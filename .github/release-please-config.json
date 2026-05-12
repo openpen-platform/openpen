@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "node",
   "include-component-in-tag": false,
-  "bootstrap-sha": "3a2e954164ca37e2698fc5713ed5cd1fef9be4ad",
+  "bootstrap-sha": "00261aba66d1612217feff40fbc40628142d2b4b",
   "packages": {
     ".": {
       "package-name": "openpen",
