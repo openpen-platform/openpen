@@ -1,0 +1,13 @@
+{
+  "name": "筆畫粗細",
+  "description": "控制列線寬滑桿與彈出調整視窗。",
+  "button": "筆觸寬度",
+  "title": "筆觸寬度",
+  "adjust": "調整筆觸寬度",
+  "defaultWidth": "預設線寬",
+  "defaultWidthSub": "開啟 App 時的初始線寬",
+  "style": "控制樣式",
+  "styleSub": "水平列與垂直列皆套用此設定",
+  "styleSlider": "滑桿",
+  "stylePopup": "彈窗"
+}

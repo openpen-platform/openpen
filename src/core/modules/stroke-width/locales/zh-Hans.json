@@ -1,0 +1,13 @@
+{
+  "name": "笔画粗细",
+  "description": "控制栏线宽滑块与弹出调整窗口。",
+  "button": "笔触宽度",
+  "title": "笔触宽度",
+  "adjust": "调整笔触宽度",
+  "defaultWidth": "默认线宽",
+  "defaultWidthSub": "打开 App 时的初始线宽",
+  "style": "控制样式",
+  "styleSub": "水平列与垂直列皆套用此设定",
+  "styleSlider": "滑块",
+  "stylePopup": "弹窗"
+}

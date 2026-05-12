@@ -1,0 +1,20 @@
+{
+  "name": "カラー",
+  "description": "コントロールバーのカラースウォッチボタンとカラーピッカーポップアップ。",
+  "button": "カラー",
+  "tabSolid": "単色",
+  "tabGradient": "グラデーション",
+  "sectionColor": "色",
+  "sectionGradient": "グラデーション",
+  "hueDrag": "色相をドラッグ",
+  "toneDrag": "明度をドラッグ",
+  "presets": "プリセット色",
+  "hexValue": "Hex カラー値",
+  "gradientFromColor": "開始色",
+  "gradientFrom": "開始",
+  "gradientPreview": "グラデーションプレビュー",
+  "gradientToColor": "終了色",
+  "gradientTo": "終了",
+  "defaultColorLabel": "デフォルトのペン色",
+  "defaultColorSub": "アプリ起動時の初期描画色。"
+}

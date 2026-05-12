@@ -1,0 +1,377 @@
+/* Wrapper fills the workArea-sized viewport; ball and bar are positioned
+   absolutely within it using --ball-x / --ball-y CSS variables (viewport coords). */
+.control-bar-wrapper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Locked state — the transparent overlay window cannot use a dim/blur backdrop,
+   so we visually mute the bar/ball and block pointer interaction instead. */
+.control-bar-wrapper.cb-locked {
+  pointer-events: none;
+}
+.control-bar-wrapper.cb-locked .float-ball,
+.control-bar-wrapper.cb-locked .control-bar {
+  opacity: 0.45;
+  filter: saturate(0.4);
+  transition: opacity var(--openpen-duration-fast) ease, filter var(--openpen-duration-fast) ease;
+}
+
+/* Floating ball — positioned by CSS variables updated from ballViewportPos. */
+.float-ball {
+  position: absolute;
+  left: var(--ball-x, 50%);
+  top: var(--ball-y, 50%);
+  transform: translate(-50%, -50%);
+
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  /* CSS variables; the host writes them directly so Vue re-renders are not needed. */
+  background: linear-gradient(
+    145deg,
+    var(--ball-color-1, rgba(99, 102, 241, 0.85)) 0%,
+    var(--ball-color-2, rgba(59, 130, 246, 0.75)) 100%
+  );
+  opacity: var(--ball-opacity, 1);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 0 0 3px var(--accent-bg, rgba(99, 102, 241, 0.18)),
+    0 8px 24px rgba(0, 0, 0, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.18) inset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  padding: 0;
+  pointer-events: auto;
+  transition:
+    transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 200ms,
+    opacity 200ms,
+    border-radius 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.float-ball:hover {
+  transform: translate(-50%, -50%) scale(1.08);
+  box-shadow:
+    0 0 0 5px rgba(99, 102, 241, 0.22),
+    0 12px 32px rgba(0, 0, 0, 0.65),
+    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.float-ball:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(0.94);
+}
+
+.float-ball.edge-left   { border-left: none;  border-radius: 0 50% 50% 0; }
+.float-ball.edge-right  { border-right: none; border-radius: 50% 0 0 50%; }
+
+.float-ball-icon {
+  width: 22px;
+  height: 22px;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Diagnostics badge — top-right; distinct from the drawing-mode dot (bottom-right). */
+.float-ball-diag-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 99px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.70);
+  cursor: pointer;
+  z-index: 3;
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+  line-height: 1;
+}
+
+.ball-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ball-ring-color, rgba(129, 140, 248, 0.35));
+  animation: ring-pulse 2.8s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes ring-pulse {
+  0%   { opacity: 0.8; transform: scale(1); }
+  70%  { opacity: 0;   transform: scale(1.5); }
+  100% { opacity: 0;   transform: scale(1.5); }
+}
+
+/* Control bar (expanded state) — Strategy A anchor: bar is positioned so the
+   drag handle center aligns to the ball center (--ball-x, --ball-y).
+   --drag-handle-offset-x is measured at runtime from cb-drag's position within
+   the bar and written by ControlBar.vue after each expand / layout change.
+   Fallback 20px = padding-left(8px) + cb-drag-width/2(12px) for horizontal mode. */
+.control-bar {
+  position: absolute;
+  left: var(--ball-x, 50%);
+  top: var(--ball-y, 50%);
+  transform: translate(calc(-1 * var(--drag-handle-offset-x, 20px)), -50%);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border-hi);
+  border-radius: 22px;
+  padding: 6px 8px;
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  box-shadow: var(--shadow);
+  user-select: none;
+  white-space: nowrap;
+  pointer-events: auto;
+  z-index: 30;
+  transition: background 200ms, border-color 200ms, box-shadow 200ms;
+  /* Horizontal bar final height: 36 (content) + 12 (padding) + 2 (border) = 50px. */
+  min-height: 50px;
+  box-sizing: border-box;
+}
+
+/* ── Drawing Mode Visual Indicators ──────────────────────────────────────── */
+
+.float-ball.drawing-active::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgb(249, 115, 22);
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.80);
+  animation: dot-pulse 1.6s ease-in-out infinite;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Accelerate ring-pulse in drawing mode (2.8s → 1.6s). */
+.float-ball.drawing-active .ball-ring {
+  animation-duration: 1.6s;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 8px  rgba(249, 115, 22, 0.80); }
+  50%       { transform: scale(1.30); box-shadow: 0 0 14px rgba(249, 115, 22, 0.95); }
+}
+
+.control-bar.drawing-active {
+  border-color: rgba(249, 115, 22, 0.42);
+  box-shadow:
+    0 0 0 1.5px rgba(249, 115, 22, 0.18),
+    0 0 28px rgba(249, 115, 22, 0.10),
+    var(--shadow);
+  transition: border-color var(--t-med, 200ms), box-shadow var(--t-med, 200ms);
+}
+
+.draw-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 7px;
+  background: rgba(249, 115, 22, 0.16);
+  border: 1px solid rgba(249, 115, 22, 0.32);
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgb(251, 146, 60);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* In horizontal bar, rotate the pill 90° so its long axis is perpendicular
+   to the bar's grain — mirrors how the default pill reads in vertical bar. */
+.control-bar:not(.vbar-left):not(.vbar-right):not(.vbar-free) .draw-mode-badge {
+  flex-direction: column;
+  padding: 7px 3px 10px 3px;
+}
+
+.draw-mode-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(249, 115, 22);
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.8);
+  animation: badge-blink 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes badge-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.40; }
+}
+
+/* Drag handle */
+.cb-drag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 36px;
+  color: var(--border-hi);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.cb-drag:active {
+  cursor: grabbing;
+}
+
+/* Diagnostics chip in the expanded bar */
+.cb-diag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 99px;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.30);
+  color: #f87171;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 150ms, border-color 150ms;
+}
+.cb-diag-chip:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.50);
+}
+
+/* ── Vue Transitions ──────────────────────────────────────────────────────── */
+
+.ball-enter-active {
+  transition:
+    opacity 250ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.ball-leave-active {
+  transition:
+    opacity 350ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.ball-enter-from,
+.ball-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.7);
+}
+
+/* transform-origin anchors the expand/collapse scale to the drag handle's
+   bar-local position so the bar visually emerges from the ball center.
+   Fallback 20px matches horizontal drag handle center offset from bar left. */
+.bar-enter-active {
+  transition:
+    opacity 350ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: var(--drag-handle-offset-x, 20px) 50%;
+}
+.bar-leave-active {
+  transition:
+    opacity 250ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: var(--drag-handle-offset-x, 20px) 50%;
+}
+.bar-enter-from,
+.bar-leave-to {
+  opacity: 0;
+  transform: translate(calc(-1 * var(--drag-handle-offset-x, 20px)), -50%) scale(0.85);
+}
+
+/* ── Vertical / Snap Layout ───────────────────────────────────────────────── */
+
+/* Snap-mode top/Y overrides are no longer needed: --ball-y encodes the snap
+   target position in viewport coords, driven by usePositioning. */
+
+/* Vertical bar base — Strategy A anchor on Y axis: top is set so that the drag
+   handle center aligns to --ball-y. --drag-handle-offset-y is the drag handle's
+   center distance from the bar's top edge, measured at runtime by ControlBar.vue.
+   Fallback 16px = padding-top(6px) + drag-handle-height/2(10px) for vertical mode. */
+.control-bar.vbar-left,
+.control-bar.vbar-right {
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  top: calc(var(--ball-y, 50%) - var(--drag-handle-offset-y, 16px));
+  left: var(--ball-x, 50%);
+  transform: translate(-50%, 0);
+  width: 50px;         /* matches horizontal bar height */
+  padding: 6px 7px;
+  border-radius: 22px;
+  white-space: normal;
+}
+
+/* Expanded vertical bar does not clip to the edge — only the collapsed ball
+   does. Keep 8px visual margin between expanded bar and screen edge. */
+.control-bar.vbar-left {
+  transform: translate(calc(-50% + 8px), 0);
+}
+
+.control-bar.vbar-right {
+  transform: translate(calc(-50% - 8px), 0);
+}
+
+/* Free vertical — Strategy A anchor on Y: positioned so drag handle center
+   aligns to --ball-y. */
+.control-bar.vbar-free {
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  top: var(--ball-y, 50%);
+  left: var(--ball-x, 50%);
+  transform: translate(-50%, calc(-1 * var(--drag-handle-offset-y, 50%)));
+  width: 50px;
+  padding: 6px 7px;
+  border-radius: 22px;
+  white-space: normal;
+}
+
+/* Drag handle dimensions in vertical mode (snapped or free). */
+.control-bar.is-vertical .cb-drag {
+  width: 36px;
+  height: 20px;
+}
+
+/* bar-v animation (vertical bar scaleY).
+   transform-origin Y is set to the drag handle's bar-local center so the bar
+   visually emerges from the ball center. --drag-handle-offset-y is written
+   by ControlBar.vue after each expand. Fallback 16px matches vertical drag handle. */
+.bar-v-enter-active {
+  transition:
+    opacity 350ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: 50% var(--drag-handle-offset-y, 16px);
+}
+.bar-v-leave-active {
+  transition:
+    opacity 250ms ease-in,
+    transform 250ms ease-in;
+  transform-origin: 50% var(--drag-handle-offset-y, 16px);
+}
+.bar-v-enter-from,
+.bar-v-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 0) scaleY(0);
+}

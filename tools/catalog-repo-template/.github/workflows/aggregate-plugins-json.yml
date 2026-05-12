@@ -1,0 +1,39 @@
+name: Aggregate plugins.json
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'plugins/**'
+
+permissions:
+  contents: write
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Rebuild plugins.json
+        run: node scripts/aggregate-plugins-json.mjs
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add plugins.json
+          if git diff --cached --quiet; then
+            echo "No changes to plugins.json"
+          else
+            git commit -m "chore: regenerate plugins.json"
+            git push
+          fi

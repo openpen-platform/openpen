@@ -1,0 +1,7 @@
+{
+  "name": "Plugin Starter",
+  "description": "Hello-world OpenPen plugin demonstrating AppPopover, AppSlider, and useModuleContext.",
+  "notif": {
+    "ready": "Plugin ready"
+  }
+}

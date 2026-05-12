@@ -1,0 +1,5 @@
+{
+  "name": "Line",
+  "description": "Straight line tool. Hold Shift to snap to 45°.",
+  "tool": "Line"
+}

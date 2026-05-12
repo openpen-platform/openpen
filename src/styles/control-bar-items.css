@@ -1,0 +1,346 @@
+/*
+ * control-bar-items.css
+ *
+ * Global chrome styles for control-bar item components.
+ *
+ * Why global (not scoped): ControlBar.vue renders module components
+ * (ColorButton, StrokeWidthSlider, etc.) via the ui.control-bar slot.
+ * Vue scoped CSS adds a [data-v-HASH] attribute selector that only matches
+ * elements in the defining component's template — they never reach
+ * module-rendered children. Moving shared item styles here ensures every
+ * module-rendered button gets the correct chrome.
+ *
+ * Imported by: src/main.ts
+ */
+
+/* ─── Separator ──────────────────────────────────────────────────────────── */
+
+.cb-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--border-hi);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+/* ─── Group container (flex wrapper, always present) ────────────────────── */
+
+.cb-group {
+  display: flex;
+  align-items: center;
+}
+
+/* ─── Group inset styling (opt-in per group via layout.inset.enabled) ───── */
+
+/* When a group declares inset.enabled, render the visible "grouped tools"
+   container. Inset MUST shrink inner items so the group's outer height
+   stays at 36px (matches an unwrapped .cb-btn), preventing the bar from
+   visually fattening. */
+.cb-group--inset {
+  background: var(--cb-group-inset-color, var(--cb-group-bg));
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 2px;
+  gap: 1px;
+}
+
+/* Inner items shrink to 30px tall (= 36 outer − 4 padding − 2 border) so
+   enabling inset NEVER grows the bar. Covers every direct child shape a
+   module can contribute: plain .cb-btn, .cb-*-wrap composites, and the
+   caret children inside those wraps. */
+.cb-group--inset .cb-btn {
+  width: 32px;
+  height: 30px;
+  border-radius: 8px;
+}
+.cb-group--inset .cb-eraser-wrap,
+.cb-group--inset .cb-shape-wrap {
+  height: 30px;
+}
+.cb-group--inset .cb-eraser-caret,
+.cb-group--inset .cb-shape-caret {
+  height: 30px;
+}
+
+/* Vertical mode: composite wraps stack their button + caret column-wise.
+   Don't clamp wrap height (would clip the caret); the bar is vertical so
+   "no fattening" means width is constrained, not height. */
+.control-bar.is-vertical .cb-group--inset .cb-eraser-wrap,
+.control-bar.is-vertical .cb-group--inset .cb-shape-wrap {
+  height: auto;
+}
+.control-bar.is-vertical .cb-group--inset .cb-eraser-caret,
+.control-bar.is-vertical .cb-group--inset .cb-shape-caret {
+  height: 14px;
+}
+
+/* ─── Icon button base ───────────────────────────────────────────────────── */
+
+.cb-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 150ms, color 150ms, transform 150ms;
+  position: relative;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.cb-btn:hover {
+  background: var(--cb-hover-bg);
+  color: var(--text-primary);
+}
+
+.cb-btn:active {
+  transform: scale(0.88);
+}
+
+.cb-btn.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.30);
+}
+
+.cb-btn.danger {
+  color: #ef4444;
+}
+
+.cb-btn.danger:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+}
+
+.cb-btn.pinned {
+  color: var(--accent);
+}
+
+/* Disabled state keeps hover/tooltip alive — HTML `disabled` kills pointer events. */
+.cb-btn.cb-disabled {
+  cursor: not-allowed;
+}
+
+/* Dim the button content only — leaves tooltip (::after) at full opacity. */
+.cb-btn.cb-disabled > * {
+  opacity: 0.30;
+}
+
+/* Tooltip — background is always dark, so text is always light */
+.cb-btn[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--tooltip-bg);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #F1F5F9;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 7px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms;
+  box-shadow: var(--shadow-sm);
+  z-index: 41;
+}
+
+.cb-btn[data-tip]:hover::after {
+  opacity: 1;
+}
+
+/* Vertical mode: tooltip opens inward (toward screen center, away from edge).
+   snap-left → tooltip opens right; snap-right → tooltip opens left.
+   vbar-free (no snap edge) → defaults to right side (same as snap-left). */
+.control-bar.is-vertical .cb-btn[data-tip]::after {
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  left: calc(100% + 8px);
+}
+
+.control-bar.vbar-right .cb-btn[data-tip]::after {
+  left: auto;
+  right: calc(100% + 8px);
+}
+
+/* Horizontal-bar near-top flip: when the bar is within ~60 px of the workArea
+   top edge, the default upward tooltip would extend off-screen. Flip it below
+   the button instead. Not applied to vertical bars (.is-vertical), which use a
+   sideways tooltip direction already handled above. */
+.control-bar.tooltip-flip-down .cb-btn[data-tip]::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+
+/* Sub-panels use z-index: 20; hovered/focused tooltips must stay above them. */
+.cb-btn[data-tip]:hover,
+.cb-btn[data-tip]:focus-visible {
+  z-index: 40;
+}
+
+/* Collapse button (vertical bar only) */
+.cb-collapse-btn {
+  color: var(--text-muted);
+}
+
+/* ─── Vertical-bar button size overrides ─────────────────────────────────── */
+
+.control-bar.is-vertical .cb-btn {
+  width: 34px;
+  height: 34px;
+}
+
+.control-bar.is-vertical .cb-group--inset .cb-btn {
+  width: 30px;
+  height: 30px;
+}
+
+/* Separator becomes a horizontal line in vertical mode. */
+.control-bar.is-vertical .cb-sep {
+  width: 24px;
+  height: 1px;
+  margin: 2px 0;
+}
+
+/* Tool group stacks vertically. */
+.control-bar.is-vertical .cb-group {
+  flex-direction: column;
+}
+
+/* ─── Color swatch ────────────────────────────────────────────────────────── */
+
+.cb-color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-hi);
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ─── Eraser module ───────────────────────────────────────────────────────── */
+
+.cb-eraser-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  -webkit-app-region: no-drag;
+}
+
+.cb-eraser-wrap--vertical {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cb-eraser-main-btn {
+  width: 32px;
+}
+
+.cb-eraser-caret {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 8px;
+  transition: color 150ms, background 150ms;
+}
+
+.cb-eraser-caret-icon {
+  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cb-eraser-caret-icon--down { transform: rotate(0deg); }
+.cb-eraser-caret-icon--up { transform: rotate(180deg); }
+.cb-eraser-caret-icon--right { transform: rotate(-90deg); }
+.cb-eraser-caret-icon--left { transform: rotate(90deg); }
+
+.cb-eraser-caret--vertical {
+  width: 30px;
+  height: 14px;
+}
+
+.cb-eraser-caret:hover {
+  color: var(--text-primary);
+  background: var(--cb-hover-bg);
+}
+
+.cb-eraser-caret.active {
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.eraser-mode-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 176px;
+}
+
+.cb-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 9px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-dim);
+  transition: background 150ms, color 150ms;
+  text-align: left;
+  -webkit-app-region: no-drag;
+}
+
+.cb-menu-item:hover {
+  background: var(--cb-hover-bg);
+  color: var(--text-primary);
+}
+
+.cb-menu-item.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.cb-menu-item-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.cb-menu-item-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ─── Shape popover content layout ─────────────────────────────────────── */
+
+.shape-popover-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+.shape-popover-content--vertical {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}

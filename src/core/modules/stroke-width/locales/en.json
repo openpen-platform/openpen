@@ -1,0 +1,13 @@
+{
+  "name": "Stroke Width",
+  "description": "Control bar slider and popup for adjusting stroke line width.",
+  "button": "Stroke Width",
+  "title": "Stroke Width",
+  "adjust": "Adjust stroke width",
+  "defaultWidth": "Default Stroke Width",
+  "defaultWidthSub": "Initial stroke width when the app starts",
+  "style": "Control Style",
+  "styleSub": "Applies to both horizontal and vertical bars",
+  "styleSlider": "Slider",
+  "stylePopup": "Popup"
+}

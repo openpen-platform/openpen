@@ -1,0 +1,18 @@
+{
+  "name": "Shape",
+  "description": "Geometric shape tool with 10 built-in shapes.",
+  "tool": "Shape",
+  "options": "Shape options",
+  "circle": "Circle",
+  "ellipse": "Ellipse",
+  "square": "Square",
+  "rect": "Rectangle",
+  "roundrect": "Rounded Rectangle",
+  "triangle": "Triangle",
+  "triangle-down": "Inverted Triangle",
+  "diamond": "Diamond",
+  "parallelogram": "Parallelogram",
+  "star": "Star",
+  "fill": "Fill",
+  "fillToggle": "Toggle fill"
+}

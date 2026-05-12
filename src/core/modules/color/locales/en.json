@@ -1,0 +1,20 @@
+{
+  "name": "Color",
+  "description": "Control bar color swatch and color picker popup.",
+  "button": "Color",
+  "tabSolid": "Solid",
+  "tabGradient": "Gradient",
+  "sectionColor": "Color",
+  "sectionGradient": "Gradient",
+  "hueDrag": "Drag hue",
+  "toneDrag": "Drag tone",
+  "presets": "Preset swatches",
+  "hexValue": "Hex color value",
+  "gradientFromColor": "Start color",
+  "gradientFrom": "Start",
+  "gradientPreview": "Gradient preview",
+  "gradientToColor": "End color",
+  "gradientTo": "End",
+  "defaultColorLabel": "Default Pen Color",
+  "defaultColorSub": "The initial drawing color when the app launches."
+}

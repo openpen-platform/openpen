@@ -1,0 +1,7 @@
+{
+  "name": "示例插件",
+  "description": "演示 AppPopover、AppSlider 与 useModuleContext 的 Hello-world OpenPen 插件。",
+  "notif": {
+    "ready": "插件已就绪"
+  }
+}

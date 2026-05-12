@@ -1,0 +1,7 @@
+{
+  "name": "範例外掛",
+  "description": "展示 AppPopover、AppSlider 與 useModuleContext 的 Hello-world OpenPen 外掛。",
+  "notif": {
+    "ready": "外掛已就緒"
+  }
+}

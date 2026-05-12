@@ -1,0 +1,18 @@
+{
+  "name": "図形",
+  "description": "10 種類の内蔵図形を持つジオメトリツール。",
+  "tool": "図形",
+  "options": "図形オプション",
+  "circle": "円形",
+  "ellipse": "楕円",
+  "square": "正方形",
+  "rect": "長方形",
+  "roundrect": "角丸長方形",
+  "triangle": "三角形",
+  "triangle-down": "逆三角形",
+  "diamond": "ひし形",
+  "parallelogram": "平行四辺形",
+  "star": "星形",
+  "fill": "塗りつぶし",
+  "fillToggle": "塗りつぶし切替"
+}

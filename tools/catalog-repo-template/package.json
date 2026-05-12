@@ -1,0 +1,13 @@
+{
+  "name": "openpen-catalog-repo-template",
+  "version": "1.0.0",
+  "description": "Seed template for the OpenPen-plugins community catalog repository",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test scripts/__tests__/"
+  },
+  "dependencies": {
+    "adm-zip": "0.5.17"
+  }
+}

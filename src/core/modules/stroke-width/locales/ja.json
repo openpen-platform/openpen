@@ -1,0 +1,13 @@
+{
+  "name": "線の太さ",
+  "description": "コントロールバーの線幅スライダーとポップアップ調整UI。",
+  "button": "線幅",
+  "title": "線幅",
+  "adjust": "線幅を調整",
+  "defaultWidth": "デフォルト線幅",
+  "defaultWidthSub": "App 起動時の初期線幅",
+  "style": "コントロールスタイル",
+  "styleSub": "水平・垂直バー両方に適用されます",
+  "styleSlider": "スライダー",
+  "stylePopup": "ポップアップ"
+}

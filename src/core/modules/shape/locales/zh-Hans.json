@@ -1,0 +1,18 @@
+{
+  "name": "形状",
+  "description": "几何形状工具，内置 10 种形状。",
+  "tool": "图形",
+  "options": "图形选项",
+  "circle": "圆形",
+  "ellipse": "椭圆",
+  "square": "正方形",
+  "rect": "矩形",
+  "roundrect": "圆角矩形",
+  "triangle": "三角形",
+  "triangle-down": "倒三角形",
+  "diamond": "菱形",
+  "parallelogram": "平行四边形",
+  "star": "星形",
+  "fill": "填充",
+  "fillToggle": "填充切换"
+}

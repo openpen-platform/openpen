@@ -1,0 +1,129 @@
+{
+  "name": "openpen",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "type": "module",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && node scripts/launch-electron.mjs\"",
+    "type-check": "vue-tsc --noEmit && vue-tsc -p packages/module-api/tsconfig.json --noEmit",
+    "build:runtime": "node scripts/build-runtime.mjs",
+    "build": "npm run type-check && vite build && npm run build:runtime",
+    "test:prod-smoke": "npx playwright test tests/e2e/prod-smoke.spec.js",
+    "dist": "npm run build && npm run test:prod-smoke && electron-builder",
+    "dist:mac": "npm run build && npm run test:prod-smoke && electron-builder --mac",
+    "dist:win": "npm run build && npm run test:prod-smoke && electron-builder --win",
+    "dist:linux": "npm run build && npm run test:prod-smoke && electron-builder --linux",
+    "preview": "vite preview",
+    "test:unit": "vitest run",
+    "test:unit:coverage": "vitest run --coverage",
+    "lint": "eslint src/",
+    "catalog:serve": "node scripts/serve-catalog.mjs"
+  },
+  "build": {
+    "appId": "com.openpen.app",
+    "productName": "OpenPen",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "assets/**/*",
+      "shared/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "icon": "assets/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.utilities",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "title": "OpenPen"
+    },
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "Utility"
+    }
+  },
+  "engines": {
+    "node": ">=20",
+    "npm": ">=9"
+  },
+  "dependencies": {
+    "@formkit/auto-animate": "^0.9.0",
+    "@openpen/plugin-manager": "*",
+    "electron-log": "^5.4.3",
+    "vue": "^3.5.13",
+    "vue-i18n": "^9.14.5",
+    "zod": "^3.25.76"
+  },
+  "overrides": {
+    "@xmldom/xmldom": "~0.8.10"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@playwright/test": "~1.58.2",
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-replace": "^6.0.3",
+    "@vitejs/plugin-vue": "~5.2.1",
+    "@vitest/coverage-v8": "~3.2.4",
+    "@vue/compiler-sfc": "^3.5.33",
+    "@vue/test-utils": "^2.4.6",
+    "concurrently": "^9.1.2",
+    "electron": "~33.2.1",
+    "electron-builder": "~26.8.1",
+    "eslint": "~9.39.4",
+    "eslint-plugin-vue": "^10.8.0",
+    "jsdom": "^27.0.1",
+    "playwright": "~1.58.2",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.58.2",
+    "vite": "~6.0.11",
+    "vitest": "~3.2.4",
+    "vue-tsc": "~3.2.6",
+    "wait-on": "^8.0.2"
+  }
+}

@@ -1,0 +1,43 @@
+.popup-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.popup-arrow.arrow-up {
+  top: -8px;
+  left: var(--arrow-offset, 50%);
+  transform: translateX(-50%);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 8px solid var(--border-hi);
+}
+
+.popup-arrow.arrow-down {
+  bottom: -8px;
+  left: var(--arrow-offset, 50%);
+  transform: translateX(-50%);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid var(--border-hi);
+}
+
+.popup-arrow.arrow-left {
+  left: -8px;
+  top: var(--arrow-offset, 50%);
+  transform: translateY(-50%);
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 8px solid var(--border-hi);
+}
+
+.popup-arrow.arrow-right {
+  right: -8px;
+  top: var(--arrow-offset, 50%);
+  transform: translateY(-50%);
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 8px solid var(--border-hi);
+}

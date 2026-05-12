@@ -1,0 +1,11 @@
+{
+  "name": "消しゴム",
+  "description": "destination-out 合成で描画を消すブラシ消しゴム。",
+  "tool": "消しゴム",
+  "toolAria": "消しゴムツール",
+  "modeMenu": "消しゴムモード選択",
+  "modeBrush": "通常消去",
+  "modeBrushSub": "触れた範囲を消去",
+  "modeStroke": "ストローク消去",
+  "modeStrokeSub": "触れたオブジェクト全体を消去"
+}

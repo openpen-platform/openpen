@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Question or general discussion
+    url: https://github.com/openpen/openpen/discussions
+    about: For questions, ideas, and showcase, please use Discussions.
+  - name: 🔒 Security vulnerability
+    url: https://github.com/openpen/openpen/security/policy
+    about: Please report security issues privately, not as public issues.

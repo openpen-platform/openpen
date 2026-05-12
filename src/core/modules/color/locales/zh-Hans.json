@@ -1,0 +1,20 @@
+{
+  "name": "颜色",
+  "description": "控制栏颜色色块按钮与颜色选择器弹出窗口。",
+  "button": "颜色",
+  "tabSolid": "实心",
+  "tabGradient": "渐变",
+  "sectionColor": "颜色",
+  "sectionGradient": "渐变",
+  "hueDrag": "色相拖动",
+  "toneDrag": "明度拖动",
+  "presets": "预设色票",
+  "hexValue": "Hex 颜色值",
+  "gradientFromColor": "起点色",
+  "gradientFrom": "起点",
+  "gradientPreview": "渐变预览",
+  "gradientToColor": "终点色",
+  "gradientTo": "终点",
+  "defaultColorLabel": "默认笔色",
+  "defaultColorSub": "App 启动时的初始绘图颜色。"
+}

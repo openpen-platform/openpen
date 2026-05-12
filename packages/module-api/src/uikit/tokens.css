@@ -1,0 +1,205 @@
+/* packages/module-api/src/uikit/tokens.css
+ *
+ * OpenPen UIKit design tokens. All tokens use the `--openpen-*` prefix
+ * to avoid collision with host or third-party CSS.
+ *
+ * Plugins MAY consume via var(--openpen-*); MUST NOT hardcode values.
+ *
+ * Values extracted from:
+ *   - src/style.css (global CSS variables)
+ *   - src/styles/control-bar-items.css (control bar item chrome)
+ *
+ * Token naming follows semantic > visual convention.
+ * e.g. --openpen-color-accent (semantic), NOT --openpen-color-indigo-400 (visual)
+ */
+
+:root {
+  /* ── Color (semantic; theme module may override actual values) ─────────── */
+
+  /* Accent — primary brand / interactive highlight color */
+  /* Source: src/style.css --accent: #818CF8 */
+  --openpen-color-accent: #818cf8;
+
+  /* Accent hover — slightly deeper accent for :hover state */
+  /* Source: src/style.css --accent-glow used as reference; approximated from #6366f1 */
+  --openpen-color-accent-hover: #6366f1;
+
+  /* Accent background — subtle tinted background for active items */
+  /* Source: src/style.css --accent-bg: rgba(129, 140, 248, 0.18) */
+  --openpen-color-accent-bg: rgba(129, 140, 248, 0.18);
+
+  /* Accent glow — used for box-shadow rings on active elements */
+  /* Source: src/style.css --accent-glow: rgba(129, 140, 248, 0.35) */
+  --openpen-color-accent-glow: rgba(129, 140, 248, 0.35);
+
+  /* Surface (dark) — main background for floating panels, bars */
+  /* Source: src/style.css --surface: rgba(18, 26, 48, 0.88) */
+  --openpen-color-surface: rgba(18, 26, 48, 0.88);
+
+  /* Surface hi — slightly elevated surface (nested panels, hover states) */
+  /* Source: src/style.css --surface-hi: rgba(30, 41, 70, 0.92) */
+  --openpen-color-surface-hi: rgba(30, 41, 70, 0.92);
+
+  /* Surface popup — background for popover / dropdown panels */
+  /* Source: src/style.css --surface-popup: rgba(20, 28, 50, 0.90) */
+  --openpen-color-surface-popup: rgba(20, 28, 50, 0.90);
+
+  /* Border — default subtle border */
+  /* Source: src/style.css --border: rgba(255, 255, 255, 0.10) */
+  --openpen-color-border: rgba(255, 255, 255, 0.10);
+
+  /* Border hi — higher-contrast border for focus rings and popup frames */
+  /* Source: src/style.css --border-hi: rgba(255, 255, 255, 0.20) */
+  --openpen-color-border-hi: rgba(255, 255, 255, 0.20);
+
+  /* Popover frame — shared by the popover's border AND arrow fill so they
+   * read as a single, continuous edge. Separate from --border-hi because the
+   * popover frame in light theme needs more presence (the near-opaque white
+   * surface buries 14% black). In dark theme it inherits border-hi unchanged. */
+  --openpen-color-popover-frame: var(--openpen-color-border-hi);
+
+  /* Text primary — main content text */
+  /* Source: src/style.css --text-primary: #F1F5F9 */
+  --openpen-color-text-primary: #f1f5f9;
+
+  /* Text dim — secondary / label text */
+  /* Source: src/style.css --text-dim: #94A3B8 */
+  --openpen-color-text-dim: #94a3b8;
+
+  /* Text muted — placeholder / disabled text */
+  /* Source: src/style.css --text-muted: #64748B */
+  --openpen-color-text-muted: #64748b;
+
+  /* Tooltip background, text, and border — always dark regardless of theme */
+  /* Source: src/style.css --tooltip-bg: rgba(15, 23, 42, 0.96) */
+  --openpen-color-tooltip-bg: rgba(15, 23, 42, 0.96);
+  --openpen-color-tooltip-text: #f1f5f9;
+  --openpen-color-tooltip-border: rgba(255, 255, 255, 0.15);
+
+  /* Control bar hover background */
+  /* Source: src/styles/control-bar-items.css --cb-hover-bg: rgba(255, 255, 255, 0.08) */
+  --openpen-color-control-hover: rgba(255, 255, 255, 0.08);
+
+  /* Control bar group background */
+  /* Source: src/styles/control-bar-items.css --cb-group-bg: rgba(255, 255, 255, 0.04) */
+  --openpen-color-control-group: rgba(255, 255, 255, 0.04);
+
+  /* ── Radius ────────────────────────────────────────────────────────────── */
+
+  /* Source: src/styles/control-bar-items.css — tooltip border-radius: 7px,
+   * cb-btn border-radius: 10px, cb-group border-radius: 11px,
+   * popup panels typically ~10-14px; mapped to sm/md/lg scale */
+  --openpen-radius-sm: 6px;
+  --openpen-radius-md: 10px;
+  --openpen-radius-lg: 14px;
+
+  /* ── Spacing ───────────────────────────────────────────────────────────── */
+
+  /* Source: control-bar-items.css uses 4px, 8px, 12px, 16px consistently */
+  --openpen-space-xs: 4px;
+  --openpen-space-sm: 8px;
+  --openpen-space-md: 12px;
+  --openpen-space-lg: 16px;
+
+  /* ── Animation duration / easing ──────────────────────────────────────── */
+
+  /* Source: src/styles/control-bar-items.css
+   * .cb-btn transition: background 150ms, color 150ms, transform 150ms
+   * ControlBar.vue expand: 350ms cubic-bezier(0.34, 1.56, 0.64, 1)
+   * ControlBar.vue collapse: 250ms same easing */
+  --openpen-duration-fast: 150ms;
+  --openpen-duration-base: 250ms;
+  --openpen-duration-bounce: 400ms;
+
+  /* Source: ControlBar.vue / src/styles/control-bar-items.css
+   * .cb-eraser-caret-icon transition: cubic-bezier(0.34, 1.56, 0.64, 1) */
+  --openpen-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --openpen-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* State colors — info / warning / success / error (dark) */
+  --openpen-color-state-info-bg:        rgba(59, 130, 246, 0.10);
+  --openpen-color-state-info-border:    rgba(59, 130, 246, 0.26);
+  --openpen-color-state-info-text:      #93C5FD;
+  --openpen-color-state-info-icon:      #60A5FA;
+  --openpen-color-state-warning-bg:     rgba(251, 191, 36, 0.10);
+  --openpen-color-state-warning-border: rgba(251, 191, 36, 0.28);
+  --openpen-color-state-warning-text:   #FDE68A;
+  --openpen-color-state-warning-icon:   #FBBF24;
+  --openpen-color-state-success-bg:     rgba(52, 211, 153, 0.10);
+  --openpen-color-state-success-border: rgba(52, 211, 153, 0.26);
+  --openpen-color-state-success-text:   #6EE7B7;
+  --openpen-color-state-success-icon:   #34D399;
+  --openpen-color-state-error-bg:       rgba(248, 113, 113, 0.10);
+  --openpen-color-state-error-border:   rgba(248, 113, 113, 0.26);
+  --openpen-color-state-error-text:     #FCA5A5;
+  --openpen-color-state-error-icon:     #F87171;
+
+  /* Danger — destructive / error button foreground and hover states */
+  /* Source: AppButton.vue danger variant; matches red-500 / red-400 scale */
+  --openpen-color-danger: #ef4444;
+  --openpen-color-danger-hover: #f87171;
+  --openpen-color-danger-hover-bg: rgba(248, 113, 113, 0.12);
+
+  /* Toggle off background — inactive state of AppToggle */
+  /* Source: src/style.css --toggle-off-bg: rgba(255, 255, 255, 0.12) */
+  --openpen-color-toggle-off: rgba(255, 255, 255, 0.12);
+
+  /* Input background — background for form inputs */
+  /* Source: src/style.css --input-bg: rgba(255, 255, 255, 0.07) */
+  --openpen-color-input-bg: rgba(255, 255, 255, 0.07);
+
+  /* ── Shadow ────────────────────────────────────────────────────────────── */
+
+  /* Source: src/style.css --shadow + --shadow-sm */
+  --openpen-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  --openpen-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.40);
+
+  /* ── Backdrop filter ───────────────────────────────────────────────────── */
+
+  /* Source: src/style.css --blur: blur(18px) saturate(160%) */
+  --openpen-blur: blur(18px) saturate(160%);
+}
+
+/* ── Light theme overrides ─────────────────────────────────────────────────── */
+/* Source: src/style.css [data-theme="light"] block */
+
+[data-theme='light'] {
+  --openpen-color-surface: rgba(255, 255, 255, 0.92);
+  --openpen-color-surface-hi: rgba(248, 250, 252, 0.98);
+  --openpen-color-surface-popup: rgba(255, 255, 255, 0.98);
+  --openpen-color-border: rgba(0, 0, 0, 0.08);
+  --openpen-color-border-hi: rgba(0, 0, 0, 0.14);
+  /* Slate-400 (#94a3b8) at 70% — a light, cool-gray semi-transparent tint that
+   * mirrors dark theme's lighter-than-surface frame treatment instead of
+   * stamping a hard dark wedge onto the near-white popup. Applied to both
+   * the popover border and arrow fill so the edge reads as one continuous tone. */
+  --openpen-color-popover-frame: rgba(148, 163, 184, 0.7);
+  --openpen-color-text-primary: #0f172a;
+  --openpen-color-text-dim: #64748b;
+  --openpen-color-text-muted: #94a3b8;
+  --openpen-color-control-hover: rgba(0, 0, 0, 0.06);
+  --openpen-color-control-group: rgba(0, 0, 0, 0.04);
+  --openpen-color-toggle-off: rgba(0, 0, 0, 0.15);
+  --openpen-color-input-bg: rgba(0, 0, 0, 0.05);
+  --openpen-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 1px 0 rgba(255, 255, 255, 0.80) inset;
+  --openpen-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.08);
+  /* State colors — light overrides */
+  --openpen-color-state-info-bg:        rgba(59, 130, 246, 0.07);
+  --openpen-color-state-info-border:    rgba(59, 130, 246, 0.22);
+  --openpen-color-state-info-text:      #1D4ED8;
+  --openpen-color-state-info-icon:      #2563EB;
+  --openpen-color-state-warning-bg:     rgba(245, 158, 11, 0.08);
+  --openpen-color-state-warning-border: rgba(245, 158, 11, 0.28);
+  --openpen-color-state-warning-text:   #92400E;
+  --openpen-color-state-warning-icon:   #B45309;
+  --openpen-color-state-success-bg:     rgba(16, 185, 129, 0.08);
+  --openpen-color-state-success-border: rgba(16, 185, 129, 0.24);
+  --openpen-color-state-success-text:   #065F46;
+  --openpen-color-state-success-icon:   #059669;
+  --openpen-color-state-error-bg:       rgba(239, 68, 68, 0.08);
+  --openpen-color-state-error-border:   rgba(239, 68, 68, 0.24);
+  --openpen-color-state-error-text:     #991B1B;
+  --openpen-color-state-error-icon:     #DC2626;
+
+  /* accent / radius / spacing / duration / easing unchanged in light mode */
+}

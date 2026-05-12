@@ -1,0 +1,7 @@
+{
+  "name": "プラグインスターター",
+  "description": "AppPopover・AppSlider・useModuleContext を示す Hello-world OpenPen プラグイン。",
+  "notif": {
+    "ready": "プラグインの準備完了"
+  }
+}

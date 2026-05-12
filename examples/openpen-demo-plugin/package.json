@@ -1,0 +1,18 @@
+{
+  "name": "openpen-demo-plugin",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "openpen-build",
+    "dev": "openpen-build --watch",
+    "check": "openpen-build --check"
+  },
+  "devDependencies": {
+    "@openpen/build": "*",
+    "@openpen/module-api": "*",
+    "typescript": "^5.0.0",
+    "vue": "^3.5.0"
+  },
+  "license": "GPL-3.0"
+}

@@ -1,0 +1,16 @@
+# `package.json` has no `files` field, so npm defaults to including everything
+# except entries listed here (plus its built-in defaults like node_modules / .git).
+
+# Tests — dev-only, noise for plugin authors
+**/*.test.ts
+**/*.contract.test.ts
+**/__tests__/
+tests/
+
+# Dev tooling
+tsconfig.json
+
+# OS / editor cruft
+.DS_Store
+*.log
+*.swp

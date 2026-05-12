@@ -1,0 +1,14 @@
+{
+  "id": "@demo/version-test",
+  "name": "Version Test",
+  "version": "2.0.0",
+  "author": "OpenPen Test",
+  "description": "Test fixture for version comparison flows. v2.0.0",
+  "minAppVersion": "1.0.0",
+  "renderer": "dist/renderer.js",
+  "changelog": [
+    "v2.0.0 sample change one — feature added.",
+    "v2.0.0 sample change two — bug fixed.",
+    "v2.0.0 sample change three — performance improved."
+  ]
+}

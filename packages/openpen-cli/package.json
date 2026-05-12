@@ -1,0 +1,38 @@
+{
+  "name": "openpen-cli",
+  "version": "1.0.0",
+  "description": "Install and manage OpenPen plugins from local paths or GitHub releases. Run via `npx openpen plugin add <source>`.",
+  "author": "navishachiku <navishachiku@gmail.com>",
+  "homepage": "https://github.com/openpen-platform/openpen#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openpen-platform/openpen.git",
+    "directory": "packages/openpen-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/openpen-platform/openpen/issues"
+  },
+  "type": "module",
+  "bin": {
+    "openpen": "bin/openpen.js"
+  },
+  "scripts": {
+    "prepack": "node scripts/sync-template.mjs"
+  },
+  "files": [
+    "bin",
+    "scripts",
+    "templates",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20",
+    "npm": ">=9"
+  },
+  "keywords": ["openpen", "plugin", "cli"],
+  "license": "MIT",
+  "dependencies": {
+    "@openpen/plugin-manager": "*",
+    "archiver": "~7.0.1"
+  }
+}

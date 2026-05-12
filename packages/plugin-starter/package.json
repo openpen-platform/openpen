@@ -1,0 +1,21 @@
+{
+  "name": "openpen-plugin-starter",
+  "version": "0.1.0",
+  "description": "Starter template for OpenPen plugins.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "openpen-build",
+    "dev": "openpen-build --watch",
+    "check": "openpen-build --check",
+    "pack": "openpen pack",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@openpen/build": "*",
+    "@openpen/module-api": "*",
+    "typescript": "^5.0.0",
+    "vue": "^3.5.0"
+  },
+  "license": "MIT"
+}

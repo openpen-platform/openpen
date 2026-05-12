@@ -1,0 +1,11 @@
+{
+  "name": "Eraser",
+  "description": "Brush eraser using destination-out compositing.",
+  "tool": "Eraser",
+  "toolAria": "Eraser tool",
+  "modeMenu": "Eraser mode",
+  "modeBrush": "Brush Erase",
+  "modeBrushSub": "Erase touched areas",
+  "modeStroke": "Stroke Erase",
+  "modeStrokeSub": "Erase the whole touched stroke"
+}

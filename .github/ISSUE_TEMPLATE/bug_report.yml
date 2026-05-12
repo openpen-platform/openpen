@@ -1,0 +1,67 @@
+name: Bug Report
+description: Report a reproducible bug in OpenPen
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill out the form below.
+        For questions or general discussion, please use [GitHub Discussions](https://github.com/openpen/openpen/discussions) instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug, what you expected, and what actually happened.
+      placeholder: When I clicked X, OpenPen did Y, but I expected Z.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps for someone else to reproduce the bug.
+      placeholder: |
+        1. Open OpenPen
+        2. Click the freehand tool
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: OpenPen version
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version
+      placeholder: e.g. macOS 14.5 / Windows 11 23H2 / Ubuntu 22.04
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / screenshots
+      description: Attach screenshots or paste log output. (Drag & drop images here.)
+  - type: textarea
+    id: log-file
+    attributes:
+      label: Log file (optional but very helpful)
+      description: |
+        Please attach `main.log` if possible. Location:
+        - **macOS**: `~/Library/Logs/openpen/main.log`
+        - **Windows**: `%USERPROFILE%\AppData\Roaming\openpen\logs\main.log`
+        - **Linux**: `~/.config/openpen/logs/main.log`
+        Review the log before sharing — it may include URLs of websites you visited while OpenPen was running.
+      placeholder: Drag & drop main.log here, or paste the last ~50 lines.

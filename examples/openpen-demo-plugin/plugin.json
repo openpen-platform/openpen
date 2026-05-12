@@ -1,0 +1,9 @@
+{
+  "id": "@openpen/demo-plugin",
+  "name": "Demo Plugin",
+  "version": "0.2.0",
+  "author": "OpenPen",
+  "description": "Demonstrates the OpenPen module API with a Highlighter tool.",
+  "minAppVersion": "1.0.0",
+  "renderer": "dist/renderer.js"
+}

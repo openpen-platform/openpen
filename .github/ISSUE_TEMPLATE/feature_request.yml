@@ -1,0 +1,36 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please describe the use case and proposed solution.
+        For brainstorming or open-ended ideas, consider [GitHub Discussions → Ideas](https://github.com/openpen/openpen/discussions/categories/ideas) first.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: What are you trying to achieve? What's missing today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would you like this to work? Mockups / API sketches welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you thought about and why they didn't fit.
+  - type: checkboxes
+    id: plugin
+    attributes:
+      label: Could this be a plugin?
+      description: OpenPen has a plugin architecture (`@openpen/module-api`). Could this feature be implemented as a third-party plugin instead of in core?
+      options:
+        - label: I've considered whether this could be a plugin

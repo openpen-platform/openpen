@@ -1,0 +1,43 @@
+{
+  "name": "@openpen/build",
+  "version": "1.0.0",
+  "description": "OpenPen plugin build CLI — zero-config Vite + Vue compilation for plugin authors.",
+  "author": "navishachiku <navishachiku@gmail.com>",
+  "homepage": "https://github.com/openpen-platform/openpen#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openpen-platform/openpen.git",
+    "directory": "packages/build-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/openpen-platform/openpen/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "bin": {
+    "openpen-build": "bin/openpen-build.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20",
+    "npm": ">=9"
+  },
+  "keywords": ["openpen", "plugin", "build", "vite", "cli"],
+  "license": "MIT",
+  "dependencies": {
+    "vite": "^6.0.0",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "vite-plugin-css-injected-by-js": "~4.0.1",
+    "archiver": "~7.0.1"
+  },
+  "peerDependencies": {
+    "@openpen/module-api": "*",
+    "vue": "^3.5.0"
+  }
+}

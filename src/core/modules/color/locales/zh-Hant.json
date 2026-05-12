@@ -1,0 +1,20 @@
+{
+  "name": "顏色",
+  "description": "控制列顏色色票按鈕與顏色選擇器彈出視窗。",
+  "button": "顏色",
+  "tabSolid": "實心",
+  "tabGradient": "漸層",
+  "sectionColor": "顏色",
+  "sectionGradient": "漸層",
+  "hueDrag": "色相拖曳",
+  "toneDrag": "明度拖曳",
+  "presets": "預設色票",
+  "hexValue": "Hex 顏色值",
+  "gradientFromColor": "起點色",
+  "gradientFrom": "起點",
+  "gradientPreview": "漸層預覽",
+  "gradientToColor": "終點色",
+  "gradientTo": "終點",
+  "defaultColorLabel": "預設筆色",
+  "defaultColorSub": "App 啟動時的初始繪圖顏色。"
+}

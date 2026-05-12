@@ -1,0 +1,9 @@
+{
+  "id": "@your-scope/your-plugin-name",
+  "name": "Your Plugin Name",
+  "version": "0.1.0",
+  "author": "your-github-username",
+  "description": "A short description of what your plugin does.",
+  "minAppVersion": "1.0.0",
+  "renderer": "dist/renderer.js"
+}

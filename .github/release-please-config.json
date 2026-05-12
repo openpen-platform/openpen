@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "include-component-in-tag": false,
+  "bootstrap-sha": "3a2e954164ca37e2698fc5713ed5cd1fef9be4ad",
+  "packages": {
+    ".": {
+      "package-name": "openpen",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "packages/build-cli": {
+      "package-name": "@openpen/build",
+      "changelog-path": "packages/build-cli/CHANGELOG.md"
+    },
+    "packages/module-api": {
+      "package-name": "@openpen/module-api",
+      "changelog-path": "packages/module-api/CHANGELOG.md"
+    },
+    "packages/openpen-cli": {
+      "package-name": "openpen-cli",
+      "changelog-path": "packages/openpen-cli/CHANGELOG.md"
+    }
+  },
+  "plugins": [
+    {
+      "type": "linked-versions",
+      "groupName": "openpen",
+      "components": ["openpen", "@openpen/build", "@openpen/module-api", "openpen-cli"]
+    }
+  ]
+}

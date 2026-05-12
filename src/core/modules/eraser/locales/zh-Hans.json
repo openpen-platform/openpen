@@ -1,0 +1,11 @@
+{
+  "name": "橡皮擦",
+  "description": "以 destination-out 合成方式清除笔迹的笔刷橡皮擦。",
+  "tool": "橡皮擦",
+  "toolAria": "橡皮擦工具",
+  "modeMenu": "橡皮擦模式选择",
+  "modeBrush": "普通擦除",
+  "modeBrushSub": "触碰到的区域会被清除",
+  "modeStroke": "触碰擦除",
+  "modeStrokeSub": "触碰到的对象会整条清除"
+}
