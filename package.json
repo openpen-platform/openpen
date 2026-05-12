@@ -8,6 +8,7 @@
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
+    "postinstall": "npm run build -w @openpen/plugin-manager",
     "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && node scripts/launch-electron.mjs\"",
     "type-check": "vue-tsc --noEmit && vue-tsc -p packages/module-api/tsconfig.json --noEmit",
     "build:runtime": "node scripts/build-runtime.mjs",
