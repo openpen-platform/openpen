@@ -34,7 +34,7 @@
     "vite": "^6.0.0",
     "@vitejs/plugin-vue": "^5.0.0",
     "vite-plugin-css-injected-by-js": "~4.0.1",
-    "archiver": "~7.0.1"
+    "archiver": "~8.0.0"
   },
   "peerDependencies": {
     "@openpen/module-api": "*",

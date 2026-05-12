@@ -33,6 +33,6 @@
   "license": "MIT",
   "dependencies": {
     "@openpen/plugin-manager": "*",
-    "archiver": "~7.0.1"
+    "archiver": "~8.0.0"
   }
 }
