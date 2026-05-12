@@ -6,8 +6,9 @@ An extensible overlay where every tool — built-in or third-party — is just a
 We're building OpenPen as a community-shaped product: the canvas ships with a useful default
 set, and the ecosystem grows by anyone with an idea.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
+![Version](https://img.shields.io/npm/v/@openpen/module-api?label=version)
+![CI](https://img.shields.io/github/actions/workflow/status/openpen-platform/openpen/ci.yml?branch=main&label=CI)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0--or--later-green.svg)
 
 ![OpenPen — Draw on your screen without leaving your app](assets/readme-hero.png)
