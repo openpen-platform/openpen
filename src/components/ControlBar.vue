@@ -358,6 +358,8 @@ const installedAtMap = ref<Map<string, string | null>>(new Map())
 const isDrawingMode = ref(false);
 let unsubDrawingMode: (() => void) | null = null;
 
+let unsubRequestQuit: (() => void) | null = null;
+
 // Undo / Redo state (authoritative state lives in overlay; these are mirrored flags).
 const canUndo = ref(false);
 const canRedo = ref(false);
@@ -375,6 +377,31 @@ function onRedoClick() {
 
 function openSettings() {
   window.openPenApi?.openSettingsWindow();
+}
+
+let quitDialogActive = false;
+
+async function confirmAndQuit() {
+  // De-dup: useDialog queues concurrent requests, which would stack a second
+  // quit confirm if the user clicked the button and Cmd+Q in quick succession.
+  if (quitDialogActive) return;
+  quitDialogActive = true;
+  try {
+    const ok = await dialog.confirm({
+      title: t('quitConfirmTitle'),
+      message: t('quitConfirmBody'),
+      okLabel: t('quitConfirmAction'),
+      cancelLabel: t('cancel'),
+      danger: true,
+    });
+    if (ok) window.openPenApi?.quitApp();
+  } finally {
+    quitDialogActive = false;
+  }
+}
+
+function onQuitClick() {
+  void confirmAndQuit();
 }
 
 const { pendingCount: pendingDiagnosticsCount } = useDiagnostics();
@@ -471,6 +498,10 @@ onMounted(async () => {
     isDrawingMode.value = enabled;
   }) ?? null;
 
+  unsubRequestQuit = window.openPenApi?.onRequestQuit(() => {
+    void confirmAndQuit();
+  }) ?? null;
+
   // Authoritative history state lives in the overlay window; this mirrors it.
   unsubHistoryState = window.openPenApi?.onHistoryStateChanged((state) => {
     canUndo.value = state.canUndo;
@@ -508,6 +539,8 @@ onUnmounted(() => {
   unsubToolChanged = null;
   unsubDrawingMode?.();
   unsubDrawingMode = null;
+  unsubRequestQuit?.();
+  unsubRequestQuit = null;
   unsubHistoryState?.();
   unsubHistoryState = null;
   unsubBarLayout?.();
@@ -697,6 +730,20 @@ onUnmounted(() => {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
             <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+
+        <button
+          class="cb-btn"
+          data-testid="quit-btn"
+          :data-tip="t('quit')"
+          :aria-label="t('quit')"
+          @click="onQuitClick"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
         </button>
       </div>

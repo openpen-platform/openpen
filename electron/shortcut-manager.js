@@ -63,6 +63,7 @@ const idConflicts = new Set();
  *   onToggleDrawingMode?: () => void,
  *   onUndo?: () => void,
  *   onRedo?: () => void,
+ *   onQuitApp?: () => void,
  *   onShortcutConflict?: (accelerator: string) => void,
  * }} [callbacks]
  */
@@ -70,6 +71,7 @@ export function initShortcutManager({
   onToggleDrawingMode,
   onUndo,
   onRedo,
+  onQuitApp,
   onShortcutConflict,
 } = {}) {
   const shortcuts = getShortcuts();
@@ -101,6 +103,16 @@ export function initShortcutManager({
     _builtinAccelerators.set('redo', redoAccel);
   } else {
     onShortcutConflict?.(redoAccel);
+  }
+
+  // Built-in: quit app. Not suspended by shortcut-capture UX — quit must always work.
+  const quitHandler = () => onQuitApp?.();
+  const quitAccel = shortcuts.quitApp;
+  if (registerShortcut(quitAccel, quitHandler)) {
+    _builtinHandlers.set('quitApp', quitHandler);
+    _builtinAccelerators.set('quitApp', quitAccel);
+  } else {
+    onShortcutConflict?.(quitAccel);
   }
 
   // Module IPC bridge: renderer-side modules register their accelerators

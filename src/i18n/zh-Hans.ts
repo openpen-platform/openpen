@@ -85,6 +85,10 @@ export default {
   clearCanvasConfirmTitle: '清除画布？',
   clearCanvasConfirmBody: '这会清除画布上所有笔画。',
   clearCanvasConfirmAction: '清除',
+  quit: '退出',
+  quitConfirmTitle: '退出 OpenPen？',
+  quitConfirmBody: '即将关闭应用程序。',
+  quitConfirmAction: '退出',
 
   // Drawing mode HUD notifications
   drawingModeOn: '进入绘图模式',
@@ -115,6 +119,8 @@ export default {
   shortcutUndoSub: '撤销上一笔',
   shortcutRedo: '重做',
   shortcutRedoSub: '重做上一个已撤销的笔画',
+  shortcutQuitApp: '退出应用',
+  shortcutQuitAppSub: '关闭 OpenPen',
   shortcutPressKeys: '请按下组合键…',
   shortcutClickToChange: '点击以更改快捷键',
   shortcutReset: '还原默认',

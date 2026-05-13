@@ -8,6 +8,7 @@ export interface UserShortcuts {
   toggleDrawingMode: string
   undo: string
   redo: string
+  quitApp: string
 }
 
 export declare const DEFAULT_SHORTCUTS: Readonly<UserShortcuts>

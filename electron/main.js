@@ -7,7 +7,7 @@ import { app, BrowserWindow, ipcMain, protocol, net, session, screen } from 'ele
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, createSettingsWindow, toggleDrawingMode, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener } from './window-manager.js';
+import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener } from './window-manager.js';
 import { initTrayManager, setTrayWarning, setTrayDrawingMode } from './tray-manager.js';
 import { initShortcutManager, unregisterAllShortcuts } from './shortcut-manager.js';
 import { initSettingsStore, getSetting } from './settings-store.js';
@@ -29,6 +29,43 @@ ipcMain.on(APP.RELAUNCH, () => {
   app.relaunch();
   app.exit(0);
 });
+
+// Quit is gated by a renderer-side confirm dialog. Two entry points:
+//   1. Control-bar Quit button — renderer shows the dialog, then sends APP.QUIT.
+//   2. Cmd+Q / Dock-quit / external app.quit() — before-quit preventDefault()s
+//      and asks the renderer to show the dialog via APP.REQUEST_QUIT. Once the
+//      user confirms there, the renderer sends APP.QUIT.
+//
+// APP.QUIT broadcasts the lifecycle event so modules can run onQuit hooks,
+// then calls app.exit(0) — bypassing app.quit()'s before-quit / window-close
+// dance. Going through app.quit() on macOS leaves transparent
+// screen-saver-level BrowserWindows in an unclean close state that requires
+// a second trigger; app.exit() short-circuits that path entirely.
+let _isQuitting = false;
+const LIFECYCLE_FLUSH_MS = 50;
+
+ipcMain.on(APP.QUIT, () => {
+  if (_isQuitting) return;
+  _isQuitting = true;
+  broadcastLifecycle('quit');
+  setTimeout(() => {
+    unregisterAllShortcuts();
+    app.exit(0);
+  }, LIFECYCLE_FLUSH_MS);
+});
+
+function requestQuitFromRenderer() {
+  // Send only to the active main window — DialogHost is mounted there. Multiple
+  // displays would otherwise stack one dialog per renderer.
+  const win = getMainWindow();
+  if (win && !win.isDestroyed()) {
+    win.webContents.send(APP.REQUEST_QUIT);
+    return true;
+  }
+  // No renderer to confirm with (e.g. all main windows destroyed mid-quit).
+  // Fall through and let the caller decide whether to force-quit.
+  return false;
+}
 
 function broadcastLifecycle(eventName) {
   for (const win of BrowserWindow.getAllWindows()) {
@@ -195,6 +232,7 @@ app.whenReady().then(async () => {
       const overlay = getOverlayWindow();
       if (overlay && !overlay.isDestroyed()) overlay.webContents.send(HISTORY.REDO);
     },
+    onQuitApp: () => { requestQuitFromRenderer(); },
     onShortcutConflict: (accelerator) => {
       setTrayWarning(`⚠️ OpenPen: shortcut ${accelerator} is taken by another app`);
     },
@@ -339,14 +377,34 @@ app.whenReady().then(async () => {
   }
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+    if (!_isQuitting && BrowserWindow.getAllWindows().length === 0) {
       createMainWindowForDisplay(screen.getPrimaryDisplay());
     }
   });
 });
 
-app.on('before-quit', () => {
-  broadcastLifecycle('quit');
+app.on('before-quit', (event) => {
+  // Already exiting via APP.QUIT (renderer-confirmed path); let app.exit run.
+  if (_isQuitting) return;
+
+  // External app.quit() (Cmd+Q / Dock-quit / system shutdown). Intercept and
+  // ask the renderer to confirm via the same dialog that the control-bar
+  // Quit button uses.
+  event.preventDefault();
+
+  // Test seam: OPENPEN_AUTO_CONFIRM_QUIT=1 skips the renderer round-trip and
+  // exits immediately, mirroring the confirmed-quit code path.
+  if (process.env.OPENPEN_AUTO_CONFIRM_QUIT) {
+    _isQuitting = true;
+    broadcastLifecycle('quit');
+    setTimeout(() => {
+      unregisterAllShortcuts();
+      app.exit(0);
+    }, LIFECYCLE_FLUSH_MS);
+    return;
+  }
+
+  requestQuitFromRenderer();
 });
 
 app.on('will-quit', () => {

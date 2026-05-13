@@ -168,6 +168,10 @@ interface OpenPenApi {
   getAppVersion(): Promise<string>
   /** Relaunch the host process. Fire-and-forget; the call returns before exit. */
   relaunchApp(): void
+  /** Quit the app. Fire-and-forget; caller must show confirm UI first. */
+  quitApp(): void
+  /** Subscribe to main-process quit requests (Cmd+Q / Dock-quit). */
+  onRequestQuit(callback: () => void): () => void
 
   // Toolbar cross-window broadcast
   setActiveTool(config: ToolConfig): void

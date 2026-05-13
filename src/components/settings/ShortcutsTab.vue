@@ -62,6 +62,7 @@ const SYSTEM_ROWS: Array<{ id: keyof UserShortcuts; labelKey: string; subKey: st
   { id: 'toggleDrawingMode', labelKey: 'shortcutToggleDrawingMode', subKey: 'shortcutToggleDrawingModeSub' },
   { id: 'undo',              labelKey: 'shortcutUndo',              subKey: 'shortcutUndoSub' },
   { id: 'redo',              labelKey: 'shortcutRedo',              subKey: 'shortcutRedoSub' },
+  { id: 'quitApp',           labelKey: 'shortcutQuitApp',           subKey: 'shortcutQuitAppSub' },
 ]
 
 interface ModuleShortcutEntry {
