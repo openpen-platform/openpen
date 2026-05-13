@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+const appVersion = __APP_VERSION__;
 </script>
 
 <template>
@@ -10,7 +11,7 @@ const { t } = useI18n();
 
     <div class="cw-row">
       <div class="cw-row-label">{{ t('version') }}</div>
-      <span class="about-val">0.1.0</span>
+      <span class="about-val">{{ appVersion }}</span>
     </div>
 
     <div class="cw-row">

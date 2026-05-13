@@ -1,6 +1,9 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import { readFileSync } from 'fs';
+
+const { version } = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 /**
  * Dev-mode middleware that serves `/openpen-runtime/*.js` requests.
@@ -63,6 +66,9 @@ function openpenRuntimeDevMiddlewarePlugin() {
 }
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+  },
   plugins: [vue(), openpenRuntimeDevMiddlewarePlugin()],
   // base './' ensures all asset paths in dist/index.html are relative, which
   // is required for Electron's file:// protocol. With base '/' (Vite default)
