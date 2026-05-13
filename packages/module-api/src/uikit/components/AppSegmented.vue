@@ -21,6 +21,7 @@ interface Option {
   value: string
   label: string
   icon?: string
+  testid?: string
 }
 
 defineProps<{
@@ -60,6 +61,7 @@ function onValueChange(val: unknown) {
       <button
         class="app-seg-btn"
         :class="{ active: modelValue === opt.value }"
+        :data-testid="opt.testid"
       >
         <span
           v-if="opt.icon"

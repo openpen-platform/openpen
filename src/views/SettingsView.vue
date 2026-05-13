@@ -85,8 +85,12 @@ async function handleCancel() {
 /** Save — persist to disk (preview is already live in memory) and close. */
 async function handleSave() {
   const { disabledModules: _, ...rest } = draft;
+  // JSON round-trip strips Vue reactive Proxies before IPC. Without it, nested
+  // reactive values (e.g. `pluginIdConflictResolutions`) make the structured
+  // clone for `settings:set` silently fail in the renderer — the handler in
+  // main never fires and the on-disk theme stays unchanged.
   try {
-    await window.openPenApi?.updateSettings({ ...rest });
+    await window.openPenApi?.updateSettings(JSON.parse(JSON.stringify(rest)));
   } catch (err) {
     console.error('[SettingsView] updateSettings failed:', err);
   }
@@ -188,6 +192,7 @@ const activeTabEntry = computed(() => TABS.value.find((tab) => tab.id === active
           :key="tab.id"
           class="stg-tab"
           :class="{ active: activeTab === tab.id }"
+          :data-testid="`tab-${tab.id}`"
           @click="activeTab = tab.id"
         >
           {{ tab.label }}
