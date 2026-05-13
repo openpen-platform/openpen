@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener } from './window-manager.js';
 import { initTrayManager, setTrayWarning, setTrayDrawingMode } from './tray-manager.js';
 import { initShortcutManager, unregisterAllShortcuts } from './shortcut-manager.js';
-import { initSettingsStore, getSetting } from './settings-store.js';
+import { initSettingsStore, getSetting, flushWrites } from './settings-store.js';
 import { initDiagnosticsManager } from './diagnostics-manager.js';
 import { initPluginMetaManager } from './plugin-meta-manager.js';
 import { initI18n } from './i18n/index.js';
@@ -48,7 +48,8 @@ ipcMain.on(APP.QUIT, () => {
   if (_isQuitting) return;
   _isQuitting = true;
   broadcastLifecycle('quit');
-  setTimeout(() => {
+  setTimeout(async () => {
+    await flushWrites();
     unregisterAllShortcuts();
     app.exit(0);
   }, LIFECYCLE_FLUSH_MS);
@@ -397,7 +398,8 @@ app.on('before-quit', (event) => {
   if (process.env.OPENPEN_AUTO_CONFIRM_QUIT) {
     _isQuitting = true;
     broadcastLifecycle('quit');
-    setTimeout(() => {
+    setTimeout(async () => {
+      await flushWrites();
       unregisterAllShortcuts();
       app.exit(0);
     }, LIFECYCLE_FLUSH_MS);
