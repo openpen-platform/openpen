@@ -48,10 +48,14 @@ jobs:
         run: npm run test:prod-smoke
 
       - name: Build Electron distributable
-        run: npx electron-builder ${{ matrix.builder_flag }} --publish never
+        shell: bash
+        run: |
+          [ -z "${CSC_LINK}" ] && unset CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
+          npx electron-builder ${{ matrix.builder_flag }} --publish never
         env:
-          # Code signing — electron-builder skips signing/notarization automatically
-          # when these env vars are absent. Add secrets in GitHub repo settings to enable.
+          # Code signing — set these secrets in GitHub repo settings to enable signing.
+          # When unset, GitHub Actions passes empty strings; the unset above prevents
+          # electron-builder from treating "" as a certificate file path.
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
