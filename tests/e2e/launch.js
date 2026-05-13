@@ -47,6 +47,7 @@ export async function launchElectronApp(overrides = {}) {
       ...process.env,
       NODE_ENV: 'development',
       OPENPEN_USER_DATA_DIR: userDataDir,
+      OPENPEN_AUTO_CONFIRM_QUIT: '1',
       ...(electronOverrides.env ?? {}),
     },
   });

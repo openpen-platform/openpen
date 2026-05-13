@@ -186,7 +186,6 @@ function repairLayoutL3b(layout, knownItemIds) {
 
 /** @type {Promise<void>} Tail of the write queue. */
 let writeQueue = Promise.resolve();
-let _quittingAfterFlush = false;
 
 /**
  * Enqueue a write. All writes are serialized — never run concurrently.
@@ -269,14 +268,6 @@ export function initSettingsStore() {
     if (cache.theme === 'system') {
       broadcastSettings();
     }
-  });
-
-  // Flush any queued writes before the process exits.
-  app.on('before-quit', (e) => {
-    if (_quittingAfterFlush) return;
-    e.preventDefault();
-    _quittingAfterFlush = true;
-    flushWrites().then(() => app.quit());
   });
 
   registerIpcHandlers();

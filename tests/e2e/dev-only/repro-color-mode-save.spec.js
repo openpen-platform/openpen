@@ -8,9 +8,8 @@
  * `settings:preview` round-trip but disk was not. Symptom: pick a new theme,
  * Save, restart — theme reverts.
  *
- * Note: orderly `electronApp.close()` currently hangs because of the
- * quit-confirm dialog stacking with the settings-store's before-quit
- * flush. We force-exit with `app.exit(0)` after reading the disk file.
+ * The launch helper seeds OPENPEN_AUTO_CONFIRM_QUIT=1 so electronApp.close()
+ * takes the dialog-skipping exit path without hanging.
  */
 import { test, expect } from '@playwright/test';
 import path from 'node:path';
@@ -96,7 +95,5 @@ test('color mode: single-change save reaches disk', async () => {
   const onDisk = JSON.parse(fs.readFileSync(path.join(userDataDir, 'config.json'), 'utf-8'));
   expect(onDisk.theme).toBe(targetTheme);
 
-  // Force-exit; orderly close is currently broken by the quit-confirm dialog.
-  await app.evaluate(({ app: a }) => a.exit(0)).catch(() => {});
-  await app.close().catch(() => {});
+  await app.close();
 });
