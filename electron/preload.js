@@ -77,6 +77,14 @@ contextBridge.exposeInMainWorld('openPenApi', {
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),
   /** Restart the host process (used after plugin install / module toggle). */
   relaunchApp: () => ipcRenderer.send('app:relaunch'),
+  /** Quit the app. Caller is responsible for showing confirm UI first. */
+  quitApp: () => ipcRenderer.send('app:quit'),
+  /** Subscribe to main → renderer quit requests (Cmd+Q / Dock-quit / external app.quit()). */
+  onRequestQuit: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on('app:request-quit', handler);
+    return () => ipcRenderer.removeListener('app:request-quit', handler);
+  },
 
   // ── Control bar cross-window broadcast ─────────────────────────────────
   setActiveTool: (config) => ipcRenderer.send('control-bar:tool-changed', config),

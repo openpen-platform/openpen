@@ -85,6 +85,10 @@ export default {
   clearCanvasConfirmTitle: 'キャンバスをクリアしますか？',
   clearCanvasConfirmBody: 'キャンバス上のすべてのストロークが消去されます。',
   clearCanvasConfirmAction: 'クリア',
+  quit: '終了',
+  quitConfirmTitle: 'OpenPen を終了しますか？',
+  quitConfirmBody: 'アプリケーションを終了します。',
+  quitConfirmAction: '終了',
 
   // Drawing mode HUD notifications
   drawingModeOn: '描画モード ON',
@@ -115,6 +119,8 @@ export default {
   shortcutUndoSub: '直前の一筆を取り消す',
   shortcutRedo: 'やり直し',
   shortcutRedoSub: '取り消した一筆をやり直す',
+  shortcutQuitApp: 'アプリを終了',
+  shortcutQuitAppSub: 'OpenPen を閉じる',
   shortcutPressKeys: 'キーを押してください…',
   shortcutClickToChange: 'クリックしてショートカットを変更',
   shortcutReset: 'デフォルトに戻す',

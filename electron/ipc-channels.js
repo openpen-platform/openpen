@@ -79,6 +79,10 @@ export const APP = {
   GET_VERSION: 'app:get-version',
   /** renderer → main (one-way): relaunch the app (used after plugin install / module toggle). */
   RELAUNCH: 'app:relaunch',
+  /** renderer → main (one-way): quit the app — only sent after the renderer has confirmed intent. */
+  QUIT: 'app:quit',
+  /** main → renderer (active main window): user-initiated quit needs the renderer to confirm. */
+  REQUEST_QUIT: 'app:request-quit',
 }
 
 /** Control bar layout. */

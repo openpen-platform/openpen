@@ -11,6 +11,7 @@ export const DEFAULT_SHORTCUTS = Object.freeze({
   toggleDrawingMode: 'CommandOrControl+Shift+A',
   undo: 'CommandOrControl+Z',
   redo: 'CommandOrControl+Shift+Z',
+  quitApp: 'CommandOrControl+Q',
 })
 
 /** @type {import('./settings-defaults').AppSettings} */

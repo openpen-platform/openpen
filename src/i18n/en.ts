@@ -85,6 +85,10 @@ export default {
   clearCanvasConfirmTitle: 'Clear canvas?',
   clearCanvasConfirmBody: 'This will erase all strokes on the canvas. This action cannot be undone after dismiss.',
   clearCanvasConfirmAction: 'Clear',
+  quit: 'Quit',
+  quitConfirmTitle: 'Quit OpenPen?',
+  quitConfirmBody: 'OpenPen is about to close.',
+  quitConfirmAction: 'Quit',
 
   // Drawing mode HUD notifications
   drawingModeOn: 'Drawing Mode ON',
@@ -114,6 +118,8 @@ export default {
   shortcutUndoSub: 'Undo the last stroke',
   shortcutRedo: 'Redo',
   shortcutRedoSub: 'Redo the last undone stroke',
+  shortcutQuitApp: 'Quit App',
+  shortcutQuitAppSub: 'Close OpenPen',
   shortcutPressKeys: 'Press keys…',
   shortcutClickToChange: 'Click to change shortcut',
   shortcutReset: 'Reset to default',
