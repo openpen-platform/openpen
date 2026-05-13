@@ -29,7 +29,11 @@
     "node": ">=20",
     "npm": ">=9"
   },
-  "keywords": ["openpen", "plugin", "cli"],
+  "keywords": [
+    "openpen",
+    "plugin",
+    "cli"
+  ],
   "license": "MIT",
   "dependencies": {
     "@openpen/plugin-manager": "*",

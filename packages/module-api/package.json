@@ -42,7 +42,12 @@
     "node": ">=20",
     "npm": ">=9"
   },
-  "keywords": ["openpen", "plugin", "module", "sdk"],
+  "keywords": [
+    "openpen",
+    "plugin",
+    "module",
+    "sdk"
+  ],
   "dependencies": {
     "reka-ui": "~2.9.7"
   },
