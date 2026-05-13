@@ -7,6 +7,11 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build (e.g. v1.0.0)'
+        required: true
 
 permissions:
   contents: write
@@ -18,9 +23,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            platform: linux
-            builder_flag: --linux
           - os: macos-latest
             platform: mac
             builder_flag: --mac
@@ -46,10 +48,14 @@ jobs:
         run: npm run test:prod-smoke
 
       - name: Build Electron distributable
-        run: npx electron-builder ${{ matrix.builder_flag }} --publish never
+        shell: bash
+        run: |
+          [ -z "${CSC_LINK}" ] && unset CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
+          npx electron-builder ${{ matrix.builder_flag }} --publish never
         env:
-          # Code signing — electron-builder skips signing/notarization automatically
-          # when these env vars are absent. Add secrets in GitHub repo settings to enable.
+          # Code signing — set these secrets in GitHub repo settings to enable signing.
+          # When unset, GitHub Actions passes empty strings; the unset above prevents
+          # electron-builder from treating "" as a certificate file path.
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -59,7 +65,7 @@ jobs:
       - name: Upload artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: release/**
 
   npm-publish:
