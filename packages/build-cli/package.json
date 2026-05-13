@@ -28,7 +28,13 @@
     "node": ">=20",
     "npm": ">=9"
   },
-  "keywords": ["openpen", "plugin", "build", "vite", "cli"],
+  "keywords": [
+    "openpen",
+    "plugin",
+    "build",
+    "vite",
+    "cli"
+  ],
   "license": "MIT",
   "dependencies": {
     "vite": "^6.0.0",
