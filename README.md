@@ -37,13 +37,13 @@ It stays out of the way as a floating ball until you need it, and disappears the
 
 ## Install
 
-> **Release artifacts are being prepared.** Pre-built binaries will be
-> available on [GitHub Releases](https://github.com/openpen-platform/openpen/releases)
-> once the v1.0.0 milestone is cut.
+Download the latest installer from [GitHub Releases](https://github.com/openpen-platform/openpen/releases/latest):
 
-In the meantime, build from source — see [Building](#building) below.
+- **macOS**: `OpenPen-1.0.0-arm64.dmg` (Apple Silicon) / `OpenPen-1.0.0-x64.dmg` (Intel)
+- **Windows**: `OpenPen.Setup.1.0.0.exe`
+- **Linux**: not in v1.0.0 — see [Platform support](#platform-support)
 
-See [Platform support](#platform-support) for per-platform status.
+Or build from source — see [Building](#building) below.
 
 ## Documentation
 
@@ -75,7 +75,7 @@ protections and the audit log.
 | -------- | ------ |
 | macOS    | Supported |
 | Windows  | Supported |
-| Linux    | Launches, but overlay layering breaks in draw mode — fix in progress |
+| Linux    | Not in v1.0.0 — overlay layering issue, will ship in a follow-up release |
 
 ## Localization
 
