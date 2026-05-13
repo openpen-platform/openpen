@@ -504,6 +504,7 @@ export function createSettingsWindow() {
     if (settingsWindow && !settingsWindow.isDestroyed()) {
       settingsWindow.show();
       settingsWindow.focus();
+      settingsWindow.webContents.focus();
     }
   });
 
