@@ -6,8 +6,9 @@ An extensible overlay where every tool — built-in or third-party — is just a
 We're building OpenPen as a community-shaped product: the canvas ships with a useful default
 set, and the ecosystem grows by anyone with an idea.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![Platform](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
+![Version](https://img.shields.io/npm/v/@openpen/module-api?label=version)
+![CI](https://img.shields.io/github/actions/workflow/status/openpen-platform/openpen/ci.yml?branch=main&label=CI)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0--or--later-green.svg)
 
 ![OpenPen — Draw on your screen without leaving your app](assets/readme-hero.png)
@@ -75,6 +76,26 @@ protections and the audit log.
 | macOS    | Supported |
 | Windows  | Supported |
 | Linux    | Launches, but overlay layering breaks in draw mode — fix in progress |
+
+## Localization
+
+OpenPen ships with a built-in language switcher. The UI is fully translated for the
+following locales:
+
+| Language | Locale | Status |
+| -------- | ------ | ------ |
+| English | `en` | ✅ Complete |
+| 繁體中文 (Traditional Chinese) | `zh-Hant` | ✅ Complete |
+| 简体中文 (Simplified Chinese) | `zh-Hans` | ✅ Complete |
+| 日本語 (Japanese) | `ja` | ✅ Complete |
+
+The app auto-detects your system language on first launch and falls back to English if the
+locale is not yet supported. You can change the language at any time from **Settings → General**.
+
+**Want to see your language here?** Speakers of any language are warmly welcome:
+
+- **Request** — open an [issue](https://github.com/openpen-platform/openpen/issues) to let us know which language you'd like
+- **Contribute** — copy [`src/i18n/en.ts`](./src/i18n/en.ts), name the file after its [BCP 47](https://www.iana.org/assignments/language-subtag-registry) tag (e.g. `fr.ts`), register it in `src/i18n/index.ts`, and open a pull request
 
 ## Development
 
