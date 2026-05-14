@@ -294,7 +294,7 @@ function onWrapperMouseEnter() {
 
 function onWrapperMouseLeave() {
   cursorOnBar.value = false;
-  if (activePanelId.value === null) {
+  if (activePanelId.value === null && !isLockedByDialog.value) {
     startCollapseTimer();
   }
 }
@@ -302,7 +302,17 @@ function onWrapperMouseLeave() {
 watch(activePanelId, (panel) => {
   if (panel !== null) {
     cancelCollapseTimer();
-  } else if (!cursorOnBar.value && document.visibilityState === 'visible') {
+  } else if (!cursorOnBar.value && !isLockedByDialog.value && document.visibilityState === 'visible') {
+    startCollapseTimer();
+  }
+});
+
+// Pause the auto-collapse timer while any dialog is open so users can read and
+// respond without finding the bar collapsed when they return to it.
+watch(isLockedByDialog, (locked) => {
+  if (locked) {
+    cancelCollapseTimer();
+  } else if (!isPinned.value && !cursorOnBar.value && activePanelId.value === null && document.visibilityState === 'visible') {
     startCollapseTimer();
   }
 });

@@ -18,7 +18,7 @@
  * falls back gracefully (no mutual exclusion, no animating-guard) — it still
  * renders and resolves correctly, just without those host integrations.
  */
-import { computed, nextTick, provide, ref, watch } from 'vue'
+import { computed, inject, nextTick, provide, ref, watch } from 'vue'
 import AppDialog from './AppDialog.vue'
 // _activeRequest MUST come from the package barrel — see AppPopover.vue header
 // comment. The runtime build externalises '@openpen/module-api/uikit' so host
@@ -27,10 +27,16 @@ import AppDialog from './AppDialog.vue'
 // callers to write to a different ref than DialogHost watches (dialog never
 // opens in production).
 import { _activeRequest, _resolveActive } from '@openpen/module-api/uikit'
+import { HOST_DIALOG_OPEN_COUNT_KEY } from '@openpen/module-api'
 import { DIALOG_PLUGIN_HANDLE_KEY } from '../composables/dialog-internal-keys'
 import type { DialogPluginComponentHandle } from '../composables/useDialogPluginComponent'
 
 const MODAL_ID = '__openpen_imperative_dialog__'
+
+// Increment/decrement the host-level dialog-open counter so ControlBar can
+// pause the auto-collapse timer while any imperative dialog is visible.
+// Falls back to a local ref when not provided (settings window has no host bar).
+const dialogOpenCount = inject(HOST_DIALOG_OPEN_COUNT_KEY, ref(0))
 
 // Whether the dialog is open: true when there is an active request.
 const isOpen = ref(false)
@@ -47,6 +53,9 @@ watch(_activeRequest, (req) => {
     if (req.kind === 'prompt') {
       promptValue.value = req.opts.defaultValue ?? ''
     }
+    if (!isOpen.value) {
+      dialogOpenCount.value++
+    }
     isOpen.value = true
     if (req.kind === 'prompt') {
       nextTick(() => {
@@ -54,6 +63,9 @@ watch(_activeRequest, (req) => {
       })
     }
   } else {
+    if (isOpen.value) {
+      dialogOpenCount.value = Math.max(0, dialogOpenCount.value - 1)
+    }
     isOpen.value = false
   }
 })
