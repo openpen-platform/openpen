@@ -7,7 +7,7 @@ A minimal scaffold for building OpenPen plugins.
 ```bash
 npx degit openpen/plugin-starter my-plugin
 cd my-plugin
-npx openpen plugin add .
+npx openpen-cli plugin add .
 ```
 
 The CLI runs `npm install` and `npm run build` for you, then copies
