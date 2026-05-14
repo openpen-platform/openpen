@@ -1,0 +1,30 @@
+name: Sync main to GitHub
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so git push has all commits
+
+      - name: Configure git identity
+        run: |
+          git config user.name "gitea-sync"
+          git config user.email "gitea-sync@local.invalid"
+
+      - name: Push main to GitHub
+        env:
+          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+        run: |
+          if [ -z "${GITHUB_PAT}" ]; then
+            echo "::error::GITHUB_PAT secret not set in Gitea repo Settings → Actions → Secrets"
+            exit 1
+          fi
+          git remote add github "https://x-access-token:${GITHUB_PAT}@github.com/openpen-platform/openpen.git"
+          git push github main
