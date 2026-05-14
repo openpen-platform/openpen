@@ -9,6 +9,9 @@ import type { ShortcutContribution } from '@openpen/module-api'
 import { sanitizeIdForI18n } from '@openpen/module-api'
 import { getSlotEntries } from '../../core/runtime/contribution-store'
 import { resolveLabel } from '../../services/i18n-utils'
+import { formatAccelerator, type Platform } from '../../utils/format-accelerator'
+
+const platform: Platform = (window.openPenApi?.platform ?? 'darwin') as Platform
 
 const { t, locale } = useI18n()
 
@@ -156,7 +159,7 @@ const hasChanges = computed(() => {
           @update:model-value="(v: string) => { moduleShortcutsOverrides[sc.namespacedId] = v }"
           @shortcut-error="shortcutError = $event"
         />
-        <kbd v-else class="sc-key">{{ sc.contribution.keys }}</kbd>
+        <kbd v-else class="sc-key">{{ formatAccelerator(sc.contribution.keys, platform) }}</kbd>
       </div>
     </div>
   </div>
