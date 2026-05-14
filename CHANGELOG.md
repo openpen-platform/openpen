@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0](https://github.com/openpen-platform/openpen/compare/v1.0.0...v1.1.0) (2026-05-14)
+
+
+### Features
+
+* **app:** add quit confirmation dialog and Cmd+Q shortcut ([57de1cd](https://github.com/openpen-platform/openpen/commit/57de1cdbf5efdcd6316662d724da4cbe4c17f3fa))
+
+
+### Bug Fixes
+
+* **quit:** change default quit shortcut to Cmd+Shift+Q ([5fb91c6](https://github.com/openpen-platform/openpen/commit/5fb91c607bd4499aca3a85ac0afa82268328ed3e))
+* **quit:** integrate write flush into APP.QUIT to break dialog deadlock ([b53e4e7](https://github.com/openpen-platform/openpen/commit/b53e4e702ed8580971f3e70c5f229ae933fb135b))
+* **settings-window:** focus webContents so first click is interactive ([63f986f](https://github.com/openpen-platform/openpen/commit/63f986f4687de88d36a6634475db0535ee848f4d))
+* **settings:** persist single Color Mode change to disk ([b8883fb](https://github.com/openpen-platform/openpen/commit/b8883fb4613a11b403afed01652586c4fe7445c8))
+
 ## [1.0.0](https://github.com/openpen-platform/openpen/compare/v0.9.0...v1.0.0) (2026-05-13)
 
 First public release. Establishes the OpenPen module / plugin architecture,
