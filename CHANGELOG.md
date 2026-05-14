@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2](https://github.com/openpen-platform/openpen/compare/v1.0.1...v1.0.2) (2026-05-14)
+
+
+### Bug Fixes
+
+* **docs:** scrub `npx openpen` typosquat from package READMEs ([6e05267](https://github.com/openpen-platform/openpen/commit/6e05267909b5168cad7a61d38639fca2aa11e96e))
+* **plugin-manager:** add README so npm package page is not blank ([080f2c5](https://github.com/openpen-platform/openpen/commit/080f2c5656e031bd70da852545194c34ca8e702f))
+
 ## [1.0.1](https://github.com/openpen-platform/openpen/compare/v1.0.0...v1.0.1) (2026-05-14)
 
 Hotfix release. Unblocks third-party plugin author onboarding that was broken in v1.0.0, and ships `@openpen/plugin-manager` to npm for the first time alongside its sibling SDK packages.
