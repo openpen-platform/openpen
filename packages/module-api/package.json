@@ -1,6 +1,6 @@
 {
   "name": "@openpen/module-api",
-  "version": "2.0.0",
+  "version": "1.0.1",
   "description": "OpenPen Module API — public contract for built-in modules and third-party plugins",
   "author": "navishachiku <navishachiku@gmail.com>",
   "homepage": "https://github.com/openpen-platform/openpen#readme",
