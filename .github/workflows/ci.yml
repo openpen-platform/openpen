@@ -9,6 +9,7 @@ on:
 jobs:
   lint:
     name: Lint
+    if: ${{ github.server_url == 'https://github.com' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -21,6 +22,7 @@ jobs:
 
   type-check:
     name: Type check
+    if: ${{ github.server_url == 'https://github.com' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -33,6 +35,7 @@ jobs:
 
   unit:
     name: Unit tests
+    if: ${{ github.server_url == 'https://github.com' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -51,6 +54,7 @@ jobs:
   # gate after a soak window if smoke proves stable.
   e2e-smoke:
     name: E2E prod smoke
+    if: ${{ github.server_url == 'https://github.com' }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
