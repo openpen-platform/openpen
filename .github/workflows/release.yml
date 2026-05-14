@@ -93,16 +93,39 @@ jobs:
         run: npm run build
 
       - name: Publish workspace packages
-        # Root package is private:true and is excluded automatically by --workspaces.
-        # --access public required for scoped packages (@openpen/*) on first publish.
-        # --provenance attaches a signed SLSA provenance attestation (requires id-token permission).
+        # Iterate each workspace under packages/* and publish independently.
+        # Per-package guards: skip private packages, skip already-published versions.
+        # A single existing version (e.g. one workspace was already on npm) MUST NOT
+        # short-circuit the whole job — that would let new / missing packages silently
+        # fall through. --access public required for scoped (@openpen/*) packages.
+        # --provenance attaches signed SLSA provenance (requires id-token permission).
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          PUBLISHED=$(npm view "@openpen/module-api@${VERSION}" version 2>/dev/null || echo "")
-          if [ "${PUBLISHED}" = "${VERSION}" ]; then
-            echo "Version ${VERSION} already on npm — skipping publish"
-            exit 0
-          fi
-          npm publish --workspaces --access public --provenance
+          EXIT_CODE=0
+          for pkg_dir in packages/*/; do
+            PKG_JSON="${pkg_dir}package.json"
+            [ -f "${PKG_JSON}" ] || continue
+            PRIVATE=$(jq -r '.private // false' "${PKG_JSON}")
+            if [ "${PRIVATE}" = "true" ]; then
+              echo "::group::Skip ${pkg_dir} (private)"
+              echo "::endgroup::"
+              continue
+            fi
+            PKG=$(jq -r '.name' "${PKG_JSON}")
+            VER=$(jq -r '.version' "${PKG_JSON}")
+            echo "::group::${PKG}@${VER}"
+            PUBLISHED=$(npm view "${PKG}@${VER}" version 2>/dev/null || echo "")
+            if [ "${PUBLISHED}" = "${VER}" ]; then
+              echo "${PKG}@${VER} already on npm — skipping"
+              echo "::endgroup::"
+              continue
+            fi
+            echo "Publishing ${PKG}@${VER}..."
+            if ! npm publish --workspace="${PKG}" --access public --provenance; then
+              echo "::error::Failed to publish ${PKG}@${VER}"
+              EXIT_CODE=1
+            fi
+            echo "::endgroup::"
+          done
+          exit ${EXIT_CODE}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
