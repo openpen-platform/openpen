@@ -2,5 +2,6 @@
   ".": "1.0.0",
   "packages/build-cli": "1.0.0",
   "packages/module-api": "1.0.0",
-  "packages/openpen-cli": "1.0.0"
+  "packages/openpen-cli": "1.0.0",
+  "packages/plugin-manager": "1.0.0"
 }

@@ -19,13 +19,17 @@
     "packages/openpen-cli": {
       "package-name": "openpen-cli",
       "changelog-path": "packages/openpen-cli/CHANGELOG.md"
+    },
+    "packages/plugin-manager": {
+      "package-name": "@openpen/plugin-manager",
+      "changelog-path": "packages/plugin-manager/CHANGELOG.md"
     }
   },
   "plugins": [
     {
       "type": "linked-versions",
       "groupName": "openpen",
-      "components": ["openpen", "@openpen/build", "@openpen/module-api", "openpen-cli"]
+      "components": ["openpen", "@openpen/build", "@openpen/module-api", "openpen-cli", "@openpen/plugin-manager"]
     }
   ]
 }
