@@ -687,6 +687,16 @@ function registerIpcHandlers() {
     // Set passthrough on the window that sent this message (identified by webContentsId).
     const sendingWin = BrowserWindow.fromWebContents(event.sender);
     if (!sendingWin || sendingWin.isDestroyed()) return;
+    // While settings is open the dimmed main window must stay passthrough.
+    // The renderer's passthrough guard receives forwarded mousemove events and
+    // tries to disable passthrough when the cursor enters the (invisible)
+    // float-ball region; honouring that would re-capture clicks on a window
+    // sitting above settings on macOS (relativeLevel 1 vs 0) and on whichever
+    // Win/Linux frame the compositor placed on top, swallowing clicks meant
+    // for the settings panel underneath.
+    if (!ignore && sendingWin === dimmedMainForSettings) {
+      return;
+    }
     if (ignore) {
       sendingWin.setIgnoreMouseEvents(true, { forward: true });
     } else {
