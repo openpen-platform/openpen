@@ -14,6 +14,7 @@
   "devDependencies": {
     "@openpen/build": "*",
     "@openpen/module-api": "*",
+    "openpen-cli": "*",
     "typescript": "^5.0.0",
     "vue": "^3.5.0"
   },
