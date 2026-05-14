@@ -61,7 +61,7 @@ to the same slots (`controlBar`, `settingsTabs`, `shortcuts`, and more).
 [Slot Reference](docs/reference/slots.md)
 
 ```bash
-npx degit openpen/plugin-starter my-plugin
+npx degit openpen-platform/openpen/packages/plugin-starter my-plugin
 ```
 
 **Security**: OpenPen uses a user-installed trust model — plugins run with full host access.

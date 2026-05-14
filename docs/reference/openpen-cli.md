@@ -9,6 +9,10 @@ npm install -g openpen-cli
 npx openpen-cli <command>
 ```
 
+> **⚠️ Always invoke as `openpen-cli`, not `openpen`.** The bare `openpen` package on
+> npm is occupied by an unrelated project — `npx openpen-cli ...` will pull the wrong tool.
+> Throughout this documentation, every command runs as `npx openpen-cli <verb>`.
+
 ---
 
 ## Commands

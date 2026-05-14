@@ -15,7 +15,7 @@ and publish it to the community catalog — all using the `openpen` CLI.
 ## 1. Scaffold the project
 
 ```bash
-npx openpen create @yourscope/my-highlighter
+npx openpen-cli create @yourscope/my-highlighter
 cd my-highlighter
 npm install
 ```
@@ -46,7 +46,7 @@ Build the plugin and install it directly from the local source directory:
 
 ```bash
 npm run build
-npx openpen plugin add .
+npx openpen-cli plugin add .
 ```
 
 `openpen plugin add <local-path>` copies `plugin.json`, `dist/`, and `locales/`
@@ -254,7 +254,7 @@ npm run dev      # watch mode — rebuilds dist/renderer.js on every save
 To test the change in OpenPen, copy and restart:
 
 ```bash
-npx openpen plugin add .
+npx openpen-cli plugin add .
 # then restart OpenPen
 ```
 
@@ -268,7 +268,7 @@ When your plugin is ready to share, create the distributable zip:
 
 ```bash
 npm run build          # clean production build
-npx openpen pack       # creates: yourscope-my-highlighter-0.1.0.zip
+npx openpen-cli pack       # creates: yourscope-my-highlighter-0.1.0.zip
                        # prints: sha256: <hex>
 ```
 
@@ -288,7 +288,7 @@ gh release create v0.1.0 ./yourscope-my-highlighter-0.1.0.zip
 ### Step 2 — Open a catalog PR
 
 ```bash
-npx openpen publish
+npx openpen-cli publish
 ```
 
 `openpen publish` reads `plugin.json`, verifies the GitHub Release exists,
@@ -311,9 +311,9 @@ validation passes — no human review needed.
 ```bash
 # bump version in plugin.json, then:
 npm run build
-npx openpen pack
+npx openpen-cli pack
 gh release create v0.2.0 ./yourscope-my-highlighter-0.2.0.zip
-npx openpen publish
+npx openpen-cli publish
 ```
 
 ---
