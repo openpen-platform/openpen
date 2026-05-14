@@ -6,9 +6,9 @@ from local paths, GitHub, or npm.
 ## Usage
 
 ```bash
-npx openpen plugin add <source>
-npx openpen plugin list
-npx openpen plugin remove <plugin-id>
+npx openpen-cli plugin add <source>
+npx openpen-cli plugin list
+npx openpen-cli plugin remove <plugin-id>
 ```
 
 `<source>` can be:
