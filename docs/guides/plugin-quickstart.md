@@ -12,7 +12,7 @@ From zero to a running OpenPen plugin in five minutes.
 ## Step 1 — Scaffold from the starter template
 
 ```bash
-npx openpen create @yourscope/my-plugin
+npx openpen-cli create @yourscope/my-plugin
 cd my-plugin
 npm install
 ```

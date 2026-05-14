@@ -47,9 +47,9 @@ cd packages/my-plugin && npm run build    # plugin
 ## Managing plugins with openpen-cli
 
 ```bash
-npx openpen plugin list                  # List installed plugins
-npx openpen plugin add <source>          # Install from a local path or GitHub release
-npx openpen plugin remove <id>           # Remove by plugin id
+npx openpen-cli plugin list                  # List installed plugins
+npx openpen-cli plugin add <source>          # Install from a local path or GitHub release
+npx openpen-cli plugin remove <id>           # Remove by plugin id
 ```
 
 `<source>` accepts:
@@ -67,8 +67,8 @@ for the full command reference.
 
 1. Build your plugin and publish a GitHub Release with the zipped `dist/`,
    `plugin.json`, and `locales/` (the `openpen pack` command produces this zip).
-2. Users install it via `npx openpen plugin add <github-url>` for a direct
-   install, or `npx openpen plugin install @scope/name` once your plugin is
+2. Users install it via `npx openpen-cli plugin add <github-url>` for a direct
+   install, or `npx openpen-cli plugin install @scope/name` once your plugin is
    listed in the catalog.
 
 There is no central plugin registry yet. Community discoverability is via
