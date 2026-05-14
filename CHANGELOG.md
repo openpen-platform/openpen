@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.1](https://github.com/openpen-platform/openpen/compare/v1.1.0...v1.1.1) (2026-05-14)
+
+
+### Bug Fixes
+
+* **quit:** change default quit shortcut to Cmd+Opt+Shift+X ([2f75580](https://github.com/openpen-platform/openpen/commit/2f755807bd8dbcda64b55b31de280f2fd0bafe9d))
+* **settings-window:** prevent dimmed main from stealing clicks ([bc9c648](https://github.com/openpen-platform/openpen/commit/bc9c64899fd9fae6e91936861e8002c2a6d66347))
+* **shortcuts:** show platform-native modifier glyphs in tooltips ([e9b5798](https://github.com/openpen-platform/openpen/commit/e9b5798a40a31fc5bd565c972d5c85c5afeff150))
+
 ## [1.1.0](https://github.com/openpen-platform/openpen/compare/v1.0.0...v1.1.0) (2026-05-14)
 
 
