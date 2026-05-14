@@ -151,6 +151,18 @@ Module-facing wrappers (`AppPopover`, `AppDialog`, `AppSlider`, `AppToggle`, `Ap
 - **Full suite is pre-commit gate only**: run `npx playwright test # regression-gate` (bash ignores the comment; the hook uses it to allow the run) only as the final step before `git commit`. Do NOT run the full suite during iteration — it exceeds 100 specs and takes ~20 min.
 - **Error recovery**: 3 consecutive test failures → stop retries → root-cause analysis → written report → discuss with human.
 
+**Branch / PR workflow (MANDATORY)**
+- **MUST** 所有 code / docs / config 改動走 feature branch + PR + squash merge — **MUST NOT** direct push main（緊急 hotfix / release-please-generated commits 例外，且 MUST user 明確授權）
+- **MUST** branch naming: `<type>/<scope-or-description>` — type 對應 Conventional Commits（`feat` / `fix` / `docs` / `chore` / `build` / `ci` / `refactor` / `test` / `style`），例: `feat/laser-pointer-tool`、`fix/settings-dim-click`、`docs/plugin-quickstart-typo`
+- **MUST** PR title 用 Conventional Commits 格式（squash merge 用 PR title 做 commit message，release-please 讀這個算版號）
+- **MUST NOT** 用 `--no-verify`、force-push main、toggle branch protection 開 force-push — nuclear-reset 級別動作必須 user 明確授權
+- **MUST** 跑 `npm run lint` / `type-check` / `test:unit` 在 push branch 前通過，避免 CI 撞紅
+
+**Release pipeline**
+- Steady-state by release-please + PAT (`RELEASE_PLEASE_TOKEN`)，merge 任何 release-worthy PR → release-please 自動 update release PR → user merge 後 tag + GitHub Release + npm publish + dmg/exe build 全自動
+- 設定參考 / 撞坑 troubleshooting 全在 `.agents/skills/openpen-release/`（本地 only，不進 git history）
+- 撞 pipeline 問題第一動作: `grep -r <symptom keyword> .agents/skills/openpen-release/references/troubleshooting.md`
+
 **Commit Messages (MANDATORY)**
 - **Language: English.** OpenPen is OSS; release-please copies commit messages verbatim into `CHANGELOG.md`, which is the public-facing release record for plugin authors worldwide. Non-English commits become unreadable CHANGELOG entries.
 - **Format: Conventional Commits** — `<type>(scope): description`
