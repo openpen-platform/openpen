@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/openpen-platform/openpen/compare/v1.0.0...v1.0.1) (2026-05-14)
+
+
+### Bug Fixes
+
+* **ci:** publish workspaces independently to prevent skip-when-one-exists ([f89ab20](https://github.com/openpen-platform/openpen/commit/f89ab204696b18f119b5413ba33166cc009af8f1))
+* **docs:** correct plugin author onboarding commands and starter scaffold path ([175be37](https://github.com/openpen-platform/openpen/commit/175be37846d28a965642bfe6e88ea8686f23e0fd))
+
 ## [1.0.0](https://github.com/openpen-platform/openpen/compare/v0.9.0...v1.0.0) (2026-05-13)
 
 First public release. Establishes the OpenPen module / plugin architecture,
