@@ -116,3 +116,15 @@ installing.
 - **Plugin-contributed shortcut customisation** is on the roadmap;
   v1.0.0 only customises built-in shortcuts.
 - Plugin development under `npm run dev` is supported but lightly tested.
+
+### Note
+
+The first GitHub Release pipeline run for v1.0.0 had a misconfiguration
+on our side. **If you downloaded v1.0.0 before 2026-05-14 13:00 UTC+8
+(05:00 UTC), please re-download** — the artifacts attached to this
+release have since been rebuilt and republished.
+
+Apologies for the inconvenience. This was OpenPen's first end-to-end
+release through automated CI, and we're learning as we go. Discussion,
+bug reports, and suggestions on how to improve the release process are
+all very welcome. Thank you.
