@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/openpen-platform/openpen/compare/v1.0.0...v1.0.1) (2026-05-14)
+
+
+### Bug Fixes
+
+* **control-bar:** pause auto-collapse timer while any dialog is open ([#1](https://github.com/openpen-platform/openpen/issues/1)) ([5787126](https://github.com/openpen-platform/openpen/commit/57871267a620b8f30e8fc125bf89ab607c85b0d1))
+
 ## 1.0.0 (2026-05-14)
 
 
