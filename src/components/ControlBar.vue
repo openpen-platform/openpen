@@ -16,6 +16,17 @@ import { BUILT_IN_MODULES } from '../core/modules/registry';
 import { reconcileLayoutGroups } from './control-bar-reconcile';
 import { on as eventBusOn, emit as eventBusEmit } from '../core/runtime/event-bus';
 import { useDialog } from '@openpen/module-api/uikit';
+import { formatAccelerator, type Platform } from '../utils/format-accelerator';
+import { DEFAULT_SHORTCUTS } from '../../shared/settings-defaults.js';
+
+const platform: Platform = (window.openPenApi?.platform ?? 'darwin') as Platform;
+
+const undoAccel = ref<string>(DEFAULT_SHORTCUTS.undo);
+const redoAccel = ref<string>(DEFAULT_SHORTCUTS.redo);
+let unsubShortcuts: (() => void) | null = null;
+
+const undoHint = computed(() => formatAccelerator(undoAccel.value, platform));
+const redoHint = computed(() => formatAccelerator(redoAccel.value, platform));
 
 const { groups: controlBarGroups, layout: currentLayoutGroups, refreshLayout } = useControlBarItems();
 const controlBarSlotEntries = getSlotEntries<ControlBarContribution>('ui.control-bar');
@@ -508,6 +519,16 @@ onMounted(async () => {
     canRedo.value = state.canRedo;
   }) ?? null;
 
+  const initialShortcuts = await window.openPenApi?.getShortcuts();
+  if (initialShortcuts) {
+    if (initialShortcuts.undo) undoAccel.value = initialShortcuts.undo;
+    if (initialShortcuts.redo) redoAccel.value = initialShortcuts.redo;
+  }
+  unsubShortcuts = window.openPenApi?.onShortcutsUpdated((s) => {
+    if (s.undo) undoAccel.value = s.undo;
+    if (s.redo) redoAccel.value = s.redo;
+  }) ?? null;
+
   const layout = await window.openPenApi?.getLayout();
   if (layout?.groups) refreshLayout(layout.groups);
   window.openPenApi?.onLayoutUpdated((l) => { if (l?.groups) refreshLayout(l.groups); });
@@ -543,6 +564,8 @@ onUnmounted(() => {
   unsubRequestQuit = null;
   unsubHistoryState?.();
   unsubHistoryState = null;
+  unsubShortcuts?.();
+  unsubShortcuts = null;
   unsubBarLayout?.();
   unsubBarLayout = null;
   collapseCleanup();
@@ -667,7 +690,7 @@ onUnmounted(() => {
         <button
           class="cb-btn cb-undo-btn"
           :class="{ 'cb-disabled': !canUndo }"
-          :data-tip="canUndo ? `${t('undo')}  ⌘Z` : t('undoDisabled')"
+          :data-tip="canUndo ? `${t('undo')}  ${undoHint}` : t('undoDisabled')"
           :aria-label="t('undo')"
           @click="onUndoClick"
         >
@@ -680,7 +703,7 @@ onUnmounted(() => {
         <button
           class="cb-btn cb-redo-btn"
           :class="{ 'cb-disabled': !canRedo }"
-          :data-tip="canRedo ? `${t('redo')}  ⌘⇧Z` : t('redoDisabled')"
+          :data-tip="canRedo ? `${t('redo')}  ${redoHint}` : t('redoDisabled')"
           :aria-label="t('redo')"
           @click="onRedoClick"
         >

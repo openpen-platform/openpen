@@ -13,6 +13,10 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('openPenApi', {
+  // ── Host platform (static; renderer uses for display formatting) ────
+  /** Node-style platform identifier from the main process: 'darwin' | 'win32' | 'linux'. */
+  platform: process.platform,
+
   // ── Window management ───────────────────────────────────────────────
   openSettingsWindow: () => ipcRenderer.send('window:open-settings'),
   closeSettingsWindow: () => ipcRenderer.send('window:close-settings'),

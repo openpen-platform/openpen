@@ -125,6 +125,9 @@ interface HistoryState {
 }
 
 interface OpenPenApi {
+  /** Node-style platform identifier from the main process. */
+  platform: 'darwin' | 'win32' | 'linux'
+
   // Window management
   getWindowPosition(): Promise<WindowPosition>
   setWindowPosition(pos: WindowPosition): void

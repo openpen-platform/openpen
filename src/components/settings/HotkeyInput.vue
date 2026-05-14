@@ -2,6 +2,7 @@
 import { ref, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AppTooltip } from '@openpen/module-api/uikit'
+import { formatAccelerator as fmtAccel, type Platform } from '../../utils/format-accelerator'
 
 const props = defineProps<{
   modelValue: string
@@ -27,7 +28,7 @@ function triggerConflictShake() {
   conflictTimer = setTimeout(() => { isConflict.value = false }, 600)
 }
 
-const isMac = navigator.platform.startsWith('Mac')
+const platform: Platform = (window.openPenApi?.platform ?? 'darwin') as Platform
 
 const KEY_MAP: Record<string, string> = {
   'ArrowUp': 'Up', 'ArrowDown': 'Down', 'ArrowLeft': 'Left', 'ArrowRight': 'Right',
@@ -38,18 +39,7 @@ const KEY_MAP: Record<string, string> = {
 const MODIFIER_KEYS = new Set(['Control', 'Shift', 'Alt', 'Meta', 'Command', 'Super', 'Hyper', 'OS'])
 
 function formatAccelerator(accel: string): string {
-  if (!accel) return ''
-  return accel.split('+').map(part => {
-    if (isMac) {
-      if (part === 'CommandOrControl') return '⌘'
-      if (part === 'Control') return '⌃'
-      if (part === 'Alt') return '⌥'
-      if (part === 'Shift') return '⇧'
-    } else {
-      if (part === 'CommandOrControl' || part === 'Control') return 'Ctrl'
-    }
-    return part
-  }).join(isMac ? '' : '+')
+  return fmtAccel(accel, platform)
 }
 
 function buildAccelerator(e: KeyboardEvent): string | null {
