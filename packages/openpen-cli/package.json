@@ -1,6 +1,6 @@
 {
   "name": "openpen-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Install and manage OpenPen plugins from local paths or GitHub releases. Run via `npx openpen plugin add <source>`.",
   "author": "navishachiku <navishachiku@gmail.com>",
   "homepage": "https://github.com/openpen-platform/openpen#readme",

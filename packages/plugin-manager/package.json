@@ -1,6 +1,6 @@
 {
   "name": "@openpen/plugin-manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Shared install/remove/list logic for OpenPen plugins — used by the CLI and the in-app marketplace.",
   "author": "navishachiku <navishachiku@gmail.com>",
   "homepage": "https://github.com/openpen-platform/openpen#readme",
@@ -30,7 +30,12 @@
     "src",
     "README.md"
   ],
-  "keywords": ["openpen", "plugin", "manager", "install"],
+  "keywords": [
+    "openpen",
+    "plugin",
+    "manager",
+    "install"
+  ],
   "license": "MIT",
   "engines": {
     "node": ">=20",
