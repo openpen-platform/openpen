@@ -2,11 +2,42 @@
 
 ## [1.0.1](https://github.com/openpen-platform/openpen/compare/v1.0.0...v1.0.1) (2026-05-14)
 
+Hotfix release. Unblocks third-party plugin author onboarding that was
+broken in v1.0.0, and ships `@openpen/plugin-manager` to npm for the
+first time alongside its sibling SDK packages.
 
 ### Bug Fixes
 
-* **ci:** publish workspaces independently to prevent skip-when-one-exists ([f89ab20](https://github.com/openpen-platform/openpen/commit/f89ab204696b18f119b5413ba33166cc009af8f1))
-* **docs:** correct plugin author onboarding commands and starter scaffold path ([175be37](https://github.com/openpen-platform/openpen/commit/175be37846d28a965642bfe6e88ea8686f23e0fd))
+- **docs**: `npx openpen <verb>` invocations throughout the docs resolved
+  to an unrelated package on npm (the bare `openpen` name is occupied by
+  a fuzzing tool by another author). All commands now read
+  `npx openpen-cli <verb>`.
+- **docs**: The `plugin-starter` scaffold command in the README pointed
+  at a non-existent GitHub repo. Updated to use the in-repo starter via
+  degit subpath syntax:
+  `npx degit openpen-platform/openpen/packages/plugin-starter`.
+- **ci**: The npm publish step was guarded by a single-package existence
+  check; if any one workspace was already on npm, the whole publish job
+  short-circuited and silently skipped the rest. This is why
+  `@openpen/plugin-manager` never reached the registry alongside the
+  other v1.0.0 packages. Replaced with a per-workspace publish loop that
+  inspects each `packages/*` independently, skips private packages and
+  already-published versions, and never aborts the others on a single
+  failure.
+
+### Packages on npm
+
+`@openpen/plugin-manager@1.0.0` ships to npm for the first time in this
+release, making `npm install openpen-cli` work for external developers.
+The other workspaces (`@openpen/module-api`, `@openpen/build`,
+`openpen-cli`) remain at their v1.0.0 versions on npm (no code changes
+to those packages in v1.0.1).
+
+### Note
+
+If you tried to develop an OpenPen plugin while v1.0.0 was the latest
+release and hit `npx openpen` invocation errors or `npm install openpen-cli`
+404s, please retry now — the v1.0.1 hotfix removes both blockers.
 
 ## [1.0.0](https://github.com/openpen-platform/openpen/compare/v0.9.0...v1.0.0) (2026-05-13)
 
