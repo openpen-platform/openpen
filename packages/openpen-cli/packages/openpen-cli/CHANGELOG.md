@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/openpen-platform/openpen/compare/v1.0.1...v1.0.2) (2026-05-14)
+
+
+### Bug Fixes
+
+* **docs:** scrub `npx openpen` typosquat from package READMEs ([6e05267](https://github.com/openpen-platform/openpen/commit/6e05267909b5168cad7a61d38639fca2aa11e96e))
+
 ## [1.0.1](https://github.com/openpen-platform/openpen/compare/v1.0.0...v1.0.1) (2026-05-14)
 
 
