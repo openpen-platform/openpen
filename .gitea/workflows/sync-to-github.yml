@@ -8,11 +8,6 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Route Gitea hostname to Docker gateway
-        run: |
-          GW=$(ip route show default | awk '{print $3; exit}')
-          echo "$GW ${GT_HOST}" >> /etc/hosts
-
       - name: Mirror Gitea to GitHub
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
