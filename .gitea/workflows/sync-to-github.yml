@@ -8,23 +8,19 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Configure git identity
+      - name: Route Gitea hostname to Docker gateway
         run: |
-          git config user.name "gitea-sync"
-          git config user.email "gitea-sync@local.invalid"
+          GW=$(ip route show default | awk '{print $3; exit}')
+          echo "$GW ${GT_HOST}" >> /etc/hosts
 
-      - name: Push main to GitHub
+      - name: Mirror Gitea to GitHub
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
+          GITEA_TOKEN: ${{ gitea.token }}
         run: |
-          if [ -z "${GH_PAT}" ]; then
-            echo "::error::GH_PAT secret not set in Gitea repo Settings → Actions → Secrets"
-            exit 1
-          fi
-          git remote add github "https://x-access-token:${GH_PAT}@github.com/openpen-platform/openpen.git"
-          git push github main
+          git clone --bare \
+            "https://oauth2:${GITEA_TOKEN}@${GT_HOST}:${GT_PORT}/openpen-platform/openpen.git" \
+            /tmp/repo.git
+          git -C /tmp/repo.git push \
+            "https://x-access-token:${GH_PAT}@github.com/openpen-platform/openpen.git" \
+            refs/heads/main:refs/heads/main
