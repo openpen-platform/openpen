@@ -37,7 +37,7 @@ async function getMainWindow() {
     for (const win of wins) {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
-        const ready = await win.evaluate(() => !!document.querySelector('.float-ball, .control-bar'));
+        const ready = await win.evaluate(() => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]'));
         if (ready) return win;
       } catch {
         // Ignore windows still loading.
@@ -49,9 +49,9 @@ async function getMainWindow() {
 }
 
 async function ensureBallMode(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (await bar.isVisible().catch(() => false)) {
-    const collapseBtn = win.locator('.cb-collapse-btn');
+    const collapseBtn = win.getByTestId('controlbar-collapse-btn');
     if (await collapseBtn.isVisible().catch(() => false)) {
       await collapseBtn.click({ force: true });
       await win.waitForTimeout(400);
@@ -60,19 +60,19 @@ async function ensureBallMode(win) {
       await win.waitForTimeout(3600);
     }
   }
-  if (!(await win.locator('.float-ball').isVisible().catch(() => false))) {
+  if (!(await win.getByTestId('floatball-btn').isVisible().catch(() => false))) {
     await win.keyboard.press('Escape').catch(() => {});
     await win.waitForTimeout(500);
   }
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 }
 
 async function expandBar(win) {
-  if (!(await win.locator('.control-bar').isVisible().catch(() => false))) {
-    await win.locator('.float-ball').click();
+  if (!(await win.getByTestId('control-bar').isVisible().catch(() => false))) {
+    await win.getByTestId('floatball-btn').click();
     await win.waitForTimeout(400);
   }
-  await expect(win.locator('.control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
 }
 
 async function setBallScreenPos(win, screenX, screenY) {
@@ -94,7 +94,7 @@ async function setBallScreenPos(win, screenX, screenY) {
 }
 
 async function dragBall(win, deltaX, deltaY, steps = 10) {
-  const box = await win.locator('.float-ball').boundingBox();
+  const box = await win.getByTestId('floatball-btn').boundingBox();
   const bx = Math.round(box.x + box.width / 2);
   const by = Math.round(box.y + box.height / 2);
   await win.mouse.move(bx, by);
@@ -165,7 +165,7 @@ test('G1: color picker stays inside viewport at free position (screen center)', 
   await setBallScreenPos(win, wa.x + Math.floor(wa.width / 2), wa.y + Math.floor(wa.height / 2));
   await expandBar(win);
 
-  await win.locator('.cb-color-btn').click();
+  await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
   await assertPopupInBounds(win);
 
@@ -181,7 +181,7 @@ test('G1: color picker stays inside viewport at snap-left', async () => {
   await snapBallToEdge(win, wa, 'left');
   await expandBar(win);
 
-  await win.locator('.cb-color-btn').click();
+  await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
   await assertPopupInBounds(win);
 
@@ -197,7 +197,7 @@ test('G1: color picker stays inside viewport at snap-right', async () => {
   await snapBallToEdge(win, wa, 'right');
   await expandBar(win);
 
-  await win.locator('.cb-color-btn').click();
+  await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
   await assertPopupInBounds(win);
 
@@ -213,7 +213,7 @@ test('G1: color picker stays inside viewport at snap-top', async () => {
   await snapBallToEdge(win, wa, 'top');
   await expandBar(win);
 
-  await win.locator('.cb-color-btn').click();
+  await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
   await assertPopupInBounds(win);
 
@@ -229,7 +229,7 @@ test('G1: color picker stays inside viewport at snap-bottom', async () => {
   await snapBallToEdge(win, wa, 'bottom');
   await expandBar(win);
 
-  await win.locator('.cb-color-btn').click();
+  await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
   await assertPopupInBounds(win);
 
@@ -287,7 +287,7 @@ test('G4: expanded bar bounds stay inside viewport at free position (screen cent
   await setBallScreenPos(win, wa.x + Math.floor(wa.width / 2), wa.y + Math.floor(wa.height / 2));
   await expandBar(win);
 
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barBox = await bar.boundingBox();
   const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
 
@@ -306,7 +306,7 @@ test('G4: expanded bar bounds stay inside viewport at snap-left', async () => {
   await snapBallToEdge(win, wa, 'left');
   await expandBar(win);
 
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barBox = await bar.boundingBox();
   const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
 
@@ -325,7 +325,7 @@ test('G4: expanded bar bounds stay inside viewport at snap-right', async () => {
   await snapBallToEdge(win, wa, 'right');
   await expandBar(win);
 
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barBox = await bar.boundingBox();
   const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
 
@@ -344,7 +344,7 @@ test('G4: expanded bar bounds stay inside viewport at snap-top', async () => {
   await snapBallToEdge(win, wa, 'top');
   await expandBar(win);
 
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barBox = await bar.boundingBox();
   const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
 
@@ -363,7 +363,7 @@ test('G4: expanded bar bounds stay inside viewport at snap-bottom', async () => 
   await snapBallToEdge(win, wa, 'bottom');
   await expandBar(win);
 
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barBox = await bar.boundingBox();
   const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
 

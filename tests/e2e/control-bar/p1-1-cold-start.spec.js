@@ -40,7 +40,7 @@ async function getMainWindow() {
     for (const win of wins) {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
-        const ready = await win.evaluate(() => !!document.querySelector('.float-ball, .control-bar'));
+        const ready = await win.evaluate(() => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]'));
         if (ready) return win;
       } catch {
         // Ignore windows still loading.
@@ -52,9 +52,9 @@ async function getMainWindow() {
 }
 
 async function ensureBallMode(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (await bar.isVisible().catch(() => false)) {
-    const collapseBtn = win.locator('.cb-collapse-btn');
+    const collapseBtn = win.getByTestId('controlbar-collapse-btn');
     if (await collapseBtn.isVisible().catch(() => false)) {
       await collapseBtn.click({ force: true });
       await win.waitForTimeout(400);
@@ -63,7 +63,7 @@ async function ensureBallMode(win) {
       await win.waitForTimeout(3600);
     }
   }
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 }
 
 async function setBallScreenPos(win, screenX, screenY) {
@@ -90,9 +90,9 @@ async function setBallScreenPos(win, screenX, screenY) {
  * 400ms is sufficient for the bar enter animation + IPC round-trip.
  */
 async function expandAndSettle(win) {
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar')).toBeVisible({ timeout: 3000 });
+  await expect(win.getByTestId('control-bar')).toBeVisible({ timeout: 3000 });
 }
 
 test('P1-1 cold-start: horizontal bar stays near ball after first-ever expand at right edge', async () => {
@@ -108,7 +108,7 @@ test('P1-1 cold-start: horizontal bar stays near ball after first-ever expand at
   await setBallScreenPos(win, nearRightX, midY);
   await expandAndSettle(win);
 
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barBox = await bar.boundingBox();
   const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
 
@@ -140,7 +140,7 @@ test('P1-1 cold-start: horizontal bar stays near ball after first-ever expand at
   await setBallScreenPos(win, midX, nearBottomY);
   await expandAndSettle(win);
 
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barBox = await bar.boundingBox();
   const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
 

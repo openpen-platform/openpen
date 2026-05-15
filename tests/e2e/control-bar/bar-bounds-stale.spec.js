@@ -35,7 +35,7 @@ async function getMainWindow() {
     for (const win of wins) {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
-        const ready = await win.evaluate(() => !!document.querySelector('.float-ball, .control-bar'));
+        const ready = await win.evaluate(() => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]'));
         if (ready) return win;
       } catch {
         // Ignore windows still loading.
@@ -47,9 +47,9 @@ async function getMainWindow() {
 }
 
 async function ensureBallMode(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (await bar.isVisible().catch(() => false)) {
-    const collapseBtn = win.locator('.cb-collapse-btn');
+    const collapseBtn = win.getByTestId('controlbar-collapse-btn');
     if (await collapseBtn.isVisible().catch(() => false)) {
       await collapseBtn.click({ force: true });
       await win.waitForTimeout(400);
@@ -58,7 +58,7 @@ async function ensureBallMode(win) {
       await win.waitForTimeout(3600);
     }
   }
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 }
 
 async function setBallScreenPos(win, screenX, screenY) {
@@ -107,30 +107,30 @@ test('P1-1: bar stays inside workArea after plugin resize + immediate expand', a
   await setBallScreenPos(win, midX, midY);
 
   // Expand bar so the bar element is mounted and ResizeObserver is wired.
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
 
   // Simulate a plugin resize while bar is expanded.
   await simulatePluginBarResize(win, 80);
 
   // Collapse before ResizeObserver callback fires — this is the race condition.
-  const collapseBtn = win.locator('.cb-collapse-btn');
+  const collapseBtn = win.getByTestId('controlbar-collapse-btn');
   if (await collapseBtn.isVisible().catch(() => false)) {
     await collapseBtn.click({ force: true });
   } else {
     await win.mouse.move(10, 10);
     await win.waitForTimeout(3600);
   }
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 
   // Immediately expand again — this is when the stale cache would cause bad clamping.
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
 
   // Geometric assertion: bar must be fully within the viewport (= workArea).
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barBox = await bar.boundingBox();
   const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
 
@@ -151,22 +151,22 @@ test('P1-1: bar stays inside workArea after resize — near right edge', async (
   await setBallScreenPos(win, nearRightX, midY);
 
   // Expand, resize, collapse.
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
 
   await simulatePluginBarResize(win, 80);
 
   await win.mouse.move(10, 10);
   await win.waitForTimeout(3600);
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 
   // Re-expand: engine must pre-clamp with correct (fresh) bounds.
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
 
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barBox = await bar.boundingBox();
   const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
 

@@ -33,7 +33,7 @@ async function getMainWindow() {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
         const hasMainUi = await win.evaluate(
-          () => !!document.querySelector('.float-ball, .control-bar')
+          () => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]')
         );
         if (hasMainUi) return win;
       } catch {
@@ -48,12 +48,12 @@ async function getMainWindow() {
 
 /** Ensure the app is in ball mode, waiting for auto-collapse if needed. */
 async function ensureBallMode(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (await bar.isVisible().catch(() => false)) {
     await win.mouse.move(200, 750);
     await win.waitForTimeout(3500);
   }
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 }
 
 /**
@@ -124,7 +124,7 @@ async function snapBallToEdge(win, wa, edge) {
  * axis: 'x' for horizontal layouts, 'y' for vertical (vbar) layouts.
  */
 async function assertDragHandleAlignedToBall(win, axis) {
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
   await expect(ball).toBeVisible({ timeout: 3000 });
 
   // Record ball center before expand.
@@ -137,11 +137,11 @@ async function assertDragHandleAlignedToBall(win, axis) {
   await ball.click();
   await win.waitForTimeout(400); // 350ms enter animation + slack
 
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   await expect(bar).toBeVisible({ timeout: 3000 });
 
   // Measure drag handle center.
-  const dragHandle = win.locator('.cb-drag');
+  const dragHandle = win.getByTestId('controlbar-drag-handle');
   await expect(dragHandle).toBeVisible({ timeout: 2000 });
   const handleBox = await dragHandle.boundingBox();
   expect(handleBox).not.toBeNull();
@@ -183,7 +183,7 @@ test('drag-handle anchor: snap-left — vertical bar Y alignment ≤ 1 px', asyn
   await snapBallToEdge(win, wa, 'left');
 
   // Verify snap landed on left edge.
-  const ballCls = await win.locator('.float-ball').getAttribute('class');
+  const ballCls = await win.getByTestId('floatball-btn').getAttribute('class');
   expect(ballCls).toMatch(/edge-left/);
 
   await assertDragHandleAlignedToBall(win, 'y');
@@ -196,7 +196,7 @@ test('drag-handle anchor: snap-right — vertical bar Y alignment ≤ 1 px', asy
   const wa = await electronApp.evaluate(({ screen }) => screen.getPrimaryDisplay().workArea);
   await snapBallToEdge(win, wa, 'right');
 
-  const ballCls = await win.locator('.float-ball').getAttribute('class');
+  const ballCls = await win.getByTestId('floatball-btn').getAttribute('class');
   expect(ballCls).toMatch(/edge-right/);
 
   await assertDragHandleAlignedToBall(win, 'y');
@@ -209,7 +209,7 @@ test('drag-handle anchor: snap-top — horizontal bar X alignment ≤ 1 px', asy
   const wa = await electronApp.evaluate(({ screen }) => screen.getPrimaryDisplay().workArea);
   await snapBallToEdge(win, wa, 'top');
 
-  const ballCls = await win.locator('.float-ball').getAttribute('class');
+  const ballCls = await win.getByTestId('floatball-btn').getAttribute('class');
   expect(ballCls).toMatch(/edge-top/);
 
   await assertDragHandleAlignedToBall(win, 'x');
@@ -222,7 +222,7 @@ test('drag-handle anchor: snap-bottom — horizontal bar X alignment ≤ 1 px', 
   const wa = await electronApp.evaluate(({ screen }) => screen.getPrimaryDisplay().workArea);
   await snapBallToEdge(win, wa, 'bottom');
 
-  const ballCls = await win.locator('.float-ball').getAttribute('class');
+  const ballCls = await win.getByTestId('floatball-btn').getAttribute('class');
   expect(ballCls).toMatch(/edge-bottom/);
 
   await assertDragHandleAlignedToBall(win, 'x');

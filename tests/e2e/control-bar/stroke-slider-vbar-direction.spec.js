@@ -44,7 +44,7 @@ async function getMainWindow() {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
         const ready = await win.evaluate(() =>
-          !!document.querySelector('.float-ball, .control-bar')
+          !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]')
         );
         if (ready) return win;
       } catch {
@@ -57,9 +57,9 @@ async function getMainWindow() {
 }
 
 async function ensureBallMode(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (await bar.isVisible().catch(() => false)) {
-    const collapseBtn = win.locator('.cb-collapse-btn');
+    const collapseBtn = win.getByTestId('controlbar-collapse-btn');
     if (await collapseBtn.isVisible().catch(() => false)) {
       await collapseBtn.click({ force: true });
       await win.waitForTimeout(400);
@@ -68,19 +68,19 @@ async function ensureBallMode(win) {
       await win.waitForTimeout(3600);
     }
   }
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 }
 
 async function expandBar(win) {
-  if (!(await win.locator('.control-bar').isVisible().catch(() => false))) {
-    await win.locator('.float-ball').click();
+  if (!(await win.getByTestId('control-bar').isVisible().catch(() => false))) {
+    await win.getByTestId('floatball-btn').click();
     await win.waitForTimeout(400);
   }
-  await expect(win.locator('.control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
 }
 
 async function dragBall(win, deltaX, deltaY, steps = 10) {
-  const box = await win.locator('.float-ball').boundingBox();
+  const box = await win.getByTestId('floatball-btn').boundingBox();
   const bx = Math.round(box.x + box.width / 2);
   const by = Math.round(box.y + box.height / 2);
   await win.mouse.move(bx, by);
@@ -235,7 +235,7 @@ async function getBarAndPopupBoxes(win, popupSelector) {
   const popup = win.locator(popupSelector).first();
   await expect(popup).toBeVisible({ timeout: 3000 });
   const [barBox, popupBox] = await Promise.all([
-    win.locator('.control-bar').boundingBox(),
+    win.getByTestId('control-bar').boundingBox(),
     popup.boundingBox(),
   ]);
   return { barBox, popupBox };
@@ -301,7 +301,7 @@ test('regression: color picker opens to the RIGHT of bar in vbar-left layout', a
   await snapToEdge(win, wa, 'left');
   await expandBar(win);
 
-  await win.locator('.cb-color-btn').click();
+  await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
 
   const { barBox, popupBox } = await getBarAndPopupBoxes(
@@ -325,7 +325,7 @@ test('regression: color picker opens to the LEFT of bar in vbar-right layout', a
   await snapToEdge(win, wa, 'right');
   await expandBar(win);
 
-  await win.locator('.cb-color-btn').click();
+  await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
 
   const { barBox, popupBox } = await getBarAndPopupBoxes(

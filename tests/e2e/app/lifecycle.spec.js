@@ -73,19 +73,26 @@ test('opening settings hides the main window; closing settings restores it', asy
   expect(electronApp.windows().length).toBe(windowsBefore + 1);
 
   // While settings is open the main BrowserWindow must not be visually present.
-  // Implementation moves it off-screen instead of hide() to avoid Windows DWM
-  // surface-allocation flicker; the user-visible result is identical.
-  const mainAwayFromScreen = await electronApp.evaluate(({ BrowserWindow }) => {
-    const wins = BrowserWindow.getAllWindows();
-    const main = wins.find(w => {
-      const url = w.webContents.getURL();
-      return !url.includes('window=settings') && !url.includes('window=overlay');
+  // Implementation uses setOpacity(0) to hide it without triggering Windows DWM
+  // surface-allocation flicker (hide()/show() would cause a one-frame flash on
+  // transparent always-on-top windows). Poll up to 3s because the opacity change
+  // is an async IPC side-effect that may complete slightly after the settings
+  // window's domcontentloaded fires.
+  let mainHidden = false;
+  for (let i = 0; i < 15; i++) {
+    mainHidden = await electronApp.evaluate(({ BrowserWindow }) => {
+      const wins = BrowserWindow.getAllWindows();
+      const main = wins.find(w => {
+        const url = w.webContents.getURL();
+        return !url.includes('window=settings') && !url.includes('window=overlay');
+      });
+      if (!main) return null;
+      return main.getOpacity() === 0;
     });
-    if (!main) return null;
-    const [x, y] = main.getPosition();
-    return !main.isVisible() || x < -10000 || y < -10000;
-  });
-  expect(mainAwayFromScreen).toBe(true);
+    if (mainHidden) break;
+    await mainWindow.waitForTimeout(200);
+  }
+  expect(mainHidden).toBe(true);
 
   await settingsWindow.evaluate(() => {
     window.openPenApi?.closeSettingsWindow();
@@ -94,17 +101,16 @@ test('opening settings hides the main window; closing settings restores it', asy
 
   await mainWindow.waitForTimeout(300);
 
-  const mainBackOnScreen = await electronApp.evaluate(({ BrowserWindow }) => {
+  const mainRestored = await electronApp.evaluate(({ BrowserWindow }) => {
     const wins = BrowserWindow.getAllWindows();
     const main = wins.find(w => {
       const url = w.webContents.getURL();
       return !url.includes('window=settings') && !url.includes('window=overlay');
     });
     if (!main) return null;
-    const [x, y] = main.getPosition();
-    return main.isVisible() && x > -10000 && y > -10000;
+    return main.getOpacity() === 1;
   });
-  expect(mainBackOnScreen).toBe(true);
+  expect(mainRestored).toBe(true);
 });
 
 test('app does not show a Dock icon (macOS)', async () => {

@@ -35,7 +35,7 @@ async function getMainWindow() {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
         const hasMainUi = await win.evaluate(
-          () => !!document.querySelector('.float-ball, .control-bar')
+          () => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]')
         );
         if (hasMainUi) return win;
       } catch {
@@ -54,9 +54,9 @@ test('control bar tool buttons respond while drawing mode is active', async () =
   const win = await getMainWindow();
 
   // Expand the bar.
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('control-bar')).toBeVisible({ timeout: 5000 });
 
   // Record the active tool before entering drawing mode.
   const toolBefore = await win.evaluate(() => {

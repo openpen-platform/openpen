@@ -31,7 +31,7 @@ async function getMainWindow() {
     for (const win of wins) {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
-        const ready = await win.evaluate(() => !!document.querySelector('.float-ball, .control-bar'));
+        const ready = await win.evaluate(() => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]'));
         if (ready) return win;
       } catch {
         // Ignore windows still loading.
@@ -61,9 +61,9 @@ async function setBallScreenPos(win, screenX, screenY) {
 }
 
 async function ensureBallMode(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (await bar.isVisible().catch(() => false)) {
-    const collapseBtn = win.locator('.cb-collapse-btn');
+    const collapseBtn = win.getByTestId('controlbar-collapse-btn');
     if (await collapseBtn.isVisible().catch(() => false)) {
       await collapseBtn.click({ force: true });
       await win.waitForTimeout(400);
@@ -72,7 +72,7 @@ async function ensureBallMode(win) {
       await win.waitForTimeout(3600);
     }
   }
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 }
 
 test('P1-3: tooltip-flip-down class present when ball is near workArea top edge', async () => {
@@ -88,9 +88,9 @@ test('P1-3: tooltip-flip-down class present when ball is near workArea top edge'
   await setBallScreenPos(win, nearTopX, nearTopY);
 
   // Expand bar.
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
 
   // The control-bar must carry .tooltip-flip-down when near the top edge
   // and in horizontal (non-vertical) mode.
@@ -114,9 +114,9 @@ test('P1-3: tooltip-flip-down class absent when ball is far from workArea top ed
   await setBallScreenPos(win, midX, midY);
 
   // Expand bar.
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
 
   const hasFlipClass = await win.evaluate(() => {
     const bar = document.querySelector('.control-bar');
@@ -138,9 +138,9 @@ test('P1-3: tooltip element does not overflow workArea top when bar is at top ed
   await setBallScreenPos(win, nearTopX, nearTopY);
 
   // Expand bar.
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
 
   // Hover the first visible button to trigger tooltip.
   const firstBtn = win.locator('.cb-btn[data-tip]').first();

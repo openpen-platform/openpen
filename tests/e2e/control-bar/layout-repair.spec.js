@@ -39,7 +39,7 @@ async function getMainWindow() {
     for (const w of electronApp.windows()) {
       try {
         await w.waitForLoadState('domcontentloaded', { timeout: 2000 });
-        if (await w.evaluate(() => !!document.querySelector('.float-ball, .control-bar'))) return w;
+        if (await w.evaluate(() => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]'))) return w;
       } catch {}
     }
     await new Promise((r) => setTimeout(r, 200));
@@ -49,7 +49,7 @@ async function getMainWindow() {
 
 test('stale config (eraser-in-tools, no inset) is repaired to canonical layout on boot', async () => {
   const win = await getMainWindow();
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(800);
 
   const layout = await win.evaluate(async () => await window.openPenApi?.getLayout());

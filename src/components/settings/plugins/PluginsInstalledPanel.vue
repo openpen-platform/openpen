@@ -156,7 +156,7 @@ onUnmounted(() => {
       </template>
     </AppBanner>
 
-    <div v-if="rows.length === 0" class="modules-empty">
+    <div v-if="rows.length === 0" class="modules-empty" data-testid="plugins-empty-state">
       {{ t('pluginsEmpty') }}
     </div>
 

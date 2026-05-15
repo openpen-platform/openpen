@@ -64,7 +64,7 @@ async function getMainWindow() {
     for (const win of wins) {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
-        const ready = await win.evaluate(() => !!document.querySelector('.float-ball, .control-bar'));
+        const ready = await win.evaluate(() => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]'));
         if (ready) return win;
       } catch {
         // Still loading.
@@ -76,7 +76,7 @@ async function getMainWindow() {
 }
 
 async function ensureBallMode(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (await bar.isVisible().catch(() => false)) {
     await win.mouse.move(10, 10);
     await win.waitForTimeout(3500);
@@ -84,19 +84,19 @@ async function ensureBallMode(win) {
   // After waiting, the bar may still be in its collapse transition (250ms).
   // Poll until float-ball is visible rather than relying on fixed delays.
   for (let attempt = 0; attempt < 4; attempt++) {
-    if (await win.locator('.float-ball').isVisible().catch(() => false)) break;
+    if (await win.getByTestId('floatball-btn').isVisible().catch(() => false)) break;
     await win.keyboard.press('Escape').catch(() => {});
     await win.waitForTimeout(400);
   }
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 }
 
 async function expandBar(win) {
-  if (!(await win.locator('.control-bar').isVisible().catch(() => false))) {
-    await win.locator('.float-ball').click();
+  if (!(await win.getByTestId('control-bar').isVisible().catch(() => false))) {
+    await win.getByTestId('floatball-btn').click();
     await win.waitForTimeout(500);
   }
-  await expect(win.locator('.control-bar')).toBeVisible({ timeout: 3000 });
+  await expect(win.getByTestId('control-bar')).toBeVisible({ timeout: 3000 });
 }
 
 /**
@@ -139,7 +139,7 @@ async function getWorkArea() {
  * Returns the barBox for use in further assertions.
  */
 async function assertBarInViewport(win, tolerance = 2) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   await expect(bar).toBeVisible({ timeout: 3000 });
   const [barBox, vp] = await Promise.all([
     bar.boundingBox(),
@@ -189,7 +189,7 @@ async function assertPopupInViewportAndAxis(win, isVerticalBar, tolerance = 2) {
  * Drag the bar (if expanded) by (deltaX, deltaY) using real mouse events.
  */
 async function dragBar(win, deltaX, deltaY, steps = 8) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barBox = await bar.boundingBox();
   expect(barBox).not.toBeNull();
   // Drag from the drag handle (left-center of bar for horizontal, top-center for vertical).
@@ -212,7 +212,7 @@ async function dragBar(win, deltaX, deltaY, steps = 8) {
  * Drag the collapsed ball by (deltaX, deltaY).
  */
 async function dragBall(win, deltaX, deltaY, steps = 10) {
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
   const box = await ball.boundingBox();
   expect(box).not.toBeNull();
   const bx = Math.round(box.x + box.width / 2);
@@ -234,7 +234,7 @@ async function dragBall(win, deltaX, deltaY, steps = 10) {
  * Assert ball is inside workArea (I1 proxy: ball DOM center inside viewport = workArea).
  */
 async function assertBallInViewport(win, tolerance = 2) {
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
   await expect(ball).toBeVisible({ timeout: 3000 });
   const [ballBox, vp] = await Promise.all([
     ball.boundingBox(),
@@ -351,7 +351,7 @@ test.describe('C2: color picker popup must be in viewport and on correct axis', 
             return bar ? (bar.classList.contains('vbar-left') || bar.classList.contains('vbar-right') || bar.classList.contains('vbar-free')) : false;
           });
 
-          const colorBtn = win.locator('.cb-color-btn');
+          const colorBtn = win.getByTestId('controlbar-color-btn');
           if (!(await colorBtn.isVisible().catch(() => false))) {
             // Color button may not exist in all configurations; skip gracefully.
             test.info().annotations.push({ type: 'skip-reason', description: 'cb-color-btn not visible' });
@@ -525,7 +525,7 @@ test.describe('I5: drag handle center must equal ball center at all snap positio
       }
 
       // Record ball viewport center before expand.
-      const ball = win.locator('.float-ball');
+      const ball = win.getByTestId('floatball-btn');
       const ballBox = await ball.boundingBox();
       if (!ballBox) {
         // Ball may have transitioned to bar (e.g. previous test left it expanded).
@@ -537,7 +537,7 @@ test.describe('I5: drag handle center must equal ball center at all snap positio
       await expandBar(win);
 
       // Measure drag handle center.
-      const handle = win.locator('.cb-drag').first();
+      const handle = win.getByTestId('controlbar-drag-handle').first();
       await expect(handle).toBeVisible({ timeout: 2000 });
       const handleBox = await handle.boundingBox();
       expect(handleBox).not.toBeNull();
@@ -579,7 +579,7 @@ test.describe('Bug 1 regression: vbar-free (vertical+snap=off) popups must open 
       await setBallScreenPos(win, pos.sx(wa), pos.sy(wa));
       await expandBar(win);
 
-      const bar = win.locator('.control-bar');
+      const bar = win.getByTestId('control-bar');
       await expect(bar).toBeVisible({ timeout: 2000 });
 
       // Verify the bar is actually in vbar-free mode.
@@ -590,7 +590,7 @@ test.describe('Bug 1 regression: vbar-free (vertical+snap=off) popups must open 
         return;
       }
 
-      const colorBtn = win.locator('.cb-color-btn');
+      const colorBtn = win.getByTestId('controlbar-color-btn');
       if (!(await colorBtn.isVisible().catch(() => false))) {
         test.info().annotations.push({ type: 'skip-reason', description: 'cb-color-btn not visible' });
         return;

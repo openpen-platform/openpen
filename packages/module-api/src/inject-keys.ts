@@ -141,3 +141,14 @@ export type PopoverPlacementHint = 'top' | 'bottom' | 'left' | 'right'
 
 export const POPOVER_PLACEMENT_HINT_KEY: InjectionKey<Readonly<Ref<PopoverPlacementHint>>> =
   Symbol('openpen:popoverPlacementHint')
+
+// ── Active Tool ───────────────────────────────────────────────────────────────
+
+/**
+ * The currently active tool id. Provided by ControlBar.vue as `readonly(activeToolId)`.
+ * Module tool-button components inject this for reactive active-state without
+ * depending on the event-bus timing (event bus is fire-and-forget; this ref is
+ * always current regardless of when the component mounts).
+ */
+export const ACTIVE_TOOL_KEY: InjectionKey<Readonly<Ref<string>>> =
+  Symbol('openpen:activeTool')

@@ -33,7 +33,7 @@ async function getMainWindow() {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
         const hasMainUi = await win.evaluate(
-          () => !!document.querySelector('.float-ball, .control-bar')
+          () => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]')
         );
         if (hasMainUi) return win;
       } catch {
@@ -47,9 +47,9 @@ async function getMainWindow() {
 }
 
 async function expandBar(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (!(await bar.isVisible().catch(() => false))) {
-    await win.locator('.float-ball').click();
+    await win.getByTestId('floatball-btn').click();
     await win.waitForTimeout(400);
   }
   await expect(bar).toBeVisible({ timeout: 5000 });
@@ -67,9 +67,9 @@ test('bar stays expanded while a dialog is open, even after pointer leaves', asy
   await expandBar(win);
 
   // Open the clear-canvas confirm dialog.
-  await win.locator('.cb-clear-btn').click();
+  await win.getByTestId('controlbar-clear-btn').click();
 
-  const dialog = win.locator('.openpen-modal-content');
+  const dialog = win.getByRole('dialog');
   await expect(dialog).toBeVisible({ timeout: 3000 });
 
   // Move the pointer completely away from the bar to trigger mouseleave.
@@ -79,8 +79,8 @@ test('bar stays expanded while a dialog is open, even after pointer leaves', asy
   await win.waitForTimeout(3500);
 
   // Bar must still be visible — the dialog should have blocked auto-collapse.
-  await expect(win.locator('.control-bar')).toBeVisible();
-  await expect(win.locator('.float-ball')).not.toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
+  await expect(win.getByTestId('floatball-btn')).not.toBeVisible();
 
   // Dismiss the dialog; bar should remain expanded (cursor hasn't returned).
   await win.keyboard.press('Escape');
@@ -99,8 +99,8 @@ test('bar auto-collapses after dialog is dismissed and pointer is off bar', asyn
   await expandBar(win);
 
   // Move pointer away to start collapse timer, but open dialog first.
-  await win.locator('.cb-clear-btn').click();
-  const dialog = win.locator('.openpen-modal-content');
+  await win.getByTestId('controlbar-clear-btn').click();
+  const dialog = win.getByRole('dialog');
   await expect(dialog).toBeVisible({ timeout: 3000 });
 
   await win.mouse.move(0, 0);
@@ -113,6 +113,6 @@ test('bar auto-collapses after dialog is dismissed and pointer is off bar', asyn
   await win.waitForTimeout(3500);
 
   // Bar should now have collapsed.
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 2000 });
-  await expect(win.locator('.control-bar')).not.toBeVisible();
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 2000 });
+  await expect(win.getByTestId('control-bar')).not.toBeVisible();
 });

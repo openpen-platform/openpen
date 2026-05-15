@@ -38,7 +38,7 @@ async function getMainWindow() {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
         const hasMainUi = await win.evaluate(
-          () => !!document.querySelector('.float-ball, .control-bar')
+          () => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]')
         );
         if (hasMainUi) return win;
       } catch {
@@ -52,20 +52,20 @@ async function getMainWindow() {
 
 /** Ensure ball mode; if bar is expanded, wait for auto-collapse. */
 async function ensureBallMode(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (await bar.isVisible().catch(() => false)) {
     await bar.hover();
     await win.mouse.move(200, 750); // well clear of every bar layout
     await win.waitForTimeout(3500);
   }
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 }
 
 /** Expand the control bar (idempotent). */
 async function expandBar(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (!(await bar.isVisible().catch(() => false))) {
-    await win.locator('.float-ball').click();
+    await win.getByTestId('floatball-btn').click();
     await win.waitForTimeout(400);
   }
   await expect(bar).toBeVisible({ timeout: 3000 });
@@ -76,7 +76,7 @@ async function expandBar(win) {
  * Mirrors the helper in layout.spec.js.
  */
 async function dragBall(win, deltaX, steps = 10) {
-  const box = await win.locator('.float-ball').boundingBox();
+  const box = await win.getByTestId('floatball-btn').boundingBox();
   const bx = Math.round(box.x + box.width / 2);
   const by = Math.round(box.y + box.height / 2);
   await win.mouse.move(bx, by);
@@ -167,11 +167,11 @@ test('snap=ON default: drag to right edge snaps bar to vbar-right', async () => 
 
   await dragBall(win, 100);
 
-  const ballCls = await win.locator('.float-ball').getAttribute('class');
+  const ballCls = await win.getByTestId('floatball-btn').getAttribute('class');
   expect(ballCls).toMatch(/edge-right/);
 
   await expandBar(win);
-  const barCls = await win.locator('.control-bar').getAttribute('class');
+  const barCls = await win.getByTestId('control-bar').getAttribute('class');
   expect(barCls).toMatch(/vbar-right/);
 });
 
@@ -193,7 +193,7 @@ test('snap=ON overrides barLayout: dragging to left edge produces vbar-left rega
 
   // snap=ON + left edge drag → vbar-left (barLayout='horizontal' is ignored).
   await expandBar(win);
-  const barCls = await win.locator('.control-bar').getAttribute('class');
+  const barCls = await win.getByTestId('control-bar').getAttribute('class');
   expect(barCls).toMatch(/vbar-left/);
 
   // Restore to centered position so subsequent tests start from a clean state.
@@ -248,7 +248,7 @@ test('vbar-free: bar aspect ratio reflects vertical layout', async () => {
   await win.waitForTimeout(200);
 
   // The bar in vertical layout is a column: height clearly exceeds width.
-  const barBox = await win.locator('.control-bar').boundingBox();
+  const barBox = await win.getByTestId('control-bar').boundingBox();
   expect(barBox).not.toBeNull();
   // Guard against degenerate case (bar collapsed or zero-size).
   expect(barBox.height).toBeGreaterThan(200);

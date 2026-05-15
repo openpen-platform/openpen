@@ -24,7 +24,7 @@ async function getMainWindow() {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
         const hasMainUi = await win.evaluate(
-          () => !!document.querySelector('.float-ball, .control-bar')
+          () => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]')
         );
         if (hasMainUi) return win;
       } catch {
@@ -68,8 +68,8 @@ async function setBallScreenPos(win, screenX, screenY) {
 
 /** Ensure the app is in ball mode, collapsing first if needed. */
 async function ensureBallMode(win) {
-  const ball = win.locator('.float-ball');
-  const bar  = win.locator('.control-bar');
+  const ball = win.getByTestId('floatball-btn');
+  const bar  = win.getByTestId('control-bar');
   if (await bar.isVisible().catch(() => false)) {
     await win.mouse.move(0, 0);
     await win.waitForTimeout(3500);
@@ -83,7 +83,7 @@ async function ensureBallMode(win) {
   if (!(await ball.isVisible().catch(() => false))) {
     await win.reload();
     await win.waitForLoadState('domcontentloaded');
-    await win.waitForFunction(() => !!document.querySelector('.float-ball, .control-bar'), null, { timeout: 10000 });
+    await win.waitForFunction(() => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]'), null, { timeout: 10000 });
   }
 
   await expect(ball).toBeVisible({ timeout: 5000 });
@@ -95,7 +95,7 @@ test('initial state: ball has no edge-* class (not snapped)', async () => {
   const win = await getMainWindow();
   await ensureBallMode(win);
 
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
   const cls = await ball.getAttribute('class');
   expect(cls).not.toMatch(/edge-/);
 });
@@ -104,7 +104,7 @@ test('after a drag, the ball gains an edge-* class (snapped)', async () => {
   const win  = await getMainWindow();
   await ensureBallMode(win);
 
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
   const box  = await ball.boundingBox();
   const cx   = box.x + box.width  / 2;
   const cy   = box.y + box.height / 2;
@@ -128,7 +128,7 @@ test('motion under the drag threshold counts as a click and expands the bar', as
   const win = await getMainWindow();
   await ensureBallMode(win);
 
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
   const box  = await ball.boundingBox();
   const cx   = box.x + box.width  / 2;
   const cy   = box.y + box.height / 2;
@@ -139,15 +139,15 @@ test('motion under the drag threshold counts as a click and expands the bar', as
   await win.mouse.move(cx + 2, cy + 1);
   await win.mouse.up();
 
-  await expect(win.locator('.control-bar')).toBeVisible({ timeout: 1000 });
+  await expect(win.getByTestId('control-bar')).toBeVisible({ timeout: 1000 });
 });
 
 test('a large drag does not expand the bar (movement suppresses the click)', async () => {
   const win = await getMainWindow();
   await ensureBallMode(win);
 
-  const ball = win.locator('.float-ball');
-  const bar  = win.locator('.control-bar');
+  const ball = win.getByTestId('floatball-btn');
+  const bar  = win.getByTestId('control-bar');
 
   // Use boundingBox to find the real ball position in the workArea viewport.
   const box = await ball.boundingBox();
@@ -179,7 +179,7 @@ test('dragging right (ball near right edge) snaps to edge-right', async () => {
   await setBallScreenPos(win, ballX, ballY);
 
   // Ball is now visible in the viewport; drag slightly right to trigger snap.
-  const box = await win.locator('.float-ball').boundingBox();
+  const box = await win.getByTestId('floatball-btn').boundingBox();
   const cx = Math.round(box.x + box.width / 2);
   const cy = Math.round(box.y + box.height / 2);
 
@@ -192,7 +192,7 @@ test('dragging right (ball near right edge) snaps to edge-right', async () => {
   // ~300ms total: 50ms drag-end delay + 250ms snap animation, plus slack.
   await win.waitForTimeout(400);
 
-  const cls = await win.locator('.float-ball').getAttribute('class');
+  const cls = await win.getByTestId('floatball-btn').getAttribute('class');
   expect(cls).toMatch(/edge-right/);
 });
 
@@ -206,7 +206,7 @@ test('dragging left (ball near left edge) snaps to edge-left', async () => {
   const ballY = wa.y + Math.floor(wa.height / 2);
   await setBallScreenPos(win, ballX, ballY);
 
-  const box = await win.locator('.float-ball').boundingBox();
+  const box = await win.getByTestId('floatball-btn').boundingBox();
   const cx = Math.round(box.x + box.width / 2);
   const cy = Math.round(box.y + box.height / 2);
   await win.mouse.move(cx, cy);
@@ -216,7 +216,7 @@ test('dragging left (ball near left edge) snaps to edge-left', async () => {
   await win.mouse.up();
   await win.waitForTimeout(400);
 
-  const cls = await win.locator('.float-ball').getAttribute('class');
+  const cls = await win.getByTestId('floatball-btn').getAttribute('class');
   expect(cls).toMatch(/edge-left/);
 });
 
@@ -224,8 +224,8 @@ test('after snapping, clicking the ball still expands the bar', async () => {
   const win = await getMainWindow();
   await ensureBallMode(win);
 
-  const ball = win.locator('.float-ball');
-  const bar  = win.locator('.control-bar');
+  const ball = win.getByTestId('floatball-btn');
+  const bar  = win.getByTestId('control-bar');
 
   // First trigger a snap via a large drag.
   const box = await ball.boundingBox();
@@ -257,7 +257,7 @@ test('edge half-circle temporarily reverts to full circle after 1px of motion (m
   const win = await getMainWindow();
   await ensureBallMode(win);
 
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
 
   // Snap to the left edge first by teleporting ball near it and dragging.
   const wa = await electronApp.evaluate(({ screen }) => screen.getPrimaryDisplay().workArea);
@@ -302,7 +302,7 @@ test('during a side snap, the ball stays circular until the animation reaches th
   const win = await getMainWindow();
   await ensureBallMode(win);
 
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
 
   // Place ball near the left edge so the snap target is clearly the left edge.
   const wa = await electronApp.evaluate(({ screen }) => screen.getPrimaryDisplay().workArea);
@@ -340,8 +340,8 @@ test('the control bar keeps its snap layout while dragging (no jump at drag star
   const win = await getMainWindow();
   await ensureBallMode(win);
 
-  const ball = win.locator('.float-ball');
-  const bar = win.locator('.control-bar');
+  const ball = win.getByTestId('floatball-btn');
+  const bar = win.getByTestId('control-bar');
 
   // Snap to the left edge.
   const wa = await electronApp.evaluate(({ screen }) => screen.getPrimaryDisplay().workArea);
@@ -364,9 +364,9 @@ test('the control bar keeps its snap layout while dragging (no jump at drag star
   // Expand the bar and drag via the drag handle.
   await ball.click();
   await expect(bar).toBeVisible({ timeout: 1000 });
-  await expect(win.locator('.control-bar.vbar-left')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toHaveClass(/vbar-left/);
 
-  const dragHandle = win.locator('.cb-drag');
+  const dragHandle = win.getByTestId('controlbar-drag-handle');
   const startBox = await dragHandle.boundingBox();
   const startX = Math.round(startBox.x + startBox.width / 2);
   const startY = Math.round(startBox.y + startBox.height / 2);
@@ -378,7 +378,7 @@ test('the control bar keeps its snap layout while dragging (no jump at drag star
 
   // The snap-left/vbar-left layout must survive the drag so the bar doesn't
   // visually snap back to the default layout mid-gesture.
-  const wrapperClass = await win.locator('.control-bar-wrapper').getAttribute('class');
+  const wrapperClass = await win.getByTestId('controlbar-panel').getAttribute('class');
   const barClass = await bar.getAttribute('class');
   expect(wrapperClass).toContain('snap-left');
   expect(barClass).toContain('vbar-left');
@@ -415,7 +415,7 @@ test('after snapping to the left edge, ball center is at the workArea left edge 
   await setBallScreenPos(win, wa.x + 30, wa.y + Math.floor(wa.height / 2));
   await win.waitForTimeout(200);
 
-  const box = await win.locator('.float-ball').boundingBox();
+  const box = await win.getByTestId('floatball-btn').boundingBox();
   const bx = Math.round(box.x + box.width / 2);
   const by = Math.round(box.y + box.height / 2);
   await win.mouse.move(bx, by);
@@ -427,7 +427,7 @@ test('after snapping to the left edge, ball center is at the workArea left edge 
 
   // After snap: ball viewport X = BALL_HALF (26px) from the workArea left edge.
   // Viewport X = ballScreenX - wa.x. CSS var positions the ball center at --ball-x.
-  const ballBox = await win.locator('.float-ball').boundingBox();
+  const ballBox = await win.getByTestId('floatball-btn').boundingBox();
   expect(ballBox).not.toBeNull();
   // Ball center in viewport coords = ballBox.x + ballBox.width/2 ≈ 26px from left.
   const ballViewportCenterX = ballBox.x + ballBox.width / 2;

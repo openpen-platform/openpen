@@ -31,7 +31,7 @@ async function getMainWindow() {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
         const hasMainUi = await win.evaluate(
-          () => !!document.querySelector('.float-ball, .control-bar')
+          () => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]')
         );
         if (hasMainUi) return win;
       } catch {
@@ -46,9 +46,9 @@ async function getMainWindow() {
 
 /** Click the ball to expand the control bar. */
 async function expandBar(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (!(await bar.isVisible().catch(() => false))) {
-    await win.locator('.float-ball').click();
+    await win.getByTestId('floatball-btn').click();
     await win.waitForTimeout(400);
   }
   await expect(bar).toBeVisible({ timeout: 5000 });
@@ -57,7 +57,7 @@ async function expandBar(win) {
 /** Dismiss any open confirm dialog via Escape key, then restore default setting. */
 async function dismissDialogIfOpen(win) {
   // DialogHost renders via AppDialog → .openpen-modal-content
-  const dialog = win.locator('.openpen-modal-content');
+  const dialog = win.getByRole('dialog');
   if (await dialog.isVisible().catch(() => false)) {
     await win.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible({ timeout: 2000 });
@@ -78,12 +78,12 @@ test('confirm dialog appears when confirmBeforeClearCanvas is ON (default)', asy
   const win = await getMainWindow();
   await expandBar(win);
 
-  const clearBtn = win.locator('.cb-clear-btn');
+  const clearBtn = win.getByTestId('controlbar-clear-btn');
   await expect(clearBtn).toBeVisible({ timeout: 5000 });
   await clearBtn.click();
 
   // DialogHost renders via AppDialog → .openpen-modal-content
-  const dialog = win.locator('.openpen-modal-content');
+  const dialog = win.getByRole('dialog');
   await expect(dialog).toBeVisible({ timeout: 3000 });
 
   // Dismiss to leave clean state for subsequent tests.
@@ -95,9 +95,9 @@ test('Cancel button closes confirm dialog without clearing canvas', async () => 
   const win = await getMainWindow();
   await expandBar(win);
 
-  await win.locator('.cb-clear-btn').click();
+  await win.getByTestId('controlbar-clear-btn').click();
 
-  const dialog = win.locator('.openpen-modal-content');
+  const dialog = win.getByRole('dialog');
   await expect(dialog).toBeVisible({ timeout: 3000 });
 
   // DialogHost footer renders the cancel button with the translated label.
@@ -109,9 +109,9 @@ test('Confirm button closes dialog and clears canvas', async () => {
   const win = await getMainWindow();
   await expandBar(win);
 
-  await win.locator('.cb-clear-btn').click();
+  await win.getByTestId('controlbar-clear-btn').click();
 
-  const dialog = win.locator('.openpen-modal-content');
+  const dialog = win.getByRole('dialog');
   await expect(dialog).toBeVisible({ timeout: 3000 });
 
   // DialogHost footer renders the ok button with the translated label ('Clear').
@@ -130,10 +130,10 @@ test('no confirm dialog when confirmBeforeClearCanvas is OFF', async () => {
 
   await expandBar(win);
 
-  await win.locator('.cb-clear-btn').click();
+  await win.getByTestId('controlbar-clear-btn').click();
   await win.waitForTimeout(400);
 
   // Dialog must NOT appear when the setting is OFF.
-  const dialog = win.locator('.openpen-modal-content');
+  const dialog = win.getByRole('dialog');
   await expect(dialog).not.toBeVisible();
 });

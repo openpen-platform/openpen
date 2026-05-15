@@ -1,18 +1,28 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, inject, onUnmounted, readonly, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emit as eventBusEmit, on as eventBusOn } from '@openpen/module-api/host'
+import { ACTIVE_TOOL_KEY } from '@openpen/module-api'
 
 const { t } = useI18n()
 
-const activeToolId = ref<string | null>(null)
-const isActive = computed(() => activeToolId.value === 'freehand')
+// Inject ControlBar's active-tool ref for the initial active state on mount
+// (avoids the event-bus fire-and-forget timing race on bar expansion).
+// Falls back to 'freehand' when mounted outside a ControlBar (not the normal path).
+const injectedActiveTool = inject(ACTIVE_TOOL_KEY, readonly(ref('freehand')))
 
+// Local ref that tracks tool switches via event bus (handles the case where the
+// bar is already expanded and the user switches tools).
+const localActiveTool = ref<string>(injectedActiveTool.value)
+
+// Keep local ref in sync with event-bus tool switches.
 const unsub = eventBusOn('tool-changed', (payload) => {
   const p = payload as { tool?: string }
-  activeToolId.value = p?.tool ?? null
+  if (p?.tool) localActiveTool.value = p.tool
 })
 onUnmounted(() => unsub())
+
+const isActive = computed(() => localActiveTool.value === 'freehand')
 
 function activate() {
   eventBusEmit('tool-changed', { tool: 'freehand' })

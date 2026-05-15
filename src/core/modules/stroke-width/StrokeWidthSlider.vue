@@ -74,7 +74,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="stroke-width-slider-wrap">
+  <div class="stroke-width-slider-wrap" data-testid="stroke-slider-wrap">
     <!-- Horizontal layout + slider style -->
     <div
       v-if="!isVertical && strokeStyle === 'slider'"
@@ -95,6 +95,7 @@ onUnmounted(() => {
         <template #trigger="{ active }">
           <button
             class="sw-hbtn"
+            data-testid="stroke-slider-h-btn"
             :class="{ active }"
             :data-tip="t('openpen.stroke-width.button')"
             :aria-label="t('openpen.stroke-width.button')"
@@ -133,6 +134,7 @@ onUnmounted(() => {
     <div
       v-else-if="isVertical && strokeStyle === 'slider'"
       class="vbar-stroke"
+      data-testid="stroke-slider-v-track"
     >
       <span class="stroke-dot" style="width:3px;height:3px;" aria-hidden="true" />
       <AppSlider v-model="widthValue" :min="1" :max="20" :step="1" orientation="vertical" width="64px" :inverted="true" />
@@ -145,6 +147,7 @@ onUnmounted(() => {
         <template #trigger="{ active }">
           <button
             class="sw-vbtn"
+            data-testid="stroke-slider-v-btn"
             :class="{ active }"
             :data-tip="t('openpen.stroke-width.button')"
             :aria-label="t('openpen.stroke-width.button')"

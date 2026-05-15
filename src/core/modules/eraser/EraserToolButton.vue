@@ -98,6 +98,7 @@ function activateIfNeeded() {
     <!-- Main eraser button — shows active eraser mode icon; activates that mode on click -->
     <button
       class="cb-btn cb-eraser-main-btn"
+      data-testid="controlbar-eraser-btn"
       :class="{ active: isActive }"
       :data-tip="t('openpen.eraser.tool')"
       :aria-label="t('openpen.eraser.toolAria')"
@@ -121,6 +122,7 @@ function activateIfNeeded() {
       <template #trigger="{ active }">
         <button
           class="cb-eraser-caret"
+          data-testid="controlbar-eraser-caret"
           :class="{
             active,
             'cb-eraser-caret--vertical': isVertical,

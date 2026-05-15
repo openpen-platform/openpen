@@ -51,7 +51,7 @@ async function openSettings(electronApp, mainWin) {
   await expandControlBar(mainWin);
   const winPromise = electronApp.waitForEvent('window', { timeout: 10000 });
   await mainWin.evaluate(() => {
-    document.querySelector('[data-testid="gear-btn"]')?.dispatchEvent(
+    document.querySelector('[data-testid="controlbar-settings-btn"]')?.dispatchEvent(
       new MouseEvent('click', { bubbles: true, cancelable: true })
     );
   });

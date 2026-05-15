@@ -89,6 +89,7 @@ export {
   CONTROL_BAR_ANIMATING_KEY,
   HOST_DIALOG_OPEN_COUNT_KEY,
   POPOVER_PLACEMENT_HINT_KEY,
+  ACTIVE_TOOL_KEY,
 } from './inject-keys'
 export type { StrokeStyleContext, SnapEdge, ModalManager, PopoverPlacementHint } from './inject-keys'
 

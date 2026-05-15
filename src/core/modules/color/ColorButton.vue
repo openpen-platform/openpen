@@ -71,6 +71,7 @@ watch(() => snapEdge?.value, () => { modalManager?.close('color') })
     <template #trigger="{ active }">
       <button
         class="cb-btn cb-color-btn"
+        data-testid="controlbar-color-btn"
         :data-tip="t('openpen.color.button')"
         :aria-label="t('openpen.color.button')"
         :class="{ active }"

@@ -112,7 +112,7 @@ async function openSettingsViaUI(mainWin) {
   await expandControlBar(mainWin);
   const winPromise = electronApp.waitForEvent('window', { timeout: 10000 });
   await mainWin.evaluate(() => {
-    document.querySelector('[data-testid="gear-btn"]')?.dispatchEvent(
+    document.querySelector('[data-testid="controlbar-settings-btn"]')?.dispatchEvent(
       new MouseEvent('click', { bubbles: true, cancelable: true })
     );
   });
@@ -159,13 +159,13 @@ test('gear button opens exactly one settings window', async () => {
 
   await expandControlBar(mainWin);
   const hasGearBtn = await mainWin.evaluate(() =>
-    document.querySelector('[data-testid="gear-btn"]') !== null
+    document.querySelector('[data-testid="controlbar-settings-btn"]') !== null
   );
   expect(hasGearBtn).toBe(true);
 
   const winPromise = electronApp.waitForEvent('window', { timeout: 8000 });
   await mainWin.evaluate(() => {
-    document.querySelector('[data-testid="gear-btn"]')?.dispatchEvent(
+    document.querySelector('[data-testid="controlbar-settings-btn"]')?.dispatchEvent(
       new MouseEvent('click', { bubbles: true, cancelable: true })
     );
   });

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, watchEffect, provide, readonly, nextTick, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { SNAP_EDGE_KEY, IS_VERTICAL_KEY, WRAPPER_EL_KEY, ANCHOR_EL_KEY, MODAL_MANAGER_KEY, CONTROL_BAR_ANIMATING_KEY, HOST_DIALOG_OPEN_COUNT_KEY, POPOVER_PLACEMENT_HINT_KEY } from '@openpen/module-api';
+import { SNAP_EDGE_KEY, IS_VERTICAL_KEY, WRAPPER_EL_KEY, ANCHOR_EL_KEY, MODAL_MANAGER_KEY, CONTROL_BAR_ANIMATING_KEY, HOST_DIALOG_OPEN_COUNT_KEY, POPOVER_PLACEMENT_HINT_KEY, ACTIVE_TOOL_KEY } from '@openpen/module-api';
 import type { PopoverPlacementHint } from '@openpen/module-api';
 import { useCollapseMode } from '../composables/useCollapseMode';
 import { useDragSnap, type BarLayoutClass } from '../composables/useDragSnap';
@@ -257,6 +257,7 @@ const isLockedByDialog = computed(() => dialogOpenCount.value > 0);
 
 // Seeded to 'freehand' to match the overlay window's initial tool state.
 const activeToolId = ref<string>('freehand');
+provide(ACTIVE_TOOL_KEY, readonly(activeToolId));
 let unsubToolChanged: (() => void) | null = null;
 
 /** Ball shape during edge-snap interactions — avoids visual glitches mid-drag. */
@@ -320,22 +321,32 @@ watch(isLockedByDialog, (locked) => {
 watch(isExpanded, (expanded) => {
   setAnimating(expanded ? BAR_EXPAND_DURATION_MS : BAR_COLLAPSE_DURATION_MS);
   if (expanded) {
-    // Slot-mounted tool buttons subscribe to the event-bus after expand; emit
-    // current tool so they render the correct active state immediately.
-    nextTick(() => {
-      eventBusEmit('tool-changed', { tool: activeToolId.value });
-      // Measure drag handle offset after bar is fully in the DOM so the CSS
-      // transform-origin reflects the actual cb-drag position.
-      updateDragHandleOffset();
-      connectDragHandleObserver();
-    });
+    // flush:'post' guarantees slot-mounted tool buttons (FreehandToolButton,
+    // ShapeToolButton, etc.) are fully mounted and their event-bus listeners
+    // registered before this watcher body runs — so the tool-changed event
+    // is received and the correct active class applied immediately.
+    eventBusEmit('tool-changed', { tool: activeToolId.value });
+    // Measure drag handle offset after bar is fully in the DOM so the CSS
+    // transform-origin reflects the actual cb-drag position.
+    updateDragHandleOffset();
+    connectDragHandleObserver();
   } else {
     dragHandleObserver?.disconnect();
     dragHandleObserver = null;
     // Keep the engine bar-expanded state in sync.
     void window.openPenApi?.sendPositioningIntent?.({ type: 'bar-collapse' });
   }
-});
+}, { flush: 'post' });
+
+// Re-broadcast the active tool whenever slot contributions change while the
+// bar is already expanded. Covers the race where modules finish loading
+// AFTER the bar has expanded — tool buttons mount late, miss the initial
+// tool-changed emit from the isExpanded watcher, and show no active state.
+watch(controlBarSlotEntries, () => {
+  if (isExpanded.value) {
+    eventBusEmit('tool-changed', { tool: activeToolId.value });
+  }
+}, { flush: 'post' });
 
 // Bar-expand positioning intent is sent by the onMeasure callback in
 // useBarBoundsCache once the bar element mounts and reports real bounds.
@@ -588,6 +599,7 @@ onUnmounted(() => {
   <div
     ref="wrapperEl"
     class="control-bar-wrapper"
+    data-testid="controlbar-panel"
     :class="{
       'snap-left':  activeSnapEdge === 'left',
       'snap-right': activeSnapEdge === 'right',
@@ -600,6 +612,7 @@ onUnmounted(() => {
       <div
         v-if="!isExpanded"
         class="float-ball"
+        data-testid="floatball-btn"
         :class="[ballEdgeClass, { 'drawing-active': isDrawingMode }]"
         :style="{ '--ball-opacity': ballOpacity }"
         role="button"
@@ -614,6 +627,7 @@ onUnmounted(() => {
         <div
           v-if="pendingDiagnosticsCount > 0"
           class="float-ball-diag-badge"
+          data-testid="floatball-diag-badge"
           role="button"
           :aria-label="`${pendingDiagnosticsCount} pending diagnostics`"
           @click.stop="openDiagnostics"
@@ -631,6 +645,7 @@ onUnmounted(() => {
         v-if="isExpanded"
         ref="controlBarEl"
         class="control-bar"
+        data-testid="control-bar"
         :class="{
           [effectiveBarLayout]: effectiveBarLayout !== 'horizontal',
           'is-vertical': isVertical,
@@ -649,7 +664,7 @@ onUnmounted(() => {
           <span class="draw-mode-badge-dot" />
         </div>
 
-        <div ref="dragHandleEl" class="cb-drag" :aria-label="t('drag')" @mousedown="onMouseDown">
+        <div ref="dragHandleEl" class="cb-drag" data-testid="controlbar-drag-handle" :aria-label="t('drag')" @mousedown="onMouseDown">
           <svg v-if="isVertical" width="16" height="10" viewBox="0 0 16 10" fill="currentColor">
             <circle cx="3" cy="3" r="1.5" /><circle cx="8" cy="3" r="1.5" /><circle cx="13" cy="3" r="1.5" />
             <circle cx="3" cy="7" r="1.5" /><circle cx="8" cy="7" r="1.5" /><circle cx="13" cy="7" r="1.5" />
@@ -663,6 +678,7 @@ onUnmounted(() => {
 
         <button
           class="cb-btn"
+          data-testid="controlbar-pin-btn"
           :class="{ pinned: isPinned }"
           :data-tip="t('pin')"
           :aria-label="isPinned ? t('unpin') : t('pin')"
@@ -699,6 +715,7 @@ onUnmounted(() => {
 
         <button
           class="cb-btn cb-undo-btn"
+          data-testid="controlbar-undo-btn"
           :class="{ 'cb-disabled': !canUndo }"
           :data-tip="canUndo ? `${t('undo')}  ${undoHint}` : t('undoDisabled')"
           :aria-label="t('undo')"
@@ -712,6 +729,7 @@ onUnmounted(() => {
 
         <button
           class="cb-btn cb-redo-btn"
+          data-testid="controlbar-redo-btn"
           :class="{ 'cb-disabled': !canRedo }"
           :data-tip="canRedo ? `${t('redo')}  ${redoHint}` : t('redoDisabled')"
           :aria-label="t('redo')"
@@ -727,6 +745,7 @@ onUnmounted(() => {
 
         <button
           class="cb-btn danger cb-clear-btn"
+          data-testid="controlbar-clear-btn"
           :data-tip="t('clearCanvas')"
           :aria-label="t('clearCanvas')"
           @click="onClearCanvasClick"
@@ -742,6 +761,7 @@ onUnmounted(() => {
         <button
           v-if="pendingDiagnosticsCount > 0"
           class="cb-diag-chip"
+          data-testid="controlbar-diag-chip"
           :aria-label="`${pendingDiagnosticsCount} pending diagnostics`"
           @click="openDiagnostics"
         >
@@ -755,7 +775,7 @@ onUnmounted(() => {
 
         <button
           class="cb-btn"
-          data-testid="gear-btn"
+          data-testid="controlbar-settings-btn"
           :data-tip="t('settings')"
           :aria-label="t('settings')"
           @click="openSettings"
@@ -768,7 +788,7 @@ onUnmounted(() => {
 
         <button
           class="cb-btn"
-          data-testid="quit-btn"
+          data-testid="controlbar-quit-btn"
           :data-tip="t('quit')"
           :aria-label="t('quit')"
           @click="onQuitClick"

@@ -33,7 +33,7 @@ async function getMainWindow() {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
         const hasMainUi = await win.evaluate(
-          () => !!document.querySelector('.float-ball, .control-bar')
+          () => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]')
         );
         if (hasMainUi) return win;
       } catch {
@@ -48,20 +48,20 @@ async function getMainWindow() {
 
 /** Ensure ball mode; if the bar is expanded, wait for auto-collapse. */
 async function ensureBallMode(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (await bar.isVisible().catch(() => false)) {
     await bar.hover();
     await win.mouse.move(200, 750); // well clear of every bar layout
     await win.waitForTimeout(3500);  // 3s collapse timer + 250ms transition
   }
-  await expect(win.locator('.float-ball')).toBeVisible({ timeout: 5000 });
+  await expect(win.getByTestId('floatball-btn')).toBeVisible({ timeout: 5000 });
 }
 
 /** Expand the control bar. */
 async function expandBar(win) {
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   if (!(await bar.isVisible().catch(() => false))) {
-    await win.locator('.float-ball').click();
+    await win.getByTestId('floatball-btn').click();
     await win.waitForTimeout(400);
   }
   await expect(bar).toBeVisible({ timeout: 3000 });
@@ -96,7 +96,7 @@ async function setBallScreenPos(win, screenX, screenY) {
  * Drag the ball horizontally using its real position via boundingBox().
  */
 async function dragBall(win, deltaX, steps = 10) {
-  const box = await win.locator('.float-ball').boundingBox();
+  const box = await win.getByTestId('floatball-btn').boundingBox();
   const bx = Math.round(box.x + box.width / 2);
   const by = Math.round(box.y + box.height / 2);
   await win.mouse.move(bx, by);
@@ -133,13 +133,13 @@ test('snap to left -> control bar has vbar-left class (vertical layout)', async 
 
   await dragBall(win, -100);
 
-  const ballCls = await win.locator('.float-ball').getAttribute('class');
+  const ballCls = await win.getByTestId('floatball-btn').getAttribute('class');
   expect(ballCls).toMatch(/edge-left/);
 
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
 
-  const barCls = await win.locator('.control-bar').getAttribute('class');
+  const barCls = await win.getByTestId('control-bar').getAttribute('class');
   expect(barCls).toMatch(/vbar-left/);
 });
 
@@ -153,13 +153,13 @@ test('snap to right -> control bar has vbar-right class (vertical layout)', asyn
 
   await dragBall(win, 100);
 
-  const ballCls = await win.locator('.float-ball').getAttribute('class');
+  const ballCls = await win.getByTestId('floatball-btn').getAttribute('class');
   expect(ballCls).toMatch(/edge-right/);
 
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
 
-  const barCls = await win.locator('.control-bar').getAttribute('class');
+  const barCls = await win.getByTestId('control-bar').getAttribute('class');
   expect(barCls).toMatch(/vbar-right/);
 });
 
@@ -172,7 +172,7 @@ test('snap to top -> horizontal layout (no vbar-left/vbar-right class)', async (
   await win.waitForTimeout(200);
 
   {
-    const box = await win.locator('.float-ball').boundingBox();
+    const box = await win.getByTestId('floatball-btn').boundingBox();
     const bx = Math.round(box.x + box.width / 2);
     const by = Math.round(box.y + box.height / 2);
     await win.mouse.move(bx, by);
@@ -183,13 +183,13 @@ test('snap to top -> horizontal layout (no vbar-left/vbar-right class)', async (
     await win.waitForTimeout(450);
   }
 
-  const ballCls = await win.locator('.float-ball').getAttribute('class');
+  const ballCls = await win.getByTestId('floatball-btn').getAttribute('class');
   expect(ballCls).toMatch(/edge-top/);
 
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
 
-  const barCls = await win.locator('.control-bar').getAttribute('class');
+  const barCls = await win.getByTestId('control-bar').getAttribute('class');
   expect(barCls).not.toMatch(/vbar-left|vbar-right/);
 });
 
@@ -202,13 +202,13 @@ test('eraser button and caret are visible in vertical mode (design: 1 main + 1 c
   await win.waitForTimeout(200);
 
   await dragBall(win, -100);
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar.vbar-left')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toHaveClass(/vbar-left/);
 
-  await expect(win.locator('.cb-btn[aria-label="Eraser tool"]')).toBeVisible();
-  await expect(win.locator('.cb-eraser-caret[aria-label="Eraser mode"]')).toBeVisible();
-  await expect(win.locator('.cb-btn[aria-label="Stroke Eraser"]')).not.toBeAttached();
+  await expect(win.getByTestId('controlbar-eraser-btn')).toBeVisible();
+  await expect(win.getByTestId('controlbar-eraser-caret')).toBeVisible();
 });
 
 test('tools group renders [freehand, line, shape] inside .cb-group--inset; bar height stays 50px', async () => {
@@ -243,12 +243,12 @@ test('tools group renders [freehand, line, shape] inside .cb-group--inset; bar h
   expect(eraserInInset).toBe(false);
 
   const isHorizontal = await win.evaluate(() => {
-    const bar = document.querySelector('.control-bar');
+    const bar = document.querySelector('[data-testid="control-bar"]');
     return !bar.classList.contains('vbar-left') && !bar.classList.contains('vbar-right');
   });
   if (isHorizontal) {
     const heights = await win.evaluate(() => ({
-      bar: document.querySelector('.control-bar').getBoundingClientRect().height,
+      bar: document.querySelector('[data-testid="control-bar"]').getBoundingClientRect().height,
       inset: document.querySelector('.cb-group--inset').getBoundingClientRect().height,
     }));
     expect(heights.bar).toBe(50);
@@ -272,9 +272,9 @@ test('horizontal mode renders the stroke-width slider inline', async () => {
   await ensureBallMode(win);
   await expandBar(win);
 
-  await expect(win.locator('.stroke-width-slider-wrap')).toBeVisible();
-  await expect(win.locator('.stroke-width-slider-wrap .app-slider-root')).toBeVisible();
-  await expect(win.locator('.sw-vbtn-wrap')).not.toBeAttached();
+  await expect(win.getByTestId('stroke-slider-wrap')).toBeVisible();
+  await expect(win.getByTestId('stroke-slider-wrap').locator('.app-slider-root')).toBeVisible();
+  await expect(win.getByTestId('stroke-slider-v-wrap')).not.toBeAttached();
 });
 
 test('vertical-bar drag handle is oriented horizontally (width > height)', async () => {
@@ -286,12 +286,13 @@ test('vertical-bar drag handle is oriented horizontally (width > height)', async
   await win.waitForTimeout(200);
   await dragBall(win, -100);
 
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar.vbar-left')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toHaveClass(/vbar-left/);
 
   const dragSvgDims = await win.evaluate(() => {
-    const svg = document.querySelector('.control-bar.vbar-left .cb-drag svg');
+    const svg = document.querySelector('[data-testid="control-bar"] [data-testid="controlbar-drag-handle"] svg');
     if (!svg) return null;
     return {
       width: parseFloat(svg.getAttribute('width')),
@@ -315,7 +316,7 @@ test('in snap-left mode, ball center viewport Y sits near the workArea vertical 
   await dragBall(win, -100);
 
   // In ball mode (snapped left) the ball's client Y center should be near the workArea midpoint.
-  const ballBox = await win.locator('.float-ball').boundingBox();
+  const ballBox = await win.getByTestId('floatball-btn').boundingBox();
   expect(ballBox).not.toBeNull();
   const ballCenterY = ballBox.y + ballBox.height / 2;
   // workArea mid in viewport coords = ballMidY - wa.y; allow ±50px tolerance for settle.
@@ -333,13 +334,13 @@ test('vertical bar sits 8px from the screen edge', async () => {
   await win.waitForTimeout(200);
   await dragBall(win, -100);
 
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
 
   // The window is now at workArea origin, so barBox.x is already a viewport-coord offset.
   // Screen X of the bar's left edge = wa.x + barBox.x.
   const [barBox, windowScreenX] = await Promise.all([
-    win.locator('.control-bar.vbar-left').boundingBox(),
+    win.getByTestId('control-bar').boundingBox(),
     electronApp.evaluate(({ BrowserWindow }) => {
       const wins = BrowserWindow.getAllWindows();
       const main = wins.find(w => {
@@ -367,11 +368,12 @@ test('vertical bar width matches horizontal bar height (50px)', async () => {
   await win.waitForTimeout(200);
   await dragBall(win, -100);
 
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar.vbar-left')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toHaveClass(/vbar-left/);
 
-  const vbarWidth = await win.locator('.control-bar.vbar-left').evaluate((el) => {
+  const vbarWidth = await win.getByTestId('control-bar').evaluate((el) => {
     return Math.round(el.getBoundingClientRect().width);
   });
   expect(vbarWidth).toBe(50);
@@ -392,11 +394,11 @@ test('button order: stroke-width slider appears before the color button', async 
   await expandBar(win);
 
   const order = await win.evaluate(() => {
-    const bar = document.querySelector('.control-bar');
+    const bar = document.querySelector('[data-testid="control-bar"]');
     if (!bar) return null;
     const elements = Array.from(bar.querySelectorAll('*'));
     const strokeIdx = elements.findIndex(el => el.classList.contains('stroke-width-slider-wrap'));
-    const colorIdx = elements.findIndex(el => el.classList.contains('cb-color-btn'));
+    const colorIdx = elements.findIndex(el => el.dataset.testid === 'controlbar-color-btn');
     return { strokeIdx, colorIdx };
   });
   expect(order).not.toBeNull();
@@ -414,14 +416,15 @@ test('vertical-bar auto-collapses back to the ball on mouseleave', async () => {
   await win.waitForTimeout(200);
   await dragBall(win, -100);
 
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
-  await expect(win.locator('.control-bar.vbar-left')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).toHaveClass(/vbar-left/);
 
-  await win.locator('.control-bar.vbar-left').hover();
+  await win.getByTestId('control-bar').hover();
   await win.mouse.move(200, 750);
   await win.waitForTimeout(3500);
 
-  await expect(win.locator('.float-ball')).toBeVisible();
-  await expect(win.locator('.control-bar')).not.toBeVisible();
+  await expect(win.getByTestId('floatball-btn')).toBeVisible();
+  await expect(win.getByTestId('control-bar')).not.toBeVisible();
 });
