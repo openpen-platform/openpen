@@ -11,7 +11,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # full history so git push has all commits
+          fetch-depth: 0
 
       - name: Configure git identity
         run: |
@@ -20,11 +20,11 @@ jobs:
 
       - name: Push main to GitHub
         env:
-          GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          if [ -z "${GITHUB_PAT}" ]; then
-            echo "::error::GITHUB_PAT secret not set in Gitea repo Settings → Actions → Secrets"
+          if [ -z "${GH_PAT}" ]; then
+            echo "::error::GH_PAT secret not set in Gitea repo Settings → Actions → Secrets"
             exit 1
           fi
-          git remote add github "https://x-access-token:${GITHUB_PAT}@github.com/openpen-platform/openpen.git"
+          git remote add github "https://x-access-token:${GH_PAT}@github.com/openpen-platform/openpen.git"
           git push github main
