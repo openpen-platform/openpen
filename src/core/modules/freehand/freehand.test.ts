@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import freehand from './index'
+import { freehandCursor, freehandCursorAnimated } from './cursor'
 
 describe('freehand module', () => {
   it('has correct id', () => {
@@ -12,11 +13,26 @@ describe('freehand module', () => {
     expect(tools[0].id).toBe('freehand')
   })
 
-  it('contributes a crosshair cursor', () => {
+  it('contributes one cursor with the pen-tip hotspot', () => {
     const cursors = freehand.contributes?.cursors ?? []
     expect(cursors).toHaveLength(1)
     expect(cursors[0].id).toBe('freehand')
-    expect(cursors[0].cursor).toBe('crosshair')
+    const cursor = cursors[0].cursor
+    if (typeof cursor === 'string' || !('svg' in cursor)) {
+      throw new Error('expected SvgCursorSpec')
+    }
+    expect(cursor.svg).toContain('<svg')
+    expect(cursor.hotspot).toEqual({ x: 2, y: 22 })
+  })
+
+  it('exports both static and animated cursor variants', () => {
+    expect(freehandCursor.svg).toContain('<svg')
+    expect(freehandCursor.svg).not.toContain('@keyframes')
+    expect(freehandCursor.hotspot).toEqual({ x: 2, y: 22 })
+
+    expect(freehandCursorAnimated.svg).toContain('<svg')
+    expect(freehandCursorAnimated.svg).toContain('@keyframes')
+    expect(freehandCursorAnimated.hotspot).toEqual({ x: 2, y: 22 })
   })
 
   it('contributes locales with en entry and required keys', () => {

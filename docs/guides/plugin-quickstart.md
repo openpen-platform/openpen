@@ -20,6 +20,14 @@ npm install
 Replace `yourscope` with your GitHub username or org name (lowercase).
 `openpen create` copies the plugin-starter template, substitutes the id, and prints next steps.
 
+> **Manual scaffold gotcha**: if you skip `openpen-cli create` and copy the
+> plugin-starter by hand, you MUST keep these three places in sync — they all
+> declare the plugin id and a mismatch causes `useModuleContext()` to throw at
+> runtime:
+> - `plugin.json` → `"id"`
+> - `src/module-id.ts` → `MODULE_ID`
+> - `defineModule({ id })` in `src/index.ts` (typically imported from `module-id.ts`)
+
 ## Step 2 — Build
 
 ```bash
@@ -52,9 +60,12 @@ my-plugin/
 ├── package.json            ← devDeps: @openpen/build, @openpen/module-api
 ├── tsconfig.json           ← Optional, used by `npm run check`
 └── src/
+    ├── module-id.ts        ← Single source of truth for the plugin's id
     ├── index.ts            ← Default-exports an OpenPenModule
     └── *.vue / *.ts        ← Your plugin's components & helpers
 ```
+
+`src/module-id.ts` exports a single `MODULE_ID` constant that both `defineModule({ id })` in `index.ts` and any other code paths that need to refer to the plugin's id import from. Keeping the id in one place is the convention the gotcha callout above warns about — see the worked example in [tutorials/build-your-first-plugin.md](../tutorials/build-your-first-plugin.md) for the full pattern.
 
 ---
 
@@ -104,6 +115,8 @@ export default defineModule({
   id: 'my-plugin',
   settingsSchema: z.object({ opacity: z.number().default(0.8) }),
   contributes: {
+    tools: [{ id: 'my-tool', /* onPointerDown/Move/Up + renderStroke — see slots.md */ }],
+    cursors: [{ id: 'my-tool', cursor: { svg: '<svg .../>', hotspot: { x: 4, y: 20 } } }],
     controlBar: [{ id: 'btn', component: MyBtn }],
     settingsPanels: [{ id: 'prefs', label: { en: 'My Plugin' }, component: MyPrefsPanel }],
     shortcuts: [{
@@ -118,6 +131,8 @@ export default defineModule({
 })
 ```
 
+- `tools` registers a drawing tool. See [reference/slots.md `canvas.tools`](../reference/slots.md) for the full `ToolContribution` interface (id, label, icon, pointer handlers, optional `renderStroke`).
+- `cursors` ties a custom DOM cursor to a tool — the `id` on `CursorContribution` MUST match the `id` on its `ToolContribution`. See [reference/slots.md `ui.cursors`](../reference/slots.md) for the cursor shape options (inline SVG / relative path / PNG) and the `--openpen-cursor-accent` theming convention.
 - `settingsPanels` adds a section to **Settings → Features**. Use `settingsTabs` only for modules that need a full dedicated tab.
 - Shortcuts with `label` and `userCustomizable: true` appear in **Settings → Shortcuts** under your module's group, letting users rebind them. Omit both to run silently with the declared default.
 - Pick accelerator defaults that won't collide with common OS bindings; the runtime logs a console error if `globalShortcut.register` is rejected.
@@ -210,7 +225,7 @@ switches to a compact single-line layout suited for dialogs and form areas.
 - **Publishing** → [guides/publishing.md](./publishing.md) — build for distribution
 - **Module settings** → [guides/module-settings.md](./module-settings.md) — settingsSchema, useModuleContext, panels vs tabs
 - **Full UIKit API** → [reference/uikit.md](../reference/uikit.md)
-- **Custom UIKit components** → [guides/custom-uikit-components.md](./custom-uikit-components.md) — building widgets beyond the 9 wrappers (tags input, number spinner, combobox)
+- **Custom UIKit components** → [guides/custom-uikit-components.md](./custom-uikit-components.md) — building widgets beyond the bundled wrappers (tags input, number spinner, combobox)
 - **Design tokens** → [reference/design-tokens.md](../reference/design-tokens.md) — host palette your styles inherit
 - **All contribution slots** → [reference/slots.md](../reference/slots.md)
 - **Escape-hatch primitives** → [reference/primitives.md](../reference/primitives.md)

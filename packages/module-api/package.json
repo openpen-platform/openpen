@@ -49,6 +49,7 @@
     "sdk"
   ],
   "dependencies": {
+    "dompurify": "^3.4.3",
     "reka-ui": "~2.9.7"
   },
   "peerDependencies": {

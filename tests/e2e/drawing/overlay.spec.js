@@ -93,7 +93,7 @@ test('setDrawingMode(false) removes drawing-mode class from the canvas', async (
   expect(cls).not.toContain('drawing-mode');
 });
 
-test('canvas cursor is crosshair in drawing mode', async () => {
+test('canvas and body cursor are hidden in drawing mode (DOM cursor takes over)', async () => {
   const mainWin = await getMainWindow();
   const overlayWin = await getOverlayWindow();
 
@@ -105,14 +105,23 @@ test('canvas cursor is crosshair in drawing mode', async () => {
   const cursor = await overlayWin.locator('.overlay-canvas').evaluate(
     el => window.getComputedStyle(el).cursor,
   );
-  expect(cursor).toBe('crosshair');
+  expect(cursor).toBe('none');
+  const bodyCursor = await overlayWin.evaluate(
+    () => window.getComputedStyle(document.body).cursor,
+  );
+  expect(bodyCursor).toBe('none');
 
   await mainWin.evaluate(() =>
     window.openPenApi?.setDrawingMode(false),
   );
 });
 
-test('canvas cursor is default when not in drawing mode', async () => {
+test('canvas cursor stays none in all drawing-mode states', async () => {
+  // Canvas cursor is held constant `none` — the canvas is the primary
+  // surface macOS evaluates while drawing mode is on, so keeping it
+  // stable removes the transition window where macOS WindowServer
+  // occasionally fails to honour the new rule. Body cursor toggles
+  // separately to restore the OS cursor when the user is not drawing.
   const overlayWin = await getOverlayWindow();
 
   const mainWin = await getMainWindow();
@@ -124,5 +133,24 @@ test('canvas cursor is default when not in drawing mode', async () => {
   const cursor = await overlayWin.locator('.overlay-canvas').evaluate(
     el => window.getComputedStyle(el).cursor,
   );
-  expect(cursor).toBe('default');
+  expect(cursor).toBe('none');
+});
+
+test('body cursor is restored when drawing mode exits (OS cursor returns)', async () => {
+  const mainWin = await getMainWindow();
+  const overlayWin = await getOverlayWindow();
+
+  // Enter then exit so the body cursor toggles through the on→off path.
+  await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
+  await overlayWin.waitForTimeout(150);
+  await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));
+  await overlayWin.waitForTimeout(150);
+
+  const bodyCursor = await overlayWin.evaluate(
+    () => document.body.style.cursor,
+  );
+  // Body inline cursor MUST be cleared on exit so macOS shows the OS
+  // cursor again outside drawing mode. Holding 'none' here would hide
+  // the OS cursor for the whole non-drawing session.
+  expect(bodyCursor).toBe('');
 });

@@ -21,8 +21,11 @@ npm install @openpen/module-api zod
 import { defineModule, z } from '@openpen/module-api'
 
 export default defineModule({
-  id: 'my-module',
-  name: { en: 'My Module', 'zh-TW': '我的模組' },
+  id: '@scope/my-module',
+  version: '0.1.0',
+  metadata: {
+    name: { en: 'My Module', 'zh-Hant': '我的模組' },
+  },
   settingsSchema: z.object({
     enabled: z.boolean().default(true),
   }),
@@ -44,9 +47,13 @@ export default defineModule({
 | Method | Description |
 |--------|-------------|
 | `ctx.getSettings<T>()` | Read this module's parsed settings (requires `settingsSchema` to be declared) |
+| `ctx.updateSettings(patch)` | Persist a partial update to this module's settings |
+| `ctx.onSettingsChange<T>(cb)` | Subscribe to settings changes; returns an unsubscribe function |
 | `ctx.callMain(action, payload?)` | Call this module's main-side handler |
 | `ctx.onDispose(fn)` | Register a cleanup callback (called in reverse order when the module is unloaded) |
 | `ctx.notify(payload)` | Show a short-lived toast in the overlay window; returns `NotifyHandle` for early `dismiss()` |
+| `ctx.t(key, params?)` | Resolve an i18n key against this module's `contributes.locales` for the current host locale |
+| `ctx.locale` | The host's current locale (e.g. `'en'`, `'zh-Hant'`) |
 
 ```typescript
 import { defineModule } from '@openpen/module-api'

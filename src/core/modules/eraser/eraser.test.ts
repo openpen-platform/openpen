@@ -17,11 +17,27 @@ describe('eraser module', () => {
     expect(typeof tool?.renderStroke).toBe('function')
   })
 
-  it('contributes a crosshair cursor', () => {
+  it('contributes one cursor with the eraser-corner hotspot', () => {
     const cursors = eraser.contributes?.cursors ?? []
     expect(cursors).toHaveLength(1)
     expect(cursors[0].id).toBe('eraser')
-    expect(cursors[0].cursor).toBe('crosshair')
+    const cursor = cursors[0].cursor
+    if (typeof cursor === 'string' || !('svg' in cursor)) {
+      throw new Error('expected SvgCursorSpec')
+    }
+    expect(cursor.svg).toContain('<svg')
+    expect(cursor.hotspot).toEqual({ x: 2, y: 22 })
+  })
+
+  it('exports both static and animated cursor variants', async () => {
+    const { eraserCursor, eraserCursorAnimated } = await import('./cursor')
+    expect(eraserCursor.svg).toContain('<svg')
+    expect(eraserCursor.svg).not.toContain('@keyframes')
+    expect(eraserCursor.hotspot).toEqual({ x: 2, y: 22 })
+
+    expect(eraserCursorAnimated.svg).toContain('<svg')
+    expect(eraserCursorAnimated.svg).toContain('@keyframes')
+    expect(eraserCursorAnimated.hotspot).toEqual({ x: 2, y: 22 })
   })
 
   it('contributes locales with all required eraser keys in en', () => {

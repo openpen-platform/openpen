@@ -145,6 +145,7 @@ interface OpenPenApi {
   // Drawing overlay
   setDrawingMode(enabled: boolean): void
   onDrawingModeChanged(cb: (enabled: boolean) => void): () => void
+  onInteractiveHoverChanged(cb: (hover: boolean) => void): () => void
 
   // Settings
   getSettings(): Promise<AppSettings & { effectiveTheme: 'light' | 'dark' }>

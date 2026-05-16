@@ -9,7 +9,14 @@
  */
 import { defineModule } from '@openpen/module-api'
 import { createFreehandTool } from './freehand-tool'
+import { freehandCursor, freehandCursorAnimated } from './cursor'
 import FreehandToolButton from './FreehandToolButton.vue'
+
+// Honour OS-level reduced-motion preference at module load.
+const reducedMotion =
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 import en from './locales/en.json'
 import zhHant from './locales/zh-Hant.json'
 import zhHans from './locales/zh-Hans.json'
@@ -30,7 +37,10 @@ export default defineModule({
         ...tool,
       },
     ],
-    cursors: [{ id: 'freehand', cursor: 'crosshair' }],
+    cursors: [{
+      id: 'freehand',
+      cursor: reducedMotion ? freehandCursor : freehandCursorAnimated,
+    }],
     controlBar: [
       {
         id: 'freehand',

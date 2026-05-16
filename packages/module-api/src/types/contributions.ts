@@ -161,10 +161,45 @@ export interface SettingsPanelContribution {
   component: Component
 }
 
+/** Hotspot offset in CSS pixels relative to the cursor image's top-left. */
+export interface Hotspot {
+  x: number
+  y: number
+}
+
+/**
+ * Vector cursor: inline SVG markup OR a plugin-internal relative path
+ * to a `.svg` file. URL-shaped strings, absolute paths, and `..` segments
+ * are rejected at contribution-validation time.
+ */
+export interface SvgCursorSpec {
+  svg: string
+  hotspot?: Hotspot
+  /** CSS keyword fallback for legacy / non-overlay contexts. Defaults to `'crosshair'`. */
+  fallback?: string
+}
+
+/**
+ * Raster cursor: plugin-internal relative path to a `.png` file. Inline
+ * form is not supported — PNG payload comes through `openpen-plugin://`.
+ */
+export interface PngCursorSpec {
+  png: string
+  hotspot?: Hotspot
+  fallback?: string
+}
+
+/**
+ * Cursor specification. The legacy `string` form must be one of the
+ * whitelisted CSS keywords (see `SAFE_CURSOR_KEYWORDS` in cursors.ts);
+ * any string containing `url(` / `image-set(` / `-webkit-image-set(` is
+ * rejected to keep the asset trust boundary closed.
+ */
+export type CursorSpec = string | SvgCursorSpec | PngCursorSpec
+
 export interface CursorContribution {
   id: string
-  /** CSS cursor value or a data URL. */
-  cursor: string
+  cursor: CursorSpec
 }
 
 export interface StatusContribution {

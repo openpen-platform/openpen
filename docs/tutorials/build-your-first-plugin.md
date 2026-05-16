@@ -137,6 +137,161 @@ contributes: {
 id-format checks at build time, so errors surface in your repo before the host
 ever sees the plugin.
 
+### Worked example — a drawing tool + custom cursor
+
+The starter scaffold contributes a control-bar button. To make it a real
+drawing tool that draws on the canvas, add `tools` + `cursors`. The
+critical Tool contract details: **all three pointer handlers receive the
+live `canvasCtx` as the first argument**; tools draw incrementally during
+`onPointerMove`; only `onPointerUp` returns a `Stroke` (the others return
+`void`); the returned `Stroke` MUST carry `id` (unique) and `tool`
+(matching `ToolContribution.id`).
+
+```ts
+// src/highlighter-tool.ts
+import type { Tool, Stroke, Point, StrokeStyle } from '@openpen/module-api'
+
+const HIGHLIGHTER_ALPHA = 0.35
+const HIGHLIGHTER_WIDTH_MUL = 3
+
+export function createHighlighterTool(toolId: string): Tool {
+  let points: Point[] = []
+  let style: StrokeStyle | null = null
+  let prev: Point | null = null
+
+  function applyStyle(ctx: CanvasRenderingContext2D, s: StrokeStyle): void {
+    ctx.globalAlpha = HIGHLIGHTER_ALPHA
+    ctx.strokeStyle =
+      typeof s.color === 'string' ? s.color : s.color.from
+    ctx.lineWidth = s.lineWidth * HIGHLIGHTER_WIDTH_MUL
+    ctx.lineCap = 'square'
+    ctx.lineJoin = 'miter'
+  }
+
+  return {
+    needsPreviewRedraw: false,
+
+    onPointerDown(_canvasCtx, point, s) {
+      points = [point]
+      style = { ...s }
+      prev = point
+    },
+
+    onPointerMove(canvasCtx, point) {
+      if (!style || !prev) return
+      points.push(point)
+      canvasCtx.save()
+      applyStyle(canvasCtx, style)
+      canvasCtx.beginPath()
+      canvasCtx.moveTo(prev.x, prev.y)
+      canvasCtx.lineTo(point.x, point.y)
+      canvasCtx.stroke()
+      canvasCtx.restore()
+      prev = point
+    },
+
+    onPointerUp(_canvasCtx, point): Stroke | null {
+      if (!style) return null
+      points.push(point)
+      const stroke: Stroke = {
+        id: crypto.randomUUID(),
+        tool: toolId,
+        points: [...points],
+        style: { ...style },
+        // tool-specific extras: survive into renderStroke for history replay
+        alpha: HIGHLIGHTER_ALPHA,
+        widthMul: HIGHLIGHTER_WIDTH_MUL,
+      }
+      points = []
+      style = null
+      prev = null
+      return stroke
+    },
+  }
+}
+
+export function renderHighlighter(
+  canvasCtx: CanvasRenderingContext2D,
+  stroke: Stroke,
+): void {
+  if (stroke.points.length < 2) return
+  const alpha = (stroke.alpha as number) ?? HIGHLIGHTER_ALPHA
+  const widthMul = (stroke.widthMul as number) ?? HIGHLIGHTER_WIDTH_MUL
+  canvasCtx.save()
+  canvasCtx.globalAlpha = alpha
+  canvasCtx.strokeStyle =
+    typeof stroke.style.color === 'string'
+      ? stroke.style.color
+      : stroke.style.color.from
+  canvasCtx.lineWidth = stroke.style.lineWidth * widthMul
+  canvasCtx.lineCap = 'square'
+  canvasCtx.lineJoin = 'miter'
+  canvasCtx.beginPath()
+  canvasCtx.moveTo(stroke.points[0].x, stroke.points[0].y)
+  for (let i = 1; i < stroke.points.length; i++) {
+    canvasCtx.lineTo(stroke.points[i].x, stroke.points[i].y)
+  }
+  canvasCtx.stroke()
+  canvasCtx.restore()
+}
+```
+
+```ts
+// src/module-id.ts — single source of truth for the plugin's id
+export const MODULE_ID = '@scope/highlighter'
+```
+
+```ts
+// src/index.ts
+import { defineModule } from '@openpen/module-api'
+import { MODULE_ID } from './module-id'
+import { createHighlighterTool, renderHighlighter } from './highlighter-tool'
+
+const TOOL_ID = 'highlighter'
+
+const highlighterCursor = {
+  svg:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">' +
+      // chunky marker body — fill follows the user's stroke color via the
+      // --openpen-cursor-accent convention.
+      '<rect x="6" y="3" width="9" height="14" rx="1.5" ' +
+        'fill="var(--openpen-cursor-accent, #ffeb3b)" stroke="#111" stroke-width="1.2"/>' +
+      '<polygon points="6,17 15,17 12,22 9,22" fill="#111"/>' +
+    '</svg>',
+  hotspot: { x: 10, y: 22 },     // bottom tip
+  fallback: 'crosshair' as const,
+}
+
+export default defineModule({
+  id: MODULE_ID,
+  version: '0.1.0',
+  metadata: { name: { en: 'Highlighter' } },
+  contributes: {
+    tools: [{
+      id: TOOL_ID,
+      label: { en: 'Highlighter' },
+      icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="9" height="14" rx="1"/><polygon points="6,17 15,17 12,22 9,22"/></svg>',
+      ...createHighlighterTool(TOOL_ID),
+      renderStroke: renderHighlighter,
+    }],
+    cursors: [{
+      id: TOOL_ID,                      // MUST match the tool's id
+      cursor: highlighterCursor,
+    }],
+  },
+})
+```
+
+Things to notice:
+
+1. **The Tool contract** — `onPointerDown(canvasCtx, point, style)` initialises state but returns `void`. `onPointerMove(canvasCtx, point)` draws incrementally on the live `canvasCtx`. `onPointerUp(canvasCtx, point)` is the only handler that returns a `Stroke`; that returned object is what the host stores for undo/redo.
+2. **Stroke is a value object** — it carries `id` (unique, `crypto.randomUUID()` is the conventional source) + `tool` (matches `ToolContribution.id`) + the points + the style + any tool-specific extras you want preserved for history replay.
+3. **`renderStroke` is the history-replay hook** — when the user undoes / redoes / resizes, the canvas engine replays all strokes by calling `renderStroke(canvasCtx, stroke)` for each. Tools that draw with effects beyond a default polyline (alpha, custom width, gradient handling) MUST provide it; tools that draw plain polylines can omit it.
+4. **`StrokeColor` is a union** — `string | { type: 'linear'; from: string; to: string }`. Custom renderers MUST handle both; the snippet above uses `color.from` as the single-colour fallback for the gradient case.
+5. **Cursor-to-tool linkage** — `CursorContribution.id === ToolContribution.id`. Match the ids exactly or the host falls back to its default cursor.
+
+Build, install, and the new tool appears in the control bar when the host loads. See [reference/slots.md](../reference/slots.md) for the complete `ToolContribution` + `Tool` + `Stroke` + `StrokeStyle` + `CursorContribution` interfaces and the `--openpen-cursor-accent` theming convention.
+
 ---
 
 ## 4. Add a `setup` hook with `ctx.t()` and `ctx.notify()`

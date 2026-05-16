@@ -25,6 +25,13 @@ import {
 } from '@openpen/module-api'
 import { createShapeTool, renderShapeStroke, type ShapeKind } from './shape-tool'
 import { currentShape, filled } from './shape-state'
+import { shapeCursor, shapeCursorAnimated } from './cursor'
+
+// Honour OS-level reduced-motion preference at module load.
+const reducedMotion =
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 import { on as eventBusOn } from '@openpen/module-api/host'
 import en from './locales/en.json'
 import zhHant from './locales/zh-Hant.json'
@@ -100,7 +107,10 @@ export default defineModule({
       },
     ],
     shapes: builtInShapes,
-    cursors: [{ id: 'shape', cursor: 'crosshair' }],
+    cursors: [{
+      id: 'shape',
+      cursor: reducedMotion ? shapeCursor : shapeCursorAnimated,
+    }],
     controlBar: [
       {
         id: 'shape',

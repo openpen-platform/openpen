@@ -267,4 +267,80 @@ describe('module-loader — loadModules', () => {
     await loadModules({ modules: [m], hostVersion: HOST })
     expect(setup).not.toHaveBeenCalled()
   })
+
+  describe('cursor contribution sanitisation + post-registration immutability', () => {
+    it('valid + invalid cursors: valid registers, invalid drops with diagnostic', async () => {
+      const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const m = defineModule({
+        id: '@test/cursors',
+        version: '1.0.0',
+        contributes: {
+          tools: [{ id: 'tool-1', ...noopTool }],
+          cursors: [
+            { id: 'good', cursor: 'crosshair' },
+            { id: 'bad-keyword', cursor: 'something-funky' },
+            { id: 'bad-url', cursor: 'url("evil.png"), pointer' },
+            { id: 'good-svg', cursor: { svg: '<svg><circle r="1"/></svg>' } },
+          ],
+        },
+      })
+      await loadModules({ modules: [m], hostVersion: HOST })
+
+      const cursors = getSlotEntries<{ id: string }>('ui.cursors').value
+      expect(cursors.map((e) => e.contribution.id).sort()).toEqual(['good', 'good-svg'])
+      // Sibling tool contribution is unaffected.
+      expect(getSlotEntries('canvas.tools').value).toHaveLength(1)
+      expect(consoleWarn.mock.calls.flat().join(' ')).toMatch(/bad-keyword.*R2/)
+      expect(consoleWarn.mock.calls.flat().join(' ')).toMatch(/bad-url.*R12/)
+      consoleWarn.mockRestore()
+    })
+
+    it('built-in modules cannot register path-form cursors (R7 / R10)', async () => {
+      const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const m = defineModule({
+        id: '@openpen/laser',
+        contributes: {
+          cursors: [
+            { id: 'inline', cursor: { svg: '<svg><circle r="1"/></svg>' } },
+            { id: 'path', cursor: { svg: 'assets/x.svg' } },
+            { id: 'png', cursor: { png: 'assets/x.png' } },
+          ],
+        },
+      })
+      await loadModules({
+        modules: [m],
+        hostVersion: HOST,
+        builtInModuleIds: new Set(['@openpen/laser']),
+      })
+
+      const cursors = getSlotEntries<{ id: string }>('ui.cursors').value
+      expect(cursors.map((e) => e.contribution.id)).toEqual(['inline'])
+      const warnings = consoleWarn.mock.calls.flat().join(' ')
+      expect(warnings).toMatch(/path.*R7/)
+      expect(warnings).toMatch(/png.*R10/)
+      consoleWarn.mockRestore()
+    })
+
+    it('post-registration mutation of the source module cannot alter the stored cursor', async () => {
+      const sourceCursors: Array<{ id: string; cursor: { svg: string; hotspot: { x: number; y: number } } }> = [
+        { id: 't1', cursor: { svg: '<svg><circle r="1"/></svg>', hotspot: { x: 0, y: 0 } } },
+      ]
+      const m = defineModule({
+        id: '@vendor/evil',
+        version: '1.0.0',
+        contributes: { cursors: sourceCursors },
+      })
+      await loadModules({ modules: [m], hostVersion: HOST })
+
+      // Plugin-side mutation after registration: try to swap the safe
+      // payload for a malicious one (marketplace-audit-evasion attack).
+      sourceCursors[0].cursor.svg = '<svg onload="evil()"/>'
+      sourceCursors[0].cursor.hotspot.x = 999
+
+      const stored = getSlotEntries<typeof sourceCursors[0]>('ui.cursors').value[0].contribution
+      expect(stored.cursor.svg).toBe('<svg><circle r="1"/></svg>')
+      expect(stored.cursor.hotspot.x).toBe(0)
+      expect(Object.isFrozen(stored.cursor)).toBe(true)
+    })
+  })
 })

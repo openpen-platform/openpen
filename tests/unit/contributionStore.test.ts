@@ -119,4 +119,60 @@ describe('contribution-store', () => {
       expect(getSlotEntries('ui.control-bar').value).toHaveLength(0)
     })
   })
+
+  describe('ui.cursors deep-clone + freeze on registration', () => {
+    it('does NOT clone contributions in other slots', () => {
+      // Non-cursor slots store contributions by reference; mutating the
+      // source object visibly affects the stored view. (The store wraps
+      // the slot ref via Vue `readonly`, so identity comparison through
+      // the proxy is not meaningful — verify via the source instead.)
+      const tool: { id: string; label: string } = { id: 't1', label: 'before' }
+      registerContribution('canvas.tools', 'mod-a', tool)
+      tool.label = 'after'
+      const stored = getSlotEntries<typeof tool>('canvas.tools').value[0].contribution
+      expect(stored.label).toBe('after')
+    })
+
+    it('clones cursor contributions so post-store mutation of source does not leak', () => {
+      const source = { id: 't1', cursor: { svg: '<svg><circle r="1"/></svg>', hotspot: { x: 0, y: 0 } } }
+      registerContribution('ui.cursors', 'mod-a', source)
+      // Plugin-side mutation after registration
+      source.cursor.svg = '<svg onload="evil()"/>'
+      source.cursor.hotspot.x = 99
+      const stored = getSlotEntries<typeof source>('ui.cursors').value[0].contribution
+      expect(stored).not.toBe(source)
+      expect(stored.cursor.svg).toBe('<svg><circle r="1"/></svg>')
+      expect(stored.cursor.hotspot.x).toBe(0)
+    })
+
+    it('freezes the stored cursor contribution and its nested objects', () => {
+      const source = { id: 't1', cursor: { svg: '<svg/>', hotspot: { x: 5, y: 6 } } }
+      registerContribution('ui.cursors', 'mod-a', source)
+      const stored = getSlotEntries<typeof source>('ui.cursors').value[0].contribution
+      expect(Object.isFrozen(stored)).toBe(true)
+      expect(Object.isFrozen(stored.cursor)).toBe(true)
+      expect(Object.isFrozen(stored.cursor.hotspot)).toBe(true)
+    })
+
+    it('rejects direct mutation of the stored cursor snapshot (strict mode throws)', () => {
+      'use strict'
+      const source = { id: 't1', cursor: { svg: '<svg/>' } as { svg: string } }
+      registerContribution('ui.cursors', 'mod-a', source)
+      const stored = getSlotEntries<typeof source>('ui.cursors').value[0].contribution
+      // Strict mode in the test file context: assigning to a frozen object throws.
+      expect(() => {
+        ;(stored.cursor as { svg: string }).svg = '<svg onload="evil()"/>'
+      }).toThrow(TypeError)
+      expect(stored.cursor.svg).toBe('<svg/>')
+    })
+
+    it('clones cursors that use the legacy string form too', () => {
+      const source = { id: 't1', cursor: 'crosshair' as const }
+      registerContribution('ui.cursors', 'mod-a', source)
+      const stored = getSlotEntries<typeof source>('ui.cursors').value[0].contribution
+      expect(stored).not.toBe(source)
+      expect(stored.cursor).toBe('crosshair')
+      expect(Object.isFrozen(stored)).toBe(true)
+    })
+  })
 })

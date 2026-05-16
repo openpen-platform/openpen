@@ -18,6 +18,127 @@ Modules use ergonomic camelCase keys on `contributes` (`historyCommands`, `theme
 - **Type**: `ToolContribution[]`
 - **Purpose**: Drawing tools driven by pointer events (`onPointerDown` / `onPointerMove` / `onPointerUp`).
 
+#### Contribution shape
+
+```ts
+interface ToolContribution extends Tool {
+  /** Tool id. Cursor contributions reference this via `CursorContribution.id`. */
+  id: string
+  /** Human-readable label for tooltips / a11y. */
+  label?: string | LocaleMap
+  /**
+   * Inline SVG markup for the tool's control-bar button icon. Host
+   * renders via `v-html`. Plugins providing a custom Vue button
+   * component (via `ui.control-bar`) can omit this.
+   */
+  icon?: string
+  /**
+   * Custom redraw renderer. Called on history replay (undo / redo,
+   * canvas restoration) with each Stroke this tool produced. Omit
+   * for polyline-style tools — the canvas engine falls back to a
+   * default polyline render through `stroke.points`.
+   */
+  renderStroke?: (canvasCtx: CanvasRenderingContext2D, stroke: Stroke) => void
+}
+
+interface Tool {
+  /**
+   * Pointer pressed. Tools that draw incrementally (most do) record
+   * the first point here. `canvasCtx` is the live canvas — tools MAY
+   * draw immediately (e.g. a dot at the press point) but must NOT
+   * return the Stroke yet.
+   */
+  onPointerDown(
+    canvasCtx: CanvasRenderingContext2D,
+    point: Point,
+    style: StrokeStyle,
+  ): void
+  /**
+   * Pointer moved with the button held. Most tools draw the next
+   * segment of the stroke here using the live `canvasCtx`. Return
+   * `true` to request a full canvas redraw (e.g. a stroke-eraser
+   * just deleted an existing stroke and the canvas state changed).
+   */
+  onPointerMove(
+    canvasCtx: CanvasRenderingContext2D,
+    point: Point,
+    modifiers?: PointerModifiers,
+  ): void | boolean
+  /**
+   * Pointer released. Return the completed Stroke for the host to
+   * push into the history store, or `null` to discard it (e.g. an
+   * eraser tool that does not accumulate persistent state).
+   */
+  onPointerUp(
+    canvasCtx: CanvasRenderingContext2D,
+    point: Point,
+    modifiers?: PointerModifiers,
+  ): Stroke | null
+  /**
+   * When `true`, the canvas engine clears + redraws all previous
+   * strokes on every `onPointerMove` before the tool draws this
+   * frame's segment. Use for tools that show a live preview that
+   * mutates with pointer position (e.g. a rectangle tool dragging
+   * the opposite corner). Default `false` — most tools draw
+   * incrementally and don't need this.
+   */
+  needsPreviewRedraw?: boolean
+  /**
+   * Optional companion to `needsPreviewRedraw`. Called every
+   * pointermove AFTER the canvas has been cleared + redrawn with
+   * historical strokes, just before `onPointerMove`. Use to draw
+   * an in-progress preview that does not persist into history.
+   */
+  renderPreview?(canvasCtx: CanvasRenderingContext2D): void
+}
+
+interface Stroke {
+  /** Globally unique id. `crypto.randomUUID()` is the conventional source. */
+  id: string
+  /** MUST match the `ToolContribution.id` that produced this stroke. */
+  tool: string
+  points: Point[]
+  style: StrokeStyle
+  /**
+   * Tool-specific state. Tools MAY store arbitrary keys during the
+   * pointer handlers; those keys survive into `renderStroke`.
+   * TypeScript cannot infer the shape — cast at the read site.
+   */
+  [extraKey: string]: unknown
+}
+
+interface Point { x: number; y: number }
+
+type StrokeColor =
+  | string
+  | { type: 'linear'; from: string; to: string }
+
+interface StrokeStyle {
+  /**
+   * Solid color or linear gradient. Tools that render the stroke
+   * themselves MUST handle both branches — pick `color.from` for
+   * the gradient start when CanvasRenderingContext2D needs a single
+   * colour string.
+   */
+  color: StrokeColor
+  lineWidth: number
+  lineCap: CanvasLineCap
+  lineJoin: CanvasLineJoin
+}
+
+interface PointerModifiers {
+  shiftKey?: boolean
+}
+```
+
+All of these types are re-exported from `@openpen/module-api` for direct import:
+
+```ts
+import type { Tool, Stroke, Point, StrokeStyle, StrokeColor, PointerModifiers } from '@openpen/module-api'
+```
+
+See `packages/plugin-starter/src/demo-tool.ts` for a complete, type-checked reference implementation.
+
 ### `canvas.shapes` — ✅ available
 - **Contribution key**: `shapes`
 - **Type**: `ShapeContribution[]`
@@ -110,7 +231,67 @@ interface SettingsPanelContribution {
 ### `ui.cursors` — ✅ available
 - **Contribution key**: `cursors`
 - **Type**: `CursorContribution[]`
-- **Purpose**: Drawing-mode cursor styles (CSS cursor strings or data URLs). The active tool selects which cursor to apply.
+- **Purpose**: Per-tool DOM cursors rendered while drawing mode is active. The host hides the OS cursor (`cursor: none`) and mounts the matching cursor SVG / PNG as a follow-the-mouse DOM element — the OS compositor is bypassed entirely, so cursors render reliably on macOS transparent overlays.
+
+#### Contribution shape
+
+```ts
+interface CursorContribution {
+  /** MUST match the `id` of the `ToolContribution` this cursor activates for. */
+  id: string
+  cursor: CursorSpec
+}
+
+type CursorSpec = string | SvgCursorSpec | PngCursorSpec
+
+interface SvgCursorSpec {
+  svg: string                  // inline `<svg>...</svg>` OR plugin-relative path
+  hotspot?: { x: number; y: number }   // default `{x:0, y:0}`
+  fallback?: string            // CSS keyword fallback, default `'crosshair'`
+}
+
+interface PngCursorSpec {
+  png: string                  // plugin-relative path; no inline form
+  hotspot?: { x: number; y: number }
+  fallback?: string
+}
+```
+
+**Linkage rule (load-bearing).** The `id` field on `CursorContribution` MUST equal the `id` of the `ToolContribution` (in `canvas.tools`) you want this cursor to activate for. The host resolves cursor → tool by exact id match on every tool change. An `id` that does not match any registered tool is harmless but inert (the host falls back to its default cursor for that tool).
+
+#### DX patterns
+
+1. **CSS keyword (legacy)** — `{ id, cursor: 'crosshair' }`. Accepted only for the 32 W3C cursor keywords; the host renders the default DOM cursor in this case (the keyword itself is never routed to CSS).
+2. **Inline SVG** — `{ id, cursor: { svg: '<svg>…</svg>', hotspot: { x, y } } }`. The host runs the markup through DOMPurify inside `compileCursor()` before mounting via `v-html`.
+3. **Vite `?raw` import** — `import laserSvg from './laser.svg?raw'` then `{ svg: laserSvg, hotspot: … }`. Same as inline; build-time inlines the file content.
+4. **Relative path** — `{ svg: 'assets/laser.svg' }` or `{ png: 'assets/stamp.png' }`. The host resolves to `openpen-plugin://<hostname>/<path>` and fetches inside `compileCursor()` at mount time. SVG paths go through DOMPurify; PNG paths are wrapped in an `<img>` (raster is inert in DOM context).
+
+URL forms (`http://`, `https://`, `data:`, `file://`, `openpen-plugin://`), absolute paths, and `..` traversal are rejected at registration.
+
+#### Theming with the current stroke color
+
+The host exposes the active stroke color as a CSS custom property on `document.documentElement`:
+
+```
+--openpen-cursor-accent
+```
+
+Cursor SVGs can reference it in fill / stroke attributes to follow the user's color pick:
+
+```html
+<circle fill="var(--openpen-cursor-accent, #818cf8)" ... />
+<line stroke="var(--openpen-cursor-accent, #818cf8)" ... />
+```
+
+When the user picks a gradient, the variable resolves to the gradient's `from` endpoint (cursors only have one accent slot). The fallback (second `var()` argument) covers the brief window before the first stroke-style event fires — pick a sensible default that matches your design.
+
+This is opt-in: cursors that hardcode a fill color stay independent of the user's pick. The built-in `freehand`, `line`, and `shape` cursors use this convention; `eraser` (dust is neutral grey) and `stroke-eraser` (red+indigo combo signals "delete whole stroke") intentionally do not.
+
+#### Safety contract (what plugin authors should know)
+
+- Embedded `<script>`, `onload=`, `onclick=`, `<foreignObject>`, and external `<image href>` / `<use href>` are stripped by DOMPurify before any markup reaches `v-html`. Sanitisation runs inside `compileCursor()` at the moment the cursor is mounted (when the active tool changes) — not at registration. Plugins authored against the public API never need to call DOMPurify themselves.
+- At registration the host normalises every cursor contribution to a strict allowlist (only `id`, `cursor.svg | cursor.png`, `cursor.hotspot`, `cursor.fallback` pass through) and stores an **immutable frozen snapshot** on its side. Mutating `myModule.contributes.cursors[0].cursor` from `setup()` succeeds on the plugin's own copy but has no effect on what the host renders — the host reads from its own snapshot. The only way to change the rendered cursor is to ship a new module version.
+- The legacy `cursor: string` form rejects any value containing `url(`, `image-set(`, `-webkit-image-set(`, `javascript:`, or `expression(`.
 
 ### `ui.status` — ✅ available
 - **Contribution key**: `status`

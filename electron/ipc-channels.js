@@ -133,6 +133,18 @@ export const LOG = {
   RECORD_ERROR: 'log:record-error',
 }
 
+/** Cross-window cursor coordination. The main window has a passthrough
+ *  guard that flips setIgnoreMouseEvents(false) when the pointer enters
+ *  an interactive UI element. On Windows that flip stops pointermove
+ *  delivery to the overlay window's renderer, so the DOM cursor freezes
+ *  at the last position. Main process relays the toggle to the overlay
+ *  renderer, which folds it into DOM-cursor visibility. */
+export const CURSOR = {
+  /** main → overlay (broadcast): main window's pointer entered/left an
+   *  interactive element. Overlay hides the DOM cursor while true. */
+  INTERACTIVE_HOVER_CHANGED: 'cursor:interactive-hover-changed',
+}
+
 /** Corruption diagnostics (sidecar diagnostics.json). */
 export const DIAGNOSTICS = {
   /** renderer → main (invoke): get current diagnostics state snapshot. */

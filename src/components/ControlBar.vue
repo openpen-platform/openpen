@@ -480,6 +480,8 @@ function onVisibilityChange() {
 
 let passthroughIgnoring = true;
 
+const IS_WIN_HOST = /Windows/.test(navigator.userAgent);
+
 function onPassthroughMove(e: MouseEvent) {
   const el = document.elementFromPoint(e.clientX, e.clientY);
   const shouldIgnore = !el?.closest(
@@ -488,6 +490,16 @@ function onPassthroughMove(e: MouseEvent) {
   if (shouldIgnore !== passthroughIgnoring) {
     passthroughIgnoring = shouldIgnore;
     window.openPenApi?.setIgnoreMouseEvents(shouldIgnore);
+    // While drawing on Win, mirror passthrough state into the body
+    // cursor so the OS cursor is hidden over the transparent control-
+    // bar area (cursor would otherwise leak through the topmost HWND)
+    // but visible over any interactive UI element. Without this,
+    // popover surfaces inherit body cursor:none and only children
+    // with an explicit cursor declaration (e.g. the colour-picker
+    // hue wheel) show a cursor.
+    if (IS_WIN_HOST && isDrawingMode.value) {
+      document.body.style.cursor = shouldIgnore ? 'none' : '';
+    }
   }
 }
 
@@ -528,6 +540,27 @@ onMounted(async () => {
 
   unsubDrawingMode = window.openPenApi?.onDrawingModeChanged((enabled) => {
     isDrawingMode.value = enabled;
+    // Windows evaluates the OS cursor on the topmost HWND under the
+    // pointer. The control-bar window covers the full workArea as a
+    // transparent always-on-top window, and the overlay 'focus' →
+    // mainWin.moveTop() z-order recovery in window-manager keeps the
+    // control bar above the overlay during drawing mode. Without this
+    // rule, the default OS arrow leaks through the transparent area of
+    // the control bar whenever the user moves the pointer — visible
+    // alongside the DOM cursor that renders in the overlay window.
+    // macOS routes the OS cursor through NSCursor + webContents focus,
+    // so the overlay's `cursor: none` already suppresses it there.
+    //
+    // Initial state on entry mirrors the current passthrough state
+    // (hidden over transparent area, shown over interactive UI); the
+    // passthrough-move handler refines on every subsequent transition.
+    if (IS_WIN_HOST) {
+      if (enabled) {
+        document.body.style.cursor = passthroughIgnoring ? 'none' : '';
+      } else {
+        document.body.style.cursor = '';
+      }
+    }
   }) ?? null;
 
   unsubRequestQuit = window.openPenApi?.onRequestQuit(() => {

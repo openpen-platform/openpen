@@ -71,6 +71,24 @@ export default defineModule({
         renderStroke: renderDemoStroke,
       },
     ],
+    // Custom DOM cursor for the demo tool. The host runs this SVG through
+    // DOMPurify at registration and mounts it as a follow-the-mouse div
+    // while drawing mode is active — script tags / on* handlers / external
+    // refs are stripped before any markup reaches v-html.
+    cursors: [
+      {
+        id: 'openpen-plugin-starter.demo',
+        cursor: {
+          svg:
+            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">' +
+              '<circle cx="12" cy="12" r="7" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5"/>' +
+              '<circle cx="12" cy="12" r="2.5" fill="#7c3aed"/>' +
+              '</svg>',
+          hotspot: { x: 12, y: 12 },
+          fallback: 'crosshair',
+        },
+      },
+    ],
     controlBar: [
       {
         id: 'starter-popover',

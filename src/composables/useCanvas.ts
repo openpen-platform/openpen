@@ -15,7 +15,7 @@
  * the trigger source.
  */
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import type { CursorContribution, ToolContribution } from '@openpen/module-api'
+import type { ToolContribution } from '@openpen/module-api'
 import { CanvasEngine } from '../services/canvas-engine'
 import { canUndo, canRedo } from '../services/stroke-store'
 import type { StrokeStyle } from '../types/tool-types'
@@ -28,8 +28,6 @@ const DEFAULT_STYLE: StrokeStyle = {
   lineCap: 'round',
   lineJoin: 'round',
 }
-
-const DEFAULT_DRAWING_CURSOR = 'crosshair'
 
 const currentStyle: StrokeStyle = { ...DEFAULT_STYLE }
 let currentToolConfig: { tool: string; shapeType?: string; filled?: boolean; eraserMode?: 'brush' | 'stroke' } = { tool: 'freehand' }
@@ -56,22 +54,25 @@ export function useCanvas() {
     )?.contribution
   }
 
-  function findCursorById(toolId: string): string | undefined {
-    return getSlotEntries<CursorContribution>('ui.cursors').value.find(
-      (e) => e.contribution.id === toolId
-    )?.contribution.cursor
-  }
-
+  // Hide strategy splits across two surfaces.
+  //
+  // Canvas: `cursor: none` is held *constant* — the canvas is the
+  // primary surface macOS evaluates while drawing mode is on
+  // (`pointer-events: auto`), so keeping the rule stable removes the
+  // transition window where macOS WindowServer occasionally fails to
+  // honour the new rule and the OS cursor stays visible.
+  //
+  // Body: toggled. When drawing mode is off the overlay enters
+  // passthrough but the window itself is still visually on top —
+  // macOS still consults the overlay's body cursor for the area not
+  // covered by the now-pointer-events:none canvas. Holding body
+  // `cursor: none` permanently would hide the OS cursor every time
+  // the user is not actively drawing.
   function applyCursor(): void {
     const canvas = canvasRef.value
     if (!canvas) return
-    if (!isDrawingMode.value) {
-      canvas.style.cursor = ''
-      return
-    }
-    canvas.style.cursor = activeToolId.value
-      ? findCursorById(activeToolId.value) ?? DEFAULT_DRAWING_CURSOR
-      : DEFAULT_DRAWING_CURSOR
+    canvas.style.cursor = 'none'
+    document.body.style.cursor = isDrawingMode.value ? 'none' : ''
   }
 
   function syncActiveTool(): void {

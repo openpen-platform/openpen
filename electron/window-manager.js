@@ -11,7 +11,7 @@
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { WINDOW, OVERLAY, CONTROL_BAR, HISTORY } from './ipc-channels.js';
+import { WINDOW, OVERLAY, CONTROL_BAR, HISTORY, CURSOR } from './ipc-channels.js';
 import { getAppConfig } from './config-loader.js';
 import { sendModuleManifests } from './module-manifest-loader.js';
 import { suspendShortcuts, resumeShortcuts } from './shortcut-manager.js';
@@ -42,6 +42,20 @@ let activeDisplayId = -1;
 
 /** @type {boolean} Whether drawing mode is currently active. */
 let drawingMode = false;
+/** 10Hz timer that re-asserts overlay webContents focus while drawing
+ *  mode is on, so macOS WindowServer keeps honouring `cursor: none`
+ *  through real pointer events. Cleared on every drawing-mode toggle. */
+let cursorFocusRefreshTimer = null;
+
+const IS_WIN = process.platform === 'win32';
+let winFocusTickCount = 0;
+let winOverlayFocusEventCount = 0;
+let winMainMoveTopCount = 0;
+function winDbg(tag, data) {
+  if (!IS_WIN) return;
+  const ts = Date.now();
+  log.info(`[WIN_CURSOR_DBG] ${tag} t=${ts}`, data ?? '');
+}
 
 /** @type {string} Vite dev-server URL or packaged dist entry. */
 let rendererEntry = '';
@@ -385,10 +399,20 @@ export function createOverlayWindowForDisplay(display) {
   if (process.platform === 'win32' || process.platform === 'linux') {
     win.on('focus', () => {
       if (!drawingMode) return;
+      winOverlayFocusEventCount += 1;
+      winDbg('overlay:focus-event-fired', {
+        displayId: display.id,
+        cumulativeCount: winOverlayFocusEventCount,
+      });
       setImmediate(() => {
         const mainWin = mainWindowsByDisplayId.get(display.id);
         if (mainWin && !mainWin.isDestroyed()) {
           mainWin.moveTop();
+          winMainMoveTopCount += 1;
+          winDbg('main:moveTop-fired (from overlay focus race)', {
+            displayId: display.id,
+            cumulativeMoveTopCount: winMainMoveTopCount,
+          });
         }
       });
     });
@@ -414,9 +438,32 @@ export function toggleDrawingMode() {
  * @param {boolean} enabled
  */
 function setDrawingModeState(enabled) {
+  const prev = drawingMode;
   drawingMode = enabled;
 
   const activeOverlay = overlayWindowsByDisplayId.get(activeDisplayId);
+  const activeMainForLog = mainWindowsByDisplayId.get(activeDisplayId);
+  winDbg('setDrawingModeState:enter', {
+    prev,
+    next: enabled,
+    activeDisplayId,
+    overlayExists: !!(activeOverlay && !activeOverlay.isDestroyed()),
+    overlayFocused: activeOverlay && !activeOverlay.isDestroyed() ? activeOverlay.isFocused() : null,
+    mainExists: !!(activeMainForLog && !activeMainForLog.isDestroyed()),
+    mainFocused: activeMainForLog && !activeMainForLog.isDestroyed() ? activeMainForLog.isFocused() : null,
+  });
+  if (enabled) {
+    winFocusTickCount = 0;
+    winOverlayFocusEventCount = 0;
+    winMainMoveTopCount = 0;
+  }
+
+  // Clear any previous cursor-focus refresh timer; it gets re-armed below
+  // only when entering drawing mode.
+  if (cursorFocusRefreshTimer) {
+    clearInterval(cursorFocusRefreshTimer);
+    cursorFocusRefreshTimer = null;
+  }
 
   if (activeOverlay && !activeOverlay.isDestroyed()) {
     if (drawingMode) {
@@ -431,7 +478,125 @@ function setDrawingModeState(enabled) {
     if (mainWin && !mainWin.isDestroyed()) {
       mainWin.moveTop();
     }
+    // Broadcast before the cursor wake-up burst so the overlay renderer
+    // has already set `cursor: none` on canvas + body by the time the
+    // synthetic mouseMove triggers macOS WindowServer to re-evaluate.
+    // Reverse order has macOS sample the still-default cursor surface
+    // and keep the OS cursor visible.
     activeOverlay.webContents.send(OVERLAY.DRAWING_MODE_CHANGED, drawingMode);
+
+    if (drawingMode) {
+      // Cursor wake-up: focus the web view (renderer-level only — does
+      // NOT steal OS focus from the screen-shared app) and synthesise
+      // a 1-pixel mouseMove followed by a move back to the real cursor
+      // point. macOS WindowServer needs both render focus and a
+      // non-zero-delta pointer event to commit to the cursor:none
+      // surface the renderer just installed.
+      //
+      // Burst fires at three staggered intervals. WindowServer's cursor
+      // re-evaluation cadence is non-deterministic from JS's viewpoint,
+      // and a single burst occasionally lands outside its sampling
+      // window. Three independent shots widen the catch surface from
+      // one ~16ms frame to ~150ms without flooding the renderer's
+      // input pipeline. Each call is idempotent: same position; the
+      // renderer cursor:none is already set, duplicate events just
+      // re-trigger evaluation against the same correct surface.
+      const fireCursorWakeup = (tag) => {
+        if (!drawingMode) return;
+        // Re-resolve the active overlay so multi-display switches that
+        // happen during the 30-180ms burst window route the wake-up to
+        // the right window.
+        const overlay = overlayWindowsByDisplayId.get(activeDisplayId);
+        if (!overlay || overlay.isDestroyed()) return;
+        try {
+          overlay.webContents.focus();
+          const point = screen.getCursorScreenPoint();
+          const bounds = overlay.getBounds();
+          const localX = point.x - bounds.x;
+          const localY = point.y - bounds.y;
+          overlay.webContents.sendInputEvent({
+            type: 'mouseMove',
+            x: localX + 1,
+            y: localY,
+          });
+          overlay.webContents.sendInputEvent({
+            type: 'mouseMove',
+            x: localX,
+            y: localY,
+          });
+          winDbg(`AD-7 burst:${tag} fired`, { localX, localY });
+        } catch (err) {
+          log.warn(`[window-manager] synthetic cursor mouseMove dropped at ${tag}:`, err?.message);
+          winDbg(`AD-7 burst:${tag} THREW`, { error: err?.message });
+        }
+      };
+      setTimeout(() => fireCursorWakeup('30ms'), 30);
+      setTimeout(() => fireCursorWakeup('80ms'), 80);
+      setTimeout(() => fireCursorWakeup('180ms'), 180);
+    } else if (IS_WIN) {
+      // Win exit cursor refresh: the HWND cursor remains at whatever
+      // Chromium last issued via SetCursor (cursor:none from drawing
+      // mode) until Windows fires a fresh WM_SETCURSOR, which only
+      // happens on real pointer movement. Toggling setIgnoreMouseEvents
+      // on the main window flips WS_EX_LAYERED/WS_EX_TRANSPARENT, which
+      // DWM treats as a window-state change and re-evaluates the
+      // cursor. Final state ends at (true, forward:true) — the steady-
+      // state default; the passthrough guard re-syncs to (false) on the
+      // next real mouseMove if the pointer is over an interactive
+      // element. Delay 50ms so the renderer has applied body cursor:''
+      // before the flip.
+      setTimeout(() => {
+        if (drawingMode) return;
+        const mainWin = mainWindowsByDisplayId.get(activeDisplayId);
+        if (!mainWin || mainWin.isDestroyed()) return;
+        try {
+          mainWin.setIgnoreMouseEvents(false);
+          mainWin.setIgnoreMouseEvents(true, { forward: true });
+          winDbg('exit cursor-refresh ignoreMouseEvents-toggle fired');
+        } catch (err) {
+          winDbg('exit cursor-refresh ignoreMouseEvents-toggle THREW', { error: err?.message });
+        }
+      }, 50);
+
+      // Real pointer movement on a macOS overlay causes WindowServer
+      // to re-evaluate cursor via OS-level tracking which ignores the
+      // webview's `cursor: none` unless the webContents is currently
+      // render-focused. Refresh focus at ~10Hz while drawing mode is
+      // on so the next real pointermove still honours the rule.
+      //
+      // Re-resolve the active overlay each tick — `activeDisplayId`
+      // can change mid-session (user drags the ball / bar across
+      // displays), and capturing the entry-time overlay would leave
+      // the new active overlay unrefreshed AND churn focus on the
+      // stale one.
+      cursorFocusRefreshTimer = setInterval(() => {
+        if (!drawingMode) {
+          clearInterval(cursorFocusRefreshTimer);
+          cursorFocusRefreshTimer = null;
+          return;
+        }
+        const overlay = overlayWindowsByDisplayId.get(activeDisplayId);
+        if (!overlay || overlay.isDestroyed()) return;
+        try {
+          overlay.webContents.focus();
+          winFocusTickCount += 1;
+          // Sample every 10th tick (1s cadence) so the log stays readable.
+          // Tick 1 captured explicitly to anchor t=0 since AD-7 burst spans 30-180ms.
+          if (winFocusTickCount === 1 || winFocusTickCount % 10 === 0) {
+            const mainWin = mainWindowsByDisplayId.get(activeDisplayId);
+            winDbg('cursorFocusRefreshTimer:tick', {
+              tickN: winFocusTickCount,
+              overlayFocused: overlay.isFocused(),
+              mainFocused: mainWin && !mainWin.isDestroyed() ? mainWin.isFocused() : null,
+              overlayFocusEventsSoFar: winOverlayFocusEventCount,
+              mainMoveTopsSoFar: winMainMoveTopCount,
+            });
+          }
+        } catch {
+          /* best-effort */
+        }
+      }, 100);
+    }
   }
 
   // Notify the active display's main window (ControlBar.vue visual indicators).
@@ -701,6 +866,22 @@ function registerIpcHandlers() {
       sendingWin.setIgnoreMouseEvents(true, { forward: true });
     } else {
       sendingWin.setIgnoreMouseEvents(false);
+    }
+    // If the sender is a main window and we are in drawing mode, relay the
+    // hover state to the matching overlay so its DOM cursor hides while the
+    // user interacts with the control bar. On Windows, pointermove delivery
+    // to the overlay stops the moment the main window captures the pointer
+    // (ignore=false), so the overlay's own pointerleave never fires and the
+    // DOM cursor would otherwise freeze at the control-bar edge.
+    if (drawingMode) {
+      for (const [displayId, mainWin] of mainWindowsByDisplayId) {
+        if (mainWin !== sendingWin) continue;
+        const overlay = overlayWindowsByDisplayId.get(displayId);
+        if (overlay && !overlay.isDestroyed()) {
+          overlay.webContents.send(CURSOR.INTERACTIVE_HOVER_CHANGED, !ignore);
+        }
+        break;
+      }
     }
   });
 

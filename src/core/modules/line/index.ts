@@ -8,7 +8,14 @@
  */
 import { defineModule } from '@openpen/module-api'
 import { createLineTool } from './line-tool'
+import { lineCursor, lineCursorAnimated } from './cursor'
 import LineToolButton from './LineToolButton.vue'
+
+// Honour OS-level reduced-motion preference at module load.
+const reducedMotion =
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 import en from './locales/en.json'
 import zhHant from './locales/zh-Hant.json'
 import zhHans from './locales/zh-Hans.json'
@@ -24,7 +31,10 @@ export default defineModule({
   },
   contributes: {
     tools: [{ id: 'line', ...tool }],
-    cursors: [{ id: 'line', cursor: 'crosshair' }],
+    cursors: [{
+      id: 'line',
+      cursor: reducedMotion ? lineCursor : lineCursorAnimated,
+    }],
     controlBar: [
       {
         id: 'line',

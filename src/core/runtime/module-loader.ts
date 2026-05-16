@@ -18,6 +18,7 @@
  */
 import {
   CONTRIBUTION_KEY_TO_SLOT_ID,
+  sanitizeCursorContributions,
   type OpenPenModule,
   type ModuleSetupContext,
   type EventSubscriptionContribution,
@@ -148,10 +149,11 @@ export async function loadModules(opts: LoadOptions): Promise<LoadResult> {
   const loaded: string[] = []
   const errors: ValidationError[] = []
   const loadedModules: OpenPenModule[] = []
+  const builtinSet = builtInModuleIds ?? new Set<string>()
   for (const m of dedupedModules) {
     try {
       registerModule(m)
-      registerContributions(m)
+      registerContributions(m, builtinSet.has(m.id))
       loaded.push(m.id)
       loadedModules.push(m)
     } catch (err) {
@@ -263,18 +265,37 @@ function rollbackModule(moduleId: string): void {
   clearModuleContext(moduleId)
 }
 
-function registerContributions(module: OpenPenModule): void {
+function registerContributions(module: OpenPenModule, isBuiltin: boolean): void {
   const c = module.contributes
   if (!c) return
+
+  // Cursor contributions go through the R1-R12 shape gate before any
+  // registration. Diagnostics are logged but never fatal — a bad cursor
+  // entry drops only its own row and leaves sibling contributions
+  // (tools / control-bar / etc.) intact. The contribution-store then
+  // deep-clones + freezes the surviving entries.
+  let sanitisedCursors: typeof c.cursors | undefined
+  if (Array.isArray(c.cursors) && c.cursors.length > 0) {
+    const { cleaned, diagnostics } = sanitizeCursorContributions(c.cursors, { isBuiltin })
+    for (const d of diagnostics) {
+      console.warn(
+        `[module-loader] cursor contribution "${d.id}" in module "${module.id}" dropped (${d.rule}): ${d.reason}`,
+      )
+    }
+    sanitisedCursors = cleaned
+  }
+
   for (const [key, value] of Object.entries(c)) {
     const slotId = CONTRIBUTION_KEY_TO_SLOT_ID[key]
     if (!slotId) continue // defineModule already rejected, but defend
-    if (Array.isArray(value)) {
-      for (const item of value) {
+    const effective = key === 'cursors' ? sanitisedCursors : value
+    if (effective === undefined) continue
+    if (Array.isArray(effective)) {
+      for (const item of effective) {
         registerContribution(slotId, module.id, item)
       }
-    } else if (value !== undefined) {
-      registerContribution(slotId, module.id, value)
+    } else {
+      registerContribution(slotId, module.id, effective)
     }
   }
 

@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useCanvas } from '../composables/useCanvas';
 import HtmlOverlayLayer from '../components/HtmlOverlayLayer.vue';
 import NotificationLayer from '../components/NotificationLayer.vue';
+import CustomCursor from '../components/CustomCursor.vue';
 import { i18n } from '../i18n/index';
 import {
   initNotificationService,
@@ -89,6 +90,7 @@ onUnmounted(() => {
   />
   <HtmlOverlayLayer />
   <NotificationLayer />
+  <CustomCursor />
 </template>
 
 <style scoped>
@@ -106,7 +108,10 @@ onUnmounted(() => {
 
 .overlay-canvas.drawing-mode {
   opacity: 1;
-  cursor: crosshair;
+  /* OS cursor is hidden so the DOM CustomCursor element is the only
+     visible cursor; useCanvas.applyCursor also writes this inline to
+     beat any cascade order surprises on first paint. */
+  cursor: none;
   pointer-events: auto;
 }
 </style>

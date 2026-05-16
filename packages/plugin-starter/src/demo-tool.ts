@@ -7,10 +7,10 @@
  *   - onPointerUp    : finalises and returns the Stroke to the canvas engine
  *   - needsPreviewRedraw : false (incremental render — no full-canvas clear needed)
  *   - extra Stroke state : stores `opacity` as a tool-specific extra key to show
- *     how custom data survives into renderStroke (see Gap #6 in @openpen/module-api)
+ *     how custom data survives into renderStroke
  *
- * For the full Tool / Stroke / Point / StrokeStyle type reference see:
- *   @openpen/module-api  →  types/tool.ts
+ * Public reference for the Tool / Stroke / Point / StrokeStyle interfaces:
+ *   docs/reference/slots.md → `canvas.tools` section.
  */
 import type { Point, Stroke, StrokeStyle, Tool } from '@openpen/module-api'
 

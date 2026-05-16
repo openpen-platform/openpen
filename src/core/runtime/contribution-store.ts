@@ -41,9 +41,32 @@ function getOrCreateSlotRef(slotId: string): Ref<ContributionEntry[]> {
 }
 
 /**
+ * Recursively freeze every plain-object node reachable from `o`.
+ * Used to lock cursor contributions into an immutable snapshot so
+ * post-registration mutation by plugin code cannot swap a sanitised
+ * payload for a malicious one.
+ */
+function deepFreeze<T>(o: T): T {
+  if (o === null || typeof o !== 'object' || Object.isFrozen(o)) return o
+  Object.freeze(o)
+  for (const v of Object.values(o as Record<string, unknown>)) {
+    if (v !== null && typeof v === 'object') deepFreeze(v)
+  }
+  return o
+}
+
+/**
  * Register a single contribution under a slot. Append-only; later
  * contributions don't shadow earlier ones — composables decide how to
  * merge.
+ *
+ * For the `ui.cursors` slot, the contribution is deep-cloned via
+ * `structuredClone` and recursively frozen before storage. This blocks
+ * a marketplace-audit-evasion attack where a plugin ships safe-looking
+ * SVG, passes shape + DOMPurify gates at registration, then mutates the
+ * shared object reference from `setup()` to slip a malicious payload
+ * past the audit. The host's stored copy is immutable; the plugin's
+ * view is irrelevant.
  */
 export function registerContribution<T = unknown>(
   slotId: string,
@@ -52,7 +75,10 @@ export function registerContribution<T = unknown>(
 ): void {
   ensureSlotKnown(slotId)
   const r = getOrCreateSlotRef(slotId)
-  r.value = [...r.value, { moduleId, contribution }]
+  const stored = slotId === 'ui.cursors'
+    ? deepFreeze(structuredClone(contribution)) as T
+    : contribution
+  r.value = [...r.value, { moduleId, contribution: stored }]
 }
 
 /**

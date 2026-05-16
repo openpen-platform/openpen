@@ -13,6 +13,13 @@
  */
 import { defineModule } from '@openpen/module-api'
 import { createStrokeEraserTool } from './stroke-eraser-tool'
+import { strokeEraserCursor, strokeEraserCursorAnimated } from './cursor'
+
+// Honour OS-level reduced-motion preference at module load.
+const reducedMotion =
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 import en from './locales/en.json'
 import zhHant from './locales/zh-Hant.json'
 import zhHans from './locales/zh-Hans.json'
@@ -33,7 +40,10 @@ export default defineModule({
         ...tool,
       },
     ],
-    cursors: [{ id: 'stroke-eraser', cursor: 'pointer' }],
+    cursors: [{
+      id: 'stroke-eraser',
+      cursor: reducedMotion ? strokeEraserCursor : strokeEraserCursorAnimated,
+    }],
     locales: { en, 'zh-Hant': zhHant, 'zh-Hans': zhHans, ja },
   },
 })

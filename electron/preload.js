@@ -34,6 +34,11 @@ contextBridge.exposeInMainWorld('openPenApi', {
     ipcRenderer.on('overlay:drawing-mode-changed', handler);
     return () => ipcRenderer.removeListener('overlay:drawing-mode-changed', handler);
   },
+  onInteractiveHoverChanged: (callback) => {
+    const handler = (_, hover) => callback(hover);
+    ipcRenderer.on('cursor:interactive-hover-changed', handler);
+    return () => ipcRenderer.removeListener('cursor:interactive-hover-changed', handler);
+  },
 
   // ── Settings ────────────────────────────────────────────────────────
   getSettings: () => ipcRenderer.invoke('settings:get'),

@@ -63,6 +63,10 @@ export type {
   SettingsTabContribution,
   SettingsPanelContribution,
   CursorContribution,
+  CursorSpec,
+  SvgCursorSpec,
+  PngCursorSpec,
+  Hotspot,
   StatusContribution,
   ModalContribution,
   TrayMenuContribution,
@@ -92,6 +96,26 @@ export {
   ACTIVE_TOOL_KEY,
 } from './inject-keys'
 export type { StrokeStyleContext, SnapEdge, ModalManager, PopoverPlacementHint } from './inject-keys'
+
+// Cursor compilation + sanitisation (used by host runtime; helpers
+// re-exported so plugins can validate cursor specs in their own tests).
+export {
+  compileCursor,
+  sanitizeSvgMarkup,
+  sanitizeCursorContributions,
+  isSafeRelativePath,
+  pluginHostname,
+  pluginAssetUrl,
+  SAFE_CURSOR_KEYWORDS,
+} from './cursors'
+export type {
+  CompiledCursor,
+  CursorResolutionContext,
+  CursorSanitizeRule,
+  CursorSanitizeDiagnostic,
+  CursorSanitizeOptions,
+  CursorSanitizeResult,
+} from './cursors'
 
 // Re-export zod so modules don't need a separate import path.
 export { z } from 'zod'

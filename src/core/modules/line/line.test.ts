@@ -12,11 +12,27 @@ describe('line module', () => {
     expect(tools[0].id).toBe('line')
   })
 
-  it('contributes a crosshair cursor', () => {
+  it('contributes one cursor with the straightedge-corner hotspot', () => {
     const cursors = line.contributes?.cursors ?? []
     expect(cursors).toHaveLength(1)
     expect(cursors[0].id).toBe('line')
-    expect(cursors[0].cursor).toBe('crosshair')
+    const cursor = cursors[0].cursor
+    if (typeof cursor === 'string' || !('svg' in cursor)) {
+      throw new Error('expected SvgCursorSpec')
+    }
+    expect(cursor.svg).toContain('<svg')
+    expect(cursor.hotspot).toEqual({ x: 2, y: 22 })
+  })
+
+  it('exports both static and animated cursor variants', async () => {
+    const { lineCursor, lineCursorAnimated } = await import('./cursor')
+    expect(lineCursor.svg).toContain('<svg')
+    expect(lineCursor.svg).not.toContain('@keyframes')
+    expect(lineCursor.hotspot).toEqual({ x: 2, y: 22 })
+
+    expect(lineCursorAnimated.svg).toContain('<svg')
+    expect(lineCursorAnimated.svg).toContain('@keyframes')
+    expect(lineCursorAnimated.hotspot).toEqual({ x: 2, y: 22 })
   })
 
   it('contributes locales with en entry and required keys', () => {
