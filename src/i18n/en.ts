@@ -15,6 +15,7 @@ export default {
   redo: 'Redo',
   redoDisabled: 'Redo (nothing to redo)',
   settings: 'Preferences',
+  settingsDisabledInDrawing: 'Preferences (exit drawing mode first)',
   collapse: 'Collapse',
   colorTabSolid: 'Solid',
   colorTabGradient: 'Gradient',

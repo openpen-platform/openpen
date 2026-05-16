@@ -408,6 +408,7 @@ function onRedoClick() {
 }
 
 function openSettings() {
+  if (isDrawingMode.value) return;
   window.openPenApi?.openSettingsWindow();
 }
 
@@ -809,8 +810,10 @@ onUnmounted(() => {
         <button
           class="cb-btn"
           data-testid="controlbar-settings-btn"
-          :data-tip="t('settings')"
+          :class="{ 'cb-disabled': isDrawingMode }"
+          :data-tip="isDrawingMode ? t('settingsDisabledInDrawing') : t('settings')"
           :aria-label="t('settings')"
+          :aria-disabled="isDrawingMode || undefined"
           @click="openSettings"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

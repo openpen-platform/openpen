@@ -15,6 +15,7 @@ export default {
   redo: 'やり直し',
   redoDisabled: 'やり直し（やり直す操作がありません）',
   settings: '環境設定',
+  settingsDisabledInDrawing: '環境設定（先に描画モードを終了してください）',
   collapse: '折りたたむ',
   colorTabSolid: '単色',
   colorTabGradient: 'グラデーション',

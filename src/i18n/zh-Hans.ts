@@ -15,6 +15,7 @@ export default {
   redo: '重做',
   redoDisabled: '重做（没有可重做的操作）',
   settings: '偏好设置',
+  settingsDisabledInDrawing: '偏好设置（请先结束绘图模式）',
   collapse: '折叠',
   colorTabSolid: '实心',
   colorTabGradient: '渐变',
