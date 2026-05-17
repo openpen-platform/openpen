@@ -12,15 +12,6 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Route Gitea hostname to Docker gateway
-        env:
-          GT_HOST: ${{ secrets.GT_HOST }}
-        run: |
-          HEX=$(awk '$2 == "00000000" { print $3; exit }' /proc/net/route)
-          GW=$(printf "%d.%d.%d.%d\n" 0x${HEX:6:2} 0x${HEX:4:2} 0x${HEX:2:2} 0x${HEX:0:2})
-          echo "$GW ${GT_HOST}" >> /etc/hosts
-          echo "Routed ${GT_HOST} -> $GW"
-
       - name: Mirror Gitea to GitHub
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
