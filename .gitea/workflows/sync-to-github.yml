@@ -17,10 +17,9 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
           GITEA_TOKEN: ${{ gitea.token }}
           GT_HOST: ${{ secrets.GT_HOST }}
-          GT_PORT: ${{ secrets.GT_PORT }}
         run: |
           git clone --bare \
-            "https://oauth2:${GITEA_TOKEN}@${GT_HOST}:${GT_PORT}/openpen-platform/openpen.git" \
+            "https://oauth2:${GITEA_TOKEN}@${GT_HOST}/openpen-platform/openpen.git" \
             /tmp/repo.git
           git -C /tmp/repo.git push \
             "https://x-access-token:${GH_PAT}@github.com/openpen-platform/openpen.git" \
