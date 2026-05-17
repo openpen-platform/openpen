@@ -46,11 +46,13 @@ onMounted(() => {
   // Module context registration completes after the host's onMounted resolves,
   // which fires after all child components mount. Defer to the next macrotask
   // so the context is guaranteed to be available.
+  //
+  // Boot-time seeding of defaultColor lives in bootstrap.initStrokeStyleFromSettings;
+  // a component-mount seed races the drawing-mode shortcut. The listener
+  // below only propagates live settings-panel edits.
   setTimeout(() => {
     try {
       const ctx = useModuleContext('@openpen/color')
-      const s = ctx.getSettings<{ defaultColor?: string }>()
-      if (s.defaultColor) strokeStyleCtx?.setColor(s.defaultColor)
       unsubSettings = ctx.onSettingsChange<{ defaultColor?: string }>((next) => {
         if (next.defaultColor) strokeStyleCtx?.setColor(next.defaultColor)
       })

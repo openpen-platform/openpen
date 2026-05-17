@@ -53,12 +53,16 @@ onMounted(() => {
   // Module context registration completes after the host's onMounted resolves,
   // which fires after all child components mount. Defer to the next macrotask
   // so the context is guaranteed to be available.
+  //
+  // Boot-time seeding of defaultWidth lives in bootstrap.initStrokeStyleFromSettings;
+  // a component-mount seed races the drawing-mode shortcut. `style` is still
+  // read here because it is UI-mode state local to this component (slider vs
+  // popup), not part of stroke style.
   setTimeout(() => {
     try {
       const ctx = useModuleContext('@openpen/stroke-width')
-      const s = ctx.getSettings<{ defaultWidth?: number; style?: 'slider' | 'popup' }>()
+      const s = ctx.getSettings<{ style?: 'slider' | 'popup' }>()
       if (s.style) strokeStyle.value = s.style
-      if (typeof s.defaultWidth === 'number') strokeStyleCtx?.setLineWidth(s.defaultWidth)
       unsubSettings = ctx.onSettingsChange<{ style?: 'slider' | 'popup' }>((next) => {
         if (next.style) strokeStyle.value = next.style
       })

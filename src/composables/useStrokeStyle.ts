@@ -11,6 +11,7 @@
 import { ref, readonly } from 'vue'
 import type { StrokeColor } from '../types/tool-types'
 import { emit as eventBusEmit, on as eventBusOn } from '../core/runtime/event-bus'
+import { getSettingsCache } from '../core/runtime/module-settings-cache'
 
 const colorRef = ref<StrokeColor>('#818cf8')
 const lineWidthRef = ref(4)
@@ -43,6 +44,43 @@ function broadcast(): void {
     color: plainColor(colorRef.value),
     lineWidth: lineWidthRef.value,
   })
+}
+
+/** Test-only: reset module-scope refs to hardcoded defaults. */
+export function resetStrokeStyleForTest(): void {
+  colorRef.value = '#818cf8'
+  lineWidthRef.value = 4
+}
+
+/**
+ * Seed the window-local stroke style refs from @openpen/color.defaultColor
+ * and @openpen/stroke-width.defaultWidth, then emit stroke-style-changed
+ * on the same-window event bus so listeners (e.g. useCanvas.currentStyle)
+ * pick up the values synchronously.
+ *
+ * Strictly local: never calls broadcast(). A per-window IPC broadcast on
+ * boot would let any window re-boot (settings window open, multi-display
+ * overlay create) overwrite the user's current stroke style across every
+ * other window. Each window is responsible for seeding itself from the
+ * shared settings cache, which must already be hydrated by the caller.
+ */
+export function initStrokeStyleFromSettings(): void {
+  const colorSettings = getSettingsCache('@openpen/color') as
+    | { defaultColor?: unknown }
+    | undefined
+  if (colorSettings && typeof colorSettings.defaultColor === 'string') {
+    const color = colorSettings.defaultColor
+    colorRef.value = color
+    eventBusEmit('stroke-style-changed', { color })
+  }
+  const widthSettings = getSettingsCache('@openpen/stroke-width') as
+    | { defaultWidth?: unknown }
+    | undefined
+  if (widthSettings && typeof widthSettings.defaultWidth === 'number') {
+    const width = Math.max(1, Math.min(20, Math.round(widthSettings.defaultWidth)))
+    lineWidthRef.value = width
+    eventBusEmit('stroke-style-changed', { lineWidth: width })
+  }
 }
 
 export function useStrokeStyle() {

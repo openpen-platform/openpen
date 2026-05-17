@@ -43,6 +43,7 @@ import {
   subscribeSettingsChange,
   resetSettingsCacheForTest,
 } from './module-settings-cache'
+import { initStrokeStyleFromSettings } from '../../composables/useStrokeStyle'
 import type { PluginConflict } from './module-validator'
 
 // ── Plugin conflict state ─────────────────────────────────────────────────────
@@ -126,6 +127,13 @@ export async function initModuleRuntime(opts: {
 
   // Hydrate the renderer-side settings cache before any module's setup() runs.
   await prepareModuleSettings(enabledModules)
+
+  // Settings window has no stroke style surface (no ControlBar, no canvas).
+  // Skipping it keeps the seed scoped to windows that actually consume
+  // stroke style; see initStrokeStyleFromSettings for the seed contract.
+  if (opts.windowType !== 'settings') {
+    initStrokeStyleFromSettings()
+  }
 
   // Merge locale dictionaries before setup() runs so ctx.t() resolves
   // namespaced keys correctly inside setup. Modules that fail validation
