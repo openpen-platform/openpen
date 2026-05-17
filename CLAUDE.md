@@ -57,7 +57,7 @@ Each domain has one manager file with private functions prefixed with `_` (e.g. 
 **3. Window Management**
 - **Settings**: `frame: false`, `transparent: true`, `hasShadow: false`, `alwaysOnTop: true`.
 - **Top Level**: `'screen-saver'` — highest level, required for full-screen apps. Do not downgrade.
-- **Settings Window**: Guard with `if (settingsWindow && !settingsWindow.isDestroyed())`. Use `show: false` + `ready-to-show` event to prevent flashes. Open → disable main window interaction (`_setMainWindowEnabled(false)`).
+- **Settings Window**: Guard with `if (settingsWindow && !settingsWindow.isDestroyed())`. Use `show: false` + `ready-to-show` event to prevent flashes. Open → make the active main window passthrough (`activeMain.setIgnoreMouseEvents(true, { forward: true })`) so clicks don't bleed through to the overlay.
 - **Mouse Passthrough**: `setIgnoreMouseEvents(true, { forward: true })` on main window when drawing mode is active.
 
 **4. Preload Rules**
@@ -112,30 +112,42 @@ OpenPen is built as a slot-driven module system: built-in features and third-par
 **Module contract**:
 - A module declares an `id`, `version`, optional metadata, and `contributions` for one or more slots.
 - Slots are the only way modules expose UI / behaviour to the host (declarative provides/consumes pattern).
-- Modules MAY also register `lifecycle.onReady` / `onQuit` hooks and `system.shortcuts`.
+- One-shot init lives in the module's `setup()` function; recurring lifecycle wiring (onReady / onSuspend / onQuit) goes through the `system.lifecycle` slot, and keyboard shortcuts go through the `system.shortcuts` slot.
 
-**Slot taxonomy** (source of truth: `packages/module-api/src/slots.ts`):
-- Canvas: `canvas.tools`, `canvas.shapes`, `canvas.stroke.style`, `canvas.history.commands`, `canvas.layers.background`, `canvas.layers.overlay`, `canvas.html.overlay`
-- UI: `ui.control-bar`, `ui.settings.tabs`, `ui.cursors`, `ui.status`, `ui.modals`, `ui.tray.menu`
-- System: `system.shortcuts`, `system.window.behaviors`, `system.locales`, `system.main.handlers`, `system.events`, `system.lifecycle`, `system.storage`
+**Slot taxonomy** (source of truth: `packages/module-api/src/slots.ts` — split between `V1_ACTIVE_SLOTS` and `V1_RESERVED_SLOTS`):
+
+*v1 active* — wired to runtime adapters, contributions take effect immediately:
+- Canvas: `canvas.tools`, `canvas.shapes`, `canvas.stroke.style`, `canvas.layers.background`, `canvas.layers.overlay`, `canvas.html.overlay`
+- UI: `ui.control-bar`, `ui.settings.tabs`, `ui.settings.panels`, `ui.cursors`, `ui.status`, `ui.modals`
+- System: `system.shortcuts`, `system.locales`, `system.main.handlers`, `system.events`, `system.lifecycle`
+
+*v1 reserved* — registration passes validation but no runtime adapter is active yet (forward-compatible, modules can ship against these now):
+- Canvas: `canvas.history.commands`, `canvas.stroke.transformers`
+- UI: `ui.tray.menu`, `ui.context.menu`, `ui.theme.tokens`
+- System: `system.window.behaviors`, `system.storage`, `system.file.drop`
 
 **Adding a built-in module**:
 1. Create `src/core/modules/<id>/` with `index.ts` exporting `defineModule({...})` and a `contributions` array.
-2. Register in `src/core/runtime/module-registry.ts` (`BUILT_IN_MODULES`).
+2. Register in `src/core/modules/registry.ts` (`BUILT_IN_MODULES` — insertion order = load order).
 3. Vue components imported by the module MUST come from `@openpen/module-api/uikit` (host-internal Vue imports are blocked by `tests/unit/moduleImportBoundary.test.ts`).
-4. Follow `MODULE_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/` for the id.
+4. Module `id` MUST be a scoped name matching `MODULE_ID_RE = /^@([a-z0-9][a-z0-9-]{0,38})\/([a-z0-9][a-z0-9-]{0,38})$/` (e.g. `@openpen/freehand`, `@alice/todo-app`). Bare unscoped names are rejected by the validator.
 
 **Renderer runtime** (`src/core/runtime/`):
 - `contribution-store.ts` — slot → contributions registry (the spine of the system)
 - `slot-runtime.ts` — Vue composables that subscribe to slot entries
 - `module-loader.ts` — discovers + validates manifests, wires lifecycle
 - `module-validator.ts` — id format + import boundary checks
-- `module-registry.ts` — `BUILT_IN_MODULES` list (host-bundled modules)
+- `module-registry.ts` — in-memory `register` / `unregister` map of loaded modules (both built-in and plugin). Note: the `BUILT_IN_MODULES` list itself lives in `src/core/modules/registry.ts`.
+- `module-settings-cache.ts` — per-module settings cache backing the Settings UI
 - `event-bus.ts` — cross-module pub/sub for non-IPC events
 - `bootstrap.ts` — boot sequence
 
-**UIKit wrappers** (`packages/module-api/src/uikit/`):
-Module-facing wrappers (`AppPopover`, `AppDialog`, `AppSlider`, `AppToggle`, `AppSegmented`, `AppSelect`, `AppTooltip`, `AppTabs`) over Reka UI. Modules MUST consume these wrappers — never `reka-ui` directly.
+**UIKit surface** (`packages/module-api/src/uikit/`) — three layers, see `docs/reference/uikit.md`:
+- *Layer 1 — high-level wrappers* (80% case): `AppPopover`, `AppDialog`, `AppSlider`, `AppToggle`, `AppSegmented`, `AppSelect`, `AppTooltip`, `AppTabs`, `AppBanner`, `AppButton`. OpenPen-opinionated styling + auto-injected host context (modal manager, teleport target, passthrough). Plugin authors start here.
+- *Layer 2 — primitive re-exports* (20% advanced): raw Reka UI headless components re-exported from `./primitives`. Use when you need full markup/style control with a11y / focus / keyboard nav intact. Caller must wire modal manager, animating guard, passthrough, and teleport target manually.
+- *Layer 3 — escape hatch* (5% fully custom): plugin installs `reka-ui` (or any library) in its own `package.json`. UIKit does not block this.
+
+Modules MUST NOT import `reka-ui` directly inside the host — go through Layer 1 or Layer 2 of this package. The import-boundary test (`tests/unit/moduleImportBoundary.test.ts`) enforces this.
 
 ---
 
@@ -152,11 +164,11 @@ Module-facing wrappers (`AppPopover`, `AppDialog`, `AppSlider`, `AppToggle`, `Ap
 - **Error recovery**: 3 consecutive test failures → stop retries → root-cause analysis → written report → discuss with human.
 
 **Branch / PR workflow (MANDATORY)**
-- **MUST** 所有 code / docs / config 改動走 feature branch + PR + squash merge — **MUST NOT** direct push main（緊急 hotfix / release-please-generated commits 例外，且 MUST user 明確授權）
-- **MUST** branch naming: `<type>/<scope-or-description>` — type 對應 Conventional Commits（`feat` / `fix` / `docs` / `chore` / `build` / `ci` / `refactor` / `test` / `style`），例: `feat/laser-pointer-tool`、`fix/settings-dim-click`、`docs/plugin-quickstart-typo`
-- **MUST** PR title 用 Conventional Commits 格式（squash merge 用 PR title 做 commit message，release-please 讀這個算版號）
-- **MUST NOT** 用 `--no-verify`、force-push main、toggle branch protection 開 force-push — nuclear-reset 級別動作必須 user 明確授權
-- **MUST** 跑 `npm run lint` / `type-check` / `test:unit` 在 push branch 前通過，避免 CI 撞紅
+- **MUST** All code / docs / config changes go through a feature branch + PR + squash merge — **MUST NOT** push directly to `main` (emergency hotfix and release-please-generated commits are the only exceptions, and both require explicit user authorization)
+- **MUST** Branch naming: `<type>/<scope-or-description>` — `type` maps to Conventional Commits (`feat` / `fix` / `docs` / `chore` / `build` / `ci` / `refactor` / `test` / `style`), e.g. `feat/laser-pointer-tool`, `fix/settings-dim-click`, `docs/plugin-quickstart-typo`
+- **MUST** PR title in Conventional Commits format — squash merge uses the PR title as the commit message, and release-please reads it to derive version bumps
+- **MUST NOT** Use `--no-verify`, force-push `main`, or toggle branch protection to enable force-push. Nuclear-reset-class operations require explicit user authorization.
+- **MUST** Pass `npm run lint` / `type-check` / `test:unit` before pushing a branch — keeps CI green
 
 **Commit Messages (MANDATORY)**
 - **Language: English.** OpenPen is OSS; release-please copies commit messages verbatim into `CHANGELOG.md`, which is the public-facing release record for plugin authors worldwide. Non-English commits become unreadable CHANGELOG entries.
