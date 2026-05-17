@@ -4,14 +4,27 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: sync-to-github
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
+      - name: Route Gitea hostname to Docker gateway
+        env:
+          GT_HOST: ${{ secrets.GT_HOST }}
+        run: |
+          GW=$(ip route show default | awk '{print $3; exit}')
+          echo "$GW ${GT_HOST}" >> /etc/hosts
+
       - name: Mirror Gitea to GitHub
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
           GITEA_TOKEN: ${{ gitea.token }}
+          GT_HOST: ${{ secrets.GT_HOST }}
+          GT_PORT: ${{ secrets.GT_PORT }}
         run: |
           git clone --bare \
             "https://oauth2:${GITEA_TOKEN}@${GT_HOST}:${GT_PORT}/openpen-platform/openpen.git" \
