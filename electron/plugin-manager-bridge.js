@@ -9,7 +9,7 @@
  * needs to catch — errors are always surfaced as { ok: false, error: string }.
  */
 
-import { ipcMain, dialog } from 'electron'
+import { ipcMain, dialog, BrowserWindow } from 'electron'
 import https from 'node:https'
 import http from 'node:http'
 import { PLUGIN } from './ipc-channels.js'
@@ -160,9 +160,142 @@ export function initPluginManagerBridge() {
   })
 
   // ── System folder picker ──────────────────────────────────────────────────
-  ipcMain.handle(PLUGIN.PICK_FOLDER, async () => {
-    const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+  ipcMain.handle(PLUGIN.PICK_FOLDER, async (event) => {
+    return openPickerWithoutOverlay(event, { properties: ['openDirectory'] })
+  })
+
+  // ── System .zip picker ────────────────────────────────────────────────────
+  // macOS does not allow combining 'openDirectory' and 'openFile' in a single
+  // dialog, so folders and zips use distinct channels.
+  ipcMain.handle(PLUGIN.PICK_ZIP, async (event) => {
+    return openPickerWithoutOverlay(event, {
+      properties: ['openFile'],
+      filters: [{ name: 'OpenPen plugin', extensions: ['zip'] }],
+    })
+  })
+
+  // ── Add Custom dialog open / close (drop landing) ─────────────────────────
+  // macOS NSWindowServer refuses to deliver OS drag sessions to a window at
+  // 'screen-saver' level. The Add Custom dialog announces its open / close
+  // here so the settings window can drop to 'floating' for the dialog's
+  // lifetime, letting Finder drop events through. Ref-counted via the
+  // shared suspendAlwaysOnTop counter so nested picker calls behave.
+  ipcMain.on(PLUGIN.ENTER_LOCAL_INSTALL, (event) => {
+    const sender = event.sender
+    const win = BrowserWindow.fromWebContents(sender)
+    if (!win) return
+    suspendAlwaysOnTop(win)
+    if (!senderRecoveryAttached.has(sender)) {
+      senderRecoveryAttached.add(sender)
+      const recover = () => forceResetAlwaysOnTop(win)
+      // `did-start-loading` covers HMR reloads + manual reloads — the new
+      // page mounts with `open: false` so it never sends a matching EXIT.
+      sender.on('did-start-loading', recover)
+      sender.on('render-process-gone', recover)
+      sender.on('destroyed', recover)
+    }
+  })
+  ipcMain.on(PLUGIN.EXIT_LOCAL_INSTALL, (event) => {
+    resumeAlwaysOnTop(BrowserWindow.fromWebContents(event.sender))
+  })
+}
+
+// Tracks how many active suspenders per BrowserWindow want always-on-top
+// dropped. Pickers (PICK_FOLDER / PICK_ZIP) and the Add Custom dialog
+// share this counter so a picker opened from inside the dialog does not
+// prematurely restore the level. WeakMap so destroyed windows GC cleanly.
+const alwaysOnTopSuspendDepth = new WeakMap()
+
+// Tracks webContents we've already wired crash / reload recovery on, so
+// repeated ENTER_LOCAL_INSTALL sends from the same renderer don't pile
+// up listeners.
+const senderRecoveryAttached = new WeakSet()
+
+function suspendAlwaysOnTop(win) {
+  if (!win || win.isDestroyed()) return
+  const wasAlwaysOnTop = win.isAlwaysOnTop()
+  const depth = alwaysOnTopSuspendDepth.get(win)
+  if (depth) {
+    alwaysOnTopSuspendDepth.set(win, { count: depth.count + 1, wasAlwaysOnTop: depth.wasAlwaysOnTop })
+    return
+  }
+  alwaysOnTopSuspendDepth.set(win, { count: 1, wasAlwaysOnTop })
+  if (wasAlwaysOnTop) {
+    // Drop to 'floating' rather than false: keeps the window visible above
+    // ordinary windows so the user can still see the modal, while leaving
+    // the OS free to deliver drag sessions and native pickers.
+    win.setAlwaysOnTop(true, 'floating')
+    // On Windows the z-order does not reflow until the window loses focus.
+    if (process.platform === 'win32') win.blur()
+  }
+}
+
+function resumeAlwaysOnTop(win) {
+  if (!win) return
+  const state = alwaysOnTopSuspendDepth.get(win)
+  if (!state) return
+  const nextCount = state.count - 1
+  if (nextCount > 0) {
+    alwaysOnTopSuspendDepth.set(win, { count: nextCount, wasAlwaysOnTop: state.wasAlwaysOnTop })
+    return
+  }
+  alwaysOnTopSuspendDepth.delete(win)
+  if (win.isDestroyed() || !state.wasAlwaysOnTop) return
+  // Defer one tick so macOS compositor can settle dialog / drag tear-down
+  // before lifting the window back to screen-saver level.
+  setTimeout(() => {
+    if (!win.isDestroyed()) {
+      win.setAlwaysOnTop(true, 'screen-saver')
+      win.focus()
+    }
+  }, 0)
+}
+
+// Crash / reload recovery: ENTER_LOCAL_INSTALL increments the depth, but
+// EXIT_LOCAL_INSTALL only fires if the renderer is still alive to send it.
+// A renderer crash, HMR reload, or settings-window close all skip the
+// EXIT, leaving the depth counter permanently elevated and the window
+// stuck at 'floating'. Reset the counter back to zero in those cases.
+function forceResetAlwaysOnTop(win) {
+  if (!win) return
+  const state = alwaysOnTopSuspendDepth.get(win)
+  if (!state) return
+  alwaysOnTopSuspendDepth.delete(win)
+  if (win.isDestroyed() || !state.wasAlwaysOnTop) return
+  setTimeout(() => {
+    if (!win.isDestroyed()) {
+      win.setAlwaysOnTop(true, 'screen-saver')
+    }
+  }, 0)
+}
+
+/**
+ * Open a native file/folder picker without it being obscured by the
+ * settings window.
+ *
+ * The settings window runs at `setAlwaysOnTop(true, 'screen-saver')` so it
+ * can float above full-screen presenter apps. On macOS, NSOpenPanel sheets
+ * are pinned at NSModalPanelWindowLevel (8) while screen-saver level is
+ * 101 — Apple's window-server refuses to layer a lower-level window above
+ * a higher-level one, so the sheet renders behind the settings glass. The
+ * same class of bug reproduces on Windows / Linux for slightly different
+ * reasons. The only workable fix is to drop always-on-top for the duration
+ * of the picker and restore it after the user closes the dialog.
+ *
+ * @param {import('electron').IpcMainInvokeEvent} event
+ * @param {import('electron').OpenDialogOptions} options
+ * @returns {Promise<string | null>}
+ */
+async function openPickerWithoutOverlay(event, options) {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (!win || win.isDestroyed()) return null
+
+  suspendAlwaysOnTop(win)
+  try {
+    const result = await dialog.showOpenDialog(win, options)
     if (result.canceled || result.filePaths.length === 0) return null
     return result.filePaths[0]
-  })
+  } finally {
+    resumeAlwaysOnTop(win)
+  }
 }

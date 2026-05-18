@@ -243,6 +243,10 @@ interface OpenPenApi {
   >
   onPluginInstallProgress(cb: (payload: { stage: 'download' | 'verify' | 'extract'; percent?: number }) => void): () => void
   pickPluginFolder(): Promise<string | null>
+  pickPluginZip(): Promise<string | null>
+  getDroppedFilePath(file: File): string
+  enterLocalInstallMode(): void
+  exitLocalInstallMode(): void
   onModuleManifests(cb: (manifests: ModuleManifest[]) => void): () => void
   getModuleManifests(): Promise<ModuleManifest[]>
   onLifecycleEvent(cb: (event: 'quit' | 'suspend' | 'ready') => void): () => void

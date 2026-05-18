@@ -127,6 +127,72 @@ async function extractZip(zipPath: string, destDir: string): Promise<void> {
     .promise()
 }
 
+function isZipPath(p: string): boolean {
+  return /\.zip$/i.test(p)
+}
+
+/**
+ * Resolve a local source path into a directory that contains plugin.json.
+ *
+ * - Directory in → returns it unchanged (and a no-op cleanup).
+ * - .zip file in → extracts to an ephemeral tempdir and returns that path
+ *   plus a cleanup function the caller MUST invoke in `finally`.
+ *
+ * Some plugin zips wrap their contents in a single top-level folder
+ * (matches `openpen pack` output: dist/ + plugin.json at the archive root,
+ * but third-party tooling may add a wrapper). If the extracted tempdir does
+ * not contain plugin.json at its root but does contain exactly one subdir
+ * that does, transparently descend into that subdir.
+ */
+async function resolveLocalSource(
+  sourcePath: string,
+): Promise<{ dir: string; cleanup: () => void }> {
+  const resolved = path.resolve(sourcePath)
+  if (!fs.existsSync(resolved)) {
+    throw new Error(`Path does not exist: ${resolved}`)
+  }
+  const stat = fs.statSync(resolved)
+
+  if (stat.isDirectory()) {
+    return { dir: resolved, cleanup: () => { /* no-op */ } }
+  }
+
+  if (!stat.isFile() || !isZipPath(resolved)) {
+    throw new Error(
+      `Local plugin source must be a directory or a .zip file. Got: ${resolved}`,
+    )
+  }
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-local-'))
+  const cleanup = () => fs.rmSync(tmpDir, { recursive: true, force: true })
+
+  try {
+    await extractZip(resolved, tmpDir)
+  } catch (err) {
+    cleanup()
+    throw new Error(
+      `Failed to extract zip: ${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
+
+  let dir = tmpDir
+  if (!fs.existsSync(path.join(dir, 'plugin.json'))) {
+    // Ignore dotfiles plus macOS Finder's `__MACOSX/` sidecar so the
+    // unwrap heuristic still recognises an otherwise-single-folder zip.
+    const entries = fs.readdirSync(dir, { withFileTypes: true })
+      .filter((e) => !e.name.startsWith('.') && e.name !== '__MACOSX')
+    if (
+      entries.length === 1 &&
+      entries[0].isDirectory() &&
+      fs.existsSync(path.join(dir, entries[0].name, 'plugin.json'))
+    ) {
+      dir = path.join(dir, entries[0].name)
+    }
+  }
+
+  return { dir, cleanup }
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export interface InspectedPluginSource {
@@ -140,64 +206,63 @@ export interface InspectedPluginSource {
 }
 
 /**
- * Read plugin.json from a local source directory and return metadata without
- * copying any files. Throws if the directory is missing, plugin.json is absent
- * or invalid, or the id format does not pass PLUGIN_ID_RE.
+ * Read plugin.json from a local source and return metadata without copying
+ * any files. Source may be a directory or a .zip file (the zip is extracted
+ * to a tempdir only to read plugin.json, then cleaned up).
  */
 export async function inspectLocalSource(sourcePath: string): Promise<InspectedPluginSource> {
-  const resolved = path.resolve(sourcePath)
-  if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) {
-    throw new Error(`Path does not exist or is not a directory: ${resolved}`)
-  }
-  const manifest = readManifest(resolved)
-  if (!manifest) {
-    throw new Error('plugin.json is missing or does not contain required fields (id, name, version).')
-  }
-  const id = manifest.id as string
-  if (!PLUGIN_ID_RE.test(id)) {
-    throw new Error(`plugin.json "id" must use @scope/name format. Got: ${JSON.stringify(id)}`)
-  }
-  const { scope, name } = parseIdParts(id)
-  const changelog = Array.isArray(manifest.changelog)
-    ? (manifest.changelog as unknown[]).filter((s): s is string => typeof s === 'string')
-    : undefined
-  return {
-    id,
-    scope,
-    name,
-    version: manifest.version as string,
-    displayName: manifest.name as string,
-    description: typeof manifest.description === 'string' ? manifest.description : undefined,
-    ...(changelog && changelog.length > 0 ? { changelog } : {}),
+  const { dir, cleanup } = await resolveLocalSource(sourcePath)
+  try {
+    const manifest = readManifest(dir)
+    if (!manifest) {
+      throw new Error('plugin.json is missing or does not contain required fields (id, name, version).')
+    }
+    const id = manifest.id as string
+    if (!PLUGIN_ID_RE.test(id)) {
+      throw new Error(`plugin.json "id" must use @scope/name format. Got: ${JSON.stringify(id)}`)
+    }
+    const { scope, name } = parseIdParts(id)
+    const changelog = Array.isArray(manifest.changelog)
+      ? (manifest.changelog as unknown[]).filter((s): s is string => typeof s === 'string')
+      : undefined
+    return {
+      id,
+      scope,
+      name,
+      version: manifest.version as string,
+      displayName: manifest.name as string,
+      description: typeof manifest.description === 'string' ? manifest.description : undefined,
+      ...(changelog && changelog.length > 0 ? { changelog } : {}),
+    }
+  } finally {
+    cleanup()
   }
 }
 
 /**
- * Install a plugin from a local source directory.
- *
- * The source directory must contain a valid plugin.json and a built dist/renderer.js.
- * The CLI uses this path for `openpen plugin add <local-path>`.
+ * Install a plugin from a local source. Source may be a built plugin
+ * directory, or a .zip file produced by `openpen pack`. Both paths converge
+ * on the same validate → copy flow.
  */
 export async function installFromLocal(
   sourcePath: string,
   opts?: InstallOptions,
 ): Promise<PluginEntry> {
-  const resolved = path.resolve(sourcePath)
-
-  if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) {
-    throw new Error(`Path does not exist or is not a directory: ${resolved}`)
-  }
-
   opts?.onProgress?.({ stage: 'extract' })
 
-  const manifest = validateManifest(resolved)
-  const pluginsDir = defaultPluginsDir(opts)
-  fs.mkdirSync(pluginsDir, { recursive: true })
+  const { dir, cleanup } = await resolveLocalSource(sourcePath)
+  try {
+    const manifest = validateManifest(dir)
+    const pluginsDir = defaultPluginsDir(opts)
+    fs.mkdirSync(pluginsDir, { recursive: true })
 
-  const destDir = pluginsDirFor(manifest.id as string, pluginsDir)
-  copyPlugin(resolved, destDir)
+    const destDir = pluginsDirFor(manifest.id as string, pluginsDir)
+    copyPlugin(dir, destDir)
 
-  return makeEntry(manifest)
+    return makeEntry(manifest)
+  } finally {
+    cleanup()
+  }
 }
 
 /**

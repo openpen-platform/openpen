@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AppBanner } from '@openpen/module-api/uikit'
 
@@ -7,7 +7,7 @@ const { t } = useI18n()
 
 type CustomTab = 'local' | 'github'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   open: boolean
   installing?: boolean
   errorMessage?: string | null
@@ -28,13 +28,106 @@ const repoUrl = ref('')
 const repoUrlError = ref<string | null>(null)
 const localStatus = ref<'idle' | 'ok' | 'error'>('idle')
 const localStatusMessage = ref('')
+const dragActive = ref(false)
+
+// The dialog uses v-if on its inner template but the component itself never
+// unmounts, so setup-script refs would otherwise persist across openings.
+// Reset on every open→true transition so a re-opened dialog is always clean.
+// The open/close transitions also drive the main process's drop-mode toggle:
+// while the dialog is up, the settings window drops from 'screen-saver' to
+// 'floating' so macOS NSWindowServer will actually deliver OS drag sessions
+// onto the drop zone.
+onUnmounted(() => {
+  if (props.open) window.openPenApi?.exitLocalInstallMode()
+})
+
+watch(() => props.open, (isOpen, wasOpen) => {
+  if (isOpen && !wasOpen) {
+    activeTab.value = 'local'
+    selectedPath.value = null
+    repoUrl.value = ''
+    repoUrlError.value = null
+    localStatus.value = 'idle'
+    localStatusMessage.value = ''
+    dragActive.value = false
+    window.openPenApi?.enterLocalInstallMode()
+  } else if (!isOpen && wasOpen) {
+    window.openPenApi?.exitLocalInstallMode()
+  }
+})
+
+function acceptPath(picked: string) {
+  selectedPath.value = picked
+  localStatus.value = 'ok'
+  localStatusMessage.value = t('pluginLocalDetected', { path: picked })
+}
 
 async function pickFolder() {
   const picked = await window.openPenApi?.pickPluginFolder()
   if (!picked) return
-  selectedPath.value = picked
-  localStatus.value = 'ok'
-  localStatusMessage.value = t('pluginLocalDetected', { path: picked })
+  acceptPath(picked)
+}
+
+async function pickZip() {
+  const picked = await window.openPenApi?.pickPluginZip()
+  if (!picked) return
+  acceptPath(picked)
+}
+
+function resolveDroppedPath(event: DragEvent): string | null {
+  // Tier 1: webUtils.getPathForFile via preload. This is the canonical post-
+  // Electron-32 API but only returns a non-empty string when the WebBlob
+  // backing the File still exists in this synchronous tick — i.e. the call
+  // must happen inside the native drop handler before any await / Vue
+  // reactive boundary clones the event.
+  const file = event.dataTransfer?.files?.[0]
+  const viaWebUtils = file ? window.openPenApi?.getDroppedFilePath(file) : null
+
+  // Tier 2: text/uri-list. macOS Finder and most Linux file managers set this
+  // MIME type with `file://` URLs. Web-standard, independent of Electron API.
+  const uriList = event.dataTransfer?.getData('text/uri-list') ?? ''
+  let viaUriList: string | null = null
+  if (uriList) {
+    const line = uriList.split(/[\r\n]+/).map((s) => s.trim()).find((l) => l.startsWith('file://'))
+    if (line) {
+      try {
+        viaUriList = decodeURIComponent(new URL(line).pathname)
+      } catch { /* malformed URI — ignore */ }
+    }
+  }
+
+  // Tier 3: text/plain. Windows Explorer sometimes only sets this with the
+  // raw path. Cheap last-ditch.
+  const plain = event.dataTransfer?.getData('text/plain')?.trim() ?? ''
+  const viaPlain = plain && (plain.startsWith('/') || /^[A-Za-z]:[\\/]/.test(plain)) ? plain : null
+
+  if (import.meta.env.DEV) {
+    console.log('[PluginAddCustomDialog] drop diagnostics', {
+      types: event.dataTransfer ? Array.from(event.dataTransfer.types) : [],
+      fileCount: event.dataTransfer?.files?.length ?? 0,
+      tier1_webUtils: viaWebUtils,
+      tier2_uriList: viaUriList,
+      tier3_plain: viaPlain,
+    })
+  }
+
+  return viaWebUtils || viaUriList || viaPlain || null
+}
+
+function handleDrop(event: DragEvent) {
+  dragActive.value = false
+  const droppedPath = resolveDroppedPath(event)
+  if (!droppedPath) return
+  acceptPath(droppedPath)
+}
+
+function handleDragOver(event: DragEvent) {
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
+  dragActive.value = true
+}
+
+function handleDragLeave() {
+  dragActive.value = false
 }
 
 function validateRepoUrl() {
@@ -87,15 +180,30 @@ function install() {
 
         <!-- Tab content area — animated on tab switch -->
         <div v-auto-animate>
-          <!-- Local folder tab -->
+          <!-- Local folder / zip tab -->
           <div v-if="activeTab === 'local'" class="mp-tab-content">
-            <div class="mp-drop-zone" @click="pickFolder">
+            <div
+              class="mp-drop-zone"
+              :class="{ 'is-drag-active': dragActive }"
+              @dragenter.prevent="handleDragOver"
+              @dragover.prevent="handleDragOver"
+              @dragleave.prevent="handleDragLeave"
+              @drop.prevent="handleDrop"
+            >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/>
                 <line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
-              {{ t('pluginDropZone') }}
+              <span>{{ t('pluginDropZone') }}</span>
+              <div class="mp-drop-actions">
+                <button type="button" class="mp-pick-btn" @click="pickFolder">
+                  {{ t('pluginPickFolder') }}
+                </button>
+                <button type="button" class="mp-pick-btn" @click="pickZip">
+                  {{ t('pluginPickZip') }}
+                </button>
+              </div>
             </div>
 
             <div v-if="selectedPath" class="mp-path-display">{{ selectedPath }}</div>
@@ -184,13 +292,25 @@ function install() {
 
 .mp-drop-zone {
   border: 1.5px dashed var(--border-hi); border-radius: var(--radius-sm);
-  padding: 28px 20px; text-align: center; font-size: 12.5px; color: var(--text-muted);
+  padding: 24px 20px 18px; text-align: center; font-size: 12.5px; color: var(--text-muted);
   background: var(--row-bg); display: flex; flex-direction: column;
-  align-items: center; gap: 8px; cursor: pointer;
+  align-items: center; gap: 8px;
   transition: border-color var(--t-fast), background var(--t-fast);
 }
-.mp-drop-zone:hover {
-  border-color: rgba(129, 140, 248, 0.55); background: var(--accent-bg);
+.mp-drop-zone.is-drag-active {
+  border-color: rgba(129, 140, 248, 0.75); background: var(--accent-bg);
+}
+.mp-drop-actions {
+  display: flex; gap: 8px; margin-top: 6px;
+}
+.mp-pick-btn {
+  padding: 5px 12px; font-size: 12px; font-weight: 500; color: var(--text-primary);
+  background: var(--surface-hi); border: 1px solid var(--border-hi);
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.mp-pick-btn:hover {
+  background: var(--accent-bg); border-color: rgba(129, 140, 248, 0.55);
 }
 .mp-path-display {
   font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;

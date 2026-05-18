@@ -58,6 +58,13 @@ function basenameLabel(p: string): string {
   return p.split('/').filter(Boolean).pop() ?? p
 }
 
+function clearPendingLocalState() {
+  pendingLocalSource.value = null
+  pendingLocalNext.value = null
+  pendingLocalCurrent.value = undefined
+  localInstallKind.value = null
+}
+
 async function runLocalInstall() {
   confirmDialog.value = null
   if (!pendingLocalSource.value) return
@@ -123,7 +130,7 @@ async function handleInstallGitHub(repoUrl: string) {
 
 function handleProgressDismiss() {
   progressOpen.value = false
-  localInstallKind.value = null
+  clearPendingLocalState()
   marketplace.resetInstallState()
 }
 
@@ -133,7 +140,7 @@ function handleProgressRestart() {
 
 function handleProgressRetry() {
   progressOpen.value = false
-  localInstallKind.value = null
+  clearPendingLocalState()
   marketplace.resetInstallState()
   addCustomOpen.value = true
 }
@@ -231,7 +238,7 @@ function handleUpgradeConfirm() {
       :title="confirmDialog.title"
       :body="confirmDialog.body"
       :confirm-label="confirmDialog.confirmLabel"
-      @update:open="(v) => { if (!v) confirmDialog = null }"
+      @update:open="(v) => { if (!v) { confirmDialog = null; clearPendingLocalState() } }"
       @confirm="handleConfirm"
     />
 
@@ -245,7 +252,7 @@ function handleUpgradeConfirm() {
       :next-version="upgradeDialog.nextVersion"
       :description="upgradeDialog.description"
       :changelog="upgradeDialog.changelog"
-      @update:open="(v) => { if (!v) upgradeDialog = null }"
+      @update:open="(v) => { if (!v) { upgradeDialog = null; clearPendingLocalState() } }"
       @confirm="handleUpgradeConfirm"
     />
 

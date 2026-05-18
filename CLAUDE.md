@@ -56,7 +56,7 @@ Each domain has one manager file with private functions prefixed with `_` (e.g. 
 
 **3. Window Management**
 - **Settings**: `frame: false`, `transparent: true`, `hasShadow: false`, `alwaysOnTop: true`.
-- **Top Level**: `'screen-saver'` — highest level, required for full-screen apps. Do not downgrade.
+- **Top Level**: `'screen-saver'` — highest level, required for full-screen apps. Do not downgrade as the steady-state level. Transient suspension is permitted when the macOS window-server refuses to deliver an OS event to a screen-saver-level window (file pickers via `dialog.showOpenDialog`, native drag-drop sessions): drop to `'floating'` or `false` for the duration of the OS interaction, ref-count concurrent suspenders so the outermost owns the restore, and lift back to `'screen-saver'` once the interaction ends.
 - **Settings Window**: Guard with `if (settingsWindow && !settingsWindow.isDestroyed())`. Use `show: false` + `ready-to-show` event to prevent flashes. Open → make the active main window passthrough (`activeMain.setIgnoreMouseEvents(true, { forward: true })`) so clicks don't bleed through to the overlay.
 - **Mouse Passthrough**: `setIgnoreMouseEvents(true, { forward: true })` on main window when drawing mode is active.
 

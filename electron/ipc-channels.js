@@ -195,8 +195,14 @@ export const PLUGIN = {
   ADD_FROM_GITHUB_REPO: 'plugin:add-from-github-repo',
   /** renderer → main (invoke): open system folder picker, returns path or null. */
   PICK_FOLDER: 'plugin:pick-folder',
-  /** renderer → main (invoke): read plugin.json from a local path, no file copy. */
+  /** renderer → main (invoke): open system file picker filtered to .zip, returns path or null. */
+  PICK_ZIP: 'plugin:pick-zip',
+  /** renderer → main (invoke): read plugin.json from a local path (directory or .zip), no file copy. */
   INSPECT_LOCAL: 'plugin:inspect-local',
+  /** renderer → main (send): the Add Custom dialog opened; main lowers settings window from screen-saver to floating so OS drag sessions can land. */
+  ENTER_LOCAL_INSTALL: 'plugin:enter-local-install',
+  /** renderer → main (send): the Add Custom dialog closed; main restores the original always-on-top level. */
+  EXIT_LOCAL_INSTALL: 'plugin:exit-local-install',
 }
 
 /** Module / plugin system. */

@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import { installFromLocal } from '../src/install.ts'
+import archiver from 'archiver'
+import { installFromLocal, inspectLocalSource } from '../src/install.ts'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -112,4 +113,125 @@ describe('installFromLocal', () => {
 
     expect(stages).toContain('extract')
   })
+
+  it('installs from a .zip source (flat layout)', async () => {
+    const srcDir = makePluginDir(tmpBase)
+    const zipPath = path.join(tmpBase, 'flat-plugin.zip')
+    await zipDirectory(srcDir, zipPath, { wrapInTopFolder: false })
+
+    const entry = await installFromLocal(zipPath, { pluginsDir: installRoot })
+
+    expect(entry.id).toBe('@alice/notes')
+    expect(entry.version).toBe('1.0.0')
+    const destDir = path.join(installRoot, '@alice', 'notes')
+    expect(fs.existsSync(path.join(destDir, 'plugin.json'))).toBe(true)
+    expect(fs.existsSync(path.join(destDir, 'dist', 'renderer.js'))).toBe(true)
+  })
+
+  it('installs from a .zip source wrapped in a single top-level folder', async () => {
+    const srcDir = makePluginDir(tmpBase)
+    const zipPath = path.join(tmpBase, 'wrapped-plugin.zip')
+    await zipDirectory(srcDir, zipPath, { wrapInTopFolder: true })
+
+    const entry = await installFromLocal(zipPath, { pluginsDir: installRoot })
+
+    expect(entry.id).toBe('@alice/notes')
+    const destDir = path.join(installRoot, '@alice', 'notes')
+    expect(fs.existsSync(path.join(destDir, 'dist', 'renderer.js'))).toBe(true)
+  })
+
+  it('installs from a .zip that contains a sibling __MACOSX/ resource fork', async () => {
+    const srcDir = makePluginDir(tmpBase)
+    const zipPath = path.join(tmpBase, 'macosx-plugin.zip')
+    await zipDirectoryWithMacOsxSidecar(srcDir, zipPath)
+
+    const entry = await installFromLocal(zipPath, { pluginsDir: installRoot })
+
+    expect(entry.id).toBe('@alice/notes')
+    const destDir = path.join(installRoot, '@alice', 'notes')
+    expect(fs.existsSync(path.join(destDir, 'dist', 'renderer.js'))).toBe(true)
+  })
+
+  it('throws on .zip with missing plugin.json', async () => {
+    const emptyDir = path.join(tmpBase, 'empty')
+    fs.mkdirSync(path.join(emptyDir, 'dist'), { recursive: true })
+    fs.writeFileSync(path.join(emptyDir, 'dist', 'renderer.js'), '// built')
+    const zipPath = path.join(tmpBase, 'no-manifest.zip')
+    await zipDirectory(emptyDir, zipPath, { wrapInTopFolder: false })
+
+    await expect(installFromLocal(zipPath, { pluginsDir: installRoot }))
+      .rejects.toThrow(/plugin\.json is missing/)
+  })
+
+  it('throws on non-zip file source', async () => {
+    const stray = path.join(tmpBase, 'stray.txt')
+    fs.writeFileSync(stray, 'not a zip')
+
+    await expect(installFromLocal(stray, { pluginsDir: installRoot }))
+      .rejects.toThrow(/directory or a \.zip file/)
+  })
 })
+
+// ── inspectLocalSource ────────────────────────────────────────────────────────
+
+describe('inspectLocalSource', () => {
+  let tmpBase: string
+
+  beforeEach(() => {
+    tmpBase = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-test-'))
+  })
+
+  afterEach(() => {
+    fs.rmSync(tmpBase, { recursive: true, force: true })
+  })
+
+  it('reads manifest from a directory', async () => {
+    const srcDir = makePluginDir(tmpBase)
+    const info = await inspectLocalSource(srcDir)
+    expect(info.id).toBe('@alice/notes')
+    expect(info.version).toBe('1.0.0')
+    expect(info.displayName).toBe('Notes')
+  })
+
+  it('reads manifest from a .zip source', async () => {
+    const srcDir = makePluginDir(tmpBase)
+    const zipPath = path.join(tmpBase, 'inspect.zip')
+    await zipDirectory(srcDir, zipPath, { wrapInTopFolder: false })
+
+    const info = await inspectLocalSource(zipPath)
+    expect(info.id).toBe('@alice/notes')
+    expect(info.version).toBe('1.0.0')
+  })
+})
+
+// ── zip helper ────────────────────────────────────────────────────────────────
+
+async function zipDirectory(
+  srcDir: string,
+  outPath: string,
+  opts: { wrapInTopFolder: boolean },
+): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const output = fs.createWriteStream(outPath)
+    const archive = archiver('zip', { zlib: { level: 0 } })
+    output.on('close', () => resolve())
+    archive.on('error', reject)
+    archive.pipe(output)
+    archive.directory(srcDir, opts.wrapInTopFolder ? path.basename(srcDir) : false)
+    void archive.finalize()
+  })
+}
+
+async function zipDirectoryWithMacOsxSidecar(srcDir: string, outPath: string): Promise<void> {
+  const topName = path.basename(srcDir)
+  await new Promise<void>((resolve, reject) => {
+    const output = fs.createWriteStream(outPath)
+    const archive = archiver('zip', { zlib: { level: 0 } })
+    output.on('close', () => resolve())
+    archive.on('error', reject)
+    archive.pipe(output)
+    archive.directory(srcDir, topName)
+    archive.append('mac resource fork stub', { name: `__MACOSX/${topName}/._plugin.json` })
+    void archive.finalize()
+  })
+}

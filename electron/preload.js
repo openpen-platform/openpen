@@ -10,7 +10,7 @@
  *   - app config (developer-side, read-only)
  *   - module manifests + main-handler IPC bridge
  */
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('openPenApi', {
   // ── Host platform (static; renderer uses for display formatting) ────
@@ -265,8 +265,21 @@ contextBridge.exposeInMainWorld('openPenApi', {
   },
   /** Open the OS folder picker. Returns the selected path, or null if cancelled. */
   pickPluginFolder: () => ipcRenderer.invoke('plugin:pick-folder'),
-  /** Read plugin.json metadata from a local path without copying files. */
+  /** Open the OS file picker filtered to .zip. Returns the selected path, or null if cancelled. */
+  pickPluginZip: () => ipcRenderer.invoke('plugin:pick-zip'),
+  /** Read plugin.json metadata from a local path (directory or .zip) without copying files. */
   inspectPluginSource: (sourcePath) => ipcRenderer.invoke('plugin:inspect-local', { sourcePath }),
+  /**
+   * Resolve the absolute filesystem path of a `File` object obtained from a
+   * drop or `<input type="file">`. Electron 32 removed the legacy `File.path`
+   * property; `webUtils.getPathForFile` must be invoked from a preload script
+   * (it is not exposed in the isolated renderer world).
+   */
+  getDroppedFilePath: (file) => webUtils.getPathForFile(file),
+  /** Announce that the Add Custom Plugin dialog has opened. Main lowers the settings window from 'screen-saver' to 'floating' so OS drag sessions can land. */
+  enterLocalInstallMode: () => ipcRenderer.send('plugin:enter-local-install'),
+  /** Announce that the Add Custom Plugin dialog has closed. Main restores the previous always-on-top level. */
+  exitLocalInstallMode: () => ipcRenderer.send('plugin:exit-local-install'),
 
   // ── Positioning engine ───────────────────────────────────────────────────────
   /**
