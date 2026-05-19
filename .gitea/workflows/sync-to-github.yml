@@ -18,9 +18,45 @@ jobs:
           GITEA_TOKEN: ${{ gitea.token }}
           GT_HOST: ${{ secrets.GT_HOST }}
         run: |
-          git clone --bare \
-            "https://oauth2:${GITEA_TOKEN}@${GT_HOST}/openpen-platform/openpen.git" \
-            /tmp/repo.git
-          git -C /tmp/repo.git push \
-            "https://x-access-token:${GH_PAT}@github.com/openpen-platform/openpen.git" \
-            refs/heads/main:refs/heads/main
+          set -euo pipefail
+
+          GITEA_URL="https://oauth2:${GITEA_TOKEN}@${GT_HOST}/openpen-platform/openpen.git"
+          GITHUB_URL="https://x-access-token:${GH_PAT}@github.com/openpen-platform/openpen.git"
+
+          git clone --branch main --single-branch "$GITEA_URL" /tmp/repo
+          cd /tmp/repo
+          git config user.email "sync-bot@openpen.local"
+          git config user.name "openpen-sync"
+
+          git remote add github "$GITHUB_URL"
+          git fetch github main
+
+          GITEA_HEAD=$(git rev-parse HEAD)
+          GITHUB_HEAD=$(git rev-parse github/main)
+
+          if [ "$GITEA_HEAD" = "$GITHUB_HEAD" ]; then
+            echo "Gitea and GitHub main already match — nothing to do."
+            exit 0
+          fi
+
+          # Fast path: GitHub is an ancestor of Gitea → linear fast-forward
+          if git merge-base --is-ancestor github/main HEAD; then
+            echo "GitHub main is an ancestor of Gitea main — fast-forward push."
+            git push github HEAD:refs/heads/main
+            exit 0
+          fi
+
+          # Divergence: GitHub has commits Gitea lacks (e.g. PR merged on
+          # GitHub side directly). Rebase Gitea-only commits onto github/main
+          # so the resulting history stays linear, then sync both ends.
+          MERGE_BASE=$(git merge-base HEAD github/main)
+          echo "Divergence detected (merge base $MERGE_BASE) — rebasing Gitea commits onto github/main."
+
+          git rebase --onto github/main "$MERGE_BASE" HEAD
+
+          # --force-with-lease pins to the SHA captured at clone time; aborts
+          # if Gitea main has moved between clone and push, so a concurrent
+          # push is never overwritten.
+          git push origin HEAD:refs/heads/main \
+            --force-with-lease=refs/heads/main:"$GITEA_HEAD"
+          git push github HEAD:refs/heads/main
