@@ -1,6 +1,6 @@
 {
   "name": "@openpen/build",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "OpenPen plugin build CLI — zero-config Vite + Vue compilation for plugin authors.",
   "author": "navishachiku <navishachiku@gmail.com>",
   "homepage": "https://github.com/openpen-platform/openpen#readme",
