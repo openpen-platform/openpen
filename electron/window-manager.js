@@ -439,7 +439,6 @@ export function toggleDrawingMode() {
  */
 function setDrawingModeState(enabled) {
   const prev = drawingMode;
-  drawingMode = enabled;
 
   const activeOverlay = overlayWindowsByDisplayId.get(activeDisplayId);
   const activeMainForLog = mainWindowsByDisplayId.get(activeDisplayId);
@@ -452,6 +451,18 @@ function setDrawingModeState(enabled) {
     mainExists: !!(activeMainForLog && !activeMainForLog.isDestroyed()),
     mainFocused: activeMainForLog && !activeMainForLog.isDestroyed() ? activeMainForLog.isFocused() : null,
   });
+
+  // Same-state reentry would tear down the cursor wake-up burst
+  // mid-flight (timer clear at the top of the block) and re-broadcast
+  // DRAWING_MODE_CHANGED, racing the renderer's cursor/passthrough
+  // wiring with itself.
+  if (enabled === prev) {
+    winDbg('setDrawingModeState:noop-same-state', { state: enabled });
+    return;
+  }
+
+  drawingMode = enabled;
+
   if (enabled) {
     winFocusTickCount = 0;
     winOverlayFocusEventCount = 0;
@@ -533,6 +544,51 @@ function setDrawingModeState(enabled) {
       setTimeout(() => fireCursorWakeup('30ms'), 30);
       setTimeout(() => fireCursorWakeup('80ms'), 80);
       setTimeout(() => fireCursorWakeup('180ms'), 180);
+
+      // Sustained cursor-focus refresh while drawing mode is on. The
+      // wake-up burst stops at 180ms, but on macOS WindowServer
+      // re-evaluates cursor via OS-level tracking on any real
+      // pointermove that follows, and that re-evaluation ignores the
+      // webview's `cursor: none` unless the webContents is currently
+      // render-focused. Without a sustained refresh the OS cursor
+      // snaps back to arrow the first time another window steals
+      // render focus (settings dialog, system UI, dock hover). DWM
+      // on Windows also keys SetCursor delivery off the focused
+      // webContents, so the same refresh keeps the HWND cursor
+      // honouring `cursor: none` across focus drift.
+      //
+      // Re-resolve the active overlay each tick — `activeDisplayId`
+      // can change mid-session (user drags the ball / bar across
+      // displays), and capturing the entry-time overlay would leave
+      // the new active overlay unrefreshed AND churn focus on the
+      // stale one. Body guard auto-clears the interval on exit.
+      cursorFocusRefreshTimer = setInterval(() => {
+        if (!drawingMode) {
+          clearInterval(cursorFocusRefreshTimer);
+          cursorFocusRefreshTimer = null;
+          return;
+        }
+        const overlay = overlayWindowsByDisplayId.get(activeDisplayId);
+        if (!overlay || overlay.isDestroyed()) return;
+        try {
+          overlay.webContents.focus();
+          winFocusTickCount += 1;
+          // Sample every 10th tick (1s cadence) so the log stays readable.
+          // Tick 1 captured explicitly to anchor t=0 since the burst spans 30-180ms.
+          if (winFocusTickCount === 1 || winFocusTickCount % 10 === 0) {
+            const mainWin = mainWindowsByDisplayId.get(activeDisplayId);
+            winDbg('cursorFocusRefreshTimer:tick', {
+              tickN: winFocusTickCount,
+              overlayFocused: overlay.isFocused(),
+              mainFocused: mainWin && !mainWin.isDestroyed() ? mainWin.isFocused() : null,
+              overlayFocusEventsSoFar: winOverlayFocusEventCount,
+              mainMoveTopsSoFar: winMainMoveTopCount,
+            });
+          }
+        } catch {
+          /* best-effort */
+        }
+      }, 100);
     } else if (IS_WIN) {
       // Win exit cursor refresh: the HWND cursor remains at whatever
       // Chromium last issued via SetCursor (cursor:none from drawing
@@ -557,45 +613,6 @@ function setDrawingModeState(enabled) {
           winDbg('exit cursor-refresh ignoreMouseEvents-toggle THREW', { error: err?.message });
         }
       }, 50);
-
-      // Real pointer movement on a macOS overlay causes WindowServer
-      // to re-evaluate cursor via OS-level tracking which ignores the
-      // webview's `cursor: none` unless the webContents is currently
-      // render-focused. Refresh focus at ~10Hz while drawing mode is
-      // on so the next real pointermove still honours the rule.
-      //
-      // Re-resolve the active overlay each tick — `activeDisplayId`
-      // can change mid-session (user drags the ball / bar across
-      // displays), and capturing the entry-time overlay would leave
-      // the new active overlay unrefreshed AND churn focus on the
-      // stale one.
-      cursorFocusRefreshTimer = setInterval(() => {
-        if (!drawingMode) {
-          clearInterval(cursorFocusRefreshTimer);
-          cursorFocusRefreshTimer = null;
-          return;
-        }
-        const overlay = overlayWindowsByDisplayId.get(activeDisplayId);
-        if (!overlay || overlay.isDestroyed()) return;
-        try {
-          overlay.webContents.focus();
-          winFocusTickCount += 1;
-          // Sample every 10th tick (1s cadence) so the log stays readable.
-          // Tick 1 captured explicitly to anchor t=0 since AD-7 burst spans 30-180ms.
-          if (winFocusTickCount === 1 || winFocusTickCount % 10 === 0) {
-            const mainWin = mainWindowsByDisplayId.get(activeDisplayId);
-            winDbg('cursorFocusRefreshTimer:tick', {
-              tickN: winFocusTickCount,
-              overlayFocused: overlay.isFocused(),
-              mainFocused: mainWin && !mainWin.isDestroyed() ? mainWin.isFocused() : null,
-              overlayFocusEventsSoFar: winOverlayFocusEventCount,
-              mainMoveTopsSoFar: winMainMoveTopCount,
-            });
-          }
-        } catch {
-          /* best-effort */
-        }
-      }, 100);
     }
   }
 
