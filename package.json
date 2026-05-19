@@ -94,8 +94,8 @@
   "dependencies": {
     "@formkit/auto-animate": "^0.9.0",
     "@openpen/plugin-manager": "*",
-    "electron-log": "^5.4.3",
-    "vue": "^3.5.13",
+    "electron-log": "^5.4.4",
+    "vue": "^3.5.34",
     "vue-i18n": "^9.14.5",
     "zod": "^3.25.76"
   },
