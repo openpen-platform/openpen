@@ -23,6 +23,7 @@
     "bin",
     "scripts",
     "templates",
+    "CHANGELOG.md",
     "README.md"
   ],
   "engines": {

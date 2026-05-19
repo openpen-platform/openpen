@@ -9,19 +9,19 @@
     },
     "packages/build-cli": {
       "package-name": "@openpen/build",
-      "changelog-path": "packages/build-cli/CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/module-api": {
       "package-name": "@openpen/module-api",
-      "changelog-path": "packages/module-api/CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/openpen-cli": {
       "package-name": "openpen-cli",
-      "changelog-path": "packages/openpen-cli/CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md"
     },
     "packages/plugin-manager": {
       "package-name": "@openpen/plugin-manager",
-      "changelog-path": "packages/plugin-manager/CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md"
     }
   },
   "plugins": [
