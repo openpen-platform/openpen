@@ -64,6 +64,15 @@ const sharedPlugins = [
     preventAssignment: true,
     values: {
       'process.env.NODE_ENV': '"production"',
+      // Vite's import.meta.env.* keys. Vite substitutes these at build time
+      // for first-party builds, but the runtime shims here are bundled with
+      // Rollup directly, so any module-api SFC that reads import.meta.env.DEV
+      // (e.g. AppPopover's dev-only warning) would otherwise hit
+      // `Cannot read properties of undefined (reading 'DEV')` at plugin load.
+      'import.meta.env.DEV': 'false',
+      'import.meta.env.PROD': 'true',
+      'import.meta.env.MODE': '"production"',
+      'import.meta.env.SSR': 'false',
       '__DEV__': 'false',
       '__ESM_BUNDLER__': 'true',
       '__CJS__': 'false',
