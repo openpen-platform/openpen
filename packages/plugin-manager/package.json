@@ -1,6 +1,6 @@
 {
   "name": "@openpen/plugin-manager",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Shared install/remove/list logic for OpenPen plugins — used by the CLI and the in-app marketplace.",
   "author": "navishachiku <navishachiku@gmail.com>",
   "homepage": "https://github.com/openpen-platform/openpen#readme",

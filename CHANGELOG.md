@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0](https://github.com/openpen-platform/openpen/compare/v1.0.2...v1.1.0) (2026-05-19)
+
+
+### Features
+
+* **cursors:** DOM overlay cursor system + plugin SDK doc gaps ([2f77192](https://github.com/openpen-platform/openpen/commit/2f771927fb94586b0ceef58e07fcb5220ed40c02))
+* **plugin-install:** accept .zip sources and rework Add Custom dialog UX ([1098fd9](https://github.com/openpen-platform/openpen/commit/1098fd97ab74eafcb6692144c1b9c6aa949c3508))
+
+
+### Bug Fixes
+
+* **canvas:** seed stroke style from module defaults at boot ([1a8f6b0](https://github.com/openpen-platform/openpen/commit/1a8f6b0f3cc36a42be4ecabe307065dcd7189d52))
+* **control-bar:** disable Settings button while drawing mode active ([2d60f7f](https://github.com/openpen-platform/openpen/commit/2d60f7fb3d3284efb03ac3a0ab8cd6466be4bbce))
+* **control-bar:** pause auto-collapse timer while any dialog is open ([#1](https://github.com/openpen-platform/openpen/issues/1)) ([add84ff](https://github.com/openpen-platform/openpen/commit/add84ff89f1ad5135c7371fd7d4bfd64b1ef2395))
+
 ## [1.0.2](https://github.com/openpen-platform/openpen/compare/v1.0.1...v1.0.2) (2026-05-14)
 
 
