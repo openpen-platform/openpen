@@ -15,7 +15,7 @@
     "@openpen/build": "*",
     "@openpen/module-api": "*",
     "openpen-cli": "*",
-    "typescript": "^5.0.0",
+    "typescript": "^6.0.3",
     "vue": "^3.5.34"
   },
   "license": "MIT"
