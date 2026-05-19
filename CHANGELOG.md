@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/openpen-platform/openpen/compare/v1.1.0...v1.1.1) (2026-05-19)
+
+
+### Bug Fixes
+
+* **release-please:** correct per-package CHANGELOG path nesting ([d151e9d](https://github.com/openpen-platform/openpen/commit/d151e9def2fa82234b1c24a1d7f83f06988c0e36))
+* **runtime:** substitute import.meta.env.* in plugin runtime shims ([6c50e01](https://github.com/openpen-platform/openpen/commit/6c50e01cbcd3016ee62e2146f4fb572c3afab4b0))
+
 ## [1.1.0](https://github.com/openpen-platform/openpen/compare/v1.0.2...v1.1.0) (2026-05-19)
 
 Cursor presentation overhaul and a richer plugin install flow, plus a batch of control-bar and canvas reliability fixes.
