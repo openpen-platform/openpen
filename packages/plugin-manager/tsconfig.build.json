@@ -8,6 +8,7 @@
     "declaration": true,
     "rootDir": "./src",
     "outDir": "./dist",
+    "types": ["node"],
     "skipLibCheck": true,
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
