@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.1.0](https://github.com/openpen-platform/openpen/compare/v1.0.2...v1.1.0) (2026-05-19)
+
+Cursor presentation overhaul and a richer plugin install flow, plus a batch of control-bar and canvas reliability fixes.
+
+### Features
+
+- **cursors**: New DOM-overlay cursor system. The drawing cursor is rendered by the renderer process as a positioned DOM element rather than the OS cursor, so per-tool visuals (colour, size, shape, hover-on-interactive feedback) stay in sync with the active drawing tool and brush size, even when the OS cursor would otherwise be hidden by passthrough or full-screen apps. The plugin SDK reference also gained the missing `ui.cursors` slot documentation and several previously undocumented UIKit primitives. ([2f77192](https://github.com/openpen-platform/openpen/commit/2f771927fb94586b0ceef58e07fcb5220ed40c02))
+- **plugin-install**: The Add Custom dialog can now accept `.zip` archive sources in addition to the previous catalog / direct-url entries. The dialog UX itself was reworked — clearer source-type selection, validation feedback, and inline progress while the catalog or archive is being fetched. ([1098fd9](https://github.com/openpen-platform/openpen/commit/1098fd97ab74eafcb6692144c1b9c6aa949c3508))
+
+### Bug Fixes
+
+- **canvas**: Stroke style (brush colour / width / opacity) is now seeded from the active module's defaults at boot instead of starting at an uninitialised state. Previously the first stroke after launch could render with stale or zero-value parameters until the user touched the stroke-style picker once. ([1a8f6b0](https://github.com/openpen-platform/openpen/commit/1a8f6b0f3cc36a42be4ecabe307065dcd7189d52))
+- **control-bar**: The Settings button is now disabled while drawing mode is active. Opening Settings during a live drawing session previously tore down the overlay window's mouse-passthrough wiring, leaving the cursor stuck in a half-state once the dialog closed. ([2d60f7f](https://github.com/openpen-platform/openpen/commit/2d60f7fb3d3284efb03ac3a0ab8cd6466be4bbce))
+- **control-bar**: The auto-collapse timer is paused while any dialog (Settings, plugin install, Add Custom) is open. The bar previously could collapse out from under an open dialog and orphan it. ([#1](https://github.com/openpen-platform/openpen/issues/1)) ([add84ff](https://github.com/openpen-platform/openpen/commit/add84ff89f1ad5135c7371fd7d4bfd64b1ef2395))
+- **drawing-mode** (macOS): Repaired sporadic drawing-mode entry when the global shortcut fired while the pointer was off the overlay (over the dock / menu bar / a secondary display). The same-state re-entry path no longer races the cursor wake-up burst, and a stale `pointerleave` no longer leaves the overlay cursor invisible after entry. ([564046d](https://github.com/openpen-platform/openpen/commit/564046d27e2b066411f6df3dde6f3c0bcad48a23))
+
+### For plugin authors and downstream packagers
+
+- **TypeScript 6.0 compatibility**: The repo and all published packages compile cleanly under both TypeScript 5.9 and 6.0. `@openpen/plugin-manager` declares `@types/node` directly (previously inherited transitively via vitest) and its `tsconfig.build.json` pins `rootDir` and `types: ["node"]` explicitly, so the build no longer depends on TypeScript's auto type-acquisition heuristics. The Dependabot TS 6.0.3 bump rides in this release. ([#22](https://github.com/openpen-platform/openpen/pull/22))
+- **Dependency hygiene**: A grouped Dependabot batch landed — jsdom 27 → 29, eslint 9 → 10, wait-on 8 → 9, and a production-minor-patch group covering three runtime packages. No behaviour changes expected; flagged here so reproducible-build setups have an accurate manifest. ([#18](https://github.com/openpen-platform/openpen/pull/18) – [#23](https://github.com/openpen-platform/openpen/pull/23))
+
 ## [1.0.2](https://github.com/openpen-platform/openpen/compare/v1.0.1...v1.0.2) (2026-05-14)
 
 

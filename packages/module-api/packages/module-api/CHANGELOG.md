@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/openpen-platform/openpen/compare/v1.0.0...v1.1.0) (2026-05-19)
+
+
+### Features
+
+* **cursors:** DOM overlay cursor system + plugin SDK doc gaps ([2f77192](https://github.com/openpen-platform/openpen/commit/2f771927fb94586b0ceef58e07fcb5220ed40c02))
+
+
+### Bug Fixes
+
+* **control-bar:** pause auto-collapse timer while any dialog is open ([#1](https://github.com/openpen-platform/openpen/issues/1)) ([add84ff](https://github.com/openpen-platform/openpen/commit/add84ff89f1ad5135c7371fd7d4bfd64b1ef2395))
+
 ## 1.0.0 (2026-05-14)
 
 
