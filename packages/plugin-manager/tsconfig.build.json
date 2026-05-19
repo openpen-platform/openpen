@@ -6,6 +6,7 @@
     "lib": ["ESNext"],
     "strict": true,
     "declaration": true,
+    "rootDir": "./src",
     "outDir": "./dist",
     "skipLibCheck": true,
     "allowImportingTsExtensions": false,
