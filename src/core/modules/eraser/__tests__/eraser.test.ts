@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import eraser from './index'
+import eraser from '../index'
 
 describe('eraser module', () => {
   it('has correct id', () => {
@@ -30,7 +30,7 @@ describe('eraser module', () => {
   })
 
   it('exports both static and animated cursor variants', async () => {
-    const { eraserCursor, eraserCursorAnimated } = await import('./cursor')
+    const { eraserCursor, eraserCursorAnimated } = await import('../cursor')
     expect(eraserCursor.svg).toContain('<svg')
     expect(eraserCursor.svg).not.toContain('@keyframes')
     expect(eraserCursor.hotspot).toEqual({ x: 2, y: 22 })

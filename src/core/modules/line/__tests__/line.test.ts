@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import line from './index'
+import line from '../index'
 
 describe('line module', () => {
   it('has correct id', () => {
@@ -25,7 +25,7 @@ describe('line module', () => {
   })
 
   it('exports both static and animated cursor variants', async () => {
-    const { lineCursor, lineCursorAnimated } = await import('./cursor')
+    const { lineCursor, lineCursorAnimated } = await import('../cursor')
     expect(lineCursor.svg).toContain('<svg')
     expect(lineCursor.svg).not.toContain('@keyframes')
     expect(lineCursor.hotspot).toEqual({ x: 2, y: 22 })

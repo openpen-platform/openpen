@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { createFreehandTool } from './freehand-tool'
+import { createFreehandTool } from '../freehand-tool'
 import type { Point, StrokeStyle } from '@openpen/module-api'
 
 function pt(x: number, y: number): Point {

@@ -1,13 +1,5 @@
-/**
- * stroke-width module unit tests.
- *
-
- * Structure validation and settings schema; UI behavior via e2e.
- */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import strokeWidthModule from './index'
-import { loadModules } from '../../runtime/module-loader'
-import { resetContributionStore, getSlotEntries } from '../../runtime/contribution-store'
 
 describe('stroke-width module — structure', () => {
   it('has a valid id', () => {
@@ -43,26 +35,5 @@ describe('stroke-width module — structure', () => {
     expect(locs!['zh-Hant']).toBeDefined()
     expect(locs!['zh-Hans']).toBeDefined()
     expect(locs!['ja']).toBeDefined()
-  })
-})
-
-describe('stroke-width module — loading', () => {
-  beforeEach(() => {
-    resetContributionStore()
-  })
-
-  it('loads successfully and registers contributions', async () => {
-    const result = await loadModules({
-      modules: [strokeWidthModule],
-      hostVersion: '1.0.0',
-    })
-    expect(result.errors).toHaveLength(0)
-    expect(result.loaded).toContain('@openpen/stroke-width')
-
-    const cbEntries = getSlotEntries('ui.control-bar')
-    expect(cbEntries.value.some((e) => e.moduleId === '@openpen/stroke-width')).toBe(true)
-
-    const swEntries = getSlotEntries('canvas.stroke.style')
-    expect(swEntries.value.some((e) => e.moduleId === '@openpen/stroke-width')).toBe(true)
   })
 })

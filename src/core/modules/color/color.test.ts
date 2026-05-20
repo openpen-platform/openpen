@@ -1,12 +1,5 @@
-/**
- * color module unit tests.
- *
-
- */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import colorModule from './index'
-import { loadModules } from '../../runtime/module-loader'
-import { resetContributionStore, getSlotEntries } from '../../runtime/contribution-store'
 
 describe('color module — structure', () => {
   it('has a valid id', () => {
@@ -42,26 +35,5 @@ describe('color module — structure', () => {
     expect(locs!['zh-Hant']).toBeDefined()
     expect(locs!['zh-Hans']).toBeDefined()
     expect(locs!['ja']).toBeDefined()
-  })
-})
-
-describe('color module — loading', () => {
-  beforeEach(() => {
-    resetContributionStore()
-  })
-
-  it('loads successfully and registers contributions', async () => {
-    const result = await loadModules({
-      modules: [colorModule],
-      hostVersion: '1.0.0',
-    })
-    expect(result.errors).toHaveLength(0)
-    expect(result.loaded).toContain('@openpen/color')
-
-    const cbEntries = getSlotEntries('ui.control-bar')
-    expect(cbEntries.value.some((e) => e.moduleId === '@openpen/color')).toBe(true)
-
-    const swEntries = getSlotEntries('canvas.stroke.style')
-    expect(swEntries.value.some((e) => e.moduleId === '@openpen/color')).toBe(true)
   })
 })

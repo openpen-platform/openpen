@@ -9,7 +9,7 @@ vi.mock('@openpen/module-api/host', () => ({
   }),
 }))
 
-import { createShapeTool, renderShapeStroke } from './shape-tool'
+import { createShapeTool, renderShapeStroke } from '../shape-tool'
 import type { Point, StrokeStyle } from '@openpen/module-api'
 
 function pt(x: number, y: number): Point {

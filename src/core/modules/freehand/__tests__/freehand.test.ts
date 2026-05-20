@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import freehand from './index'
-import { freehandCursor, freehandCursorAnimated } from './cursor'
+import freehand from '../index'
+import { freehandCursor, freehandCursorAnimated } from '../cursor'
 
 describe('freehand module', () => {
   it('has correct id', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import shape from './index'
+import shape from '../index'
 
 describe('shape module', () => {
   it('has correct id', () => {
@@ -43,7 +43,7 @@ describe('shape module', () => {
   })
 
   it('exports both static and animated cursor variants', async () => {
-    const { shapeCursor, shapeCursorAnimated } = await import('./cursor')
+    const { shapeCursor, shapeCursorAnimated } = await import('../cursor')
     expect(shapeCursor.svg).toContain('<svg')
     expect(shapeCursor.svg).not.toContain('@keyframes')
     expect(shapeCursor.hotspot).toEqual({ x: 2, y: 2 })

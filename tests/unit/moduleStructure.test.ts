@@ -6,11 +6,16 @@
  * The host bootstrap uses `en.json` as the base dictionary; without it,
  * locale-specific keys have no fallback and the UI silently shows
  * untranslated key strings.
+ *
+ * Also validates the BUILT_IN_MODULES registry:
+ * - each module's declared id unscoped segment must match its folder name
+ * - no two modules may share the same id
  */
 import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { BUILT_IN_MODULES } from '../../src/core/modules/registry'
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -82,4 +87,40 @@ describe('module locales/ structure', () => {
       }
     })
   }
+})
+
+// ---------------------------------------------------------------------------
+// BUILT_IN_MODULES registry integrity checks
+// ---------------------------------------------------------------------------
+
+describe('BUILT_IN_MODULES registry — folder matches id', () => {
+  // Rules out: module renamed on disk but id field forgotten, causing the
+  // runtime to register with a stale id that no longer corresponds to any
+  // folder, breaking contribution lookups silently.
+  for (const mod of BUILT_IN_MODULES) {
+    const unscopedSegment = mod.id.includes('/') ? mod.id.split('/').pop()! : mod.id
+    const expectedDir = path.join(MODULES_DIR, unscopedSegment)
+
+    it(`${mod.id}: folder "${unscopedSegment}" exists under src/core/modules/`, () => {
+      expect(
+        fs.existsSync(expectedDir),
+        `Module id "${mod.id}" declares unscoped segment "${unscopedSegment}" but no folder` +
+          ` src/core/modules/${unscopedSegment}/ found on disk`
+      ).toBe(true)
+    })
+  }
+})
+
+describe('BUILT_IN_MODULES registry — no duplicate ids', () => {
+  // Rules out: two modules accidentally claiming the same id; the second
+  // registration silently shadows or fails to load, dropping one module
+  // from the running app without any error.
+  it('all module ids are unique', () => {
+    const ids = BUILT_IN_MODULES.map((m) => m.id)
+    const unique = new Set(ids)
+    expect(
+      unique.size,
+      `Duplicate ids found in BUILT_IN_MODULES: ${ids.filter((id, i) => ids.indexOf(id) !== i).join(', ')}`
+    ).toBe(ids.length)
+  })
 })
