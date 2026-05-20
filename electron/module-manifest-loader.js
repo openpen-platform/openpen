@@ -16,9 +16,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { MODULE } from './ipc-channels.js'
 import { ensurePluginInstalledAt, getPluginInstalledAt } from './plugin-meta-manager.js'
-
-// Mirror of MODULE_ID_RE in packages/module-api/src/validation.ts — keep in sync.
-const MODULE_ID_RE = /^@([a-z0-9][a-z0-9-]{0,38})\/([a-z0-9][a-z0-9-]{0,38})$/
+import { MODULE_ID_RE } from './plugin-id-validator.js'
 
 /**
  * Plugin install directory.

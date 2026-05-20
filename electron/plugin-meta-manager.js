@@ -17,8 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { PLUGIN_META } from './ipc-channels.js';
 import { fsyncDir } from './fs-utils.js';
-
-const MODULE_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/
+import { MODULE_ID_RE } from './plugin-id-validator.js';
 
 /** @type {Record<string, { installedAt: string }>} */
 let metaMap = {}

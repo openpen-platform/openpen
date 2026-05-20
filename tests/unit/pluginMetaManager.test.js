@@ -52,6 +52,14 @@ vi.mock('../../electron/fs-utils.js', () => ({
   fsyncDir: vi.fn(),
 }));
 
+// ── mock plugin-id-validator.js ──
+vi.mock('../../electron/plugin-id-validator.js', () => ({
+  MODULE_ID_RE: /^@([a-z0-9][a-z0-9-]{0,38})\/([a-z0-9][a-z0-9-]{0,38})$/,
+  isValidPluginId: (id) =>
+    typeof id === 'string' &&
+    /^@([a-z0-9][a-z0-9-]{0,38})\/([a-z0-9][a-z0-9-]{0,38})$/.test(id),
+}));
+
 import fs from 'node:fs';
 import {
   initPluginMetaManager,
@@ -97,11 +105,11 @@ describe('invalid sidecar', () => {
 
 describe('ensurePluginInstalledAt', () => {
   it('writes a new ISO8601 entry and returns it', () => {
-    const result = ensurePluginInstalledAt('my-plugin');
+    const result = ensurePluginInstalledAt('@openpen/my-plugin');
     // Must be a valid ISO string.
     expect(new Date(result).toISOString()).toBe(result);
     // Must be persisted in memory.
-    expect(getAllPluginMeta()).toEqual({ 'my-plugin': { installedAt: result } });
+    expect(getAllPluginMeta()).toEqual({ '@openpen/my-plugin': { installedAt: result } });
     // Must have triggered an atomic write (openSync called once for .tmp).
     expect(fs.openSync).toHaveBeenCalledTimes(1);
   });
@@ -109,9 +117,9 @@ describe('ensurePluginInstalledAt', () => {
   // ── 4. Second call returns same value, no rewrite ─────────────────────────
 
   it('returns the same timestamp on a second call and does NOT rewrite to disk', () => {
-    const first = ensurePluginInstalledAt('stable-plugin');
+    const first = ensurePluginInstalledAt('@openpen/stable-plugin');
     vi.clearAllMocks(); // reset call counts
-    const second = ensurePluginInstalledAt('stable-plugin');
+    const second = ensurePluginInstalledAt('@openpen/stable-plugin');
     expect(second).toBe(first);
     // No additional write should have occurred.
     expect(fs.openSync).not.toHaveBeenCalled();
@@ -124,8 +132,8 @@ describe('ensurePluginInstalledAt', () => {
   });
 
   it('getPluginInstalledAt returns the stored value after ensurePluginInstalledAt', () => {
-    const ts = ensurePluginInstalledAt('known-plugin');
-    expect(getPluginInstalledAt('known-plugin')).toBe(ts);
+    const ts = ensurePluginInstalledAt('@openpen/known-plugin');
+    expect(getPluginInstalledAt('@openpen/known-plugin')).toBe(ts);
   });
 });
 
@@ -149,11 +157,11 @@ describe('session persistence', () => {
   it('ensurePluginInstalledAt does not overwrite a loaded entry', () => {
     const original = '2024-01-01T00:00:00.000Z';
     fs.existsSync.mockReturnValue(true);
-    fs.readFileSync.mockReturnValue(JSON.stringify({ 'old-plugin': { installedAt: original } }));
+    fs.readFileSync.mockReturnValue(JSON.stringify({ '@openpen/old-plugin': { installedAt: original } }));
     initPluginMetaManager();
 
     vi.clearAllMocks();
-    const result = ensurePluginInstalledAt('old-plugin');
+    const result = ensurePluginInstalledAt('@openpen/old-plugin');
     expect(result).toBe(original);
     expect(fs.openSync).not.toHaveBeenCalled();
   });
