@@ -137,7 +137,7 @@ All of these types are re-exported from `@openpen/module-api` for direct import:
 import type { Tool, Stroke, Point, StrokeStyle, StrokeColor, PointerModifiers } from '@openpen/module-api'
 ```
 
-See `packages/plugin-starter/src/demo-tool.ts` for a complete, type-checked reference implementation.
+See `packages/plugin-starter/src/demo-tool.ts` for a complete, type-checked reference implementation. Use `resolveStrokeColor(color)` from `@openpen/module-api` to fold a `StrokeColor` into a single CSS string when assigning to `ctx.strokeStyle`.
 
 ### `canvas.shapes` — ✅ available
 - **Contribution key**: `shapes`

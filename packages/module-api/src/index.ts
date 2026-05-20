@@ -34,6 +34,7 @@ export type {
   PointerModifiers,
   Tool,
 } from './types/tool'
+export { resolveStrokeColor } from './types/tool'
 
 // Control bar layout types + helpers
 export type { ControlBarLayout, LayoutGroup, GroupInset, ControlBarContribution } from './types/control-bar-layout'

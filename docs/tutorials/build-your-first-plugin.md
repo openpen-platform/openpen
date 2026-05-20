@@ -149,6 +149,7 @@ live `canvasCtx` as the first argument**; tools draw incrementally during
 
 ```ts
 // src/highlighter-tool.ts
+import { resolveStrokeColor } from '@openpen/module-api'
 import type { Tool, Stroke, Point, StrokeStyle } from '@openpen/module-api'
 
 const HIGHLIGHTER_ALPHA = 0.35
@@ -161,8 +162,7 @@ export function createHighlighterTool(toolId: string): Tool {
 
   function applyStyle(ctx: CanvasRenderingContext2D, s: StrokeStyle): void {
     ctx.globalAlpha = HIGHLIGHTER_ALPHA
-    ctx.strokeStyle =
-      typeof s.color === 'string' ? s.color : s.color.from
+    ctx.strokeStyle = resolveStrokeColor(s.color)
     ctx.lineWidth = s.lineWidth * HIGHLIGHTER_WIDTH_MUL
     ctx.lineCap = 'square'
     ctx.lineJoin = 'miter'
@@ -219,10 +219,7 @@ export function renderHighlighter(
   const widthMul = (stroke.widthMul as number) ?? HIGHLIGHTER_WIDTH_MUL
   canvasCtx.save()
   canvasCtx.globalAlpha = alpha
-  canvasCtx.strokeStyle =
-    typeof stroke.style.color === 'string'
-      ? stroke.style.color
-      : stroke.style.color.from
+  canvasCtx.strokeStyle = resolveStrokeColor(stroke.style.color)
   canvasCtx.lineWidth = stroke.style.lineWidth * widthMul
   canvasCtx.lineCap = 'square'
   canvasCtx.lineJoin = 'miter'
@@ -287,7 +284,7 @@ Things to notice:
 1. **The Tool contract** — `onPointerDown(canvasCtx, point, style)` initialises state but returns `void`. `onPointerMove(canvasCtx, point)` draws incrementally on the live `canvasCtx`. `onPointerUp(canvasCtx, point)` is the only handler that returns a `Stroke`; that returned object is what the host stores for undo/redo.
 2. **Stroke is a value object** — it carries `id` (unique, `crypto.randomUUID()` is the conventional source) + `tool` (matches `ToolContribution.id`) + the points + the style + any tool-specific extras you want preserved for history replay.
 3. **`renderStroke` is the history-replay hook** — when the user undoes / redoes / resizes, the canvas engine replays all strokes by calling `renderStroke(canvasCtx, stroke)` for each. Tools that draw with effects beyond a default polyline (alpha, custom width, gradient handling) MUST provide it; tools that draw plain polylines can omit it.
-4. **`StrokeColor` is a union** — `string | { type: 'linear'; from: string; to: string }`. Custom renderers MUST handle both; the snippet above uses `color.from` as the single-colour fallback for the gradient case.
+4. **`StrokeColor` is a union** — `string | { type: 'linear'; from: string; to: string }`. Custom renderers MUST handle both; the snippet above uses `resolveStrokeColor(color)` from `@openpen/module-api` to pick a representative CSS colour (`color.from` for linear gradients) for `ctx.strokeStyle`.
 5. **Cursor-to-tool linkage** — `CursorContribution.id === ToolContribution.id`. Match the ids exactly or the host falls back to its default cursor.
 
 Build, install, and the new tool appears in the control bar when the host loads. See [reference/slots.md](../reference/slots.md) for the complete `ToolContribution` + `Tool` + `Stroke` + `StrokeStyle` + `CursorContribution` interfaces and the `--openpen-cursor-accent` theming convention.

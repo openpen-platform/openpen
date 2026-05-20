@@ -12,6 +12,7 @@
  * Public reference for the Tool / Stroke / Point / StrokeStyle interfaces:
  *   docs/reference/slots.md → `canvas.tools` section.
  */
+import { resolveStrokeColor } from '@openpen/module-api'
 import type { Point, Stroke, StrokeStyle, Tool } from '@openpen/module-api'
 
 // Fixed demo opacity — replace with a settings value in a real tool.
@@ -38,8 +39,7 @@ export function createDemoTool(): Tool {
 
       canvasCtx.save()
       canvasCtx.globalAlpha = DEMO_OPACITY
-      canvasCtx.strokeStyle =
-        typeof style.color === 'string' ? style.color : style.color.from
+      canvasCtx.strokeStyle = resolveStrokeColor(style.color)
       canvasCtx.lineWidth = style.lineWidth
       canvasCtx.lineCap = style.lineCap
       canvasCtx.lineJoin = style.lineJoin
@@ -90,10 +90,7 @@ export function renderDemoStroke(
 
   canvasCtx.save()
   canvasCtx.globalAlpha = opacity
-  canvasCtx.strokeStyle =
-    typeof stroke.style.color === 'string'
-      ? stroke.style.color
-      : stroke.style.color.from
+  canvasCtx.strokeStyle = resolveStrokeColor(stroke.style.color)
   canvasCtx.lineWidth = stroke.style.lineWidth
   canvasCtx.lineCap = stroke.style.lineCap
   canvasCtx.lineJoin = stroke.style.lineJoin

@@ -15,6 +15,20 @@ export type StrokeColor =
   | string
   | { type: 'linear'; from: string; to: string }
 
+/**
+ * Reduce a `StrokeColor` to a single CSS colour string.
+ *
+ * `CanvasRenderingContext2D.strokeStyle` accepts a single colour string but
+ * not a structured gradient descriptor; custom `renderStroke` implementations
+ * that don't draw the gradient natively need a representative fallback.
+ * Returns the string as-is for solid colours, and the `from` stop for linear
+ * gradients. Future gradient kinds can pick their own representative without
+ * touching callers.
+ */
+export function resolveStrokeColor(color: StrokeColor): string {
+  return typeof color === 'string' ? color : color.from
+}
+
 export interface StrokeStyle {
   color: StrokeColor
   lineWidth: number
