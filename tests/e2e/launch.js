@@ -48,6 +48,11 @@ export async function launchElectronApp(overrides = {}) {
       NODE_ENV: 'development',
       OPENPEN_USER_DATA_DIR: userDataDir,
       OPENPEN_AUTO_CONFIRM_QUIT: '1',
+      // Point Electron at whatever URL globalSetup booted Vite at.
+      // The 5173 fallback is for ad-hoc spec runs that bypass globalSetup
+      // (e.g. an IDE harness that ignores playwright.config.js) — in normal
+      // `npx playwright test` invocations OPENPEN_E2E_VITE_URL is always set.
+      VITE_DEV_SERVER_URL: process.env.OPENPEN_E2E_VITE_URL ?? 'http://localhost:5173',
       ...(electronOverrides.env ?? {}),
     },
   });

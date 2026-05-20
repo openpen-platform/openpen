@@ -251,7 +251,7 @@ await electronApp.evaluate(({ BrowserWindow }, p) => {
 ## COMMANDS
 
 ```bash
-npm run dev              # Vite dev server + Electron concurrently
+npm run dev              # scripts/dev.mjs: start Vite, then spawn Electron pointed at the resolved URL
 npm run type-check       # vue-tsc on host + module-api
 npm run lint             # ESLint on src/
 npm run test:unit        # Unit tests (Vitest)

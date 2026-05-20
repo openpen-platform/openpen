@@ -8,14 +8,12 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'tests/e2e/report' }]],
 
-  webServer: {
-    command: 'npx vite',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    stdout: 'ignore',
-    stderr: 'pipe',
-    timeout: 15000,
-  },
+  // globalSetup boots Vite programmatically so the port is whatever's free,
+  // mirroring scripts/dev.mjs in production. The resolved URL is exposed via
+  // OPENPEN_E2E_VITE_URL and consumed by tests/e2e/launch.js. Replaces the
+  // prior `webServer: { command: 'npx vite', url: 'http://localhost:5173' }`
+  // setup, which broke when 5173 was already taken by another local project.
+  globalSetup: './tests/e2e/global-setup.js',
 
   use: {
     screenshot: 'only-on-failure',

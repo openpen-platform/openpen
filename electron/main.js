@@ -16,12 +16,13 @@ import { initPluginMetaManager } from './plugin-meta-manager.js';
 import { initI18n } from './i18n/index.js';
 import { initConfigLoader } from './config-loader.js';
 import { initModuleManifestLoader, sendModuleManifests, resolvePluginFilePath } from './module-manifest-loader.js';
-import { APP, AUDIT, HISTORY, LOG, MODULE, POSITIONING, SYSTEM } from './ipc-channels.js';
+import { APP, AUDIT, HISTORY, LOG, MODULE, POSITIONING, SYSTEM, WINDOW } from './ipc-channels.js';
 import { initPluginManagerBridge } from './plugin-manager-bridge.js';
 import { createAuditLog } from './audit-log.js';
 import { initLogger, log } from './logger.js';
 import { initPositioningEngine, processIntent, getState as getPositioningState } from './positioning-engine.js';
 import { probeTransparentRendering } from './transparent-render-probe.js';
+import { createRendererReadyWatchdog, resolveTimeoutMs } from './renderer-ready-watchdog.js';
 
 ipcMain.handle(APP.GET_VERSION, () => app.getVersion());
 
@@ -158,8 +159,13 @@ process.on('unhandledRejection', (reason) => {
   log.error('unhandledRejection:', reason);
 });
 
+// In dev, the launcher (scripts/dev.mjs) starts Vite programmatically and
+// passes the resolved URL via VITE_DEV_SERVER_URL — Vite may have moved off
+// 5173 if another project on the machine is already using it. The literal
+// fallback is kept only so that running `electron .` directly (without going
+// through the launcher) still works against a manually-started Vite on 5173.
 const rendererEntry = isDev
-  ? 'http://localhost:5173'
+  ? (process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173')
   : `file://${path.join(__dirname, '..', 'dist', 'index.html')}`;
 
 app.on('render-process-gone', (_event, webContents, details) => {
@@ -245,6 +251,19 @@ app.whenReady().then(async () => {
     createMainWindowForDisplay(display);
     createOverlayWindowForDisplay(display);
   }
+
+  // If no window reports CONTENT_READY before the deadline, the renderer
+  // either crashed, hung, or loaded a foreign URL (e.g. a port collision
+  // routed loadURL to another project's dev server). The transparent
+  // screen-saver-level windows would otherwise cover the desktop with no
+  // recovery path. Quitting releases input back to the OS.
+  createRendererReadyWatchdog({
+    timeoutMs: resolveTimeoutMs(process.env, 30000),
+    ipc: ipcMain,
+    channel: WINDOW.CONTENT_READY,
+    onTimeout: () => app.quit(),
+    log,
+  });
 
   // Set the primary display as the initial active display so IPC routing
   // (drawing-mode, clear-canvas, history) targets the correct window before
