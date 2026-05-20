@@ -65,14 +65,6 @@ const emit = defineEmits<{
 
 const isVertical = computed(() => props.orientation === 'vertical')
 
-/** Fill percentage for the track range background. */
-const fillPct = computed(() => {
-  const range = props.max - props.min
-  if (range === 0) return '0.00%'
-  const pct = ((props.modelValue - props.min) / range) * 100
-  return Math.max(0, Math.min(100, pct)).toFixed(2) + '%'
-})
-
 /** Root element inline style */
 const rootStyle = computed(() => {
   if (isVertical.value) {
@@ -80,7 +72,6 @@ const rootStyle = computed(() => {
       '--thumb-w': props.thumbWidth,
       '--thumb-h': props.thumbHeight,
       '--thumb-r': props.thumbRadius,
-      '--fill-pct': fillPct.value,
       '--track-height': props.trackHeight,
       '--track-radius': props.trackRadius,
       height: props.width,
@@ -91,7 +82,6 @@ const rootStyle = computed(() => {
     '--thumb-w': props.thumbWidth,
     '--thumb-h': props.thumbHeight,
     '--thumb-r': props.thumbRadius,
-    '--fill-pct': fillPct.value,
     '--track-height': props.trackHeight,
     '--track-radius': props.trackRadius,
     width: props.width,
