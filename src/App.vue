@@ -86,7 +86,11 @@ onMounted(async () => {
   // revealed. Required because windows are created with show:false to avoid a
   // Windows DWM paint-timing issue where transparent frameless windows can
   // render invisibly if shown before the first paint completes.
-  window.openPenApi?.signalContentReady();
+  // Settings window signals from SettingsView after its draft hydrates;
+  // signaling here would race and reveal the window with unhydrated form state.
+  if (!isSettingsWindow) {
+    window.openPenApi?.signalContentReady();
+  }
 
   unsubSettings = window.openPenApi?.onSettingsUpdated(onSettingsUpdated) ?? null;
 
