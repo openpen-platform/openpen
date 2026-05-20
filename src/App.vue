@@ -82,6 +82,12 @@ function onSettingsUpdated(settings: SettingsPayload) {
 }
 
 onMounted(async () => {
+  // Tell the main process the renderer has mounted so the host window can be
+  // revealed. Required because windows are created with show:false to avoid a
+  // Windows DWM paint-timing issue where transparent frameless windows can
+  // render invisibly if shown before the first paint completes.
+  window.openPenApi?.signalContentReady();
+
   unsubSettings = window.openPenApi?.onSettingsUpdated(onSettingsUpdated) ?? null;
 
   const settings = await window.openPenApi?.getSettings();
@@ -90,12 +96,6 @@ onMounted(async () => {
   const locale = (await window.openPenApi?.getLocale()) ?? 'en';
   const windowType = isOverlayWindow ? 'overlay' : isSettingsWindow ? 'settings' : 'main';
   await initModuleRuntime({ locale, windowType });
-
-  // Tell the main process the renderer has mounted so the host window can be
-  // revealed. Required because windows are created with show:false to avoid a
-  // Windows DWM paint-timing issue where transparent frameless windows can
-  // render invisibly if shown before the first paint completes.
-  window.openPenApi?.signalContentReady();
 });
 
 onUnmounted(() => {
