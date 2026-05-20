@@ -102,7 +102,7 @@ export default defineModule({
       },
       {
         // MyNumberSpinner demonstrates building a custom component from Reka UI
-        // primitives and OpenPen design tokens — see docs/guides/custom-uikit-components.md.
+        // primitives and OpenPen design tokens — see docs/uikit/custom-components.md.
         id: 'starter-spinner',
         component: MyNumberSpinner,
       },

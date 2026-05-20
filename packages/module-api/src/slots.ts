@@ -23,7 +23,7 @@ export interface SlotDefinition {
   status: SlotStatus
   /** High-level grouping for documentation and UI. */
   category: SlotCategory
-  /** One-sentence purpose, shown in `docs/reference/slots.md`. */
+  /** One-sentence purpose, shown in `docs/slots/index.md`. */
   description: string
 }
 

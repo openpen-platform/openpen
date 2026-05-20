@@ -142,7 +142,7 @@ OpenPen is built as a slot-driven module system: built-in features and third-par
 - `event-bus.ts` — cross-module pub/sub for non-IPC events
 - `bootstrap.ts` — boot sequence
 
-**UIKit surface** (`packages/module-api/src/uikit/`) — three layers, see `docs/reference/uikit.md`:
+**UIKit surface** (`packages/module-api/src/uikit/`) — three layers, see `docs/uikit/index.md`:
 - *Layer 1 — high-level wrappers* (80% case): `AppPopover`, `AppDialog`, `AppSlider`, `AppToggle`, `AppSegmented`, `AppSelect`, `AppTooltip`, `AppTabs`, `AppBanner`, `AppButton`. OpenPen-opinionated styling + auto-injected host context (modal manager, teleport target, passthrough). Plugin authors start here.
 - *Layer 2 — primitive re-exports* (20% advanced): raw Reka UI headless components re-exported from `./primitives`. Use when you need full markup/style control with a11y / focus / keyboard nav intact. Caller must wire modal manager, animating guard, passthrough, and teleport target manually.
 - *Layer 3 — escape hatch* (5% fully custom): plugin installs `reka-ui` (or any library) in its own `package.json`. UIKit does not block this.

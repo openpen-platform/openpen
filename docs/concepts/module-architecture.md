@@ -97,7 +97,7 @@ export default defineModule({
 })
 ```
 
-The full slot catalogue lives in [`reference/slots.md`](../reference/slots.md).
+The full slot catalogue lives in [`slots/index.md`](../slots/index.md).
 
 ### Slot statuses
 
@@ -127,10 +127,10 @@ Plugins MUST only import from `@openpen/module-api`; the host validates this at 
 
 ## See also
 
-- [`reference/slots.md`](../reference/slots.md) — every slot, its status, and contribution shape.
+- [`slots/index.md`](../slots/index.md) — every slot, its status, and contribution shape.
 - [`guides/module-settings.md`](../guides/module-settings.md) — settingsSchema, `useModuleContext`, `settingsPanels` vs `settingsTabs`.
-- [`reference/uikit.md`](../reference/uikit.md) — UIKit wrappers for plugin authors.
-- [`reference/primitives.md`](../reference/primitives.md) — primitives, design tokens, and escape-hatch guidance.
+- [`uikit/index.md`](../uikit/index.md) — UIKit wrappers for plugin authors.
+- [`uikit/primitives.md`](../uikit/primitives.md) — primitives, design tokens, and escape-hatch guidance.
 - [`guides/plugin-quickstart.md`](../guides/plugin-quickstart.md) — from zero to a running plugin.
 - [`CONTRIBUTING.md`](../../CONTRIBUTING.md) — contributing to OpenPen core.
 - `@openpen/module-api` on npm — TypeScript types and full API surface.

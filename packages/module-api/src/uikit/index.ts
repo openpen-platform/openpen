@@ -16,7 +16,7 @@
  *   Plugin installs reka-ui (or any library) directly in its own package.json.
  *   UIKit MUST NOT block this. Not handled here — plugin author's choice.
  *
- * See docs/reference/uikit.md for the full trade-off description.
+ * See docs/uikit/index.md for the full trade-off description.
  */
 
 // ── Layer 1: High-level Wrappers ──────────────────────────────────────────────

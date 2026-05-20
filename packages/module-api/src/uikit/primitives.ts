@@ -16,7 +16,7 @@
  *   - Mouse passthrough guard (usePassthroughGuard)
  *   - Teleport target (inject WRAPPER_EL_KEY)
  *
- * See docs/reference/uikit.md for the full trade-off description.
+ * See docs/uikit/index.md for the full trade-off description.
  *
  * All v1.0 high-level wrappers are implemented — prefer them over
  * the corresponding primitive:

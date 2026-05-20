@@ -183,5 +183,6 @@ export default defineModule({
 
 ## See also
 
-- [`reference/slots.md`](../reference/slots.md) — `ui.settings.panels`, `ui.settings.tabs`, and `system.shortcuts` slot details.
-- [`reference/uikit.md`](../reference/uikit.md) — `AppSlider`, `AppSegmented`, `AppToggle`, and other UIKit components for building preference rows.
+- [UI slots](../slots/ui) — [`ui.settings.panels`](../slots/ui#ui-settings-panels), [`ui.settings.tabs`](../slots/ui#ui-settings-tabs) slot details.
+- [System slots](../slots/system) — [`system.shortcuts`](../slots/system#system-shortcuts) slot details.
+- [UIKit](../uikit/) — [`AppSlider`](../uikit/app-slider), [`AppSegmented`](../uikit/app-segmented), [`AppToggle`](../uikit/app-toggle), and other UIKit components for building preference rows.

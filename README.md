@@ -58,7 +58,7 @@ to the same slots (`controlBar`, `settingsTabs`, `shortcuts`, and more).
 **Build your first plugin in 5 minutes** →
 [Tutorial](docs/tutorials/build-your-first-plugin.md) ·
 [Module Architecture](docs/concepts/module-architecture.md) ·
-[Slot Reference](docs/reference/slots.md)
+[Slot Reference](docs/slots/index.md)
 
 ```bash
 npx degit openpen-platform/openpen/packages/plugin-starter my-plugin

@@ -131,15 +131,15 @@ export default defineModule({
 })
 ```
 
-- `tools` registers a drawing tool. See [reference/slots.md `canvas.tools`](../reference/slots.md) for the full `ToolContribution` interface (id, label, icon, pointer handlers, optional `renderStroke`).
-- `cursors` ties a custom DOM cursor to a tool — the `id` on `CursorContribution` MUST match the `id` on its `ToolContribution`. See [reference/slots.md `ui.cursors`](../reference/slots.md) for the cursor shape options (inline SVG / relative path / PNG) and the `--openpen-cursor-accent` theming convention.
+- `tools` registers a drawing tool. See [`canvas.tools`](../slots/canvas#canvas-tools) for the full `ToolContribution` interface (id, label, icon, pointer handlers, optional `renderStroke`).
+- `cursors` ties a custom DOM cursor to a tool — the `id` on `CursorContribution` MUST match the `id` on its `ToolContribution`. See [`ui.cursors`](../slots/ui#ui-cursors) for the cursor shape options (inline SVG / relative path / PNG) and the `--openpen-cursor-accent` theming convention.
 - `settingsPanels` adds a section to **Settings → Features**. Use `settingsTabs` only for modules that need a full dedicated tab.
 - Shortcuts with `label` and `userCustomizable: true` appear in **Settings → Shortcuts** under your module's group, letting users rebind them. Omit both to run silently with the declared default.
 - Pick accelerator defaults that won't collide with common OS bindings; the runtime logs a console error if `globalShortcut.register` is rejected.
 
 For the full settings API (`getSettings`, `updateSettings`, `onSettingsChange`), see [guides/module-settings.md](./module-settings.md).
 
-See [reference/slots.md](../reference/slots.md) for the full slot catalogue.
+See [slots/index.md](../slots/index.md) for the full slot catalogue.
 
 ---
 
@@ -175,7 +175,7 @@ this automatically. If you override `rollupOptions.external`, include all three:
 ## Using UIKit components
 
 OpenPen provides UIKit wrapper components so your plugin matches the host's visual
-style with zero extra work. See [reference/uikit.md](../reference/uikit.md) for
+style with zero extra work. See [uikit/index.md](../uikit/index.md) for
 the full component reference.
 
 Quick example — a button that opens a slider popover:
@@ -224,9 +224,9 @@ switches to a compact single-line layout suited for dialogs and form areas.
 
 - **Publishing** → [guides/publishing.md](./publishing.md) — build for distribution
 - **Module settings** → [guides/module-settings.md](./module-settings.md) — settingsSchema, useModuleContext, panels vs tabs
-- **Full UIKit API** → [reference/uikit.md](../reference/uikit.md)
-- **Custom UIKit components** → [guides/custom-uikit-components.md](./custom-uikit-components.md) — building widgets beyond the bundled wrappers (tags input, number spinner, combobox)
+- **Full UIKit API** → [uikit/index.md](../uikit/index.md)
+- **Custom UIKit components** → [uikit/custom-components.md](../uikit/custom-components.md) — building widgets beyond the bundled wrappers (tags input, number spinner, combobox)
 - **Design tokens** → [reference/design-tokens.md](../reference/design-tokens.md) — host palette your styles inherit
-- **All contribution slots** → [reference/slots.md](../reference/slots.md)
-- **Escape-hatch primitives** → [reference/primitives.md](../reference/primitives.md)
+- **All contribution slots** → [slots/index.md](../slots/index.md)
+- **Escape-hatch primitives** → [uikit/primitives.md](../uikit/primitives.md)
 - **Architecture deep-dive** → [module-architecture.md](../concepts/module-architecture.md)

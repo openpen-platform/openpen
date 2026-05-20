@@ -39,7 +39,7 @@ import {
 
 For these three primitive groups there is no corresponding Layer 1 wrapper.
 For guided usage and complete styled examples see
-[guides/custom-uikit-components.md](../guides/custom-uikit-components.md).
+[custom-components.md](./custom-components.md).
 
 **Upstream docs:**
 - NumberField → [reka-ui.com/components/number-field](https://reka-ui.com/docs/components/number-field)

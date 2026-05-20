@@ -104,5 +104,5 @@ As a plugin author, you **SHOULD**:
 ## See also
 
 - [guides/plugin-quickstart.md](./plugin-quickstart.md) — develop locally first
-- [reference/uikit.md](../reference/uikit.md) — UIKit component API
-- [reference/slots.md](../reference/slots.md) — all contribution slots
+- [uikit/](../uikit/index.md) — UIKit component API
+- [slots/](../slots/index.md) — all contribution slots

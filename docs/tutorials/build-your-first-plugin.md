@@ -129,7 +129,7 @@ contributes: {
   settingsTabs: [...],      // a tab in Settings > (Your Plugin)
   shortcuts: [...],         // global keyboard shortcuts
   cursors: [...],           // custom cursor per tool
-  // ...and more — see reference/slots.md
+  // ...and more — see slots/index.md
 }
 ```
 
@@ -287,7 +287,7 @@ Things to notice:
 4. **`StrokeColor` is a union** — `string | { type: 'linear'; from: string; to: string }`. Custom renderers MUST handle both; the snippet above uses `resolveStrokeColor(color)` from `@openpen/module-api` to pick a representative CSS colour (`color.from` for linear gradients) for `ctx.strokeStyle`.
 5. **Cursor-to-tool linkage** — `CursorContribution.id === ToolContribution.id`. Match the ids exactly or the host falls back to its default cursor.
 
-Build, install, and the new tool appears in the control bar when the host loads. See [reference/slots.md](../reference/slots.md) for the complete `ToolContribution` + `Tool` + `Stroke` + `StrokeStyle` + `CursorContribution` interfaces and the `--openpen-cursor-accent` theming convention.
+Build, install, and the new tool appears in the control bar when the host loads. See [`canvas.tools`](../slots/canvas#canvas-tools) for the complete `ToolContribution` + `Tool` + `Stroke` + `StrokeStyle` interfaces and [`ui.cursors`](../slots/ui#ui-cursors) for `CursorContribution` shapes and the `--openpen-cursor-accent` theming convention.
 
 ---
 
@@ -475,6 +475,6 @@ npx openpen-cli publish
 - [Module Architecture](../concepts/module-architecture.md) — the four-layer
   design and how plugins fit in
 - [Trust Model](../concepts/trust-model.md) — what plugins can and can't do
-- [Slot Reference](../reference/slots.md) — all contribution slots
-- [UIKit Reference](../reference/uikit.md) — pre-built UI components
+- [Slot Reference](../slots/index.md) — all contribution slots
+- [UIKit Reference](../uikit/index.md) — pre-built UI components
 - [Notify API](../reference/notify-api.md) — toast notifications and i18n

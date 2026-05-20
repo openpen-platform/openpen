@@ -146,5 +146,5 @@ The L2 reset only affects the layout — your theme, language, and shortcuts are
 
 ## See also
 
-- [Contribution Slot Catalog](./slots.md#ui-control-bar) — `ui.control-bar` slot and `ControlBarContribution` type
+- [Contribution Slot Catalog](../slots/ui#ui-control-bar) — `ui.control-bar` slot and `ControlBarContribution` type
 - [Module Architecture](../concepts/module-architecture.md) — how built-in and plugin modules declare contributions

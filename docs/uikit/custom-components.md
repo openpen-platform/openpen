@@ -1,7 +1,7 @@
 # Building Custom UIKit Components
 
 This guide covers how to build plugin UI components that are not available in
-the [UIKit wrapper library](../reference/uikit.md). You will learn when to reach
+the [UIKit wrapper library](./index.md). You will learn when to reach
 past the wrappers, how to use design tokens for visual consistency, and how to
 compose Reka UI primitives into finished components that follow dark/light theme
 automatically.
@@ -423,6 +423,6 @@ import { AppToggle } from '@openpen/module-api/uikit'
 
 ## See also
 
-- [UIKit component wrappers](../reference/uikit.md) — pre-built high-level components
+- [UIKit component wrappers](./index.md) — pre-built high-level components
 - [Design tokens reference](../reference/design-tokens.md) — full `--openpen-*` catalogue
-- [Primitives, escape hatch & peer dependency rules](../reference/primitives.md) — Layer 2/3 access and importmap rules
+- [Primitives, escape hatch & peer dependency rules](./primitives.md) — Layer 2/3 access and importmap rules

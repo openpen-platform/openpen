@@ -10,7 +10,7 @@
  *     how custom data survives into renderStroke
  *
  * Public reference for the Tool / Stroke / Point / StrokeStyle interfaces:
- *   docs/reference/slots.md → `canvas.tools` section.
+ *   docs/slots/index.md → `canvas.tools` section.
  */
 import { resolveStrokeColor } from '@openpen/module-api'
 import type { Point, Stroke, StrokeStyle, Tool } from '@openpen/module-api'
