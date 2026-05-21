@@ -57,9 +57,9 @@ test('expanded control bar shows the tool buttons (freehand, line, shape)', asyn
   await ball.click();
   await mainWin.waitForTimeout(400);
 
-  await expect(mainWin.locator('.cb-btn[aria-label="Freehand"]')).toBeVisible();
-  await expect(mainWin.locator('.cb-btn[aria-label="Line"]')).toBeVisible();
-  await expect(mainWin.locator('.cb-btn[aria-label="Shape"]')).toBeVisible();
+  await expect(mainWin.locator('[data-testid="controlbar-freehand-btn"]')).toBeVisible();
+  await expect(mainWin.locator('[data-testid="controlbar-line-btn"]')).toBeVisible();
+  await expect(mainWin.locator('[data-testid="controlbar-shape-btn"]')).toBeVisible();
 });
 
 test('freehand is the default active tool', async () => {
@@ -72,7 +72,7 @@ test('freehand is the default active tool', async () => {
     await mainWin.waitForTimeout(400);
   }
 
-  const freehandBtn = mainWin.locator('.cb-btn[aria-label="Freehand"]');
+  const freehandBtn = mainWin.locator('[data-testid="controlbar-freehand-btn"]');
   await expect(freehandBtn).toHaveClass(/active/);
 
   // Verify the overlay process reflects freehand as the active tool — this
@@ -91,13 +91,13 @@ test('clicking the line tool makes it active', async () => {
     await mainWin.waitForTimeout(400);
   }
 
-  await mainWin.locator('.cb-btn[aria-label="Line"]').click();
+  await mainWin.locator('[data-testid="controlbar-line-btn"]').click();
   await mainWin.waitForTimeout(100);
 
-  const lineBtn = mainWin.locator('.cb-btn[aria-label="Line"]');
+  const lineBtn = mainWin.locator('[data-testid="controlbar-line-btn"]');
   await expect(lineBtn).toHaveClass(/active/);
   // Freehand button should lose its active state.
-  const freehandBtn = mainWin.locator('.cb-btn[aria-label="Freehand"]');
+  const freehandBtn = mainWin.locator('[data-testid="controlbar-freehand-btn"]');
   expect(await freehandBtn.evaluate(el => el.classList.contains('active'))).toBe(false);
 
   // Verify the tool switch propagated to the overlay process — catching any
@@ -105,7 +105,7 @@ test('clicking the line tool makes it active', async () => {
   await waitForOverlayTool(overlayWin, 'line');
 
   // Restore freehand so subsequent tests start from a known state.
-  await mainWin.locator('.cb-btn[aria-label="Freehand"]').click();
+  await mainWin.locator('[data-testid="controlbar-freehand-btn"]').click();
 });
 
 test('clicking the shape tool switches mode only; the caret opens the sub-panel', async () => {
@@ -117,16 +117,16 @@ test('clicking the shape tool switches mode only; the caret opens the sub-panel'
     await mainWin.waitForTimeout(400);
   }
 
-  await mainWin.locator('.cb-btn[aria-label="Shape"]').click();
+  await mainWin.locator('[data-testid="controlbar-shape-btn"]').click();
   await mainWin.waitForTimeout(100);
 
   // Clicking the main button switches tool without auto-opening the sub-panel.
-  const shapeBtn = mainWin.locator('.cb-btn[aria-label="Shape"]');
+  const shapeBtn = mainWin.locator('[data-testid="controlbar-shape-btn"]');
   await expect(shapeBtn).toHaveClass(/active/);
   await expect(mainWin.locator('.shape-popover')).not.toBeVisible();
 
   // Only the caret opens the shape sub-panel.
-  await mainWin.locator('.cb-shape-caret').click();
+  await mainWin.locator('[data-testid="controlbar-shape-caret"]').click();
   await mainWin.waitForTimeout(100);
 
   // Shape chips and the fill toggle should now be visible.
@@ -310,7 +310,7 @@ test('brush eraser drag erases strokes along its path', async () => {
   expect(baseline).not.toBeNull();
 
   await expandControlBar(mainWin);
-  await mainWin.locator('.cb-btn[aria-label="Eraser tool"]').click();
+  await mainWin.locator('[data-testid="controlbar-eraser-btn"]').click();
   await waitForOverlayTool(overlayWin, 'eraser');
 
   await mainWin.evaluate(() => {
@@ -380,7 +380,7 @@ test('stroke eraser removes only strokes it hits', async () => {
 
   // Stroke eraser is now accessed via the eraser caret popup (design: 1 eraser button + caret).
   await expandControlBar(mainWin);
-  await mainWin.locator('.cb-eraser-caret[aria-label="Eraser mode"]').click();
+  await mainWin.locator('[data-testid="controlbar-eraser-caret"]').click();
   await mainWin.waitForTimeout(250);
   await mainWin.locator('.cb-menu-item[class*="active"], .cb-menu-item').filter({ hasText: 'Stroke Erase' }).click();
   await mainWin.waitForTimeout(200);

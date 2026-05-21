@@ -176,7 +176,11 @@ test.describe('Modules tab — disable/enable freehand', () => {
   });
 
   test('Plugins sub-tab shows empty state when no plugins are installed', async () => {
-    let app = await launchElectronApp({ userDataDir });
+    // Use an isolated HOME so module-manifest-loader scans an empty plugin
+    // directory regardless of plugins installed in the maintainer's real
+    // `~/.openpen/plugins/`.
+    const isolatedHome = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-e2e-plugins-empty-'));
+    let app = await launchElectronApp({ userDataDir, env: { HOME: isolatedHome } });
     let mainWin = await getMainWindow(app);
 
     await expandControlBar(mainWin);

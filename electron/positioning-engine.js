@@ -271,10 +271,9 @@ function _handleDragEnd({ ballScreenPos, hadMotion, enableDragAutoSnap, barBound
 function _handleSummonToCursor() {
   const cursor = screen.getCursorScreenPoint();
   const displays = _getAllDisplays();
-  const display = findDisplay(cursor.x, cursor.y, displays);
+  const { ballX, ballY, display } = clampToWorkArea(cursor.x, cursor.y, displays);
 
-  // Window equals workArea: no edge clamping needed. Ball goes exactly to cursor.
-  _state.ballScreenPos = { x: cursor.x, y: cursor.y };
+  _state.ballScreenPos = { x: ballX, y: ballY };
   _state.activeDisplayId = display.id;
   _state.snapEdge = null;
   _state.barLayoutClass = _deriveBarLayoutClass(null);

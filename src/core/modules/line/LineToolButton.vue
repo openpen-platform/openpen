@@ -26,6 +26,7 @@ function activate() {
     :active="isActive"
     :tooltip="t('openpen.line.tool')"
     :aria-label="t('openpen.line.tool')"
+    data-testid="controlbar-line-btn"
     @click="activate"
   >
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">

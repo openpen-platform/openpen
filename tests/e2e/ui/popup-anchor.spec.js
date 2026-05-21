@@ -288,8 +288,8 @@ async function resetStrokePopupMode(win, value) {
 // aria-label="Shape" matches the rendered i18n output under the default 'en'
 // locale. Keep in sync with src/i18n/en.ts `toolShape` if the label changes.
 async function openShapePanel(win) {
-  const shapeBtn = win.locator('.cb-btn[aria-label="Shape"]');
-  const shapeCaret = win.locator('.cb-shape-caret');
+  const shapeBtn = win.locator('[data-testid="controlbar-shape-btn"]');
+  const shapeCaret = win.locator('[data-testid="controlbar-shape-caret"]');
   await shapeBtn.click();
   await shapeCaret.click();
   await win.waitForTimeout(250);
@@ -424,8 +424,8 @@ test('activePanel mutual exclusion — opening the color picker closes the shape
   await expandBar(win);
 
   // Click the shape tool + caret → shape sub-panel appears.
-  await win.locator('.cb-btn[aria-label="Shape"]').click();
-  await win.locator('.cb-shape-caret').click();
+  await win.locator('[data-testid="controlbar-shape-btn"]').click();
+  await win.locator('[data-testid="controlbar-shape-caret"]').click();
   await win.waitForTimeout(200);
   await expect(win.locator('.shape-popover')).toBeVisible();
 
@@ -441,8 +441,8 @@ test('closing the color picker does not re-open the shape sub-panel (must be reo
   await expandBar(win);
 
   // Make sure the shape tool is active and the sub-panel is manually expanded.
-  await win.locator('.cb-btn[aria-label="Shape"]').click();
-  await win.locator('.cb-shape-caret').click();
+  await win.locator('[data-testid="controlbar-shape-btn"]').click();
+  await win.locator('[data-testid="controlbar-shape-caret"]').click();
   await win.waitForTimeout(200);
   await expect(win.locator('.shape-popover')).toBeVisible();
 

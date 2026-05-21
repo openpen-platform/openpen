@@ -161,20 +161,14 @@ export function useCustomCursor() {
     if (window.openPenApi) {
       const offDraw = window.openPenApi.onDrawingModeChanged((enabled) => {
         isDrawingMode.value = enabled
-        if (enabled) {
-          // Stale pointerleave (pointer was over dock / menu bar / a
-          // secondary display when the shortcut fired) leaves
-          // pointerInside=false, which keeps the DOM cursor invisible
-          // despite drawing mode being on. Force-reset on enter; the
-          // next real pointermove updates position normally.
-          pointerInside.value = true
-        } else {
-          // Reset hover state on every drawing toggle: the main window's
-          // passthrough guard only relays on transitions, so a stale
-          // interactiveHover from a previous session could otherwise
-          // suppress the cursor through the next drawing session.
-          interactiveHover.value = false
-        }
+        // Reset both pointerInside and interactiveHover on every transition.
+        // Stale pointerleave (pointer was over dock / menu bar / a secondary
+        // display when the shortcut fired) or stale interactiveHover (main
+        // window's passthrough guard only relays on transitions, so a stale
+        // value from a previous drawing session can suppress the cursor)
+        // would otherwise keep visible=false right after enable.
+        pointerInside.value = true
+        interactiveHover.value = false
       })
       unsubs.push(offDraw)
 
