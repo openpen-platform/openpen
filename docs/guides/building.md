@@ -1,3 +1,8 @@
+---
+title: Building OpenPen from Source
+description: Produce a distributable OpenPen package for macOS, Windows, and Linux from the source tree.
+---
+
 # Building OpenPen from Source
 
 This guide covers how to produce a distributable package for macOS, Windows, and Linux.

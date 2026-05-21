@@ -1,3 +1,8 @@
+---
+title: Module Settings
+description: Persist user preferences for your module with a Zod settings schema and the useModuleContext composable.
+---
+
 # Module Settings
 
 Modules can persist user preferences via a **settings schema** and the `useModuleContext()` composable. Settings are stored under `config.json → modules[moduleId]` and survive app restarts.

@@ -1,3 +1,8 @@
+---
+title: Publishing a Plugin
+description: Build, install, and distribute an OpenPen plugin from your machine to end users.
+---
+
 # Publishing a Plugin
 
 How to build, install, and distribute an OpenPen plugin.

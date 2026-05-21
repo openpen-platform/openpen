@@ -1,3 +1,8 @@
+---
+title: Control Bar Layout
+description: The JSON layout schema in OpenPen settings that controls control-bar item order, grouping, and separators.
+---
+
 # Control Bar Layout
 
 The control bar layout is stored as a JSON structure in your OpenPen settings file.

@@ -1,3 +1,8 @@
+---
+title: Building Custom UIKit Components
+description: Build plugin UI components beyond the UIKit wrappers using Reka UI primitives and OpenPen design tokens for theme consistency.
+---
+
 # Building Custom UIKit Components
 
 This guide covers how to build plugin UI components that are not available in

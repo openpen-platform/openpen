@@ -1,3 +1,8 @@
+---
+title: ctx.notify() — Toast Notification API
+description: The ctx.notify() method on ModuleSetupContext displays a short-lived toast notification in the overlay window.
+---
+
 # ctx.notify() — Toast Notification API
 
 `ctx.notify()` is a method on `ModuleSetupContext` that lets a module display a short-lived toast notification in the overlay window — for example, to give immediate feedback when entering drawing mode or triggering a shortcut.

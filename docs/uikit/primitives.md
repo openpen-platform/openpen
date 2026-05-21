@@ -1,3 +1,8 @@
+---
+title: Primitives, Escape Hatch & Design Tokens
+description: Use Reka UI primitives directly when you need full markup or styling control beyond the AppPopover / AppDialog / AppSlider wrappers.
+---
+
 # Primitives, Escape Hatch, Design Tokens & Upstream Notice
 
 ---

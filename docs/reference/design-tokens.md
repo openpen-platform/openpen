@@ -1,3 +1,8 @@
+---
+title: OpenPen Design Tokens
+description: CSS custom properties under the --openpen-* prefix that expose the host visual language to plugin components.
+---
+
 # OpenPen Design Tokens
 
 OpenPen exposes a set of CSS custom properties (design tokens) under the

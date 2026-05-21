@@ -1,3 +1,8 @@
+---
+title: Build Your First OpenPen Plugin
+description: Scaffold, build, install, and publish a plugin from zero to running inside OpenPen using the openpen-cli toolchain.
+---
+
 # Build Your First OpenPen Plugin
 
 In this tutorial you'll scaffold a plugin, build it, install it into OpenPen,

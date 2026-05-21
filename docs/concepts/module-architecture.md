@@ -1,3 +1,8 @@
+---
+title: OpenPen Module Architecture
+description: How the host's three-layer core plus contribution-slot system lets built-in modules and third-party plugins share the same extension surface.
+---
+
 # OpenPen Module Architecture
 
 ## TL;DR

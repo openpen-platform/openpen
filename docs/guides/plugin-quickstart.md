@@ -1,3 +1,8 @@
+---
+title: Plugin Quick-start
+description: From zero to a running OpenPen plugin in five minutes.
+---
+
 # Plugin Quick-start
 
 From zero to a running OpenPen plugin in five minutes.

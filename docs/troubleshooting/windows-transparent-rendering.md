@@ -1,3 +1,8 @@
+---
+title: 'Windows: Transparent overlay shows black background'
+description: Diagnose and recover from a Windows transparent-overlay regression where OpenPen renders solid black instead of a see-through canvas.
+---
+
 # Windows: Transparent overlay shows black background
 
 ## Symptom

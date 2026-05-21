@@ -1,3 +1,8 @@
+---
+title: Trust Model
+description: What full-renderer-process access means for OpenPen plugins, and how to install plugins safely as a user.
+---
+
 # Trust Model
 
 OpenPen plugins run with **full access** to the host renderer process.

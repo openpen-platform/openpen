@@ -1,3 +1,8 @@
+---
+title: Plugin Compatibility
+description: How plugins declare which OpenPen versions they support, how the host decides whether to load them, and how breaking changes are handled.
+---
+
 # Plugin Compatibility
 
 How plugins declare which OpenPen versions they support, how OpenPen

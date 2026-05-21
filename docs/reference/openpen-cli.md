@@ -1,3 +1,8 @@
+---
+title: openpen CLI
+description: The openpen-cli command-line tool for plugin scaffolding, installation, packaging, and catalog publishing.
+---
+
 # openpen CLI
 
 The `openpen` CLI (`openpen-cli` package) manages plugin installation, packaging, and publishing
