@@ -1,6 +1,11 @@
 /**
- * CLI smoke test — verifies that `openpen plugin add <local-path>` delegates
- * to @openpen/plugin-manager and produces the correct install directory structure.
+ * CLI smoke + security-prompt tests.
+ *
+ * - Verifies that `openpen plugin add <local-path>` delegates to
+ *   @openpen/plugin-manager and produces the correct install directory.
+ * - Verifies the install-time security gate: `--yes` bypasses the prompt,
+ *   non-TTY stdin without `--yes` aborts with a warning instead of silently
+ *   installing.
  *
  * Uses a fixture plugin directory with a pre-built dist/renderer.js so no
  * network access or build toolchain is required.
@@ -20,7 +25,6 @@ const FIXTURE_DIR = path.resolve(__dirname, 'fixture-plugin')
 // ── Fixture setup ─────────────────────────────────────────────────────────────
 
 beforeEach(() => {
-  // Create a minimal built plugin fixture
   if (!fs.existsSync(FIXTURE_DIR)) {
     fs.mkdirSync(path.join(FIXTURE_DIR, 'dist'), { recursive: true })
     fs.writeFileSync(
@@ -45,30 +49,25 @@ afterEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('openpen plugin add <local-path>', () => {
-  it('installs plugin to a custom plugins dir and prints success', () => {
+  it('installs plugin to a custom plugins dir and prints success (with --yes)', () => {
     const tmpPluginsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-cli-test-'))
     try {
       const result = spawnSync(
         process.execPath,
-        [CLI_BIN, 'plugin', 'add', FIXTURE_DIR],
+        [CLI_BIN, 'plugin', 'add', FIXTURE_DIR, '--yes'],
         {
           encoding: 'utf-8',
           env: {
             ...process.env,
-            // Override home so the default plugins dir goes to tmp
             HOME: tmpPluginsDir,
           },
         },
       )
 
-      // Should exit 0
       expect(result.status).toBe(0)
-
-      // Should mention the plugin id in output
       expect(result.stdout).toContain('@testscope/fixture-plugin')
       expect(result.stdout).toMatch(/installed/i)
 
-      // Should have copied plugin.json and dist/renderer.js
       const installDir = path.join(tmpPluginsDir, '.openpen', 'plugins', '@testscope', 'fixture-plugin')
       expect(fs.existsSync(path.join(installDir, 'plugin.json'))).toBe(true)
       expect(fs.existsSync(path.join(installDir, 'dist', 'renderer.js'))).toBe(true)
@@ -81,7 +80,6 @@ describe('openpen plugin add <local-path>', () => {
     const tmpPluginsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-cli-test-'))
     const badFixture = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-bad-fixture-'))
     try {
-      // Create a fixture without dist/
       fs.writeFileSync(
         path.join(badFixture, 'plugin.json'),
         JSON.stringify({ id: '@testscope/nodist', name: 'NoDist', version: '1.0.0' }),
@@ -89,7 +87,7 @@ describe('openpen plugin add <local-path>', () => {
 
       const result = spawnSync(
         process.execPath,
-        [CLI_BIN, 'plugin', 'add', badFixture],
+        [CLI_BIN, 'plugin', 'add', badFixture, '--yes'],
         {
           encoding: 'utf-8',
           env: { ...process.env, HOME: tmpPluginsDir },
@@ -101,6 +99,89 @@ describe('openpen plugin add <local-path>', () => {
     } finally {
       fs.rmSync(tmpPluginsDir, { recursive: true, force: true })
       fs.rmSync(badFixture, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('openpen plugin install security prompt', () => {
+  it('with --yes flag: skips the security prompt and proceeds to install', () => {
+    const tmpPluginsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-cli-test-'))
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [CLI_BIN, 'plugin', 'add', FIXTURE_DIR, '--yes'],
+        {
+          encoding: 'utf-8',
+          env: { ...process.env, HOME: tmpPluginsDir },
+        },
+      )
+
+      expect(result.status).toBe(0)
+      expect(result.stderr).not.toMatch(/full host access/i)
+      expect(result.stderr).not.toMatch(/Install .* \[y\/N\]/i)
+      const installDir = path.join(tmpPluginsDir, '.openpen', 'plugins', '@testscope', 'fixture-plugin')
+      expect(fs.existsSync(installDir)).toBe(true)
+    } finally {
+      fs.rmSync(tmpPluginsDir, { recursive: true, force: true })
+    }
+  })
+
+  it('with -y short flag: skips the security prompt and proceeds to install', () => {
+    const tmpPluginsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-cli-test-'))
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [CLI_BIN, 'plugin', 'add', FIXTURE_DIR, '-y'],
+        {
+          encoding: 'utf-8',
+          env: { ...process.env, HOME: tmpPluginsDir },
+        },
+      )
+
+      expect(result.status).toBe(0)
+      const installDir = path.join(tmpPluginsDir, '.openpen', 'plugins', '@testscope', 'fixture-plugin')
+      expect(fs.existsSync(installDir)).toBe(true)
+    } finally {
+      fs.rmSync(tmpPluginsDir, { recursive: true, force: true })
+    }
+  })
+
+  it('non-TTY stdin without --yes: exits non-zero with a security warning on stderr', () => {
+    const tmpPluginsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-cli-test-'))
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [CLI_BIN, 'plugin', 'add', FIXTURE_DIR],
+        {
+          encoding: 'utf-8',
+          env: { ...process.env, HOME: tmpPluginsDir },
+        },
+      )
+
+      expect(result.status).not.toBe(0)
+      expect(result.stderr).toMatch(/interactive terminal/i)
+      expect(result.stderr).toMatch(/--yes/)
+    } finally {
+      fs.rmSync(tmpPluginsDir, { recursive: true, force: true })
+    }
+  })
+
+  it('non-TTY stdin without --yes: does NOT create the plugin install directory', () => {
+    const tmpPluginsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-cli-test-'))
+    try {
+      spawnSync(
+        process.execPath,
+        [CLI_BIN, 'plugin', 'add', FIXTURE_DIR],
+        {
+          encoding: 'utf-8',
+          env: { ...process.env, HOME: tmpPluginsDir },
+        },
+      )
+
+      const installDir = path.join(tmpPluginsDir, '.openpen', 'plugins', '@testscope', 'fixture-plugin')
+      expect(fs.existsSync(installDir)).toBe(false)
+    } finally {
+      fs.rmSync(tmpPluginsDir, { recursive: true, force: true })
     }
   })
 })

@@ -7,8 +7,8 @@
  *
  * Usage:
  *   npx openpen create @scope/name
- *   npx openpen plugin add <source>
- *   npx openpen plugin install @scope/name
+ *   npx openpen plugin add <source> [--yes]
+ *   npx openpen plugin install @scope/name [--yes]
  *   npx openpen plugin list
  *   npx openpen plugin remove @scope/name
  *   npx openpen pack
@@ -32,6 +32,7 @@ import {
   CATALOG_OWNER,
   CATALOG_REPO,
 } from '@openpen/plugin-manager'
+import { promptInstallConfirm, extractYesFlag } from '../lib/confirm.js'
 
 const PLUGINS_DIR = path.join(os.homedir(), '.openpen', 'plugins')
 
@@ -41,8 +42,16 @@ if (topCommand === 'create') {
   await cmdCreate(subCommand)
 } else if (topCommand === 'plugin') {
   switch (subCommand) {
-    case 'add':     await cmdPluginAdd(args[0]); break
-    case 'install': await cmdPluginInstall(args[0]); break
+    case 'add': {
+      const { yes, rest } = extractYesFlag(args)
+      await cmdPluginAdd(rest[0], { yes })
+      break
+    }
+    case 'install': {
+      const { yes, rest } = extractYesFlag(args)
+      await cmdPluginInstall(rest[0], { yes })
+      break
+    }
     case 'list':    await cmdPluginList(); break
     case 'remove':  await cmdPluginRemove(args[0]); break
     default:        printPluginHelp()
@@ -53,6 +62,24 @@ if (topCommand === 'create') {
   await cmdPublish()
 } else {
   printHelp()
+}
+
+async function ensureInstallConfirmed(pluginId, { yes }) {
+  if (yes) return
+  if (!process.stdin.isTTY) {
+    console.error('Error: `openpen plugin install/add` requires an interactive terminal to confirm.')
+    console.error('  Pass --yes (or -y) to bypass in CI / scripts after vetting the plugin source.')
+    process.exit(1)
+  }
+  const confirmed = await promptInstallConfirm({
+    input: process.stdin,
+    output: process.stderr,
+    pluginId,
+  })
+  if (!confirmed) {
+    console.error('Aborted.')
+    process.exit(1)
+  }
 }
 
 // ── create ────────────────────────────────────────────────────────────────────
@@ -158,11 +185,12 @@ function checkGitHubAuthScope(expectedScope) {
 
 // ── plugin add ────────────────────────────────────────────────────────────────
 
-async function cmdPluginAdd(source) {
+async function cmdPluginAdd(source, { yes } = {}) {
   if (!source) {
-    console.error('Usage: npx openpen plugin add <source>')
+    console.error('Usage: npx openpen plugin add <source> [--yes]')
     process.exit(1)
   }
+  await ensureInstallConfirmed(source, { yes })
   fs.mkdirSync(PLUGINS_DIR, { recursive: true })
   const kind = detectSource(source)
   let entry
@@ -189,11 +217,12 @@ async function cmdPluginAdd(source) {
 
 // ── plugin install ────────────────────────────────────────────────────────────
 
-async function cmdPluginInstall(pluginId) {
+async function cmdPluginInstall(pluginId, { yes } = {}) {
   if (!pluginId) {
-    console.error('Usage: npx openpen plugin install @scope/name')
+    console.error('Usage: npx openpen plugin install @scope/name [--yes]')
     process.exit(1)
   }
+  await ensureInstallConfirmed(pluginId, { yes })
   console.log(`Installing ${pluginId} from catalog...`)
   try {
     const entry = await installFromCatalog(pluginId, {
@@ -538,16 +567,21 @@ Usage:
   npx openpen <command> [args]
 
 Commands:
-  create @scope/name          Scaffold a new plugin from the starter template
-  plugin add <source>         Install a plugin (local path, zip URL, or GitHub repo)
-  plugin install @scope/name  Install a plugin from the catalog
-  plugin list                 List installed plugins
-  plugin remove @scope/name   Remove an installed plugin
-  pack                        Create a distributable zip for the current plugin
-  publish                     Open a catalog PR for the current plugin
+  create @scope/name              Scaffold a new plugin from the starter template
+  plugin add <source> [--yes]     Install a plugin (local path, zip URL, or GitHub repo)
+  plugin install @scope/name [--yes]
+                                  Install a plugin from the catalog
+  plugin list                     List installed plugins
+  plugin remove @scope/name       Remove an installed plugin
+  pack                            Create a distributable zip for the current plugin
+  publish                         Open a catalog PR for the current plugin
 
 Plugins are installed to: ${PLUGINS_DIR}
 Restart OpenPen after installing or removing plugins.
+
+\`plugin install\` and \`plugin add\` prompt before installing because plugins run
+with full host access. Pass --yes (or -y) to bypass in CI / scripts after vetting
+the plugin source.
 `)
 }
 
@@ -559,10 +593,14 @@ Usage:
   npx openpen plugin <subcommand> [args]
 
 Subcommands:
-  add <source>           Install a plugin
-                         source: local path | release zip URL | github.com repo URL
-  install @scope/name    Install from catalog
-  list                   List installed plugins
-  remove @scope/name     Remove a plugin by ID
+  add <source> [--yes]      Install a plugin
+                            source: local path | release zip URL | github.com repo URL
+  install @scope/name [--yes]
+                            Install from catalog
+  list                      List installed plugins
+  remove @scope/name        Remove a plugin by ID
+
+Flags:
+  --yes, -y                 Skip the security prompt (for CI / scripts).
 `)
 }
