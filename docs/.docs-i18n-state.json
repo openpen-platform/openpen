@@ -1,7 +1,808 @@
 {
   "$schema": "https://openpen.dev/schemas/docs-i18n-state-v1.json",
   "version": 1,
-  "last_synced_commit": null,
-  "last_synced_at": null,
-  "per_file_status": {}
+  "last_synced_commit": "8e4d741",
+  "last_synced_at": "2026-05-22T00:30:00Z",
+  "per_file_status": {
+    "docs/concepts/module-architecture.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/concepts/plugin-compatibility.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/concepts/trust-model.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/guides/building.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/guides/module-settings.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/guides/plugin-quickstart.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/guides/publishing.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/reference/control-bar-layout.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/reference/design-tokens.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/reference/notify-api.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/reference/openpen-cli.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/slots/canvas.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/slots/index.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/slots/system.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/slots/ui.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/troubleshooting/windows-transparent-rendering.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/tutorials/build-your-first-plugin.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-banner.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-button-dropdown.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-button.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-dialog.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-popover.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-segmented.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-select.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-slider.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-tabs.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-toggle.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/app-tooltip.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/custom-components.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/index.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/primitives.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/uikit/use-dialog.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "8e4d741",
+          "translatedAt": "2026-05-22T00:30:00Z",
+          "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    }
+  }
 }

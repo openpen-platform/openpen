@@ -232,4 +232,4 @@ Default: `top-center`.
 
 - [`ModuleSetupContext` full interface](../../packages/module-api/src/types/module.ts)
 - [plugin-quickstart.md](../guides/plugin-quickstart.md) — five-minute plugin development guide
-- [slots.md](./slots.md) — full contribution slot catalogue
+- [slots.md](../slots/) — full contribution slot catalogue

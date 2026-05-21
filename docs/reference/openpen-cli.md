@@ -149,4 +149,4 @@ registered by third parties.
 
 - [Build your first plugin](../tutorials/build-your-first-plugin.md)
 - [Plugin publishing guide](../guides/publishing.md)
-- [Contribution Slot Catalog](./slots.md)
+- [Contribution Slot Catalog](../slots/)
