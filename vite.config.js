@@ -2,8 +2,12 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { readFileSync } from 'fs';
+import { fileURLToPath } from 'node:url';
 
 const { version } = JSON.parse(readFileSync('./package.json', 'utf-8'));
+
+const moduleApiSrc = (subpath) =>
+  fileURLToPath(new URL(`./packages/module-api/src/${subpath}`, import.meta.url));
 
 /**
  * Dev-mode middleware that serves `/openpen-runtime/*.js` requests.
@@ -70,6 +74,18 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(version),
   },
   plugins: [vue(), openpenRuntimeDevMiddlewarePlugin()],
+  // Resolve @openpen/module-api to live src/ in this monorepo so vite dev and
+  // vitest read the TypeScript source directly without depending on the
+  // dist/ artifact (which only exists for npm-installed external consumers).
+  resolve: {
+    alias: [
+      { find: /^@openpen\/module-api\/uikit\/internal$/, replacement: moduleApiSrc('uikit/internal.ts') },
+      { find: /^@openpen\/module-api\/uikit$/,           replacement: moduleApiSrc('uikit/index.ts') },
+      { find: /^@openpen\/module-api\/host\/registry$/,  replacement: moduleApiSrc('host/registry.ts') },
+      { find: /^@openpen\/module-api\/host$/,            replacement: moduleApiSrc('host/index.ts') },
+      { find: /^@openpen\/module-api$/,                  replacement: moduleApiSrc('index.ts') },
+    ],
+  },
   // base './' ensures all asset paths in dist/index.html are relative, which
   // is required for Electron's file:// protocol. With base '/' (Vite default)
   // paths become absolute and fail when loaded via file://.

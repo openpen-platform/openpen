@@ -4,9 +4,15 @@ import { autoAnimatePlugin } from '@formkit/auto-animate/vue'
 import { i18n } from './i18n/index'
 import { clickOutside } from './directives/clickOutside'
 import { initAppConfig } from './services/config-bridge'
+import { bootstrapHost } from './host-bootstrap'
 import './style.css'
 import './styles/control-bar-items.css'
 import '@openpen/module-api/uikit/tokens.css'
+
+// Register the ModuleHost implementation against @openpen/module-api/host
+// before anything imports from that subpath. MUST come before initAppConfig
+// (popup-anchor reads config via the host registry) and before createApp.
+bootstrapHost()
 
 // Window-level uncaught errors → main-process log.
 window.addEventListener('error', (event) => {

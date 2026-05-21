@@ -51,6 +51,10 @@ const FORBIDDEN_SPECIFIERS: ReadonlyArray<RegExp> = [
   // Node builtins without the node: prefix — prefer 'node:fs' over 'fs'
   // so the intent is explicit (allowed via the node: check above).
   /^(fs|path|os|crypto|stream|http|https|net|child_process|worker_threads)$/,
+  // Host-only injection seam: only the renderer bootstrap (src/host-bootstrap.ts)
+  // is allowed to import this subpath. Plugin / module code MUST consume the
+  // host via the proxy exports in @openpen/module-api/host instead.
+  /^@openpen\/module-api\/host\/registry$/,
 ]
 
 const IMPORT_FROM_RE = /(?:^|\s)import\s+[^'"\n]+from\s+['"]([^'"\n]+)['"]/g

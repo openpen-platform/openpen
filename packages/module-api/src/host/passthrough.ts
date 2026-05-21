@@ -1,10 +1,12 @@
 /**
  * @openpen/module-api/host — Passthrough Guard
  *
- * Re-exports usePassthroughGuard so module components (and UIKit wrappers)
- * can import from @openpen/module-api/host without cross-layer imports.
- *
- * Exposed here so module code can import without cross-layer relative paths.
+ * Proxies usePassthroughGuard through the host registry so module
+ * components (and UIKit wrappers) can use it without reaching past the
+ * package boundary.
  */
+import { _useHost } from './registry'
+import type { ModuleHost } from './types'
 
-export { usePassthroughGuard } from '../../../../src/composables/usePassthroughGuard'
+export const usePassthroughGuard: ModuleHost['usePassthroughGuard'] = (target) =>
+  _useHost().usePassthroughGuard(target)

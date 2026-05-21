@@ -1,20 +1,25 @@
 /**
  * @openpen/module-api/host — Stroke Store
  *
- * Re-exports the stroke store APIs that module tools need.
+ * Proxies the stroke store read + history APIs through the host registry.
  * Only the minimum surface required by stroke-eraser (and similar tools)
  * is exposed: getAllStrokes, removeStrokeById, pushCommand.
  *
  * Host-internal state mutation helpers (clearAll, addStroke, undo, redo)
- * are intentionally NOT exported — modules must use hostCommands for
+ * are intentionally NOT exposed here — modules must use hostCommands for
  * undo/redo and canvas clear.
  */
+import { _useHost } from './registry'
+import type { ModuleHost } from './types'
 
-export {
-  getAllStrokes,
-  removeStrokeById,
-  pushCommand,
-} from '../../../../src/services/stroke-store'
+export const getAllStrokes: ModuleHost['getAllStrokes'] = () =>
+  _useHost().getAllStrokes()
+
+export const removeStrokeById: ModuleHost['removeStrokeById'] = (id) =>
+  _useHost().removeStrokeById(id)
+
+export const pushCommand: ModuleHost['pushCommand'] = (command) =>
+  _useHost().pushCommand(command)
 
 // Re-export Stroke type via the public SDK types, not host internals.
 export type { Stroke } from '../types/tool'

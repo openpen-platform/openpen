@@ -8,11 +8,11 @@
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
-    "postinstall": "npm run build -w @openpen/plugin-manager",
+    "postinstall": "npm run build -w @openpen/plugin-manager && npm run build -w @openpen/module-api",
     "dev": "node scripts/dev.mjs",
     "type-check": "vue-tsc --noEmit && vue-tsc -p packages/module-api/tsconfig.json --noEmit",
     "build:runtime": "node scripts/build-runtime.mjs",
-    "build": "npm run type-check && vite build && npm run build:runtime",
+    "build": "npm run type-check && npm run build -w @openpen/module-api && vite build && npm run build:runtime",
     "test:prod-smoke": "npx playwright test tests/e2e/prod-smoke.spec.js",
     "dist": "npm run build && npm run test:prod-smoke && electron-builder",
     "dist:mac": "npm run build && npm run test:prod-smoke && electron-builder --mac",

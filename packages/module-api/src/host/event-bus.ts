@@ -1,9 +1,10 @@
 /**
  * @openpen/module-api/host — Domain Event Bus
  *
- * Re-exports the renderer-side event-bus emit/on so module components
- * can publish and subscribe without reaching into host runtime internals.
- * The bus is a process-local pub/sub for cross-module coordination.
+ * Proxies the renderer-side event-bus emit/on through the host registry so
+ * module components can publish and subscribe without reaching into host
+ * runtime internals. The bus is a process-local pub/sub for cross-module
+ * coordination.
  *
  * **Host-emitted events (consume via `on(name, cb)`):**
  *
@@ -34,4 +35,11 @@
  * ```
  */
 
-export { emit, on } from '../../../../src/core/runtime/event-bus'
+import { _useHost } from './registry'
+import type { ModuleHost } from './types'
+
+export const emit: ModuleHost['emit'] = (event, payload) =>
+  _useHost().emit(event, payload)
+
+export const on: ModuleHost['on'] = (event, handler) =>
+  _useHost().on(event, handler)

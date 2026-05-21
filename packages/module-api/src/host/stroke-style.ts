@@ -1,15 +1,20 @@
 /**
  * @openpen/module-api/host — Stroke Style
  *
- * Re-exports the public API of the host useStrokeStyle composable.
- * Module components MUST import from here, not from src/composables directly.
+ * Proxies the useStrokeStyle composable through the host registry so
+ * module components can read + write the global stroke style without
+ * reaching past the package boundary. The reactive refs returned by
+ * useStrokeStyle stay live across the proxy because the host registry
+ * returns the singleton refs the host owns.
  *
- * Exposed here so module components can access it without cross-layer imports.
+ * initStrokeStyleFromSettings is host-boot-only and intentionally
+ * NOT exposed here.
  */
+import { _useHost } from './registry'
+import type { ModuleHost } from './types'
 
-// Re-export the public API functions that modules need.
-// initStrokeStyleFromSettings is host-boot-only and intentionally NOT exported here.
-export { useStrokeStyle } from '../../../../src/composables/useStrokeStyle'
+export const useStrokeStyle: ModuleHost['useStrokeStyle'] = () =>
+  _useHost().useStrokeStyle()
 
 // Re-export the StrokeColor type via the public SDK types (not host internals).
 export type { StrokeColor } from '../types/tool'

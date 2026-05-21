@@ -124,6 +124,22 @@ for (const { input, output, label, extra_external } of entries) {
       warn(warning)
     },
     plugins: [
+      // Resolve @openpen/module-api* to the package's src/ so the vue-sfc
+      // plugin below sees the raw .vue files and inlines scoped styles.
+      // Without this we would resolve via package.json exports to the
+      // pre-compiled dist/, where styles are emitted to a separate .css
+      // file that this rollup pipeline does not know to load.
+      {
+        name: 'module-api-src-resolver',
+        resolveId(id) {
+          if (id === '@openpen/module-api') return r('packages/module-api/src/index.ts')
+          if (id === '@openpen/module-api/uikit') return r('packages/module-api/src/uikit/index.ts')
+          if (id === '@openpen/module-api/uikit/internal') return r('packages/module-api/src/uikit/internal.ts')
+          if (id === '@openpen/module-api/host') return r('packages/module-api/src/host/index.ts')
+          if (id === '@openpen/module-api/host/registry') return r('packages/module-api/src/host/registry.ts')
+          return null
+        },
+      },
       // Compile Vue SFC files using @vue/compiler-sfc.
       {
         name: 'vue-sfc',

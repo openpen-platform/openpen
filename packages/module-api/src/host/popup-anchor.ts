@@ -1,14 +1,16 @@
 /**
  * @openpen/module-api/host — Popup Anchor
  *
- * Re-exports the usePopupAnchor composable and its pure helper
- * calculatePopupAnchor for module components that need anchor-relative
- * popup positioning.
- *
- * Exposed here so module code can import without cross-layer relative paths.
+ * Proxies the `usePopupAnchor` composable and the `calculatePopupAnchor`
+ * pure helper through the host registry so module components can position
+ * popups relative to anchor elements without reaching past the package
+ * boundary.
  */
+import { _useHost } from './registry'
+import type { ModuleHost } from './types'
 
-export {
-  usePopupAnchor,
-  calculatePopupAnchor,
-} from '../../../../src/composables/usePopupAnchor'
+export const usePopupAnchor: ModuleHost['usePopupAnchor'] = (options) =>
+  _useHost().usePopupAnchor(options)
+
+export const calculatePopupAnchor: ModuleHost['calculatePopupAnchor'] = (options) =>
+  _useHost().calculatePopupAnchor(options)
