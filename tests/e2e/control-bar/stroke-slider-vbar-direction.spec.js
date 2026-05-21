@@ -159,7 +159,7 @@ test('vbar vertical slider: app-slider-root--inverted class is present', async (
   await expandBar(win);
   await ensureStrokeWidthSliderStyle(win);
 
-  const slider = win.locator('.vbar-stroke .app-slider-root');
+  const slider = win.getByTestId('stroke-slider-v-track').locator('[class~="app-slider-root"]');
   await expect(slider).toBeVisible({ timeout: 3000 });
   await expect(slider).toHaveClass(/app-slider-root--inverted/);
 });
@@ -181,8 +181,8 @@ test('vbar vertical slider: range fills from top (inverted=true, top=min)', asyn
   });
   await win.waitForTimeout(150);
 
-  const track = win.locator('.vbar-stroke .app-slider-track');
-  const range = win.locator('.vbar-stroke .app-slider-range');
+  const track = win.getByTestId('stroke-slider-v-track').locator('[class~="app-slider-track"]');
+  const range = win.getByTestId('stroke-slider-v-track').locator('[class~="app-slider-range"]');
   await expect(track).toBeVisible({ timeout: 3000 });
   await expect(range).toBeVisible({ timeout: 3000 });
 
@@ -214,7 +214,7 @@ test('vbar vertical slider: ArrowDown key increases stroke width (down = more)',
   await win.waitForTimeout(150);
 
   // Focus the thumb and press ArrowDown.
-  const thumb = win.locator('.vbar-stroke .app-slider-thumb');
+  const thumb = win.getByTestId('stroke-slider-v-track').locator('[class~="app-slider-thumb"]');
   await expect(thumb).toBeVisible({ timeout: 3000 });
   await thumb.focus();
   await win.keyboard.press('ArrowDown');
@@ -222,7 +222,7 @@ test('vbar vertical slider: ArrowDown key increases stroke width (down = more)',
 
   // The thumb should have moved down (y increased) because value increased.
   // We check via the range height growing (more fill = taller range from top).
-  const range = win.locator('.vbar-stroke .app-slider-range');
+  const range = win.getByTestId('stroke-slider-v-track').locator('[class~="app-slider-range"]');
   const rangeBoxAfter = await range.boundingBox();
   expect(rangeBoxAfter).not.toBeNull();
   // Range height > 0 confirms fill is present and direction is working.
@@ -250,7 +250,7 @@ test('regression: stroke-width popup opens to the RIGHT of bar in vbar-left layo
   await expandBar(win);
   await ensureStrokeWidthPopupStyle(win);
 
-  const swBtn = win.locator('.sw-vbtn, .sw-hbtn').first();
+  const swBtn = win.getByTestId('stroke-slider-v-btn').or(win.getByTestId('stroke-slider-h-btn')).first();
   await swBtn.click();
   await win.waitForTimeout(250);
 
@@ -276,7 +276,7 @@ test('regression: stroke-width popup opens to the LEFT of bar in vbar-right layo
   await expandBar(win);
   await ensureStrokeWidthPopupStyle(win);
 
-  const swBtn = win.locator('.sw-vbtn, .sw-hbtn').first();
+  const swBtn = win.getByTestId('stroke-slider-v-btn').or(win.getByTestId('stroke-slider-h-btn')).first();
   await swBtn.click();
   await win.waitForTimeout(250);
 

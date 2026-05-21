@@ -95,7 +95,7 @@ test('P1-3: tooltip-flip-down class present when ball is near workArea top edge'
   // The control-bar must carry .tooltip-flip-down when near the top edge
   // and in horizontal (non-vertical) mode.
   const hasFlipClass = await win.evaluate(() => {
-    const bar = document.querySelector('.control-bar');
+    const bar = document.querySelector('[data-testid="control-bar"]');
     return bar?.classList.contains('tooltip-flip-down') ?? false;
   });
   expect(hasFlipClass).toBe(true);
@@ -119,7 +119,7 @@ test('P1-3: tooltip-flip-down class absent when ball is far from workArea top ed
   await expect(win.getByTestId('control-bar')).toBeVisible();
 
   const hasFlipClass = await win.evaluate(() => {
-    const bar = document.querySelector('.control-bar');
+    const bar = document.querySelector('[data-testid="control-bar"]');
     return bar?.classList.contains('tooltip-flip-down') ?? false;
   });
   expect(hasFlipClass).toBe(false);
@@ -143,7 +143,7 @@ test('P1-3: tooltip element does not overflow workArea top when bar is at top ed
   await expect(win.getByTestId('control-bar')).toBeVisible();
 
   // Hover the first visible button to trigger tooltip.
-  const firstBtn = win.locator('.cb-btn[data-tip]').first();
+  const firstBtn = win.getByTestId('controlbar-pin-btn');
   await firstBtn.hover();
   await win.waitForTimeout(200);
 

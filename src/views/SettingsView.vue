@@ -221,7 +221,7 @@ const activeTabEntry = computed(() => TABS.value.find((tab) => tab.id === active
 
     <!-- Footer -->
     <div class="stg-footer">
-      <button class="stg-btn stg-btn-cancel" @click="handleCancel">{{ t('cancel') }}</button>
+      <button class="stg-btn stg-btn-cancel" data-testid="cancel-btn" @click="handleCancel">{{ t('cancel') }}</button>
       <button class="stg-btn stg-btn-save" data-testid="save-btn" @click="handleSave">{{ t('save') }}</button>
     </div>
   </div>

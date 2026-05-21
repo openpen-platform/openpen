@@ -160,7 +160,7 @@ async function assertBarInViewport(win, tolerance = 2) {
  *   - horizontal bar → popup dataSide must be 'top' or 'bottom'
  */
 async function assertPopupInViewportAndAxis(win, isVerticalBar, tolerance = 2) {
-  const popup = win.locator('.openpen-popover-content[data-state="open"]').first();
+  const popup = win.locator('[class~="openpen-popover-content"][data-state="open"]').first();
   await expect(popup).toBeVisible({ timeout: 4000 });
 
   const [popupBox, vp] = await Promise.all([
@@ -347,7 +347,7 @@ test.describe('C2: color picker popup must be in viewport and on correct axis', 
 
           // Determine actual isVertical from rendered bar class (more reliable than settings).
           const isVerticalBar = await win.evaluate(() => {
-            const bar = document.querySelector('.control-bar');
+            const bar = document.querySelector('[data-testid="control-bar"]');
             return bar ? (bar.classList.contains('vbar-left') || bar.classList.contains('vbar-right') || bar.classList.contains('vbar-free')) : false;
           });
 
@@ -583,7 +583,7 @@ test.describe('Bug 1 regression: vbar-free (vertical+snap=off) popups must open 
       await expect(bar).toBeVisible({ timeout: 2000 });
 
       // Verify the bar is actually in vbar-free mode.
-      const isVbarFree = await win.evaluate(() => document.querySelector('.control-bar.vbar-free') !== null);
+      const isVbarFree = await win.evaluate(() => document.querySelector('[data-testid="control-bar"].vbar-free') !== null);
       if (!isVbarFree) {
         // Settings may not have taken effect (timing); skip gracefully.
         test.info().annotations.push({ type: 'skip-reason', description: 'vbar-free class not present' });
@@ -598,7 +598,7 @@ test.describe('Bug 1 regression: vbar-free (vertical+snap=off) popups must open 
       await colorBtn.click();
       await win.waitForTimeout(300);
 
-      const popup = win.locator('.openpen-popover-content[data-state="open"]').first();
+      const popup = win.locator('[class~="openpen-popover-content"][data-state="open"]').first();
       await expect(popup).toBeVisible({ timeout: 3000 });
       const dataSide = await popup.getAttribute('data-side');
 
@@ -680,7 +680,7 @@ test.describe('A3: vertical barLayout with snap=ON — snap wins, bar is NOT vba
 
     await expandBar(win);
 
-    const isVbarFree = await win.evaluate(() => document.querySelector('.control-bar.vbar-free') !== null);
+    const isVbarFree = await win.evaluate(() => document.querySelector('[data-testid="control-bar"].vbar-free') !== null);
     expect(isVbarFree, 'A3: snap=ON should override vertical barLayout; vbar-free must not appear').toBe(false);
 
     await assertBarInViewport(win);

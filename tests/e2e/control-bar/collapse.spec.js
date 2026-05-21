@@ -168,7 +168,7 @@ test('ball fades after 4s of idle (opacity drops)', async () => {
   await ensureBallMode(win);
 
   const initOpacity = await win.evaluate(() => {
-    const ball = document.querySelector('.float-ball');
+    const ball = document.querySelector('[data-testid="floatball-btn"]');
     return ball ? getComputedStyle(ball).opacity : null;
   });
   expect(parseFloat(initOpacity)).toBeCloseTo(1, 1);
@@ -177,7 +177,7 @@ test('ball fades after 4s of idle (opacity drops)', async () => {
   await win.waitForTimeout(4200);
 
   const idleOpacity = await win.evaluate(() => {
-    const ball = document.querySelector('.float-ball');
+    const ball = document.querySelector('[data-testid="floatball-btn"]');
     return ball ? getComputedStyle(ball).opacity : null;
   });
   expect(parseFloat(idleOpacity)).toBeLessThan(0.9);
@@ -196,7 +196,7 @@ test('moving the pointer over the ball restores opacity to 1', async () => {
   await win.waitForTimeout(300);
 
   const opacity = await win.evaluate(() => {
-    const ball = document.querySelector('.float-ball');
+    const ball = document.querySelector('[data-testid="floatball-btn"]');
     return ball ? getComputedStyle(ball).opacity : null;
   });
   expect(parseFloat(opacity)).toBeCloseTo(1, 1);

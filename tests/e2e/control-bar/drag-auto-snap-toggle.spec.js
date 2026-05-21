@@ -129,9 +129,7 @@ async function openSettings(mainWin) {
 
 /** Navigate to the Behavior tab in the settings window. */
 async function goToBehaviorTab(settingsWin) {
-  // The tabs are rendered in declaration order: Appearance(0), Behavior(1), ...
-  const tabs = settingsWin.locator('.stg-tab');
-  await tabs.nth(1).click();
+  await settingsWin.getByTestId('tab-behavior').click();
   await settingsWin.waitForTimeout(200);
 }
 
@@ -145,7 +143,7 @@ async function saveSettings(settingsWin) {
 
 /** Close any open settings window without saving. */
 async function closeSettings(settingsWin) {
-  await settingsWin.locator('.stg-btn-cancel').click();
+  await settingsWin.getByTestId('cancel-btn').click();
   await settingsWin.waitForEvent('close', { timeout: 5000 }).catch(() => {});
   await new Promise((r) => setTimeout(r, 300));
 }
@@ -228,7 +226,7 @@ test('vbar-free: bar aspect ratio reflects vertical layout', async () => {
     await snapToggle.click();
     await settingsWin.waitForTimeout(200);
   }
-  const verticalBtn = settingsWin.locator('.app-seg-btn').filter({ hasText: 'Vertical' });
+  const verticalBtn = settingsWin.getByTestId('bar-layout-vertical');
   await verticalBtn.click();
   await settingsWin.waitForTimeout(200);
 
@@ -267,7 +265,7 @@ test('vbar-free: bar aspect ratio reflects vertical layout', async () => {
   }
 
   // Restore barLayout to Horizontal (segmented is now enabled because snap=OFF).
-  const horizontalRestoreBtn = restore.locator('.app-seg-btn').filter({ hasText: 'Horizontal' });
+  const horizontalRestoreBtn = restore.getByTestId('bar-layout-horizontal');
   await horizontalRestoreBtn.click();
   await restore.waitForTimeout(200);
 
@@ -306,14 +304,14 @@ test('barLayout AppSegmented is disabled when snap=ON', async () => {
 
   // The Bar Orientation AppSegmented must carry the .app-seg--disabled class.
   const segDisabled = await settingsWin.evaluate(() => {
-    const seg = document.querySelector('.app-seg');
+    const seg = document.querySelector('[data-testid="bar-layout-seg"]');
     return seg ? seg.classList.contains('app-seg--disabled') : false;
   });
   expect(segDisabled).toBe(true);
 
   // Also verify via computed style: pointer-events should be 'none'.
   const pointerEvents = await settingsWin.evaluate(() => {
-    const seg = document.querySelector('.app-seg');
+    const seg = document.querySelector('[data-testid="bar-layout-seg"]');
     return seg ? getComputedStyle(seg).pointerEvents : '';
   });
   expect(pointerEvents).toBe('none');
@@ -333,7 +331,7 @@ test('horizontal near screen bottom: shape popup stays within viewport bounds', 
     await snapToggle.click();
     await setupWin.waitForTimeout(200);
   }
-  const hBtn = setupWin.locator('.app-seg-btn').filter({ hasText: 'Horizontal' });
+  const hBtn = setupWin.getByTestId('bar-layout-horizontal');
   await hBtn.click();
   await setupWin.waitForTimeout(200);
   await saveSettings(setupWin);
@@ -351,7 +349,7 @@ test('horizontal near screen bottom: shape popup stays within viewport bounds', 
   await caretBtn.click();
   await win.waitForTimeout(400);
 
-  const popupContent = win.locator('.openpen-popover-content');
+  const popupContent = win.locator('[class~="openpen-popover-content"]');
   await expect(popupContent).toBeVisible({ timeout: 3000 });
 
   // Geometric invariant: popup must remain fully within the viewport regardless

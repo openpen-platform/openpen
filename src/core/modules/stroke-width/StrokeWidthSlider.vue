@@ -78,7 +78,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="stroke-width-slider-wrap" data-testid="stroke-slider-wrap">
+  <div class="stroke-width-slider-wrap" data-testid="controlbar-stroke-slider">
     <!-- Horizontal layout + slider style -->
     <div
       v-if="!isVertical && strokeStyle === 'slider'"

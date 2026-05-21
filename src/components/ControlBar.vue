@@ -732,6 +732,7 @@ onUnmounted(() => {
           <div
             class="cb-group"
             :class="{ 'cb-group--inset': group.inset?.enabled }"
+            :data-testid="group.inset?.enabled ? 'cb-group-inset' : undefined"
             :style="
               group.inset?.enabled && group.inset.color
                 ? { '--cb-group-inset-color': group.inset.color }

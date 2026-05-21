@@ -48,7 +48,7 @@ test('ball is visible only on the primary display at boot', async () => {
   //     const displayId = new URLSearchParams(new URL(w.url()).search).get('displayId');
   //     const state = await w.evaluate(() => window.openPenApi.getPositioningState());
   //     const isActive = Number(displayId) === state.activeDisplayId;
-  //     const barRoot = await w.locator('.main-window').boundingBox();
+  //     const barRoot = await w.getByTestId('main-window').boundingBox();
   //     if (isActive) {
   //       expect(barRoot).not.toBeNull();
   //     } else {

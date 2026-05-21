@@ -25,8 +25,8 @@ function setDelay(v: number) {
 }
 
 const barLayoutOptions = computed(() => [
-  { value: 'horizontal', label: t('barLayoutHorizontal') },
-  { value: 'vertical',   label: t('barLayoutVertical') },
+  { value: 'horizontal', label: t('barLayoutHorizontal'), testid: 'bar-layout-horizontal' },
+  { value: 'vertical',   label: t('barLayoutVertical'),   testid: 'bar-layout-vertical' },
 ]);
 </script>
 
@@ -52,6 +52,7 @@ const barLayoutOptions = computed(() => [
         <div class="cw-row-sub">{{ t('barLayoutSub') }}</div>
       </div>
       <AppSegmented
+        data-testid="bar-layout-seg"
         :model-value="draft.barLayout"
         :options="barLayoutOptions"
         :disabled="draft.enableDragAutoSnap"

@@ -71,6 +71,6 @@ test('stale config (eraser-in-tools, no inset) is repaired to canonical layout o
   expect(eraserIdx).toBe(toolsIdx + 1);
 
   // Bar height MUST stay 50px (no fattening even on first migration boot).
-  const barH = await win.evaluate(() => document.querySelector('.control-bar').getBoundingClientRect().height);
+  const barH = await win.evaluate(() => document.querySelector('[data-testid="control-bar"]').getBoundingClientRect().height);
   expect(barH).toBe(50);
 });

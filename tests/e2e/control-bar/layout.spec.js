@@ -207,7 +207,7 @@ test('eraser button and caret are visible in vertical mode (design: 1 main + 1 c
   await expect(win.getByTestId('control-bar')).toBeVisible();
   await expect(win.getByTestId('control-bar')).toHaveClass(/vbar-left/);
 
-  await expect(win.getByTestId('controlbar-eraser-btn')).toBeVisible();
+  await expect(win.getByTestId('controlbar-erase-btn')).toBeVisible();
   await expect(win.getByTestId('controlbar-eraser-caret')).toBeVisible();
 });
 
@@ -225,11 +225,11 @@ test('tools group renders [freehand, line, shape] inside .cb-group--inset; bar h
   await win.waitForTimeout(200);
   await expandBar(win);
 
-  const insetCount = await win.evaluate(() => document.querySelectorAll('.cb-group--inset').length);
+  const insetCount = await win.evaluate(() => document.querySelectorAll('[data-testid="cb-group-inset"]').length);
   expect(insetCount).toBe(1);
 
   const labels = await win.evaluate(() => {
-    const g = document.querySelector('.cb-group--inset');
+    const g = document.querySelector('[data-testid="cb-group-inset"]');
     if (!g) return [];
     return Array.from(g.children).map((c) =>
       c.getAttribute('aria-label') || c.querySelector('[aria-label]')?.getAttribute('aria-label') || c.tagName
@@ -238,7 +238,7 @@ test('tools group renders [freehand, line, shape] inside .cb-group--inset; bar h
   expect(labels).toEqual(['Freehand', 'Line', 'Shape']);
 
   const eraserInInset = await win.evaluate(() =>
-    !!document.querySelector('.cb-group--inset .cb-eraser-wrap, .cb-group--inset [aria-label="Eraser tool"]')
+    !!document.querySelector('[data-testid="cb-group-inset"] [data-testid="controlbar-erase-btn"]')
   );
   expect(eraserInInset).toBe(false);
 
@@ -249,7 +249,7 @@ test('tools group renders [freehand, line, shape] inside .cb-group--inset; bar h
   if (isHorizontal) {
     const heights = await win.evaluate(() => ({
       bar: document.querySelector('[data-testid="control-bar"]').getBoundingClientRect().height,
-      inset: document.querySelector('.cb-group--inset').getBoundingClientRect().height,
+      inset: document.querySelector('[data-testid="cb-group-inset"]').getBoundingClientRect().height,
     }));
     expect(heights.bar).toBe(50);
     expect(heights.inset).toBe(36);
@@ -272,8 +272,8 @@ test('horizontal mode renders the stroke-width slider inline', async () => {
   await ensureBallMode(win);
   await expandBar(win);
 
-  await expect(win.getByTestId('stroke-slider-wrap')).toBeVisible();
-  await expect(win.getByTestId('stroke-slider-wrap').locator('.app-slider-root')).toBeVisible();
+  await expect(win.getByTestId('controlbar-stroke-slider')).toBeVisible();
+  await expect(win.getByTestId('controlbar-stroke-slider').locator('[class~="app-slider-root"]')).toBeVisible();
   await expect(win.getByTestId('stroke-slider-v-wrap')).not.toBeAttached();
 });
 

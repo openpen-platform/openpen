@@ -86,7 +86,7 @@ async function setBallScreenPos(win, screenX, screenY) {
  */
 async function simulatePluginBarResize(win, extraWidthPx) {
   await win.evaluate((extra) => {
-    const bar = document.querySelector('.control-bar');
+    const bar = document.querySelector('[data-testid="control-bar"]');
     if (bar) {
       bar.style.paddingRight = `${extra}px`;
     }
