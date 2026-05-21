@@ -13,7 +13,7 @@ Import path:
 
 ```ts
 import {
-  AppButton,
+  AppButton, AppButtonDropdown,
   AppPopover, AppDialog,
   AppSlider, AppToggle, AppSegmented,
   AppSelect, AppTooltip, AppTabs,
@@ -82,6 +82,7 @@ bundled yourself will not.
 | [`AppTabs`](./app-tabs) | Wrapper | Controlled tabbed-content container |
 | [`AppBanner`](./app-banner) | Wrapper | Inline status and feedback messages |
 | [`AppButton`](./app-button) | Wrapper | Standard control-bar action button |
+| [`AppButtonDropdown`](./app-button-dropdown) | Wrapper | Split-mode button: main action + caret-triggered popover |
 | [`primitives`](./primitives) | Primitive re-export | Raw Reka UI re-exports for custom markup |
 
 See [`custom-components`](./custom-components) for the escape hatch layer (writing your own from scratch).

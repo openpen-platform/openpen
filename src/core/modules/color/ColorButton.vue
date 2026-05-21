@@ -71,6 +71,13 @@ watch(() => snapEdge?.value, () => { modalManager?.close('color') })
 <template>
   <AppPopover popover-id="color" placement="auto">
     <template #trigger="{ active }">
+      <!-- Raw <button> intentionally: reka-ui PopoverTrigger uses `as-child`
+           to merge its event handlers + aria attrs into the slot's root
+           element. Wrapping the trigger in an AppButton (Vue component)
+           breaks the merge and reka-ui emits its own extra <button> wrapper,
+           which both widens the control bar and prevents click-routing.
+           cb-btn / cb-color-btn classes match the original visual surface
+           and are styled by src/styles/control-bar-items.css. -->
       <button
         class="cb-btn cb-color-btn"
         data-testid="controlbar-color-btn"

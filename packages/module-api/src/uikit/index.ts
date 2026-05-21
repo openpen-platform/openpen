@@ -60,6 +60,7 @@ export { default as AppBanner } from './components/AppBanner.vue'
 export type { BannerVariant } from './components/AppBanner.vue'
 
 export { default as AppButton } from './components/AppButton.vue'
+export { default as AppButtonDropdown } from './components/AppButtonDropdown.vue'
 
 // ── Layer 2: Primitive Re-exports ────────────────────────────────────────────
 //

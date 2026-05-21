@@ -109,6 +109,23 @@ export const ANCHOR_EL_KEY: InjectionKey<Readonly<Ref<HTMLElement | null>>> =
 export const CONTROL_BAR_ANIMATING_KEY: InjectionKey<Readonly<Ref<boolean>>> =
   Symbol('openpen:control-bar-animating')
 
+// ── Tooltip Flip Down (near workArea top) ────────────────────────────────────
+
+/**
+ * `true` when the control bar's ball is sitting close to the workArea top
+ * edge, in horizontal mode. Buttons that render a tooltip above themselves
+ * (`bottom: calc(100% + 8px)`) would extend off-screen in that state, so they
+ * flip below the button instead.
+ *
+ * Provided by ControlBar.vue. Consumed by AppButton (and any other UIKit
+ * wrapper that renders an `::after` tooltip).
+ *
+ * `false` in vertical mode regardless of position — vertical bars use a
+ * sideways tooltip direction (see `SNAP_EDGE_KEY`).
+ */
+export const TOOLTIP_FLIP_DOWN_KEY: InjectionKey<Readonly<Ref<boolean>>> =
+  Symbol('openpen:tooltipFlipDown')
+
 // ── Host Dialog Presence ─────────────────────────────────────────────────────
 
 /**

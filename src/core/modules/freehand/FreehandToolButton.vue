@@ -3,6 +3,7 @@ import { computed, inject, onUnmounted, readonly, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emit as eventBusEmit, on as eventBusOn } from '@openpen/module-api/host'
 import { ACTIVE_TOOL_KEY } from '@openpen/module-api'
+import { AppButton } from '@openpen/module-api/uikit'
 
 const { t } = useI18n()
 
@@ -31,15 +32,15 @@ function activate() {
 </script>
 
 <template>
-  <button
-    class="cb-btn"
-    :class="{ active: isActive }"
-    :data-tip="t('openpen.freehand.tool')"
+  <AppButton
+    :active="isActive"
+    :tooltip="t('openpen.freehand.tool')"
     :aria-label="t('openpen.freehand.tool')"
+    data-testid="controlbar-freehand-btn"
     @click="activate"
   >
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M3 17c3-3 6-6 9-3s6 0 9-3"/>
     </svg>
-  </button>
+  </AppButton>
 </template>

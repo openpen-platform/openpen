@@ -249,8 +249,8 @@ test('G1: shape sub-panel stays inside viewport at snap-bottom', async () => {
   await snapBallToEdge(win, wa, 'bottom');
   await expandBar(win);
 
-  await win.locator('.cb-btn[aria-label="Shape"]').click();
-  await win.locator('.cb-shape-caret').click();
+  await win.getByTestId('controlbar-shape-btn').click();
+  await win.getByTestId('controlbar-shape-caret').click();
   await win.waitForTimeout(250);
   await assertPopupInBounds(win, '.shape-popover');
 
@@ -266,8 +266,8 @@ test('G1: shape sub-panel stays inside viewport at snap-left', async () => {
   await snapBallToEdge(win, wa, 'left');
   await expandBar(win);
 
-  await win.locator('.cb-btn[aria-label="Shape"]').click();
-  await win.locator('.cb-shape-caret').click();
+  await win.getByTestId('controlbar-shape-btn').click();
+  await win.getByTestId('controlbar-shape-caret').click();
   await win.waitForTimeout(250);
   await assertPopupInBounds(win, '.shape-popover');
 

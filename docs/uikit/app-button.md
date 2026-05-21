@@ -11,6 +11,20 @@ Prefer this wrapper over a plain `<button>` when adding a button to the control
 bar — it removes the need to replicate exact sizing, colours, and tooltip
 behaviour manually.
 
+The button automatically adapts to the host's control-bar context:
+
+- **Vertical bars** shrink the button to 34×34 to match the narrower vbar
+  footprint.
+- **Tooltip direction** points away from the snapped edge in a vertical bar
+  (snap-left → tooltip on the right; snap-right → tooltip on the left) and
+  flips below the button in horizontal mode when the bar is near the
+  workArea top edge.
+
+These behaviours come from host-provided injection keys (`IS_VERTICAL_KEY`,
+`SNAP_EDGE_KEY`, `TOOLTIP_FLIP_DOWN_KEY`); plugin authors do not need to
+configure them. Outside a host control-bar context AppButton renders as the
+standard 36×36 horizontal-mode button.
+
 ## Props
 
 | Prop | Type | Default | Description |

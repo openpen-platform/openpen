@@ -2,6 +2,7 @@
 import { computed, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emit as eventBusEmit, on as eventBusOn } from '@openpen/module-api/host'
+import { AppButton } from '@openpen/module-api/uikit'
 
 const { t } = useI18n()
 
@@ -21,10 +22,9 @@ function activate() {
 </script>
 
 <template>
-  <button
-    class="cb-btn"
-    :class="{ active: isActive }"
-    :data-tip="t('openpen.line.tool')"
+  <AppButton
+    :active="isActive"
+    :tooltip="t('openpen.line.tool')"
     :aria-label="t('openpen.line.tool')"
     @click="activate"
   >
@@ -33,5 +33,5 @@ function activate() {
       <circle cx="5" cy="19" r="2" fill="currentColor" stroke="none"/>
       <circle cx="19" cy="5" r="2" fill="currentColor" stroke="none"/>
     </svg>
-  </button>
+  </AppButton>
 </template>

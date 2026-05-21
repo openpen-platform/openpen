@@ -46,31 +46,30 @@
 
 /* Inner items shrink to 30px tall (= 36 outer − 4 padding − 2 border) so
    enabling inset NEVER grows the bar. Covers every direct child shape a
-   module can contribute: plain .cb-btn, .cb-*-wrap composites, and the
-   caret children inside those wraps. */
-.cb-group--inset .cb-btn {
+   module can contribute: SDK AppButton, SDK AppButtonDropdown (wrap +
+   caret), and the legacy host-chrome `.cb-btn` (still used by Pin /
+   Undo / Redo / Clear / Settings / Quit in ControlBar.vue, none of which
+   sit inside an inset group today but the rule stays for safety). */
+.cb-group--inset .cb-btn,
+.cb-group--inset .app-btn {
   width: 32px;
   height: 30px;
   border-radius: 8px;
 }
-.cb-group--inset .cb-eraser-wrap,
-.cb-group--inset .cb-shape-wrap {
+.cb-group--inset .app-btn-dropdown-wrap {
   height: 30px;
 }
-.cb-group--inset .cb-eraser-caret,
-.cb-group--inset .cb-shape-caret {
+.cb-group--inset .app-btn-dropdown-caret {
   height: 30px;
 }
 
 /* Vertical mode: composite wraps stack their button + caret column-wise.
    Don't clamp wrap height (would clip the caret); the bar is vertical so
    "no fattening" means width is constrained, not height. */
-.control-bar.is-vertical .cb-group--inset .cb-eraser-wrap,
-.control-bar.is-vertical .cb-group--inset .cb-shape-wrap {
+.control-bar.is-vertical .cb-group--inset .app-btn-dropdown-wrap {
   height: auto;
 }
-.control-bar.is-vertical .cb-group--inset .cb-eraser-caret,
-.control-bar.is-vertical .cb-group--inset .cb-shape-caret {
+.control-bar.is-vertical .cb-group--inset .app-btn-dropdown-caret {
   height: 14px;
 }
 
@@ -229,60 +228,11 @@
 
 /* ─── Eraser module ───────────────────────────────────────────────────────── */
 
-.cb-eraser-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  -webkit-app-region: no-drag;
-}
-
-.cb-eraser-wrap--vertical {
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cb-eraser-main-btn {
-  width: 32px;
-}
-
-.cb-eraser-caret {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 36px;
-  border: none;
-  background: transparent;
-  color: var(--text-dim);
-  cursor: pointer;
-  padding: 0;
-  border-radius: 8px;
-  transition: color 150ms, background 150ms;
-}
-
-.cb-eraser-caret-icon {
-  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.cb-eraser-caret-icon--down { transform: rotate(0deg); }
-.cb-eraser-caret-icon--up { transform: rotate(180deg); }
-.cb-eraser-caret-icon--right { transform: rotate(-90deg); }
-.cb-eraser-caret-icon--left { transform: rotate(90deg); }
-
-.cb-eraser-caret--vertical {
-  width: 30px;
-  height: 14px;
-}
-
-.cb-eraser-caret:hover {
-  color: var(--text-primary);
-  background: var(--cb-hover-bg);
-}
-
-.cb-eraser-caret.active {
-  color: var(--accent);
-  background: var(--accent-bg);
-}
+/* The eraser main button + caret are now rendered by `AppButtonDropdown`
+   from the SDK. Wrap layout, caret sizing, hover / active states, and
+   caret-icon rotation live inside AppButtonDropdown.vue (unscoped
+   `.app-btn-dropdown-*` classes). Only the popup content styling stays
+   here because the popup is teleported and cannot use scoped CSS. */
 
 .eraser-mode-panel {
   display: flex;

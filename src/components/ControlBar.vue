@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, watchEffect, provide, readonly, nextTick, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { SNAP_EDGE_KEY, IS_VERTICAL_KEY, WRAPPER_EL_KEY, ANCHOR_EL_KEY, MODAL_MANAGER_KEY, CONTROL_BAR_ANIMATING_KEY, HOST_DIALOG_OPEN_COUNT_KEY, POPOVER_PLACEMENT_HINT_KEY, ACTIVE_TOOL_KEY } from '@openpen/module-api';
+import { SNAP_EDGE_KEY, IS_VERTICAL_KEY, WRAPPER_EL_KEY, ANCHOR_EL_KEY, MODAL_MANAGER_KEY, CONTROL_BAR_ANIMATING_KEY, TOOLTIP_FLIP_DOWN_KEY, HOST_DIALOG_OPEN_COUNT_KEY, POPOVER_PLACEMENT_HINT_KEY, ACTIVE_TOOL_KEY } from '@openpen/module-api';
 import type { PopoverPlacementHint } from '@openpen/module-api';
 import { useCollapseMode } from '../composables/useCollapseMode';
 import { useDragSnap, type BarLayoutClass } from '../composables/useDragSnap';
@@ -248,6 +248,7 @@ function setAnimating(durationMs: number) {
 }
 
 provide(CONTROL_BAR_ANIMATING_KEY, readonly(animating));
+provide(TOOLTIP_FLIP_DOWN_KEY, readonly(shouldFlipTooltipDown));
 
 const dialog = useDialog();
 

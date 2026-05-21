@@ -9,7 +9,20 @@
  * Disabled state uses aria-disabled + a CSS class rather than the HTML
  * `disabled` attribute, because `disabled` removes pointer events and would
  * swallow the tooltip hover that this component is expected to keep alive.
+ *
+ * In a vertical control bar the button shrinks to 34×34 and the tooltip
+ * points away from the snapped edge (snap-left → right side; snap-right →
+ * left side; vbar-free → right side). In a horizontal bar the tooltip sits
+ * above the button by default, but flips below when the bar is near the
+ * workArea top edge (the host raises TOOLTIP_FLIP_DOWN_KEY in that case).
+ *
+ * All orientation signals come from the host via injection
+ * (IS_VERTICAL_KEY / SNAP_EDGE_KEY / TOOLTIP_FLIP_DOWN_KEY) so plugin
+ * buttons render identically to the host's own control-bar buttons.
  */
+
+import { computed, inject } from 'vue'
+import { SNAP_EDGE_KEY, IS_VERTICAL_KEY, TOOLTIP_FLIP_DOWN_KEY } from '../../inject-keys'
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -36,16 +49,33 @@ function handleClick() {
     emit('click')
   }
 }
+
+// ── Orientation context (host-injected) ───────────────────────────────────────
+
+const isVertical = inject(IS_VERTICAL_KEY, undefined)
+const snapEdge = inject(SNAP_EDGE_KEY, undefined)
+const tooltipFlipDown = inject(TOOLTIP_FLIP_DOWN_KEY, undefined)
+
+const tooltipSide = computed<'top' | 'top-flip' | 'right' | 'left'>(() => {
+  if (isVertical?.value) {
+    return snapEdge?.value === 'right' ? 'left' : 'right'
+  }
+  return tooltipFlipDown?.value ? 'top-flip' : 'top'
+})
 </script>
 
 <template>
   <button
     class="app-btn"
-    :class="{
-      active,
-      danger: variant === 'danger',
-      'app-btn-disabled': disabled,
-    }"
+    :class="[
+      `app-btn--tooltip-${tooltipSide}`,
+      {
+        'app-btn--vertical': isVertical,
+        active,
+        danger: variant === 'danger',
+        'app-btn-disabled': disabled,
+      },
+    ]"
     :data-tip="tooltip"
     :aria-label="ariaLabel"
     :aria-disabled="disabled || undefined"
@@ -71,6 +101,13 @@ function handleClick() {
   position: relative;
   flex-shrink: 0;
   padding: 0;
+}
+
+/* Vertical bars shrink the button to 34×34 to match the host's
+   `.control-bar.is-vertical .cb-btn` rule. */
+.app-btn.app-btn--vertical {
+  width: 34px;
+  height: 34px;
 }
 
 .app-btn:hover {
@@ -107,7 +144,7 @@ function handleClick() {
   opacity: 0.30;
 }
 
-/* Tooltip */
+/* Tooltip — horizontal mode default (above the button). */
 .app-btn[data-tip]::after {
   content: attr(data-tip);
   position: absolute;
@@ -127,6 +164,32 @@ function handleClick() {
   transition: opacity var(--openpen-duration-fast);
   box-shadow: var(--openpen-shadow-sm);
   z-index: 41;
+}
+
+/* Horizontal mode near workArea top: tooltip flips below the button so
+   it does not extend off-screen. The host sets TOOLTIP_FLIP_DOWN_KEY when
+   the ball is within ~60 px of the top edge. */
+.app-btn.app-btn--tooltip-top-flip[data-tip]::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+
+/* Vertical bar, snap-left or vbar-free: tooltip points right (inward). */
+.app-btn.app-btn--tooltip-right[data-tip]::after {
+  top: 50%;
+  bottom: auto;
+  left: calc(100% + 8px);
+  right: auto;
+  transform: translateY(-50%);
+}
+
+/* Vertical bar, snap-right: tooltip points left (inward). */
+.app-btn.app-btn--tooltip-left[data-tip]::after {
+  top: 50%;
+  bottom: auto;
+  left: auto;
+  right: calc(100% + 8px);
+  transform: translateY(-50%);
 }
 
 .app-btn[data-tip]:hover::after {

@@ -7,10 +7,12 @@
  */
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { join, dirname } from 'node:path'
 import AppButton from './AppButton.vue'
+import { IS_VERTICAL_KEY, SNAP_EDGE_KEY, TOOLTIP_FLIP_DOWN_KEY, type SnapEdge } from '../../inject-keys'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -114,6 +116,99 @@ describe('AppButton', () => {
     })
     await wrapper.find('button').trigger('click')
     expect(wrapper.emitted('click')).toBeFalsy()
+  })
+
+  // ── Tooltip side (vbar orientation) ────────────────────────────────────────
+
+  function mountWithHostContext(opts: { isVertical: boolean; snapEdge: SnapEdge; tooltipFlipDown?: boolean }) {
+    return mount(AppButton, {
+      props: { tooltip: 'demo' },
+      global: {
+        provide: {
+          [IS_VERTICAL_KEY as symbol]: ref(opts.isVertical),
+          [SNAP_EDGE_KEY as symbol]: ref(opts.snapEdge),
+          [TOOLTIP_FLIP_DOWN_KEY as symbol]: ref(opts.tooltipFlipDown ?? false),
+        },
+      },
+    })
+  }
+
+  it('horizontal default: tooltip side is top (no host context provided)', () => {
+    const wrapper = mount(AppButton, { props: { tooltip: 'demo' } })
+    const classes = wrapper.find('button').classes()
+    expect(classes).toContain('app-btn--tooltip-top')
+    expect(classes).not.toContain('app-btn--tooltip-left')
+    expect(classes).not.toContain('app-btn--tooltip-right')
+  })
+
+  it('horizontal mode with snap-top context: tooltip side stays top', () => {
+    const wrapper = mountWithHostContext({ isVertical: false, snapEdge: 'top' })
+    const classes = wrapper.find('button').classes()
+    expect(classes).toContain('app-btn--tooltip-top')
+    expect(classes).not.toContain('app-btn--tooltip-left')
+    expect(classes).not.toContain('app-btn--tooltip-right')
+  })
+
+  it('vertical + snap-left: tooltip side is right (away from edge)', () => {
+    const wrapper = mountWithHostContext({ isVertical: true, snapEdge: 'left' })
+    const classes = wrapper.find('button').classes()
+    expect(classes).toContain('app-btn--tooltip-right')
+    expect(classes).not.toContain('app-btn--tooltip-top')
+    expect(classes).not.toContain('app-btn--tooltip-left')
+  })
+
+  it('vertical + snap-right: tooltip side is left (away from edge)', () => {
+    const wrapper = mountWithHostContext({ isVertical: true, snapEdge: 'right' })
+    const classes = wrapper.find('button').classes()
+    expect(classes).toContain('app-btn--tooltip-left')
+    expect(classes).not.toContain('app-btn--tooltip-top')
+    expect(classes).not.toContain('app-btn--tooltip-right')
+  })
+
+  it('vertical + no snap edge (vbar-free): tooltip side defaults to right', () => {
+    const wrapper = mountWithHostContext({ isVertical: true, snapEdge: null })
+    const classes = wrapper.find('button').classes()
+    expect(classes).toContain('app-btn--tooltip-right')
+    expect(classes).not.toContain('app-btn--tooltip-left')
+    expect(classes).not.toContain('app-btn--tooltip-top')
+  })
+
+  // ── Vertical size override ─────────────────────────────────────────────────
+
+  it('horizontal mode: no app-btn--vertical class on root', () => {
+    const wrapper = mount(AppButton)
+    expect(wrapper.find('button').classes()).not.toContain('app-btn--vertical')
+  })
+
+  it('vertical mode: app-btn--vertical class applied to root', () => {
+    const wrapper = mountWithHostContext({ isVertical: true, snapEdge: null })
+    expect(wrapper.find('button').classes()).toContain('app-btn--vertical')
+  })
+
+  // ── Horizontal tooltip flip-down (near workArea top) ───────────────────────
+
+  it('horizontal mode, tooltipFlipDown=true: tooltip side is top-flip', () => {
+    const wrapper = mountWithHostContext({ isVertical: false, snapEdge: null, tooltipFlipDown: true })
+    const classes = wrapper.find('button').classes()
+    expect(classes).toContain('app-btn--tooltip-top-flip')
+    expect(classes).not.toContain('app-btn--tooltip-top')
+    expect(classes).not.toContain('app-btn--tooltip-left')
+    expect(classes).not.toContain('app-btn--tooltip-right')
+  })
+
+  it('horizontal mode, tooltipFlipDown=false: tooltip side stays top', () => {
+    const wrapper = mountWithHostContext({ isVertical: false, snapEdge: null, tooltipFlipDown: false })
+    const classes = wrapper.find('button').classes()
+    expect(classes).toContain('app-btn--tooltip-top')
+    expect(classes).not.toContain('app-btn--tooltip-top-flip')
+  })
+
+  it('vertical mode ignores tooltipFlipDown (sideways tooltip wins)', () => {
+    const wrapper = mountWithHostContext({ isVertical: true, snapEdge: 'left', tooltipFlipDown: true })
+    const classes = wrapper.find('button').classes()
+    expect(classes).toContain('app-btn--tooltip-right')
+    expect(classes).not.toContain('app-btn--tooltip-top-flip')
+    expect(classes).not.toContain('app-btn--tooltip-top')
   })
 
   // CSS token contract — negative: legacy host-internal vars must not appear.
