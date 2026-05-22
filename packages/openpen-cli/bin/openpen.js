@@ -152,6 +152,7 @@ function copyStarterTo(starterDir, destDir, pluginId, scope, name) {
           .replace(/your-plugin-name/g, name)
           .replace(/Your Plugin Name/g, toTitleCase(name))
           .replace(/your-github-username/g, scope)
+          .replace(/"openpen-plugin-starter"/g, JSON.stringify(pluginId))
         fs.writeFileSync(destPath, content)
       }
     }
