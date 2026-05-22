@@ -186,6 +186,7 @@ ipcMain.on(LOG.RECORD_ERROR, (_event, payload) => {
 });
 
 app.whenReady().then(async () => {
+  try {
   // openpen-plugin://<pluginId>/<file> → ~/.openpen/plugins/<pluginId>/<file>
   protocol.handle('openpen-plugin', (request) => {
     const url = new URL(request.url);
@@ -401,6 +402,20 @@ app.whenReady().then(async () => {
       createMainWindowForDisplay(screen.getPrimaryDisplay());
     }
   });
+  } catch (err) {
+    // Catches any throw from the init chain above (after the early-return
+    // initConfigLoader catch). Tears down windows so the user sees no
+    // zombie transparent overlays before the process dies.
+    try {
+      log.error('[Main] [fatal] init chain failed:', err);
+    } catch {
+      console.error('[Main] [fatal] init chain failed (logger unavailable):', err);
+    }
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.destroy();
+    }
+    process.exit(1);
+  }
 });
 
 app.on('before-quit', (event) => {
