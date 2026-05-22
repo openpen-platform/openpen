@@ -2,8 +2,8 @@
 title: plugin の互換性
 description: plugin がサポートする OpenPen のバージョンを宣言する方法、ホストが plugin をロードするかどうかを判断する方法、および破壊的変更の扱い方。
 translationType: machine
-translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedFrom: 36c1264
+translatedAt: 2026-05-22T02:00:00Z
 language: ja
 ---
 
@@ -44,7 +44,7 @@ export default defineModule({
 このフィールドは `OpenPenModule` インターフェース上の `minAppVersion?: string` プロパティに対応します。ロード時に、OpenPen はすべての module に対してプリフライト検証を実行します。
 
 - 実行中のホストバージョンが `minAppVersion` より**古い**場合 → plugin は拒否され、モジュールパネルに明確なエラーがログ出力されます。
-- 実行中のホストバージョンが`minAppVersion` と**同じかより新しい**場合 → 検証は次のチェック (id フォーマット、slot の存在確認、設定スキーマなど) に進みます。
+- 実行中のホストバージョンが `minAppVersion` と**同じかより新しい**場合 → 検証は次のチェック (id フォーマット、slot の存在確認、設定スキーマなど) に進みます。
 
 このフィールドはオプションです。省略した場合、ホストバージョンゲートは適用されません。
 
@@ -101,7 +101,7 @@ API サーフェスの形状が変化する場合 (slot フィールドの名前
 
 ## plugin ライセンスの自由
 
-OpenPen はレイヤード ライセンスモデルを採用しています。ホストは Plugin Linking Exception 付きの GPL-3.0-or-later であり、SDK パッケージ (`@openpen/module-api`、`@openpen/build`、`openpen-cli`) は MIT ライセンスです。
+OpenPen はレイヤードライセンスモデルを採用しています。ホストは Plugin Linking Exception 付きの GPL-3.0-or-later であり、SDK パッケージ (`@openpen/module-api`、`@openpen/build`、`openpen-cli`) は MIT ライセンスです。
 
 つまり:
 
@@ -150,6 +150,20 @@ plugin id は npm スコープ形式 `@scope/name` (例: `@acme/sticky-notes`) �
 - **plugin id は永続的なものとして扱ってください。** id の名前変更はユーザーのインストールを壊し、`installedAt` 履歴も失われます。長く使える名前を選んでください。
 
 ---
+
+## `plugin-meta.json` の管理
+
+OpenPen はユーザーデータディレクトリ (macOS では `~/Library/Application Support/openpen/plugin-meta.json`、Windows・Linux では対応する場所) に `plugin-meta.json` キャッシュを管理します。このキャッシュは `installedAt` などのプラグインごとのメタデータを追跡します。
+
+ホストは**起動時に `~/.openpen/plugins/` をスキャンしてキャッシュを再構築します**。CLI (`openpen-cli plugin add` / `npm run install` パス) は `plugin-meta.json` に**書き込みません** — `~/.openpen/plugins/<scope>/<name>/` 配下にファイルを配置するだけです。
+
+実際の影響:
+
+- `openpen-cli plugin add .` が返った後、plugin はディスク上に存在しますが**メタデータキャッシュにはまだ含まれていません**。キャッシュに反映されるまで OpenPen を起動 (または再起動) してください。
+- インストールが反映されたか確認するには:
+  - `npx openpen-cli plugin list` はオンディスクの plugins ディレクトリを直接スキャンします
+  - OpenPen を開いて **設定 → モジュール** を確認します
+- `plugin-meta.json` を手動で編集することはサポートされていません。次回のホスト起動時に編集内容は上書きされます。
 
 ## OpenPen が意図せず何かを壊した場合
 

@@ -2,8 +2,8 @@
 title: Plugin 快速入门
 description: 从零开始，五分钟内运行一个 OpenPen plugin。
 translationType: machine
-translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedFrom: 36c1264
+translatedAt: 2026-05-22T02:00:00Z
 language: zh-Hans
 ---
 
@@ -45,6 +45,24 @@ npm run dev      # watch mode during development
 
 ## 第 3 步 — 在本地安装以供测试
 
+使用 CLI 将构建好的 plugin 复制到宿主的 plugin 目录：
+
+```bash
+npx openpen-cli plugin add .
+```
+
+`openpen plugin add <local-path>` 会将 `plugin.json`、`dist/` 和 `locales/`
+（如果存在）复制到 `~/.openpen/plugins/@yourscope/my-plugin/`。宿主在启动时扫描
+该目录；更多内容参见教程的[实战示例](../tutorials/build-your-first-plugin.md#2-install-for-local-development)。
+
+> 磁盘上的文件只是一半——`plugin-meta.json` 会在 OpenPen 下次启动时由宿主重新构建。
+> 关于 `plugin add` 返回后发生的事情，参见
+> [`plugin-meta.json` 所有权](../concepts/plugin-compatibility.md#plugin-meta-json-ownership)。
+
+### 手动安装（备选方案）
+
+如果 CLI 不可用，等效的 shell 命令为：
+
 ```bash
 mkdir -p ~/.openpen/plugins/@yourscope/my-plugin
 cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
@@ -54,9 +72,12 @@ cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
 
 重启 OpenPen，在控制栏中查找你的 contribution。
 
-> **注意**：Plugin 加载需要正式构建版本。Vite 开发服务器
->（在宿主 repo 中运行 `npm run dev`）不会加载 plugin——安装在
-> `~/.openpen/plugins/` 中的 plugin 在开发模式下不会被扫描。
+> [!IMPORTANT]
+> Plugin 加载需要 OpenPen 的**正式构建版本**
+> （`npm run build` 的输出 / 打包后的发行版）。Vite 开发服务器（在宿主 repo 中运行 `npm run dev`）
+> **不会**加载 plugin——安装在
+> `~/.openpen/plugins/` 中的 plugin 在开发模式下会被跳过。在排查「plugin 未加载」问题前，
+> 请确认你运行的是已打包的 OpenPen。
 
 ---
 

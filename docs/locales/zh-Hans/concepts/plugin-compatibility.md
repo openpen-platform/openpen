@@ -2,7 +2,7 @@
 title: Plugin 兼容性
 description: Plugin 如何声明其支持的 OpenPen 版本、宿主如何决定是否加载它们，以及如何处理破坏性变更。
 translationType: machine
-translatedFrom: 8e4d741
+translatedFrom: 36c1264
 translatedAt: 2026-05-22T00:00:00Z
 language: zh-Hans
 ---
@@ -77,7 +77,7 @@ Plugin **不得**打包 `@openpen/module-api` — `@openpen/build` 会自动将�
 你的 plugin 构建时所依赖的版本决定了你使用的 API 接口；
 宿主实际运行的是其自带的版本。
 
-构建配置详情请参阅 [发布](../guides/publishing.md)。
+构建配置详情请参阅[发布](../guides/publishing.md)。
 
 ---
 
@@ -151,7 +151,7 @@ Gatekeeper 保护系统上所必需）。这影响 plugin 在运行时可以携�
   都将被 macOS Gatekeeper 拦截。`@openpen/build` 工具链（Vite + Vue）
   支持 `.ts`、`.vue` 和 `.css` — 它们会编译为纯 JS，可以正常发布。
 - **允许外部 `fetch` / `XMLHttpRequest`**，但会记录在
-  OpenPen 的审计日志中；请参阅 [信任模型](./trust-model.md)。
+  OpenPen 的审计日志中；请参阅[信任模型](./trust-model.md)。
 - **Plugin 代码不能派生子进程。** Plugin 无法通过 `child_process`
   启动独立的二进制文件（渲染进程未暴露此功能，preload 桥接也不代理它）。
 
@@ -201,6 +201,27 @@ Plugin id 必须遵循 npm 域范围格式 `@scope/name`（例如 `@acme/sticky-
   丢失 `installedAt` 历史记录；请选择一个你能长期使用的名称。
 
 ---
+
+## `plugin-meta.json` 归属
+
+OpenPen 在用户数据目录中维护一份 `plugin-meta.json` 缓存
+（macOS 上为 `~/Library/Application Support/openpen/plugin-meta.json`；
+Windows 和 Linux 上位于等效路径）。该缓存跟踪每个 plugin 的元数据，
+例如 `installedAt`。
+
+宿主**在启动时通过扫描 `~/.openpen/plugins/` 重建缓存**。
+CLI（`openpen-cli plugin add` / `npm run install` 路径）**从不写入
+`plugin-meta.json`** — 它只将文件放置在
+`~/.openpen/plugins/<scope>/<name>/` 下。
+
+实际影响：
+
+- `openpen-cli plugin add .` 返回后，你的 plugin 已在磁盘上，但**尚未
+  进入元数据缓存**。启动（或重启）OpenPen 后缓存才会更新。
+- 要验证安装是否生效：
+  - `npx openpen-cli plugin list` 直接扫描磁盘上的 plugin 目录
+  - 打开 OpenPen 并检查**设置 → Modules**
+- 不支持手动编辑 `plugin-meta.json`。下次宿主启动时会覆盖所做的编辑。
 
 ## 当 OpenPen 意外破坏某些功能时
 

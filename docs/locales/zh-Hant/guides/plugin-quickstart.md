@@ -2,8 +2,8 @@
 title: Plugin 快速入門
 description: 從零開始，五分鐘內讓 OpenPen plugin 運作。
 translationType: machine
-translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedFrom: 36c1264
+translatedAt: 2026-05-22T06:00:00Z
 language: zh-Hant
 ---
 
@@ -45,6 +45,24 @@ npm run dev      # watch mode during development
 
 ## 第 3 步 — 在本機安裝以進行測試
 
+使用 CLI 將已建置的 plugin 複製到 host 的 plugin 資料夾：
+
+```bash
+npx openpen-cli plugin add .
+```
+
+`openpen plugin add <local-path>` 會將 `plugin.json`、`dist/` 及 `locales/`
+（若存在）複製到 `~/.openpen/plugins/@yourscope/my-plugin/`。Host 會在啟動時掃描
+此資料夾；詳見教學的[實作範例](../tutorials/build-your-first-plugin.md#2-install-for-local-development)。
+
+> 磁碟上的檔案只是一半 — `plugin-meta.json` 會在 OpenPen 下次啟動時由 host 重新建立。
+> 關於 `plugin add` 返回後發生的事，請參閱
+> [`plugin-meta.json` 所有權](../concepts/plugin-compatibility.md#plugin-meta-json-ownership)。
+
+### 手動安裝（替代方案）
+
+若 CLI 不可用，等效的 shell 指令如下：
+
 ```bash
 mkdir -p ~/.openpen/plugins/@yourscope/my-plugin
 cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
@@ -54,9 +72,12 @@ cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
 
 重新啟動 OpenPen，在控制列中尋找你的 contribution。
 
-> **注意**：載入 plugin 需要 prod 建置。Vite 開發伺服器
-> （在 host repo 中執行 `npm run dev`）不會載入 plugin — 在開發模式下，
-> 安裝於 `~/.openpen/plugins/` 的 plugin 不會被掃描。
+> [!IMPORTANT]
+> Plugin loading requires the **production build** of OpenPen
+> (`npm run build` output / a packaged release). The Vite dev server (`npm run dev`
+> in the host repo) does **not** load plugins — plugins installed in
+> `~/.openpen/plugins/` are skipped in dev mode. Confirm you are running a
+> packaged OpenPen before debugging "plugin not loading" issues.
 
 ---
 
@@ -221,7 +242,7 @@ const saveError = ref<string | null>(null)
 </template>
 ```
 
-可用的 variant：`info`、`warning`、`success`、`error`。`inline` prop
+可用的 variant：`info`、`warning`、`success`、`error`。`inline` 屬性
 切換為適合對話框和表單區域的緊湊單行版面。
 
 ---

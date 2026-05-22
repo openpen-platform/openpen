@@ -2,8 +2,8 @@
 title: はじめての OpenPen plugin を作る
 description: openpen-cli ツールチェーンを使って、plugin のスキャフォールディングからビルド、インストール、公開まで、ゼロから OpenPen 上で動かすまでの手順を解説します。
 translationType: machine
-translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedFrom: 36c1264
+translatedAt: 2026-05-22T07:00:00Z
 language: ja
 ---
 
@@ -55,11 +55,17 @@ npm run build
 npx openpen-cli plugin add .
 ```
 
-`openpen plugin add <local-path>` は `plugin.json`、`dist/`、および `locales/` (存在する場合) を `~/.openpen/plugins/@yourscope/my-highlighter/` にコピーします。インストール時にビルドは実行されません — ビルド済みの `dist/` がそのまま使用されます。
+`openpen plugin add <local-path>` は `plugin.json`、`dist/`、および `locales/` (存在する場合) を `~/.openpen/plugins/@yourscope/my-highlighter/` にコピーします。インストール時にマシン上でビルドは実行されません — ビルド済みの `dist/` がそのまま使用されます。
+
+CLI はファイルの書き込みのみを行います。`plugin-meta.json` はホストの責務であり、次回起動時に再構築されます。インストールが反映されたことを確認する方法を含む完全な lifecycle については、[`plugin-meta.json` の所有権](../concepts/plugin-compatibility.md#plugin-meta-json-ownership)を参照してください。
 
 OpenPen を再起動すると、plugin が自動的に読み込まれ、その contribution がコントロールバーに表示されます。
 
-> **Note**: plugin の読み込みには OpenPen のプロダクションビルドが必要です。Vite の開発サーバーでは動作しません。まだビルドしていない場合は、ホストリポジトリで `npm run build` を実行してください。
+> [!IMPORTANT]
+> plugin の読み込みには OpenPen の**プロダクションビルド**
+> (`npm run build` の出力 / パッケージ済みリリース) が必要です。Vite の開発サーバー (ホストリポジトリの `npm run dev`)
+> では plugin を読み込み**ません**。「plugin が読み込まれない」問題をデバッグする前に、パッケージ済みの
+> OpenPen が実行されていることを確認してください。
 
 ### 手動インストール (代替手段)
 
@@ -404,7 +410,7 @@ npx openpen-cli pack       # creates: yourscope-my-highlighter-0.1.0.zip
                        # prints: sha256: <hex>
 ```
 
-zip には `plugin.json`、`dist/`、`locales/` のみが含まれます。`src/`、`node_modules/`、ライフサイクルスクリプトは含まれません。
+zip には `plugin.json`、`dist/`、`locales/` のみが含まれます。`src/`、`node_modules/`、lifecycle スクリプトは含まれません。
 
 ---
 

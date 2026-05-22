@@ -2,8 +2,8 @@
 title: 打造你的第一個 OpenPen Plugin
 description: 使用 openpen-cli 工具鏈，從零開始建立、編譯、安裝並發佈一個 plugin 至 OpenPen。
 translationType: machine
-translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedFrom: 36c1264
+translatedAt: 2026-05-22T07:00:00Z
 language: zh-Hant
 ---
 
@@ -60,10 +60,13 @@ npx openpen-cli plugin add .
 複製至 `~/.openpen/plugins/@yourscope/my-highlighter/`。安裝時不會在你的機器上執行編譯步驟
 ——你所編譯的 `dist/` 會直接使用。
 
+CLI 僅寫入檔案；`plugin-meta.json` 是 host 的責任，會在下次啟動時重新建立。完整的 lifecycle 及如何驗證安裝是否生效，請參閱
+[`plugin-meta.json` 的所有權](../concepts/plugin-compatibility.md#plugin-meta-json-ownership)。
+
 重新啟動 OpenPen。你的 plugin 會自動載入，其 contribution 也會出現在控制列中。
 
-> **注意**：Plugin 載入需要 OpenPen 的正式版本（production build），
-> 而非 Vite 開發伺服器。若尚未完成，請在 host repo 中執行 `npm run build` 來編譯 host。
+> [!IMPORTANT]
+> Plugin 載入需要 OpenPen 的**正式版本**（`npm run build` 產出的 / 已打包的 release）。Vite 開發伺服器（在 host repo 中執行的 `npm run dev`）**不會**載入 plugin。在排查「plugin 無法載入」的問題之前，請先確認你執行的是已打包的 OpenPen。
 
 ### 手動安裝（替代方式）
 

@@ -2,8 +2,8 @@
 title: Plugin クイックスタート
 description: ゼロから動作する OpenPen plugin を5分で作成します。
 translationType: machine
-translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedFrom: 36c1264
+translatedAt: 2026-05-22T07:00:00Z
 language: ja
 ---
 
@@ -46,6 +46,25 @@ npm run dev      # watch mode during development
 
 ## ステップ 3 — テスト用にローカルインストール
 
+CLI を使用して、ビルド済み plugin をホストの plugin ディレクトリにコピーします:
+
+```bash
+npx openpen-cli plugin add .
+```
+
+`openpen plugin add <local-path>` は `plugin.json`、`dist/`、および `locales/` (存在する場合) を
+`~/.openpen/plugins/@yourscope/my-plugin/` にコピーします。ホストは起動時にこのディレクトリをスキャンします。詳細は
+チュートリアルの [実装例](../tutorials/build-your-first-plugin.md#2-install-for-local-development) を参照してください。
+
+> ディスク上のファイルは全体の半分に過ぎません。`plugin-meta.json` は次回 OpenPen が起動する際に
+> ホストによって再構築されます。`plugin add` が返った後の動作については
+> [`plugin-meta.json` の所有権](../concepts/plugin-compatibility.md#plugin-meta-json-ownership)
+> を参照してください。
+
+### 手動インストール (代替手段)
+
+CLI が利用できない場合、同等のシェルコマンドは以下のとおりです:
+
 ```bash
 mkdir -p ~/.openpen/plugins/@yourscope/my-plugin
 cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
@@ -55,9 +74,11 @@ cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
 
 OpenPen を再起動し、コントロールバーに contribution が表示されることを確認します。
 
-> **注意**: plugin の読み込みにはプロダクションビルドが必要です。Vite の開発サーバー
-> (ホストリポジトリでの `npm run dev`) は plugin を読み込みません。
-> `~/.openpen/plugins/` にインストールされた plugin は開発モードではスキャンされません。
+> [!IMPORTANT]
+> plugin の読み込みには OpenPen の**プロダクションビルド**が必要です
+> (`npm run build` の出力またはパッケージ化されたリリース)。Vite の開発サーバー (ホストリポジトリでの `npm run dev`)
+> は plugin を読み込みません。`~/.openpen/plugins/` にインストールされた plugin は開発モードではスキップされます。
+> 「plugin が読み込まれない」問題をデバッグする前に、パッケージ化された OpenPen を実行していることを確認してください。
 
 ---
 

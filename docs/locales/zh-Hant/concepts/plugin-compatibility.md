@@ -2,8 +2,8 @@
 title: Plugin 相容性
 description: Plugin 如何宣告支援哪些 OpenPen 版本、host 如何決定是否載入，以及如何處理重大變更。
 translationType: machine
-translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedFrom: 36c1264
+translatedAt: 2026-05-22T09:00:00Z
 language: zh-Hant
 ---
 
@@ -194,6 +194,27 @@ Plugin id 必須遵循 npm scope 格式 `@scope/name`（例如 `@acme/sticky-not
   `installedAt` 歷史記錄；請選一個你能長期使用的名稱。
 
 ---
+
+## `plugin-meta.json` 的所有權
+
+OpenPen 在使用者資料目錄中維護一個 `plugin-meta.json` 快取
+（macOS 上位於 `~/Library/Application Support/openpen/plugin-meta.json`；
+Windows 與 Linux 有對應的位置）。該快取追蹤每個 plugin 的中繼資料，例如
+`installedAt`。
+
+Host 會在**啟動時重建快取**，掃描 `~/.openpen/plugins/`。
+CLI（`openpen-cli plugin add` ／ `npm run install` 路徑）**永遠不會寫入
+`plugin-meta.json`**——它只會將檔案放置在
+`~/.openpen/plugins/<scope>/<name>/` 下。
+
+實際影響：
+
+- 執行 `openpen-cli plugin add .` 返回後，你的 plugin 已在磁碟上，但**尚未
+  進入中繼資料快取**。請啟動（或重新啟動）OpenPen，讓快取讀取到它。
+- 驗證安裝是否生效：
+  - `npx openpen-cli plugin list` 直接掃描磁碟上的 plugin 資料夾
+  - 開啟 OpenPen 並前往**設定 → Modules**
+- 手動編輯 `plugin-meta.json` 不受支援。下次 host 啟動時會覆蓋編輯內容。
 
 ## 當 OpenPen 無意間造成破壞時
 

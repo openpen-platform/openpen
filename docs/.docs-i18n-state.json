@@ -1,8 +1,8 @@
 {
   "$schema": "https://openpen.dev/schemas/docs-i18n-state-v1.json",
   "version": 1,
-  "last_synced_commit": "8e4d741",
-  "last_synced_at": "2026-05-22T00:30:00Z",
+  "last_synced_commit": "36c1264",
+  "last_synced_at": "2026-05-22T02:35:58Z",
   "per_file_status": {
     "docs/concepts/module-architecture.md": {
       "translations": {
@@ -32,22 +32,22 @@
     "docs/concepts/plugin-compatibility.md": {
       "translations": {
         "zh-Hant": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
+          "translatedFrom": "36c1264",
+          "translatedAt": "2026-05-22T02:35:58Z",
           "translationType": "machine",
           "llm_provider": "claude-sonnet",
           "warnings": []
         },
         "zh-Hans": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
+          "translatedFrom": "36c1264",
+          "translatedAt": "2026-05-22T02:35:58Z",
           "translationType": "machine",
           "llm_provider": "claude-sonnet",
           "warnings": []
         },
         "ja": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
+          "translatedFrom": "36c1264",
+          "translatedAt": "2026-05-22T02:35:58Z",
           "translationType": "machine",
           "llm_provider": "claude-sonnet",
           "warnings": []
@@ -132,22 +132,22 @@
     "docs/guides/plugin-quickstart.md": {
       "translations": {
         "zh-Hant": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
+          "translatedFrom": "36c1264",
+          "translatedAt": "2026-05-22T02:35:58Z",
           "translationType": "machine",
           "llm_provider": "claude-sonnet",
           "warnings": []
         },
         "zh-Hans": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
+          "translatedFrom": "36c1264",
+          "translatedAt": "2026-05-22T02:35:58Z",
           "translationType": "machine",
           "llm_provider": "claude-sonnet",
           "warnings": []
         },
         "ja": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
+          "translatedFrom": "36c1264",
+          "translatedAt": "2026-05-22T02:35:58Z",
           "translationType": "machine",
           "llm_provider": "claude-sonnet",
           "warnings": []
@@ -407,22 +407,22 @@
     "docs/tutorials/build-your-first-plugin.md": {
       "translations": {
         "zh-Hant": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
+          "translatedFrom": "36c1264",
+          "translatedAt": "2026-05-22T02:35:58Z",
           "translationType": "machine",
           "llm_provider": "claude-sonnet",
           "warnings": []
         },
         "zh-Hans": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
+          "translatedFrom": "36c1264",
+          "translatedAt": "2026-05-22T02:35:58Z",
           "translationType": "machine",
           "llm_provider": "claude-sonnet",
           "warnings": []
         },
         "ja": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
+          "translatedFrom": "36c1264",
+          "translatedAt": "2026-05-22T02:35:58Z",
           "translationType": "machine",
           "llm_provider": "claude-sonnet",
           "warnings": []
