@@ -79,53 +79,6 @@ test('DOM cursor is not visible when drawing mode is off', async () => {
   expect(count).toBe(0);
 });
 
-test.skip('DOM cursor appears in drawing mode and carries an SVG payload', async () => {
-  const mainWin = await getMainWindow();
-  const overlayWin = await getOverlayWindow();
-
-  await setDrawingMode(mainWin, true);
-  // Move the pointer through the overlay so updatePosition snaps the
-  // transform off the (0,0) initial corner.
-  await overlayWin.mouse.move(400, 300);
-  await overlayWin.waitForTimeout(200);
-
-  const cursor = overlayWin.locator('.openpen-custom-cursor');
-  await expect(cursor).toBeVisible();
-  const innerHtml = await cursor.evaluate((el) => el.innerHTML);
-  expect(innerHtml).toContain('<svg');
-
-  await setDrawingMode(mainWin, false);
-});
-
-test.skip('DOM cursor swaps markup when the active tool changes', async () => {
-  const mainWin = await getMainWindow();
-  const overlayWin = await getOverlayWindow();
-
-  await setDrawingMode(mainWin, true);
-  await setActiveTool(mainWin, 'freehand');
-  await overlayWin.mouse.move(300, 300);
-  await overlayWin.waitForTimeout(150);
-  const freehandMarkup = await overlayWin
-    .locator('.openpen-custom-cursor')
-    .evaluate((el) => el.innerHTML);
-
-  await setActiveTool(mainWin, 'line');
-  await overlayWin.waitForTimeout(150);
-  const lineMarkup = await overlayWin
-    .locator('.openpen-custom-cursor')
-    .evaluate((el) => el.innerHTML);
-
-  expect(freehandMarkup).not.toBe(lineMarkup);
-  // Cursor SVG keyframes are namespaced per tool — used as a stable
-  // identity marker that survives design tweaks to geometry.
-  expect(freehandMarkup).toContain('openpen-freehand-');
-  expect(lineMarkup).toContain('openpen-line-');
-  expect(freehandMarkup).not.toContain('openpen-line-');
-  expect(lineMarkup).not.toContain('openpen-freehand-');
-
-  await setDrawingMode(mainWin, false);
-});
-
 test('DOM cursor transform tracks pointer position (minus hotspot)', async () => {
   const mainWin = await getMainWindow();
   const overlayWin = await getOverlayWindow();
