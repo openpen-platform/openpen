@@ -42,6 +42,25 @@ npm run dev      # watch mode during development
 
 ## Step 3 — Install locally for testing
 
+Use the CLI to copy the built plugin into the host's plugin directory:
+
+```bash
+npx openpen-cli plugin add .
+```
+
+`openpen plugin add <local-path>` copies `plugin.json`, `dist/`, and `locales/`
+(when present) into `~/.openpen/plugins/@yourscope/my-plugin/`. The host scans
+this directory at startup; see the tutorial's [worked example](../tutorials/build-your-first-plugin.md#2-install-for-local-development) for more.
+
+> Files on disk are only half the picture — `plugin-meta.json` is rebuilt by
+> the host the next time OpenPen starts. See
+> [`plugin-meta.json` ownership](../concepts/plugin-compatibility.md#plugin-meta-json-ownership)
+> for what happens after `plugin add` returns.
+
+### Manual install (alternative)
+
+If the CLI is not available, the equivalent shell commands are:
+
 ```bash
 mkdir -p ~/.openpen/plugins/@yourscope/my-plugin
 cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
@@ -51,9 +70,12 @@ cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
 
 Restart OpenPen and look for your contribution in the control bar.
 
-> **Note**: Plugin loading requires the prod build. The Vite dev server
-> (`npm run dev` in the host repo) does NOT load plugins — plugins installed
-> in `~/.openpen/plugins/` are not scanned in dev mode.
+> [!IMPORTANT]
+> Plugin loading requires the **production build** of OpenPen
+> (`npm run build` output / a packaged release). The Vite dev server (`npm run dev`
+> in the host repo) does **not** load plugins — plugins installed in
+> `~/.openpen/plugins/` are skipped in dev mode. Confirm you are running a
+> packaged OpenPen before debugging "plugin not loading" issues.
 
 ---
 

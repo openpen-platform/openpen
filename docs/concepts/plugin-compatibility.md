@@ -223,6 +223,29 @@ To avoid silent collisions with someone else's plugin:
 
 ---
 
+## `plugin-meta.json` ownership
+
+OpenPen maintains a `plugin-meta.json` cache in the user-data directory
+(`~/Library/Application Support/openpen/plugin-meta.json` on macOS; equivalent
+locations on Windows and Linux). The cache tracks per-plugin metadata such as
+`installedAt`.
+
+The host **rebuilds the cache on startup** by scanning `~/.openpen/plugins/`.
+The CLI (`openpen-cli plugin add` / `npm run install` paths) **never writes
+into `plugin-meta.json`** — it only places files under
+`~/.openpen/plugins/<scope>/<name>/`.
+
+Practical consequences:
+
+- After `openpen-cli plugin add .` returns, your plugin is on disk but **not
+  yet in the metadata cache**. Start (or restart) OpenPen for the cache to
+  pick it up.
+- To verify an install took effect:
+  - `npx openpen-cli plugin list` scans the on-disk plugins directory directly
+  - Open OpenPen and check **Settings → Modules**
+- Manually editing `plugin-meta.json` is unsupported. The next host start
+  overwrites edits.
+
 ## When OpenPen breaks something unintentionally
 
 Unintended host-side breakage is a bug. Open an issue at

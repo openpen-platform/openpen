@@ -58,12 +58,19 @@ npx openpen-cli plugin add .
 (when present) into `~/.openpen/plugins/@yourscope/my-highlighter/`. No build
 step runs on your machine during install — the `dist/` you built is used as-is.
 
+The CLI only writes files; `plugin-meta.json` is the host's responsibility and
+is rebuilt on next start. See
+[`plugin-meta.json` ownership](../concepts/plugin-compatibility.md#plugin-meta-json-ownership)
+for the full lifecycle and how to verify the install took effect.
+
 Restart OpenPen. Your plugin loads automatically and its contribution appears
 in the control bar.
 
-> **Note**: Plugin loading requires the production build of OpenPen,
-> not the Vite dev server. Build the host with `npm run build` in the
-> host repo if you have not already.
+> [!IMPORTANT]
+> Plugin loading requires the **production build** of OpenPen
+> (`npm run build` output / a packaged release). The Vite dev server (`npm run dev`
+> in the host repo) does **not** load plugins. Confirm you are running a
+> packaged OpenPen before debugging "plugin not loading" issues.
 
 ### Manual install (alternative)
 
