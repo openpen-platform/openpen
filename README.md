@@ -1,6 +1,6 @@
 # OpenPen
 
-Draw on your screen without leaving your app.
+Make your point — without losing your place.
 
 An extensible overlay where every tool — built-in or third-party — is just a plugin.
 We're building OpenPen as a community-shaped product: the canvas ships with a useful default
@@ -11,7 +11,7 @@ set, and the ecosystem grows by anyone with an idea.
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0--or--later-green.svg)
 
-![OpenPen — Draw on your screen without leaving your app](assets/readme-hero.png)
+![OpenPen — Make your point without losing your place](assets/readme-hero.png)
 
 ## Who it's for
 
