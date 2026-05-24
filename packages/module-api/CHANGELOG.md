@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0](https://github.com/openpen-platform/openpen/compare/v1.1.1...v1.2.0) (2026-05-24)
+
+
+### Features
+
+* **module-api:** add resolveStrokeColor helper for StrokeColor union ([75e9a9c](https://github.com/openpen-platform/openpen/commit/75e9a9c74d002393134931f9bc933b918c9d0391))
+* **module-api:** ship dist + host services via registry injection ([ccae34f](https://github.com/openpen-platform/openpen/commit/ccae34f3030d9d5973336eb4882d4969d5f1b343))
+* **uikit:** add AppButtonDropdown and migrate built-in modules onto SDK button components ([5aeb7d3](https://github.com/openpen-platform/openpen/commit/5aeb7d34f58d5291546cfeca15cf7f3ee8c9b4ba))
+
 ## [1.1.1](https://github.com/openpen-platform/openpen/compare/v1.1.0...v1.1.1) (2026-05-19)
 
 

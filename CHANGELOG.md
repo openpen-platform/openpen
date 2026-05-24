@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.2.0](https://github.com/openpen-platform/openpen/compare/v1.1.1...v1.2.0) (2026-05-24)
+
+
+### Features
+
+* **module-api:** add resolveStrokeColor helper for StrokeColor union ([75e9a9c](https://github.com/openpen-platform/openpen/commit/75e9a9c74d002393134931f9bc933b918c9d0391))
+* **module-api:** ship dist + host services via registry injection ([ccae34f](https://github.com/openpen-platform/openpen/commit/ccae34f3030d9d5973336eb4882d4969d5f1b343))
+* **openpen-cli:** add security prompt before plugin install ([d9342ae](https://github.com/openpen-platform/openpen/commit/d9342ae12810859c42a8378aaa54686355c05db6))
+* **uikit:** add AppButtonDropdown and migrate built-in modules onto SDK button components ([5aeb7d3](https://github.com/openpen-platform/openpen/commit/5aeb7d34f58d5291546cfeca15cf7f3ee8c9b4ba))
+
+
+### Bug Fixes
+
+* **boot:** gate App.vue content-ready signal for settings window ([3be53aa](https://github.com/openpen-platform/openpen/commit/3be53aa2341170ec56bb8db02a572a81dfe08687))
+* **boot:** signal renderer content ready before module bootstrap ([0551f2a](https://github.com/openpen-platform/openpen/commit/0551f2a5124039c867fbdef06e0213920862f987))
+* **cli:** substitute package.json name in scaffold ([b28742f](https://github.com/openpen-platform/openpen/commit/b28742f73d796f872aa95e167701c73c78f257db))
+* **dev:** prevent overlay lockout from Vite port collision and renderer hang ([753057f](https://github.com/openpen-platform/openpen/commit/753057fb8d8420e771f4f65c17519956fd673786))
+* **e2e:** restore green baseline across all scopes ([7576694](https://github.com/openpen-platform/openpen/commit/757669456db6554798409e5c4d572b7f0c251ea1))
+* **main:** wrap whenReady init chain in single try-catch ([53a9b0b](https://github.com/openpen-platform/openpen/commit/53a9b0b62734671c04d0cb86d1929a9b78b35cef))
+* **plugin-meta:** align MODULE_ID_RE with scoped format ([ad78aa7](https://github.com/openpen-platform/openpen/commit/ad78aa75ea3cc303aa93705dd022df0670e3807a))
+
 ## [1.1.1](https://github.com/openpen-platform/openpen/compare/v1.1.0...v1.1.1) (2026-05-19)
 
 
