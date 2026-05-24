@@ -64,6 +64,12 @@ to the same slots (`controlBar`, `settingsTabs`, `shortcuts`, and more).
 npx degit openpen-platform/openpen/packages/plugin-starter my-plugin
 ```
 
+**SDK packages on npm:**
+
+- [`@openpen/module-api`](https://www.npmjs.com/package/@openpen/module-api) — plugin API surface (types, slots, UIKit components)
+- [`@openpen/build`](https://www.npmjs.com/package/@openpen/build) — plugin build CLI
+- [`openpen-cli`](https://www.npmjs.com/package/openpen-cli) — plugin install CLI for end users
+
 **Security**: OpenPen uses a user-installed trust model — plugins run with full host access.
 **Before installing any plugin, evaluate the source yourself.** See
 [Trust Model](docs/concepts/trust-model.md) and [`SECURITY.md`](SECURITY.md) for baseline
@@ -137,9 +143,9 @@ of the host with plugin ecosystem freedom:
 | Component | License | Notes |
 |-----------|---------|-------|
 | OpenPen host application | [GPL-3.0-or-later](LICENSE) **+ Linking Exception** | Modifications to OpenPen itself remain GPL-3.0-or-later. Plugins linked through the official `@openpen/module-api` SDK may use any license. |
-| `@openpen/module-api` | [MIT](packages/module-api/LICENSE) | Plugin SDK — depend on it under any license, including proprietary. |
-| `@openpen/build` | [MIT](packages/build-cli/LICENSE) | Plugin build CLI. |
-| `openpen-cli` | [MIT](packages/openpen-cli/LICENSE) | Plugin install CLI. |
+| [`@openpen/module-api`](https://www.npmjs.com/package/@openpen/module-api) | [MIT](packages/module-api/LICENSE) | Plugin SDK — depend on it under any license, including proprietary. |
+| [`@openpen/build`](https://www.npmjs.com/package/@openpen/build) | [MIT](packages/build-cli/LICENSE) | Plugin build CLI. |
+| [`openpen-cli`](https://www.npmjs.com/package/openpen-cli) | [MIT](packages/openpen-cli/LICENSE) | Plugin install CLI. |
 
 **What this means:**
 - ✅ You can write closed-source / commercial plugins for OpenPen.
