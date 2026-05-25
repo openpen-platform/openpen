@@ -64,7 +64,7 @@
   ],
   "dependencies": {
     "dompurify": "^3.4.5",
-    "reka-ui": "~2.9.7"
+    "reka-ui": "~2.9.8"
   },
   "peerDependencies": {
     "vue": "^3.5.0",
