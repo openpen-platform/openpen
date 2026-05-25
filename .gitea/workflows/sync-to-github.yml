@@ -78,10 +78,14 @@ jobs:
           git config user.email "sync-bot@openpen.local"
           git config user.name "openpen-sync"
 
-          # Bearer header instead of URL-embedded basic auth (https://user:pat@github.com/...).
-          # Keeps the PAT out of remote URLs / process listings and avoids ambiguity in how
-          # different git/curl helpers map the username field onto GitHub's PAT scope check.
-          git config http.https://github.com/.extraheader "AUTHORIZATION: Bearer ${GH_PAT}"
+          # Basic auth via extraheader (the actions/checkout pattern). github.com's git
+          # endpoint expects HTTP Basic for token auth; putting the credential in
+          # extraheader instead of the remote URL keeps it out of `git remote -v` and `ps`.
+          # The 'x-access-token' username works for both classic PATs (need 'workflow'
+          # scope) and fine-grained PATs (need 'Workflows: Read and write' permission on
+          # the target repo) when pushing under .github/workflows/.
+          AUTH_HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${GH_PAT}" | base64 -w0)"
+          git config http.https://github.com/.extraheader "${AUTH_HEADER}"
 
           git remote add github https://github.com/openpen-platform/openpen.git
           git fetch github main
