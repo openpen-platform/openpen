@@ -1,7 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "node",
-  "include-component-in-tag": false,
+  "include-component-in-tag": true,
+  "include-v-in-tag": true,
+  "tag-separator": "@",
+  "separate-pull-requests": true,
+  "bootstrap-sha": "bf975c8af66b123561e654180c4b66814935c762",
   "packages": {
     ".": {
       "package-name": "openpen",
@@ -23,12 +27,5 @@
       "package-name": "@openpen/plugin-manager",
       "changelog-path": "CHANGELOG.md"
     }
-  },
-  "plugins": [
-    {
-      "type": "linked-versions",
-      "groupName": "openpen",
-      "components": ["openpen", "@openpen/build", "@openpen/module-api", "openpen-cli", "@openpen/plugin-manager"]
-    }
-  ]
+  }
 }

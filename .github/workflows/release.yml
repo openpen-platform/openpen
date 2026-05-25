@@ -1,26 +1,41 @@
-# TODO(e2e-gate): once macOS runner + Playwright Electron setup is ready,
-#   add an e2e job here as a release prerequisite (see CLAUDE.md TESTING STANDARD).
-
 name: Release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to build (e.g. v1.0.0)'
+        description: 'Existing release tag to (re)build, e.g. openpen@v1.2.0'
         required: true
 
 permissions:
   contents: write
+  pull-requests: write
   id-token: write  # required for npm publish --provenance (SLSA attestation)
 
 jobs:
+  release-please:
+    name: Release Please
+    if: ${{ github.event_name == 'push' && github.server_url == 'https://github.com' }}
+    runs-on: ubuntu-latest
+    outputs:
+      releases_created: ${{ steps.rp.outputs.releases_created }}
+      host_released: ${{ steps.rp.outputs['.--release_created'] }}
+      host_tag: ${{ steps.rp.outputs['.--tag_name'] }}
+    steps:
+      - uses: googleapis/release-please-action@v5
+        id: rp
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          config-file: .github/release-please-config.json
+          manifest-file: .github/release-please-manifest.json
+
   build:
     name: Build (${{ matrix.os }})
-    if: ${{ github.server_url == 'https://github.com' }}
+    needs: release-please
+    if: ${{ always() && (needs.release-please.outputs.host_released == 'true' || github.event_name == 'workflow_dispatch') && github.server_url == 'https://github.com' }}
     strategy:
       matrix:
         include:
@@ -54,9 +69,6 @@ jobs:
           [ -z "${CSC_LINK}" ] && unset CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
           npx electron-builder ${{ matrix.builder_flag }} --publish never
         env:
-          # Code signing — set these secrets in GitHub repo settings to enable signing.
-          # When unset, GitHub Actions passes empty strings; the unset above prevents
-          # electron-builder from treating "" as a certificate file path.
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -66,7 +78,7 @@ jobs:
       - name: Upload artifacts to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ inputs.tag || github.ref_name }}
+          tag_name: ${{ inputs.tag || needs.release-please.outputs.host_tag }}
           files: |
             release/*.dmg
             release/*.exe
@@ -76,9 +88,9 @@ jobs:
 
   npm-publish:
     name: Publish to npm
-    if: ${{ github.server_url == 'https://github.com' }}
+    needs: release-please
+    if: ${{ always() && (needs.release-please.outputs.releases_created == 'true' || github.event_name == 'workflow_dispatch') && github.server_url == 'https://github.com' }}
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - uses: actions/checkout@v6
 
