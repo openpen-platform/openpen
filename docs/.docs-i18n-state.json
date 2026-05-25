@@ -79,31 +79,6 @@
         }
       }
     },
-    "docs/guides/building.md": {
-      "translations": {
-        "zh-Hant": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
-          "translationType": "machine",
-          "llm_provider": "claude-sonnet",
-          "warnings": []
-        },
-        "zh-Hans": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
-          "translationType": "machine",
-          "llm_provider": "claude-sonnet",
-          "warnings": []
-        },
-        "ja": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
-          "translationType": "machine",
-          "llm_provider": "claude-sonnet",
-          "warnings": []
-        }
-      }
-    },
     "docs/guides/module-settings.md": {
       "translations": {
         "zh-Hant": {

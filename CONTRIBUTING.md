@@ -104,16 +104,102 @@ For **plugin tools** (without modifying the core codebase), see [Module Architec
 npm run test:unit       # Vitest unit tests
 npx playwright test     # E2E tests (Playwright + real Electron)
 npm run build           # Vite build verification
-npm run dist:mac        # macOS .dmg
-npm run dist:win        # Windows .exe installer
-npm run dist:linux      # Linux .AppImage
 ```
-
-For code signing, cross-platform builds, and CI setup, see [guides/building.md](./guides/building.md).
 
 Unit tests live in `tests/unit/`. E2E tests in `tests/e2e/`.
 
 All PRs must pass unit tests. E2E tests are run manually before releases.
+
+---
+
+## Packaging & Distribution
+
+Maintainers ship official releases through CI; the commands below are for
+local testing and ad-hoc builds.
+
+### Build commands
+
+| Command | Output |
+|---------|--------|
+| `npm run dist:mac` | macOS `.dmg` (arm64 + x64) |
+| `npm run dist:win` | Windows NSIS installer `.exe` (x64 + arm64) |
+| `npm run dist:linux` | Linux `.AppImage` (x64 + arm64) |
+| `npm run dist` | Current platform (auto-detected) |
+
+Each `dist*` command runs three stages in order:
+
+1. **`npm run build`** — TypeScript type-check (`vue-tsc`) + `vite build`.
+2. **`npm run test:prod-smoke`** — Playwright smoke test against the production
+   bundle (`tests/e2e/prod-smoke.spec.js`); catches dev/prod parity regressions
+   before they ship.
+3. **`electron-builder`** — packages the production bundle for the target.
+
+Output files land in `release/`. If the prod-smoke stage fails,
+`electron-builder` is not invoked.
+
+### macOS
+
+**Artifact naming** — `.dmg` files carry an explicit `-arm64` or `-x64` suffix
+(via `mac.artifactName` in `package.json`); the default would drop the suffix
+on x64 and route Apple Silicon users to the Intel build by accident.
+
+**First launch (ad-hoc signed build)** — macOS Gatekeeper blocks the app on
+first run. Right-click the `.app` → **Open**, then confirm. Or clear quarantine
+from Terminal:
+
+```bash
+xattr -cr /Applications/OpenPen.app
+```
+
+**Code signing (Developer ID release)** — set these before `npm run dist:mac`:
+
+```bash
+export CSC_LINK=/path/to/certificate.p12
+export CSC_KEY_PASSWORD=your_password
+export APPLE_ID=your@apple.id
+export APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx
+export APPLE_TEAM_ID=XXXXXXXXXX
+```
+
+> **Hardened Runtime + entitlements** — `hardenedRuntime: true` is required for
+> Apple notarization. Without a real Developer ID, ad-hoc-signed sub-bundles
+> (Electron Framework, Helper apps) end up with mismatched team IDs and macOS's
+> cross-team library validation refuses to launch the app ("cannot be opened
+> because a problem occurred"). `build/entitlements.mac.plist` sets
+> `com.apple.security.cs.disable-library-validation` so ad-hoc local builds
+> still launch. Real Developer ID releases share a consistent team ID across
+> sub-bundles and don't depend on this entitlement, but leaving it in is harmless.
+
+### Windows
+
+Must run on a Windows machine (or via CI). Windows SmartScreen warns on
+unsigned `.exe` files; to sign with an EV certificate:
+
+```cmd
+set CSC_LINK=C:\path\to\certificate.pfx
+set CSC_KEY_PASSWORD=your_password
+npm run dist:win
+```
+
+### Linux
+
+Produces a portable `.AppImage` that runs on most x86_64 and arm64 distros
+without installation. Mark it executable and run directly:
+
+```bash
+chmod +x release/OpenPen-*.AppImage
+./release/OpenPen-*.AppImage
+```
+
+### Cross-platform builds from a macOS host
+
+| Target | From macOS | Notes |
+|--------|-----------|-------|
+| macOS `.dmg` | ✅ Native | |
+| Linux `.AppImage` | ✅ Works | Requires Docker or local build tools |
+| Windows `.exe` | ⚠️ Partial | Signing requires Windows or a certificate service |
+
+For reliable multi-platform releases, use CI jobs on all three OSes.
 
 ---
 

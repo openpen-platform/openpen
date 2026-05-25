@@ -125,7 +125,7 @@ npm run dist:linux   # Linux .AppImage  (x64 + arm64)
 ```
 
 Output lands in `release/`. For artifact naming, code signing, entitlements,
-and CI setup, see [`docs/guides/building.md`](./docs/guides/building.md).
+and CI setup, see [`CONTRIBUTING.md`](./CONTRIBUTING.md#packaging--distribution).
 
 ## Contributing & feedback
 
