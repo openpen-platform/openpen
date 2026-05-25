@@ -12,6 +12,24 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
+      - name: Verify GH_PAT has workflow scope
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_PAT:-}" ]; then
+            echo "::error::GH_PAT secret not set in Gitea repo Settings -> Actions -> Secrets"
+            exit 1
+          fi
+          SCOPES=$(curl -sS -I -H "Authorization: Bearer ${GH_PAT}" https://api.github.com/user \
+            | tr -d '\r' \
+            | awk 'BEGIN{IGNORECASE=1} /^x-oauth-scopes:/ {sub(/^[^:]*: */,""); print}')
+          echo "GH_PAT scopes: ${SCOPES:-<empty>}"
+          if ! printf '%s' "$SCOPES" | grep -qE '(^|, )workflow($|,)'; then
+            echo "::error::GH_PAT lacks 'workflow' scope - pushes that touch .github/workflows/* are rejected by GitHub (GH013). Update the Gitea secret with a classic PAT that has both 'repo' and 'workflow' scopes."
+            exit 1
+          fi
+
       - name: Mirror Gitea to GitHub
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -21,14 +39,18 @@ jobs:
           set -euo pipefail
 
           GITEA_URL="https://oauth2:${GITEA_TOKEN}@${GT_HOST}/openpen-platform/openpen.git"
-          GITHUB_URL="https://x-access-token:${GH_PAT}@github.com/openpen-platform/openpen.git"
 
           git clone --branch main --single-branch "$GITEA_URL" /tmp/repo
           cd /tmp/repo
           git config user.email "sync-bot@openpen.local"
           git config user.name "openpen-sync"
 
-          git remote add github "$GITHUB_URL"
+          # Bearer header instead of URL-embedded basic auth (https://user:pat@github.com/...).
+          # Keeps the PAT out of remote URLs / process listings and avoids ambiguity in how
+          # different git/curl helpers map the username field onto GitHub's PAT scope check.
+          git config http.https://github.com/.extraheader "AUTHORIZATION: Bearer ${GH_PAT}"
+
+          git remote add github https://github.com/openpen-platform/openpen.git
           git fetch github main
 
           GITEA_HEAD=$(git rev-parse HEAD)
