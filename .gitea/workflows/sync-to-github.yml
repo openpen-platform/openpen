@@ -21,14 +21,47 @@ jobs:
             echo "::error::GH_PAT secret not set in Gitea repo Settings -> Actions -> Secrets"
             exit 1
           fi
-          SCOPES=$(curl -sS -I -H "Authorization: Bearer ${GH_PAT}" https://api.github.com/user \
-            | tr -d '\r' \
-            | awk 'BEGIN{IGNORECASE=1} /^x-oauth-scopes:/ {sub(/^[^:]*: */,""); print}')
-          echo "GH_PAT scopes: ${SCOPES:-<empty>}"
-          if ! printf '%s' "$SCOPES" | grep -qE '(^|, )workflow($|,)'; then
-            echo "::error::GH_PAT lacks 'workflow' scope - pushes that touch .github/workflows/* are rejected by GitHub (GH013). Update the Gitea secret with a classic PAT that has both 'repo' and 'workflow' scopes."
-            exit 1
-          fi
+
+          RESP=$(curl -sS -i -H "Authorization: Bearer ${GH_PAT}" https://api.github.com/user)
+          STATUS_LINE=$(printf '%s\n' "$RESP" | head -1 | tr -d '\r')
+          STATUS_CODE=$(printf '%s' "$STATUS_LINE" | awk '{print $2}')
+          SCOPES=$(printf '%s\n' "$RESP" | tr -d '\r' | awk 'BEGIN{IGNORECASE=1} /^x-oauth-scopes:/ {sub(/^[^:]*: */,""); print}')
+          EXPIRES=$(printf '%s\n' "$RESP" | tr -d '\r' | awk 'BEGIN{IGNORECASE=1} /^github-authentication-token-expiration:/ {sub(/^[^:]*: */,""); print}')
+          LOGIN=$(printf '%s\n' "$RESP" | grep -E '^[[:space:]]*"login"' | head -1 | sed 's/.*"login":[[:space:]]*"\([^"]*\)".*/\1/')
+
+          echo "GitHub /user probe:"
+          echo "  status:        ${STATUS_LINE}"
+          echo "  login:         ${LOGIN:-<none>}"
+          echo "  scopes header: ${SCOPES:-<empty>}"
+          echo "  expiration:    ${EXPIRES:-<none>}"
+
+          case "${STATUS_CODE}" in
+            200)
+              if [ -n "${SCOPES}" ]; then
+                # Classic PAT: X-OAuth-Scopes lists granted scopes, so the
+                # workflow-scope requirement can be pre-flight-checked.
+                if ! printf '%s' "${SCOPES}" | grep -qE '(^|, )workflow($|,)'; then
+                  echo "::error::Classic PAT for '${LOGIN:-?}' lacks 'workflow' scope (scopes seen: ${SCOPES}). Enable 'workflow' at github.com/settings/tokens and re-paste into Gitea secret GH_PAT."
+                  exit 1
+                fi
+                echo "Verified: classic PAT for '${LOGIN}' has workflow scope."
+              else
+                # Fine-grained PAT does not advertise scopes via this header
+                # (it uses repository-scoped permissions instead). Pre-flight
+                # cannot verify 'Workflows: Read and write'; the push itself
+                # is the source of truth.
+                echo "::warning::No X-OAuth-Scopes header for '${LOGIN:-?}' — likely a fine-grained PAT. Pre-flight scope check skipped; if the GitHub push is rejected with GH013, the token lacks 'Workflows: Read and write' permission on the target repository."
+              fi
+              ;;
+            401)
+              echo "::error::Token in Gitea secret GH_PAT is unauthorized (HTTP 401). The value is invalid, expired, or revoked. Re-paste a valid PAT (classic with 'repo'+'workflow', or fine-grained with 'Contents: RW' and 'Workflows: RW') into Gitea secret GH_PAT."
+              exit 1
+              ;;
+            *)
+              echo "::error::Unexpected response from api.github.com/user: '${STATUS_LINE}'. Check network connectivity from the Gitea runner and GitHub status."
+              exit 1
+              ;;
+          esac
 
       - name: Mirror Gitea to GitHub
         env:
