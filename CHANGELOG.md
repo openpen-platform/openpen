@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/openpen-platform/openpen/compare/openpen@v1.2.0...openpen@v1.3.0) (2026-05-31)
+
+
+### Features
+
+* **linux:** always-shown Wayland bar + cross-platform hide-bar shortcut ([a6cb6e7](https://github.com/openpen-platform/openpen/commit/a6cb6e730a8688da6e3e2536d5dd88d2c6794b7e))
+
 ## [1.2.0](https://github.com/openpen-platform/openpen/compare/v1.1.1...v1.2.0) (2026-05-24)
 
 
