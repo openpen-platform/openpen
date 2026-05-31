@@ -86,6 +86,15 @@ export async function launchElectronAppProd(overrides = {}) {
     env: {
       ...(overrides.env ?? {}),
       NODE_ENV: 'production',
+      // prod-smoke is a standard-model gate (float-ball + persistent overlay).
+      // On Linux, force the standard path so it runs for REAL on a Wayland host
+      // too (via XWayland) instead of skipping to a false-green release gate. The
+      // child reads XDG_SESSION_TYPE → standard window model + ozone=x11. No-op
+      // on macOS/Windows (not Linux). Done here, not in the npm script, so the
+      // script stays a plain `playwright test` that runs under Windows cmd.exe.
+      ...(process.platform === 'linux'
+        ? { XDG_SESSION_TYPE: 'x11', ELECTRON_OZONE_PLATFORM_HINT: 'x11' }
+        : {}),
     },
   });
 }

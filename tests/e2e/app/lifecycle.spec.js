@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { attachElectronErrorDetection } from '../electron-errors.js';
 import { launchElectronApp } from '../launch.js';
+import { IS_WAYLAND_SESSION } from '../session.js';
 
 let electronApp;
 
@@ -59,6 +60,10 @@ test('IPC channel constants wire up — preload bridge + main handlers (window n
 });
 
 test('opening settings hides the main window; closing settings restores it', async () => {
+  // Standard model hides the main window via setOpacity(0); on Wayland the bar is
+  // hidden through reconcileLinuxWindows() (bar.hide()), not opacity, so the
+  // opacity assertion below is standard-only. The rest of this file is agnostic.
+  test.skip(IS_WAYLAND_SESSION, 'opacity-dim hide is standard-model only');
   const mainWindow = await electronApp.firstWindow();
   await mainWindow.waitForLoadState('domcontentloaded');
 
