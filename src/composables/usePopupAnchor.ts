@@ -123,9 +123,9 @@ export function calculatePopupAnchor({
   const clampMinTop = Math.min(minTop, maxTop)
   const clampMaxTop = Math.max(minTop, maxTop)
 
-  let top = 0
-  let left = 0
-  let arrowOffset = '50%'
+  let top: number
+  let left: number
+  let arrowOffset: string
 
   if (placement === 'below' || placement === 'above') {
     const unclampedLeft = triggerCenterX - popupWidth / 2

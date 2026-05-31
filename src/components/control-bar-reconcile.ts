@@ -113,7 +113,6 @@ export function reconcileLayoutGroups(
       const insertAt = defaultIdx >= 0 ? defaultIdx : groups.length
       groups.splice(insertAt, 0, newGroup)
       groupById.set(gid, newGroup)
-      mutated = true
     }
 
     // Collect newly-appended ids per group for post-pass sort.
