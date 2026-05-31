@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { launchElectronApp } from '../launch.js';
+import { IS_WAYLAND_SESSION } from '../session.js';
 
 // Wayland-only behaviour: the control bar is ONE persistent window (role=panel)
 // that is always expanded (no ball). reconcileLinuxWindows() is the single owner
@@ -12,14 +13,14 @@ import { launchElectronApp } from '../launch.js';
 // covered by the deriveLinuxWindowState unit truth-table instead; here we exercise
 // the two reconcile triggers a renderer CAN drive (drawing + settings).
 
+// playwright.config.js testIgnores this file on non-Wayland sessions; the inline
+// skip is belt-and-suspenders for a direct/bare run.
+test.skip(!IS_WAYLAND_SESSION, 'Wayland always-bar model only');
+
 let electronApp;
-let isWayland = false;
 
 test.beforeAll(async () => {
   electronApp = await launchElectronApp();
-  isWayland = await electronApp.evaluate(() =>
-    /wayland/i.test(process.env.XDG_SESSION_TYPE || ''),
-  );
 });
 
 test.afterAll(async () => {
@@ -56,7 +57,6 @@ function barVisible(app) {
 }
 
 test('Wayland: bar is always expanded, no ball', async () => {
-  test.skip(!isWayland, 'role=panel always-bar only exists on native Wayland sessions');
 
   const bar = await findBarWindow(electronApp);
   await expect(bar.locator('[data-testid="control-bar"]')).toBeVisible();
@@ -65,7 +65,6 @@ test('Wayland: bar is always expanded, no ball', async () => {
 });
 
 test('Wayland: entering drawing hides the bar, exiting restores it', async () => {
-  test.skip(!isWayland, 'role=panel always-bar only exists on native Wayland sessions');
 
   const bar = await findBarWindow(electronApp);
   await expect.poll(() => barVisible(electronApp), { timeout: 15000 }).toBe(true);
@@ -82,7 +81,6 @@ test('Wayland: entering drawing hides the bar, exiting restores it', async () =>
 });
 
 test('Wayland: opening settings hides the bar, closing restores it', async () => {
-  test.skip(!isWayland, 'role=panel always-bar only exists on native Wayland sessions');
 
   const bar = await findBarWindow(electronApp);
   await expect.poll(() => barVisible(electronApp), { timeout: 15000 }).toBe(true);

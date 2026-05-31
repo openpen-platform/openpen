@@ -24,6 +24,11 @@ import { launchElectronAppProd } from './launch.js';
 let electronApp;
 attachElectronErrorDetection(() => electronApp);
 
+// Standard-model gate (clicks the float-ball, expects the persistent fullscreen
+// overlay). launchElectronAppProd forces the standard path on Linux, so this
+// runs for REAL on a Wayland host too (via XWayland) — no false-green skip, and
+// no Windows-cmd-incompatible env prefix on the npm script.
+
 test.beforeAll(async () => {
   electronApp = await launchElectronAppProd();
 });

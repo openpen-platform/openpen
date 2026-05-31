@@ -37,6 +37,9 @@ jobs:
     needs: release-please
     if: ${{ always() && (needs.release-please.outputs.host_released == 'true' || github.event_name == 'workflow_dispatch') && github.server_url == 'https://github.com' }}
     strategy:
+      # Keep building the other platforms even if one leg fails, so a Linux
+      # build problem never cancels the macOS / Windows release artifacts.
+      fail-fast: false
       matrix:
         include:
           - os: macos-latest
@@ -45,6 +48,9 @@ jobs:
           - os: windows-latest
             platform: win
             builder_flag: --win
+          - os: ubuntu-latest
+            platform: linux
+            builder_flag: --linux
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -61,7 +67,15 @@ jobs:
         run: npm run build
 
       - name: Prod smoke test
+        if: ${{ matrix.platform != 'linux' }}
         run: npm run test:prod-smoke
+
+      # Linux runners are headless; the prod-smoke launches a real Electron
+      # window, so it needs a virtual X display. launchElectronAppProd forces
+      # the standard (X11) path, so the smoke runs for real under Xvfb.
+      - name: Prod smoke test (Xvfb)
+        if: ${{ matrix.platform == 'linux' }}
+        run: xvfb-run --auto-servernum npm run test:prod-smoke
 
       - name: Build Electron distributable
         shell: bash
