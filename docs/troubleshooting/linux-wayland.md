@@ -118,5 +118,3 @@ GitHub issue and include:
 2. Your desktop environment and version (e.g. GNOME 46).
 3. Your distribution and version.
 4. Whether you are running on real hardware or a virtual machine.
-</content>
-</invoke>
