@@ -22,8 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       releases_created: ${{ steps.rp.outputs.releases_created }}
-      host_released: ${{ steps.rp.outputs['.--release_created'] }}
-      host_tag: ${{ steps.rp.outputs['.--tag_name'] }}
+      host_released: ${{ steps.rp.outputs.release_created }}
+      host_tag: ${{ steps.rp.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v5
         id: rp
