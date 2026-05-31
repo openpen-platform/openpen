@@ -42,7 +42,7 @@ Download the latest installer from [GitHub Releases](https://github.com/openpen-
 
 - **macOS**: `OpenPen-1.0.0-arm64.dmg` (Apple Silicon) / `OpenPen-1.0.0-x64.dmg` (Intel)
 - **Windows**: `OpenPen.Setup.1.0.0.exe`
-- **Linux**: not in v1.0.0 — see [Platform support](#platform-support)
+- **Linux**: `.AppImage` (x86_64 + arm64) — conditional support; see [Platform support](#platform-support)
 
 Or build from source — see [Building](#building) below.
 
@@ -82,7 +82,7 @@ protections and the audit log.
 | -------- | ------ |
 | macOS    | Supported |
 | Windows  | Supported |
-| Linux    | Not in v1.0.0 — overlay layering issue, will ship in a follow-up release |
+| Linux    | Conditional — full on X11/Xorg; reduced on native Wayland. See [Linux & Wayland support](docs/troubleshooting/linux-wayland.md) |
 
 ## Localization
 

@@ -191,6 +191,11 @@ chmod +x release/OpenPen-*.AppImage
 ./release/OpenPen-*.AppImage
 ```
 
+Linux runtime support is conditional: the full floating-ball experience needs an
+X11/Xorg session, while native Wayland (GNOME) gets a reduced, fixed-bar
+experience. See [docs/troubleshooting/linux-wayland.md](docs/troubleshooting/linux-wayland.md)
+for the feature matrix and the reasons.
+
 ### Cross-platform builds from a macOS host
 
 | Target | From macOS | Notes |

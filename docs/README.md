@@ -13,7 +13,11 @@ Where to start, depending on what you want to do.
 - [module-architecture.md](./concepts/module-architecture.md) — three-layer model + module contract
 
 ## Building & releasing
-- [guides/building.md](./guides/building.md) — build for macOS / Windows / Linux, code signing, CI
+- [CONTRIBUTING.md](../CONTRIBUTING.md#packaging--distribution) — build for macOS / Windows / Linux, code signing, CI
+
+## Platform notes & troubleshooting
+- [troubleshooting/linux-wayland.md](./troubleshooting/linux-wayland.md) — Linux support, X11 vs Wayland differences
+- [troubleshooting/windows-transparent-rendering.md](./troubleshooting/windows-transparent-rendering.md) — Windows black-overlay fix
 
 ## Contributing to OpenPen core
 - [CONTRIBUTING.md](../CONTRIBUTING.md)
