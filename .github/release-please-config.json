@@ -2,14 +2,16 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "release-type": "node",
   "include-component-in-tag": true,
-  "include-v-in-tag": true,
+  "include-v-in-tag": false,
   "tag-separator": "@",
   "separate-pull-requests": true,
   "bootstrap-sha": "bf975c8af66b123561e654180c4b66814935c762",
   "packages": {
     ".": {
       "package-name": "openpen",
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "include-component-in-tag": false,
+      "include-v-in-tag": true
     },
     "packages/build-cli": {
       "package-name": "@openpen/build",
