@@ -97,6 +97,26 @@ describe('registerShortcut', () => {
     expect(result).toBe(false);
   });
 
+  it('returns false (does NOT throw) when globalShortcut.register throws on an unparseable accelerator', () => {
+    // Electron throws — rather than returning false — on tokens it can't parse
+    // (e.g. the literal "Backslash"). An unguarded throw would propagate through
+    // initShortcutManager and crash startup via the main.js init chain.
+    mockGlobalShortcut.register.mockImplementation(() => {
+      throw new Error('conversion failure from CommandOrControl+Shift+Backslash');
+    });
+    expect(() => registerShortcut('CommandOrControl+Shift+Backslash', vi.fn())).not.toThrow();
+    expect(registerShortcut('CommandOrControl+Shift+Backslash', vi.fn())).toBe(false);
+  });
+
+  it('initShortcutManager survives a built-in accelerator that throws (no crash, reports conflict)', () => {
+    mockGlobalShortcut.register.mockImplementation(() => {
+      throw new Error('conversion failure');
+    });
+    const onShortcutConflict = vi.fn();
+    expect(() => initShortcutManager({ onShortcutConflict })).not.toThrow();
+    expect(onShortcutConflict).toHaveBeenCalled();
+  });
+
   it('rejects double-registration (does not call globalShortcut.register twice)', () => {
     registerShortcut('CommandOrControl+Alt+J', vi.fn());
     const result = registerShortcut('CommandOrControl+Alt+J', vi.fn());

@@ -21,6 +21,28 @@ import { DEFAULT_SHORTCUTS } from '../../shared/settings-defaults.js';
 
 const platform: Platform = (window.openPenApi?.platform ?? 'darwin') as Platform;
 
+// On a Wayland session the control bar runs in a dedicated window the main
+// process tags with a ?role param (Wayland can't do per-pixel passthrough, so the
+// Mac/Win single-fullscreen-window model doesn't apply):
+//   role=panel       — the persistent, always-shown toolbar (idle, not drawing)
+//   role=overlay-bar — the toolbar mounted inside the fullscreen drawing overlay
+// Everywhere else (Mac, Win, and X11 Linux sessions) there is no role param →
+// linuxRole is null and the single fullscreen window hosts everything, unchanged.
+const urlParams = new URLSearchParams(window.location.search);
+const linuxRole = urlParams.get('role') as 'panel' | 'overlay-bar' | null;
+// Wayland drawing mode: this ControlBar is mounted INSIDE the fullscreen overlay
+// window (alongside the canvas). The overlay is fullscreen like the Mac/Win main
+// window, so the bar uses the default positioning/expand path — NOT the separate
+// ball/panel-window split. The only difference from Mac/Win is the per-pixel
+// passthrough dance is disabled: there is no window below to forward clicks to
+// (the canvas is a sibling in the same window), and toggling the overlay's
+// ignoreMouseEvents would break drawing capture. DOM hit-testing handles it.
+const isOverlayBar = linuxRole === 'overlay-bar';
+// Top-left anchor (px) for the Wayland bar/overlay-bar: the toolbar window is
+// Mutter-placed (the client can't position it), so the bar and the popovers it
+// opens below are anchored near the window's top-left to fit inside its bounds.
+const LINUX_BALL_ANCHOR_PX = 60;
+
 const undoAccel = ref<string>(DEFAULT_SHORTCUTS.undo);
 const redoAccel = ref<string>(DEFAULT_SHORTCUTS.redo);
 let unsubShortcuts: (() => void) | null = null;
@@ -66,6 +88,23 @@ const { ballViewportPos, snapEdge: engineSnapEdge } = usePositioning();
 watchEffect(() => {
   const el = wrapperEl.value;
   if (!el) return;
+  if (linuxRole === 'panel') {
+    // Wayland: the toolbar window is small and Mutter-placed (the client can't
+    // position it). Anchor the bar near the window's top-left so it and the
+    // popovers it opens below fit inside the window's bounds (popovers are
+    // clipped to the window). The scale animation grows from this point.
+    el.style.setProperty('--ball-x', `${LINUX_BALL_ANCHOR_PX}px`);
+    el.style.setProperty('--ball-y', `${LINUX_BALL_ANCHOR_PX}px`);
+    return;
+  }
+  if (isOverlayBar) {
+    // In-overlay bar (Wayland drawing): anchor near the top-left so the ball
+    // stays where the standalone ball was, instead of falling through to the
+    // 50%/50% default and jumping to screen centre when no viewport pos is set.
+    el.style.setProperty('--ball-x', `${LINUX_BALL_ANCHOR_PX}px`);
+    el.style.setProperty('--ball-y', `${LINUX_BALL_ANCHOR_PX}px`);
+    return;
+  }
   const vp = ballViewportPos.value;
   el.style.setProperty('--ball-x', vp ? `${vp.x}px` : '50%');
   el.style.setProperty('--ball-y', vp ? `${vp.y}px` : '50%');
@@ -140,6 +179,12 @@ const {
 const activeSnapEdge = computed(() => snapEdge.value ?? engineSnapEdge.value);
 
 const effectiveBarLayout = computed<BarLayoutClass>(() => {
+  // Wayland panel: always horizontal. Snap-to-edge / vertical layouts assume a
+  // draggable ball that can rest against an edge, but the Wayland ball is pinned
+  // in place, so there is no snap state to honour.
+  // Panel (separate-window) and overlay-bar (in-overlay during drawing) are
+  // always horizontal — edge-snap assumes a draggable free-floating ball.
+  if (linuxRole === 'panel' || isOverlayBar) return 'horizontal';
   if (enableDragAutoSnap.value) {
     if (activeSnapEdge.value === 'left') return 'vbar-left';
     if (activeSnapEdge.value === 'right') return 'vbar-right';
@@ -263,6 +308,9 @@ let unsubToolChanged: (() => void) | null = null;
 
 /** Ball shape during edge-snap interactions — avoids visual glitches mid-drag. */
 const ballEdgeClass = computed(() => {
+  // Wayland: the ball is pinned (can't be dragged/snapped), so it's always a
+  // plain full circle — never an edge-flattened shape from stale snap state.
+  if (linuxRole) return '';
   // Restore full circle only while actively dragging a vertically-snapped ball.
   if (isVertical.value && isPointerDragging.value && hasDragMotion.value) return '';
   // During side-snap animation, delay the half-circle look until the ball reaches the edge.
@@ -289,13 +337,28 @@ watch(isVertical, () => {
 // together guard the collapse timer so the bar doesn't dismiss mid-interaction.
 const cursorOnBar = ref(true);
 
+// In-overlay bar (Wayland drawing): the canvas + bar share one window, so the
+// custom drawing cursor would otherwise render over the bar and the OS cursor
+// stay hidden. Tell the same-renderer CustomCursor to hide (and CSS restores the
+// OS cursor on the bar) whenever the pointer is over the ball/bar. On Mac/Win
+// this is relayed cross-window via onInteractiveHoverChanged instead; here the
+// passthrough dance is off, so we emit the equivalent signal on the event bus.
+function setOverlayBarHover(inside: boolean) {
+  if (isOverlayBar) eventBusEmit('interactive-hover', inside);
+}
+
 function onWrapperMouseEnter() {
   cursorOnBar.value = true;
   cancelCollapseTimer();
+  setOverlayBarHover(true);
 }
 
 function onWrapperMouseLeave() {
   cursorOnBar.value = false;
+  setOverlayBarHover(false);
+  // The Wayland persistent bar never auto-collapses (collapsing would blank the
+  // window — there is no ball to fall back to).
+  if (linuxRole === 'panel') return;
   if (activePanelId.value === null && !isLockedByDialog.value) {
     startCollapseTimer();
   }
@@ -304,7 +367,7 @@ function onWrapperMouseLeave() {
 watch(activePanelId, (panel) => {
   if (panel !== null) {
     cancelCollapseTimer();
-  } else if (!cursorOnBar.value && !isLockedByDialog.value && document.visibilityState === 'visible') {
+  } else if (!cursorOnBar.value && !isLockedByDialog.value && document.visibilityState === 'visible' && linuxRole !== 'panel') {
     startCollapseTimer();
   }
 });
@@ -314,7 +377,7 @@ watch(activePanelId, (panel) => {
 watch(isLockedByDialog, (locked) => {
   if (locked) {
     cancelCollapseTimer();
-  } else if (!isPinned.value && !cursorOnBar.value && activePanelId.value === null && document.visibilityState === 'visible') {
+  } else if (!isPinned.value && !cursorOnBar.value && activePanelId.value === null && document.visibilityState === 'visible' && linuxRole !== 'panel') {
     startCollapseTimer();
   }
 });
@@ -357,6 +420,15 @@ function onBallClick() {
   expand();
 }
 
+// Linux persistent bar window (role=panel): the always-shown toolbar. There is
+// no ball and no collapse on Wayland — Mutter can't position a ball, and the
+// window's visibility is owned by the main process — so expand once and stay
+// expanded (the auto-collapse timer is suppressed for this role below, since
+// collapsing would blank the window with no ball to fall back to).
+if (linuxRole === 'panel') {
+  expand();
+}
+
 async function onClearCanvasClick() {
   const settings = await window.openPenApi?.getSettings();
   const ask = settings?.confirmBeforeClearCanvas ?? true;
@@ -387,8 +459,13 @@ BUILT_IN_MODULES.forEach((mod, modIdx) => {
 
 const installedAtMap = ref<Map<string, string | null>>(new Map())
 
-// Mirrored from main process; authoritative state lives there.
-const isDrawingMode = ref(false);
+// Mirrored from main process; authoritative state lives there. The in-overlay
+// bar (Wayland drawing) is created fresh each drawing session and its async
+// onMounted subscribes to onDrawingModeChanged only AFTER awaiting settings —
+// racing past the one-shot DRAWING_MODE_CHANGED(true) the overlay emits on load.
+// It exists ONLY while drawing, so seed true; the subscription still keeps the
+// standalone/Mac-Win bars in sync.
+const isDrawingMode = ref(isOverlayBar);
 let unsubDrawingMode: (() => void) | null = null;
 
 let unsubRequestQuit: (() => void) | null = null;
@@ -485,6 +562,11 @@ let passthroughIgnoring = true;
 const IS_WIN_HOST = /Windows/.test(navigator.userAgent);
 
 function onPassthroughMove(e: MouseEvent) {
+  // Linux control windows ARE the interactive region (they only cover the ball
+  // / the expanded bar surface), so they always capture and never toggle
+  // passthrough — the Mac/Win hover-driven setIgnoreMouseEvents dance is
+  // unimplemented on Wayland anyway.
+  if (linuxRole) return;
   const el = document.elementFromPoint(e.clientX, e.clientY);
   const shouldIgnore = !el?.closest(
     '.float-ball, .control-bar, .stroke-width-slider-wrap, .sw-vbtn-wrap, .sw-hpopup-wrap, .eraser-mode-panel, .cb-shape-wrap, .openpen-interactive'
@@ -506,6 +588,7 @@ function onPassthroughMove(e: MouseEvent) {
 }
 
 function onWindowLeave() {
+  if (linuxRole) return;
   if (!passthroughIgnoring) {
     passthroughIgnoring = true;
     window.openPenApi?.setIgnoreMouseEvents(true);
@@ -542,6 +625,9 @@ onMounted(async () => {
 
   unsubDrawingMode = window.openPenApi?.onDrawingModeChanged((enabled) => {
     isDrawingMode.value = enabled;
+    // Wayland persistent bar hides during drawing; close any open popover so it
+    // returns clean when it is re-shown on drawing exit.
+    if (linuxRole === 'panel' && enabled) activePanelId.value = null;
     // Windows evaluates the OS cursor on the topmost HWND under the
     // pointer. The control-bar window covers the full workArea as a
     // transparent always-on-top window, and the overlay 'focus' →
@@ -645,7 +731,7 @@ onUnmounted(() => {
   >
     <Transition name="ball">
       <div
-        v-if="!isExpanded"
+        v-if="!isExpanded && linuxRole !== 'panel'"
         class="float-ball"
         data-testid="floatball-btn"
         :class="[ballEdgeClass, { 'drawing-active': isDrawingMode }]"
@@ -655,6 +741,8 @@ onUnmounted(() => {
         :aria-label="t('expandBar')"
         @mousedown="onMouseDown"
         @mousemove="resetIdleTimer"
+        @mouseenter="setOverlayBarHover(true)"
+        @mouseleave="setOverlayBarHover(false)"
         @click="onBallClick"
       >
         <span v-if="!activeSnapEdge" class="ball-ring" aria-hidden="true" />

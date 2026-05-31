@@ -63,6 +63,9 @@ function activateTool() {
 function activateToolIfNeeded() {
   if (!isActive.value) {
     eventBusEmit('tool-changed', { tool: 'shape' })
+    // Mirror activateTool: the overlay engine only switches via the IPC path, so
+    // the event-bus emit alone would update the bar UI but not the drawn stroke.
+    window.openPenApi?.setActiveTool({ tool: 'shape' })
   }
 }
 </script>

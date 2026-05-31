@@ -84,6 +84,9 @@ let _getAllMainWindows = () => [];
 /** Notifies the window-manager of the active display id after each intent. */
 let _setActiveDisplayId = (_id) => {};
 
+/** Optional per-state hook (Linux: moves/show-hides the ball/panel windows). */
+let _onStateChange = (_state) => {};
+
 /** Serial intent queue — prevents concurrent state mutations. */
 let _queue = Promise.resolve();
 
@@ -144,6 +147,9 @@ function _broadcastState(state, animation) {
   // Keep the window-manager's activeDisplayId in sync so it routes IPC
   // (drawing-mode, clear-canvas, history) to the correct display.
   _setActiveDisplayId(state.activeDisplayId);
+  // Per-state hook: on Linux this moves the ball window and swaps ball/panel
+  // visibility to match ballScreenPos + barExpanded.
+  _onStateChange(state);
 }
 
 // ─── Intent handlers ──────────────────────────────────────────────────────────
@@ -424,9 +430,10 @@ function getState() {
  *   setActiveDisplayId: (id: number) => void;
  * }} deps
  */
-export function initPositioningEngine({ getAllMainWindows, setActiveDisplayId }) {
+export function initPositioningEngine({ getAllMainWindows, setActiveDisplayId, onStateChange }) {
   _getAllMainWindows = getAllMainWindows;
   _setActiveDisplayId = setActiveDisplayId;
+  if (onStateChange) _onStateChange = onStateChange;
 }
 
 export { processIntent, getState };

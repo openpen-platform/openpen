@@ -11,6 +11,9 @@ let tray = null;
 /** @type {boolean} Whether the main (control-bar) window is currently visible. */
 let isMainVisible = true;
 
+/** @type {boolean} Whether drawing mode is currently active — drives the toggle label. */
+let isDrawingMode = false;
+
 /**
  * Module-level reference to the last-built context-menu rebuild function.
  * Set by _buildContextMenu; cleared by destroyTray.
@@ -148,13 +151,14 @@ function _buildIcons() {
  * @property {() => void} onShowMain
  * @property {() => void} onHideMain
  * @property {() => void} onOpenSettings
+ * @property {() => void} [onToggleDrawingMode]
  */
 
 /**
  * @param {TrayCallbacks} callbacks
  */
 export function initTrayManager(callbacks) {
-  const { onShowMain, onHideMain, onOpenSettings } = callbacks;
+  const { onShowMain, onHideMain, onOpenSettings, onToggleDrawingMode } = callbacks;
 
   // macOS: hide the Dock icon — the app is driven entirely from the tray.
   if (process.platform === 'darwin') {
@@ -166,39 +170,81 @@ export function initTrayManager(callbacks) {
   tray = new Tray(_normalIcon);
   tray.setToolTip('OpenPen');
 
-  _buildContextMenu(tray, { onShowMain, onHideMain, onOpenSettings });
+  _buildContextMenu(tray, { onShowMain, onHideMain, onOpenSettings, onToggleDrawingMode });
 }
 
 /**
- * Swap the tray icon to reflect drawing mode state.
- * Called by main.js whenever drawing mode changes.
+ * Swap the tray icon to reflect drawing mode state, and rebuild the context
+ * menu so the toggle label tracks the new state.
+ *
+ * The rebuild is deferred to a setImmediate task so it does NOT run inside the
+ * original menu-item click handler. On Linux/GTK, calling
+ * `tray.setContextMenu(newMenu)` while a click is still dispatching against the
+ * old menu re-dispatches the click against the same screen row in the new menu
+ * — landing on whichever item shifted into that row. Deferring breaks the
+ * re-dispatch window so the click finishes cleanly first.
+ *
  * @param {boolean} isDrawing
  */
 export function setTrayDrawingMode(isDrawing) {
   if (!tray || tray.isDestroyed()) return;
+  isDrawingMode = isDrawing;
   tray.setImage(isDrawing ? _drawingIcon : _normalIcon);
+  setImmediate(() => {
+    if (!tray || tray.isDestroyed()) return;
+    _rebuildContextMenu?.();
+  });
+}
+
+/**
+ * Sync the hide/show menu label with the control bar's hidden state. Fired from
+ * the window-manager barHidden listener so the label tracks the change whether
+ * it came from the tray item or the toggleBar shortcut. Like setTrayDrawingMode,
+ * the rebuild is deferred to break GTK's same-tick click re-dispatch.
+ *
+ * @param {boolean} hidden
+ */
+export function setTrayBarHidden(hidden) {
+  if (!tray || tray.isDestroyed()) return;
+  isMainVisible = !hidden;
+  setImmediate(() => {
+    if (!tray || tray.isDestroyed()) return;
+    _rebuildContextMenu?.();
+  });
 }
 
 /**
  * @param {import('electron').Tray} trayInstance
  * @param {TrayCallbacks} callbacks
  */
-function _buildContextMenu(trayInstance, { onShowMain, onHideMain, onOpenSettings }) {
+function _buildContextMenu(trayInstance, { onShowMain, onHideMain, onOpenSettings, onToggleDrawingMode }) {
   function rebuild() {
-    const menu = Menu.buildFromTemplate([
+    /** @type {Electron.MenuItemConstructorOptions[]} */
+    const template = [
       {
         label: isMainVisible ? t('tray.hideControlBar') : t('tray.showControlBar'),
         click: () => {
-          if (isMainVisible) {
-            onHideMain();
-            isMainVisible = false;
-          } else {
-            onShowMain();
-            isMainVisible = true;
-          }
-          rebuild();
+          // isMainVisible + the deferred rebuild are driven by setTrayBarHidden
+          // (fired via the window-manager barHidden listener), so both the menu
+          // click and the toggleBar shortcut keep the label in sync through one
+          // path.
+          if (isMainVisible) onHideMain();
+          else onShowMain();
         },
       },
+    ];
+
+    // Drawing-mode toggle — UI fallback for entering drawing mode without the
+    // keyboard accelerator. On Linux Wayland globalShortcut can't grab keys, so
+    // this menu and the GNOME desktop keybinding are the entry points.
+    if (onToggleDrawingMode) {
+      template.push({
+        label: isDrawingMode ? t('tray.exitDrawingMode') : t('tray.enterDrawingMode'),
+        click: () => onToggleDrawingMode(),
+      });
+    }
+
+    template.push(
       {
         label: t('tray.preferences'),
         click: () => onOpenSettings(),
@@ -208,9 +254,9 @@ function _buildContextMenu(trayInstance, { onShowMain, onHideMain, onOpenSetting
         label: t('tray.quit'),
         click: () => app.quit(),
       },
-    ]);
+    );
 
-    trayInstance.setContextMenu(menu);
+    trayInstance.setContextMenu(Menu.buildFromTemplate(template));
   }
 
   _rebuildContextMenu = rebuild;

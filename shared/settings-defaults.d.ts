@@ -6,6 +6,7 @@
 
 export interface UserShortcuts {
   toggleDrawingMode: string
+  toggleBar: string
   undo: string
   redo: string
   quitApp: string

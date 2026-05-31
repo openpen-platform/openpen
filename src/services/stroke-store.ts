@@ -69,6 +69,30 @@ export function resetHistory(): void {
   redoStack = []
 }
 
+/** A serialisable snapshot of the full drawing (strokes + undo/redo stacks). */
+export interface DrawingSnapshot {
+  strokes: Stroke[]
+  undoStack: Command[]
+  redoStack: Command[]
+}
+
+/** Capture the current strokes + history as a plain, JSON-serialisable snapshot. */
+export function serializeState(): DrawingSnapshot {
+  return { strokes, undoStack, redoStack }
+}
+
+/**
+ * Replace the store with a snapshot, WITHOUT generating new history commands.
+ * Used on Wayland to restore the canvas after the overlay window is recreated
+ * (the renderer's in-memory store is lost when the window is destroyed; the
+ * main process holds the snapshot and replays it here).
+ */
+export function hydrateState(snapshot: DrawingSnapshot): void {
+  strokes = Array.isArray(snapshot.strokes) ? [...snapshot.strokes] : []
+  undoStack = Array.isArray(snapshot.undoStack) ? [...snapshot.undoStack] : []
+  redoStack = Array.isArray(snapshot.redoStack) ? [...snapshot.redoStack] : []
+}
+
 function applyUndo(command: Command): void {
   if (command.type === 'ADD_STROKE') {
     removeStrokeById(command.stroke.id)

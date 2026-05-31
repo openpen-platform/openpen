@@ -35,6 +35,25 @@ import {
 let _suspendCount = 0;
 let _suspended = false;
 
+/**
+ * Hooks fired on the suspend↔resume transition (not on every nested call).
+ * Lets platform shortcut backends that live outside globalShortcut follow the
+ * same suspension — notably the Linux/Wayland gsettings desktop keybinding,
+ * which globalShortcut.unregisterAll() cannot touch, so without this it would
+ * keep firing while the settings window (or a hotkey-capture field) is open.
+ * @type {Array<(suspended: boolean) => void>}
+ */
+const _suspendChangeHooks = [];
+
+/** Register a callback fired with `true` on first suspend, `false` on final resume. */
+export function onShortcutsSuspendChange(cb) {
+  _suspendChangeHooks.push(cb);
+  return () => {
+    const i = _suspendChangeHooks.indexOf(cb);
+    if (i >= 0) _suspendChangeHooks.splice(i, 1);
+  };
+}
+
 /** @type {Map<string, () => void>} accelerator → handler */
 const acceleratorToHandler = new Map();
 
@@ -61,6 +80,7 @@ const idConflicts = new Set();
  *
  * @param {{
  *   onToggleDrawingMode?: () => void,
+ *   onToggleBar?: () => void,
  *   onUndo?: () => void,
  *   onRedo?: () => void,
  *   onQuitApp?: () => void,
@@ -69,6 +89,7 @@ const idConflicts = new Set();
  */
 export function initShortcutManager({
   onToggleDrawingMode,
+  onToggleBar,
   onUndo,
   onRedo,
   onQuitApp,
@@ -84,6 +105,16 @@ export function initShortcutManager({
     _builtinAccelerators.set('toggleDrawingMode', drawingAccel);
   } else {
     onShortcutConflict?.(drawingAccel);
+  }
+
+  // Built-in: hide/show the control bar.
+  const barHandler = () => { if (!_suspended) onToggleBar?.(); };
+  const barAccel = shortcuts.toggleBar;
+  if (registerShortcut(barAccel, barHandler)) {
+    _builtinHandlers.set('toggleBar', barHandler);
+    _builtinAccelerators.set('toggleBar', barAccel);
+  } else {
+    onShortcutConflict?.(barAccel);
   }
 
   // Built-in: undo / redo.
@@ -229,7 +260,19 @@ export function registerShortcut(accelerator, handler) {
     console.warn(`[ShortcutManager] Accelerator already registered: ${accelerator}`);
     return false;
   }
-  const ok = globalShortcut.register(accelerator, handler);
+  let ok = false;
+  try {
+    ok = globalShortcut.register(accelerator, handler);
+  } catch (err) {
+    // Electron THROWS (not returns false) on an accelerator it can't parse —
+    // e.g. the literal token "Backslash" instead of "\". Unguarded, that throw
+    // propagates through initShortcutManager and main.js turns any init-chain
+    // exception into process.exit(1); on a settings update it bypasses the
+    // {ok:false} rollback. Treat an unparseable accelerator as a failed
+    // registration so a bad persisted/user/module key can't crash startup.
+    console.error(`[ShortcutManager] Invalid accelerator "${accelerator}": ${err?.message}`);
+    return false;
+  }
   if (ok) {
     acceleratorToHandler.set(accelerator, handler);
   } else {
@@ -311,6 +354,7 @@ function _suspendShortcuts() {
   if (_suspended) return;
   _suspended = true;
   globalShortcut.unregisterAll();
+  for (const hook of _suspendChangeHooks) hook(true);
 }
 
 /**
@@ -325,6 +369,7 @@ function _resumeShortcuts() {
   for (const [accel, handler] of acceleratorToHandler) {
     globalShortcut.register(accel, handler);
   }
+  for (const hook of _suspendChangeHooks) hook(false);
 }
 
 /**

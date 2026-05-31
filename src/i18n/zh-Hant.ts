@@ -115,6 +115,8 @@ export default {
   shortcutNote: '更改立即生效，不受「儲存」/「取消」影響。',
   shortcutToggleDrawingMode: '切換繪圖模式',
   shortcutToggleDrawingModeSub: '開始或停止在螢幕上繪圖',
+  shortcutToggleBar: '隱藏／顯示控制列',
+  shortcutToggleBarSub: '隱藏或顯示浮動控制列',
   shortcutUndo: '復原',
   shortcutUndoSub: '復原上一個筆畫',
   shortcutRedo: '重做',

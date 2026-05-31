@@ -188,6 +188,16 @@ export function useCustomCursor() {
       unsubs.push(offStyle)
     }
 
+    // Wayland in-overlay bar: the control bar shares this renderer, so it can't
+    // relay hover through the cross-window onInteractiveHoverChanged IPC. It
+    // emits the same signal on the event bus instead, so the pen cursor hides
+    // (and the OS cursor shows) while the pointer is over the ball/bar.
+    unsubs.push(
+      eventBusOn('interactive-hover', (payload) => {
+        interactiveHover.value = !!payload
+      }),
+    )
+
     unsubs.push(
       eventBusOn('tool-changed', (payload) => {
         const p = payload as { tool?: string; eraserMode?: 'brush' | 'stroke' }

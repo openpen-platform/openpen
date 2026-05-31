@@ -116,6 +116,8 @@ export default {
   shortcutNote: '変更は即時に反映されます。保存/キャンセルの影響を受けません。',
   shortcutToggleDrawingMode: '描画モード切替',
   shortcutToggleDrawingModeSub: '画面への描画を開始または停止する',
+  shortcutToggleBar: 'コントロールバーの表示／非表示',
+  shortcutToggleBarSub: 'フローティングコントロールバーを表示または非表示にする',
   shortcutUndo: '元に戻す',
   shortcutUndoSub: '直前の一筆を取り消す',
   shortcutRedo: 'やり直し',

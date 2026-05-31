@@ -12,6 +12,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+// This suite asserts the Mac/Win opacity-dim behaviour, which window-manager
+// gates on IS_WAYLAND (a Wayland session instead hides the bar via reconcile and
+// does not opacity-dim). Force the non-Wayland path so the suite is
+// deterministic regardless of the host session type (it would otherwise take the
+// Wayland branch when run on a Wayland desktop). vi.hoisted runs before the
+// window-manager import that reads XDG_SESSION_TYPE at module load.
+vi.hoisted(() => { process.env.XDG_SESSION_TYPE = 'x11'; });
+
 // ─── Shared mock instances ────────────────────────────────────────────────────
 
 /**
@@ -27,6 +35,8 @@ const mainWinMock = {
   setIgnoreMouseEvents: vi.fn(),
   setAlwaysOnTop: vi.fn(),
   setVisibleOnAllWorkspaces: vi.fn(),
+  isVisible: vi.fn(() => false),
+  hide: vi.fn(),
   webContents: {
     ipc: { once: vi.fn() },
     on: vi.fn(),
@@ -77,6 +87,8 @@ vi.mock('electron', () => {
       setIgnoreMouseEvents: vi.fn(),
       setAlwaysOnTop: vi.fn(),
       setVisibleOnAllWorkspaces: vi.fn(),
+      isVisible: vi.fn(() => false),
+      hide: vi.fn(),
       webContents: {
         ipc: { once: vi.fn() },
         on: vi.fn(),

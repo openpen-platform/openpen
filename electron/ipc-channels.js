@@ -27,6 +27,17 @@ export const WINDOW = {
 export const OVERLAY = {
   SET_DRAWING_MODE: 'overlay:set-drawing-mode',
   DRAWING_MODE_CHANGED: 'overlay:drawing-mode-changed',
+  /** overlay renderer → main (Linux): persist the current drawing snapshot
+   *  (strokes + history) so it survives the overlay window being recreated. */
+  PERSIST_STATE: 'overlay:persist-drawing-state',
+  /** main → overlay renderer (Linux): replay a persisted drawing snapshot into
+   *  a freshly-created overlay. */
+  RESTORE_STATE: 'overlay:restore-drawing-state',
+  /** overlay renderer → main (Linux): a stroke is in progress (pointer-down ↔
+   *  pointer-up). Main blocks a drawing-mode EXIT while true so the on-demand
+   *  Wayland overlay isn't destroyed mid-stroke (which would lose the not-yet-
+   *  committed stroke). No effect on platforms with a persistent overlay. */
+  STROKE_ACTIVE: 'overlay:stroke-active',
 }
 
 /** Control bar — cross-window broadcast for tool / style / clear actions. */

@@ -9,6 +9,7 @@
 /** @type {import('./settings-defaults').UserShortcuts} */
 export const DEFAULT_SHORTCUTS = Object.freeze({
   toggleDrawingMode: 'CommandOrControl+Shift+A',
+  toggleBar: 'CommandOrControl+Shift+\\',
   undo: 'CommandOrControl+Z',
   redo: 'CommandOrControl+Shift+Z',
   quitApp: 'CommandOrControl+Alt+Shift+X',

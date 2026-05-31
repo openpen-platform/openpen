@@ -17,7 +17,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import type { ToolContribution } from '@openpen/module-api'
 import { CanvasEngine } from '../services/canvas-engine'
-import { canUndo, canRedo } from '../services/stroke-store'
+import { canUndo, canRedo, serializeState, hydrateState } from '../services/stroke-store'
 import type { StrokeStyle } from '../types/tool-types'
 import { emit as eventBusEmit, on as eventBusOn } from '../core/runtime/event-bus'
 import { getSlotEntries } from '../core/runtime/contribution-store'
@@ -82,11 +82,32 @@ export function useCanvas() {
     if (tool) engine.setActiveTool(tool)
   }
 
+  // Linux only: the Wayland overlay window is destroyed on drawing-exit and
+  // recreated on the next session, so its in-renderer stroke store is lost.
+  // Persist a snapshot to the main process after every change; main replays it
+  // into the fresh overlay (see onRestoreDrawingState below). No-op elsewhere,
+  // where the overlay lives for the whole session.
+  const isLinux = window.openPenApi?.platform === 'linux'
+  function persistDrawing(): void {
+    if (!isLinux) return
+    window.openPenApi?.persistDrawingState?.(serializeState())
+  }
+
+  // Linux/Wayland: the on-demand overlay is destroyed on drawing-exit. Tell main
+  // when a stroke is in progress so it won't tear the overlay down mid-stroke
+  // (which would lose the not-yet-committed stroke — it only enters the store on
+  // pointer-up). No-op off Linux, where the overlay persists for the session.
+  function notifyStroke(active: boolean): void {
+    if (!isLinux) return
+    window.openPenApi?.notifyStrokeActive?.(active)
+  }
+
   function reportHistoryState(): void {
     window.openPenApi?.reportHistoryState({
       canUndo: canUndo(),
       canRedo: canRedo(),
     })
+    persistDrawing()
   }
 
   function applyToolConfig(config: { tool: string; shapeType?: string; filled?: boolean; eraserMode?: 'brush' | 'stroke' }): void {
@@ -138,6 +159,7 @@ export function useCanvas() {
       }
     }
     engine.handlePointerDown(toPoint(e), { ...currentStyle })
+    notifyStroke(true)
   }
 
   function onPointerMove(e: PointerEvent): void {
@@ -160,6 +182,7 @@ export function useCanvas() {
     pointerDown = false
     pendingPointer = null
     engine.handlePointerUp(toPoint(e), { shiftKey: e.shiftKey })
+    notifyStroke(false)
     reportHistoryState()
   }
 
@@ -210,6 +233,16 @@ export function useCanvas() {
         applyCursor()
       })
       ipcUnsubs.push(onDraw)
+
+      // Linux: replay the persisted drawing snapshot into this freshly-created
+      // overlay so strokes from the previous session reappear.
+      const onRestore = window.openPenApi.onRestoreDrawingState((snapshot) => {
+        if (!snapshot) return
+        hydrateState(snapshot as Parameters<typeof hydrateState>[0])
+        engine?.redrawAll()
+        window.openPenApi?.reportHistoryState({ canUndo: canUndo(), canRedo: canRedo() })
+      })
+      ipcUnsubs.push(onRestore)
     }
     unsubs.push(...ipcUnsubs)
 

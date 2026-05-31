@@ -26,13 +26,24 @@ contextBridge.exposeInMainWorld('openPenApi', {
   getCursorPosition: () => ipcRenderer.invoke('window:get-cursor-position'),
   setIgnoreMouseEvents: (ignore) => ipcRenderer.send('window:set-ignore-mouse-events', ignore),
   signalContentReady: () => ipcRenderer.send('window:content-ready'),
-
   // ── Drawing overlay ─────────────────────────────────────────────────
   setDrawingMode: (enabled) => ipcRenderer.send('overlay:set-drawing-mode', enabled),
   onDrawingModeChanged: (callback) => {
     const handler = (_, enabled) => callback(enabled);
     ipcRenderer.on('overlay:drawing-mode-changed', handler);
     return () => ipcRenderer.removeListener('overlay:drawing-mode-changed', handler);
+  },
+  /** Linux: persist the current drawing snapshot so it survives the overlay
+   *  window being recreated on the next drawing session. */
+  persistDrawingState: (snapshot) => ipcRenderer.send('overlay:persist-drawing-state', snapshot),
+  /** Linux: report whether a stroke is in progress (pointer-down ↔ pointer-up)
+   *  so main can avoid tearing down the on-demand overlay mid-stroke. */
+  notifyStrokeActive: (active) => ipcRenderer.send('overlay:stroke-active', active),
+  /** Linux: receive a persisted drawing snapshot to replay into a fresh overlay. */
+  onRestoreDrawingState: (callback) => {
+    const handler = (_, snapshot) => callback(snapshot);
+    ipcRenderer.on('overlay:restore-drawing-state', handler);
+    return () => ipcRenderer.removeListener('overlay:restore-drawing-state', handler);
   },
   onInteractiveHoverChanged: (callback) => {
     const handler = (_, hover) => callback(hover);

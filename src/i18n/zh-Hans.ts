@@ -116,6 +116,8 @@ export default {
   shortcutNote: '更改立即生效，不受"保存"/"取消"影响。',
   shortcutToggleDrawingMode: '切换绘图模式',
   shortcutToggleDrawingModeSub: '开始或停止在屏幕上绘图',
+  shortcutToggleBar: '隐藏／显示控制栏',
+  shortcutToggleBarSub: '隐藏或显示浮动控制栏',
   shortcutUndo: '撤销',
   shortcutUndoSub: '撤销上一笔',
   shortcutRedo: '重做',

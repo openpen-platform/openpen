@@ -25,6 +25,13 @@ const pluginConflicts = usePluginConflicts();
 const params = new URLSearchParams(window.location.search);
 const isSettingsWindow = params.get('window') === 'settings';
 const isOverlayWindow = params.get('window') === 'overlay';
+// Wayland-only: the drawing overlay also hosts the control bar in its own DOM
+// (role=overlay-bar). A separate control window can't be stacked above the
+// capturing fullscreen overlay on Mutter (clients can't restack toplevels), so
+// the bar rides inside the overlay — DOM hit-testing separates "click a bar
+// button" from "draw on the canvas". On Mac/Win/X11 the bar stays in its own
+// always-present main window and this is never set.
+const overlayHostsBar = isOverlayWindow && params.get('role') === 'overlay-bar';
 
 /**
  * Display id this renderer instance belongs to, parsed from the URL query string.
@@ -109,7 +116,15 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <OverlayView v-if="isOverlayWindow" />
+  <template v-if="isOverlayWindow">
+    <OverlayView />
+    <!-- Wayland: the bar lives inside the overlay during drawing. pointer-events
+         pass through the host to the canvas underneath; only the bar wrapper
+         captures, so clicks outside the bar draw and clicks on it interact. -->
+    <div v-if="overlayHostsBar && isActiveDisplay" class="overlay-bar-host">
+      <ControlBar />
+    </div>
+  </template>
   <SettingsView v-else-if="isSettingsWindow" />
   <div v-else class="main-window" :class="{ 'display-inactive': !isActiveDisplay }">
     <ControlBar />
@@ -151,5 +166,27 @@ onUnmounted(() => {
 
 .main-window :deep(.control-bar-wrapper) {
   pointer-events: auto;
+}
+
+/* Wayland in-overlay bar: full-screen host above the canvas. It stays
+   pointer-events:none, and so does the control-bar-wrapper inside it — only the
+   .float-ball / .control-bar elements opt back into pointer-events (their own
+   CSS). So clicks on the ball/bar are caught; clicks anywhere else fall through
+   to the canvas underneath and draw. (Do NOT set the wrapper to pointer-events:
+   auto — it is a full-screen element and would swallow every click. Mac/Win can
+   set it auto only because the window-level passthrough dance hit-tests there;
+   the in-overlay bar has that dance disabled and relies on DOM hit-testing.) */
+.overlay-bar-host {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* The overlay sets cursor:none while drawing; restore a real cursor on the
+   interactive bar elements (the elements that actually receive pointer events). */
+.overlay-bar-host :deep(.float-ball),
+.overlay-bar-host :deep(.control-bar) {
+  cursor: auto;
 }
 </style>

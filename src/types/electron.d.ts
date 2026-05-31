@@ -146,6 +146,12 @@ interface OpenPenApi {
   setDrawingMode(enabled: boolean): void
   onDrawingModeChanged(cb: (enabled: boolean) => void): () => void
   onInteractiveHoverChanged(cb: (hover: boolean) => void): () => void
+  /** Linux: persist the current drawing snapshot (strokes + history) across overlay recreation. */
+  persistDrawingState(snapshot: unknown): void
+  /** Linux: report whether a stroke is in progress so main avoids tearing down the overlay mid-stroke. */
+  notifyStrokeActive(active: boolean): void
+  /** Linux: receive a persisted drawing snapshot to replay into a fresh overlay. */
+  onRestoreDrawingState(cb: (snapshot: unknown) => void): () => void
 
   // Settings
   getSettings(): Promise<AppSettings & { effectiveTheme: 'light' | 'dark' }>

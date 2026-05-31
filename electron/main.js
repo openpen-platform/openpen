@@ -7,9 +7,9 @@ import { app, BrowserWindow, ipcMain, protocol, net, session, screen } from 'ele
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener } from './window-manager.js';
-import { initTrayManager, setTrayWarning, setTrayDrawingMode } from './tray-manager.js';
-import { initShortcutManager, unregisterAllShortcuts } from './shortcut-manager.js';
+import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, applyLinuxWindowPositioning } from './window-manager.js';
+import { initTrayManager, setTrayWarning, setTrayDrawingMode, setTrayBarHidden } from './tray-manager.js';
+import { initShortcutManager, unregisterAllShortcuts, onShortcutsSuspendChange } from './shortcut-manager.js';
 import { initSettingsStore, getSetting, flushWrites } from './settings-store.js';
 import { initDiagnosticsManager } from './diagnostics-manager.js';
 import { initPluginMetaManager } from './plugin-meta-manager.js';
@@ -23,6 +23,8 @@ import { initLogger, log } from './logger.js';
 import { initPositioningEngine, processIntent, getState as getPositioningState } from './positioning-engine.js';
 import { probeTransparentRendering } from './transparent-render-probe.js';
 import { createRendererReadyWatchdog, resolveTimeoutMs } from './renderer-ready-watchdog.js';
+import { isGnome, registerDesktopShortcut, unregisterDesktopShortcut, suspendDesktopShortcut, resumeDesktopShortcut, electronToGtkAccelerator, buildCliCommand, DRAWING_MODE_BINDING_ID, TOGGLE_DRAWING_MODE_FLAG, BAR_BINDING_ID, TOGGLE_BAR_FLAG, SUMMON_BINDING_ID } from './linux-shortcut.js';
+import { IS_WAYLAND_SESSION } from './is-wayland-session.js';
 
 ipcMain.handle(APP.GET_VERSION, () => app.getVersion());
 
@@ -125,12 +127,52 @@ function _isVirtioGpu() {
 //      acceleration.
 //
 // Both must run before app.whenReady() for Chromium to consume them.
+//
+// Ozone platform is SESSION-AWARE: only force the Wayland backend on an actual
+// Wayland session. On an X11/Xorg session, forcing ozone=wayland would fail (no
+// Wayland compositor) — use x11 so the classic fullscreen overlay path works
+// natively (globalShortcut, cursor query and passthrough are all available on
+// X11). The Wayland-specific windowed fallback (see window-manager) only engages
+// on Wayland sessions. IS_WAYLAND_SESSION is the shared predicate (also used by
+// window-manager and the e2e suite) — see ./is-wayland-session.js.
 if (process.platform === 'linux') {
   if (_isVirtioGpu()) {
     app.disableHardwareAcceleration();
   }
   app.commandLine.appendSwitch('enable-features', 'UseOzonePlatform');
-  app.commandLine.appendSwitch('ozone-platform', 'wayland');
+  app.commandLine.appendSwitch('ozone-platform', IS_WAYLAND_SESSION ? 'wayland' : 'x11');
+}
+
+// Linux single-instance lock. The GNOME desktop keybinding (see
+// linux-shortcut.js) relaunches our binary with --toggle-drawing-mode; that
+// relaunch must NOT spawn a second app — instead its argv is forwarded to the
+// already-running instance via the 'second-instance' event, which toggles
+// drawing mode. Linux-only so Mac/Win behaviour (multiple instances, no lock)
+// is untouched. The lock file lives in userData, so test instances with
+// distinct OPENPEN_USER_DATA_DIR get independent locks and never collide.
+let _isSecondaryInstance = false;
+if (IS_WAYLAND_SESSION) {
+  if (!app.requestSingleInstanceLock()) {
+    // A primary instance already owns the app; requestSingleInstanceLock has
+    // delivered our argv to it via 'second-instance'. Quit gracefully (lets the
+    // argv IPC drain first) and skip the whole whenReady boot below so we never
+    // spin up a second set of windows.
+    _isSecondaryInstance = true;
+    app.quit();
+    // app.quit() before whenReady is unreliable here (the instance can linger as
+    // a zombie holding GPU/Wayland resources). requestSingleInstanceLock has
+    // already delivered our argv to the primary, so force-exit shortly after as
+    // a hard guarantee.
+    setTimeout(() => process.exit(0), 400);
+  } else {
+    app.on('second-instance', (_event, argv) => {
+      if (argv.includes(TOGGLE_DRAWING_MODE_FLAG)) {
+        toggleDrawingMode();
+      } else if (argv.includes(TOGGLE_BAR_FLAG)) {
+        toggleControlsHidden();
+      }
+    });
+  }
 }
 
 const __filename = fileURLToPath(import.meta.url);
@@ -186,6 +228,10 @@ ipcMain.on(LOG.RECORD_ERROR, (_event, payload) => {
 });
 
 app.whenReady().then(async () => {
+  // Secondary Linux instances (a --toggle-drawing-mode relaunch) have already
+  // forwarded their argv to the primary and called app.quit(); never boot a
+  // second set of windows.
+  if (_isSecondaryInstance) return;
   try {
   // openpen-plugin://<pluginId>/<file> → ~/.openpen/plugins/<pluginId>/<file>
   protocol.handle('openpen-plugin', (request) => {
@@ -228,10 +274,13 @@ app.whenReady().then(async () => {
     onShowMain: () => showMainWindow(),
     onHideMain: () => hideMainWindow(),
     onOpenSettings: () => createSettingsWindow(),
+    onToggleDrawingMode: () => toggleDrawingMode(),
   });
   setDrawingModeChangedListener((isDrawing) => setTrayDrawingMode(isDrawing));
+  setBarHiddenChangedListener((hidden) => setTrayBarHidden(hidden));
   initShortcutManager({
     onToggleDrawingMode: toggleDrawingMode,
+    onToggleBar: toggleControlsHidden,
     onUndo: () => {
       const overlay = getOverlayWindow();
       if (overlay && !overlay.isDestroyed()) overlay.webContents.send(HISTORY.UNDO);
@@ -246,11 +295,73 @@ app.whenReady().then(async () => {
     },
   });
 
+  // Linux/GNOME: globalShortcut can't grab keys on Wayland, so register the
+  // drawing-mode toggle as a desktop-level GNOME custom keybinding that
+  // relaunches us with --toggle-drawing-mode (forwarded to this instance via
+  // the single-instance lock). Idempotent; fire-and-forget so a gsettings
+  // hiccup never blocks startup. The tray menu is the always-available fallback.
+  // Wayland GNOME only: globalShortcut can't grab keys, so route through a
+  // gsettings desktop keybinding. On an X11 session globalShortcut works
+  // natively, so this is skipped to avoid a double-fire.
+  // The gsettings custom keybinding is GLOBAL per-user state. Only the real
+  // install instance (default userData) may write it; instances with an isolated
+  // userData dir (e2e/behavioural tests) must NOT, or they clobber the user's
+  // binding with a command pointing at their own ephemeral context.
+  const ownsDesktopShortcut = isGnome() && IS_WAYLAND_SESSION && !process.env.OPENPEN_USER_DATA_DIR;
+  if (ownsDesktopShortcut) {
+    void (async () => {
+      const register = async (id, name, electronAccel, flag) => {
+        const gtkAccel = electronToGtkAccelerator(electronAccel);
+        if (!gtkAccel) return;
+        const result = await registerDesktopShortcut({
+          id, name, accelerator: gtkAccel, command: buildCliCommand(flag),
+        });
+        if (!result.ok) log.warn(`[Main] Failed to register GNOME shortcut ${id}:`, result.error);
+        else log.info(`[Main] GNOME desktop shortcut registered: ${id} → ${gtkAccel}`);
+      };
+      const drawAccel = getSetting('shortcuts')?.toggleDrawingMode || 'CommandOrControl+Shift+A';
+      await register(DRAWING_MODE_BINDING_ID, 'OpenPen: Toggle drawing mode', drawAccel, TOGGLE_DRAWING_MODE_FLAG);
+      const barAccel = getSetting('shortcuts')?.toggleBar || 'CommandOrControl+Shift+\\';
+      await register(BAR_BINDING_ID, 'OpenPen: Toggle control bar', barAccel, TOGGLE_BAR_FLAG);
+      // summon-to-cursor is impossible on Wayland (no global cursor, no client
+      // window positioning), so the module's Ctrl+Shift+S has no desktop
+      // keybinding here. Remove any binding left by an earlier build.
+      await unregisterDesktopShortcut(SUMMON_BINDING_ID);
+    })();
+
+    // globalShortcut.unregisterAll() (what suspendShortcuts uses) cannot touch
+    // the gsettings desktop keybinding, so without this the drawing-mode chord
+    // would still fire while the settings window — or a hotkey-capture field —
+    // is open. Mirror every suspend↔resume transition onto the gsettings entry.
+    onShortcutsSuspendChange((suspended) => {
+      if (suspended) {
+        void suspendDesktopShortcut(DRAWING_MODE_BINDING_ID);
+        void suspendDesktopShortcut(BAR_BINDING_ID);
+      } else {
+        void resumeDesktopShortcut(DRAWING_MODE_BINDING_ID);
+        void resumeDesktopShortcut(BAR_BINDING_ID);
+      }
+    });
+
+    // Crash-safe: if the app quits while shortcuts are suspended (settings open),
+    // re-register so the chord isn't left dead for the next session. (Boot-time
+    // registration is the ultimate safety net, but this covers graceful quit so
+    // the chord keeps working to relaunch the app.)
+    app.on('will-quit', () => {
+      void resumeDesktopShortcut(DRAWING_MODE_BINDING_ID);
+      void resumeDesktopShortcut(BAR_BINDING_ID);
+    });
+  }
+
   // Create one main + one overlay window per display. On a single-display system
   // this degenerates to one main + one overlay (the existing behaviour).
   for (const display of screen.getAllDisplays()) {
     createMainWindowForDisplay(display);
-    createOverlayWindowForDisplay(display);
+    // Wayland: the overlay is created on-demand at drawing-enter and destroyed
+    // on exit (a persistent fullscreen overlay can't be parked/passthrough on
+    // Mutter and re-showing it crashes Viz). Mac/Win AND X11 sessions create it
+    // upfront (the classic always-present passthrough overlay).
+    if (!IS_WAYLAND_SESSION) createOverlayWindowForDisplay(display);
   }
 
   // If no window reports CONTENT_READY before the deadline, the renderer
@@ -271,8 +382,9 @@ app.whenReady().then(async () => {
   // the engine fires its first intent.
   setActiveDisplayId(screen.getPrimaryDisplay().id);
 
-  // Initialise the positioning engine after windows are created.
-  initPositioningEngine({ getAllMainWindows, setActiveDisplayId });
+  // Initialise the positioning engine after windows are created. On Linux the
+  // onStateChange hook moves the ball window and swaps ball/panel visibility.
+  initPositioningEngine({ getAllMainWindows, setActiveDisplayId, onStateChange: applyLinuxWindowPositioning });
 
   // Seed the engine with the workArea-center default position so getPositioningState()
   // returns valid coordinates before the renderer sends its first intent.

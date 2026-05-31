@@ -115,6 +115,8 @@ export default {
   shortcutNote: 'Changes take effect immediately and are not affected by Save/Cancel.',
   shortcutToggleDrawingMode: 'Toggle Drawing Mode',
   shortcutToggleDrawingModeSub: 'Start or stop drawing on screen',
+  shortcutToggleBar: 'Hide / Show Control Bar',
+  shortcutToggleBarSub: 'Hide or show the floating control bar',
   shortcutUndo: 'Undo',
   shortcutUndoSub: 'Undo the last stroke',
   shortcutRedo: 'Redo',
