@@ -174,7 +174,14 @@ Modules MUST NOT import `reka-ui` directly inside the host — go through Layer 
 - **Language: English.** OpenPen is OSS; release-please copies commit messages verbatim into `CHANGELOG.md`, which is the public-facing release record for plugin authors worldwide. Non-English commits become unreadable CHANGELOG entries.
 - **Format: Conventional Commits** — `<type>(scope): description`
   - Types: `feat` / `fix` / `docs` / `style` / `refactor` / `perf` / `test` / `build` / `ci` / `chore` / `revert`
-  - Scope (optional, lowercase): module / area name (`canvas`, `plugin-loader`, `module-api`, `tray`, `release`, etc.)
+  - **Scope (lowercase, optional): when present, MUST be one of the canonical area vocabulary below — do NOT invent synonyms** (one consistent vocabulary keeps scopes from fragmenting):
+    `control-bar` · `cursor` · `overlay` · `positioning` · `drawing` · `settings` · `notifications` · `modals` · `uikit` · `module-api` · `plugin` · `cli` · `tray` · `i18n` · `boot` · `build` · `docs` · `tests`
+    - `overlay` = window-manager / platform (wayland, linux) / transparent render
+    - `positioning` = positioning-engine / drag / snap
+    - `plugin` = plugin-manager / plugin-meta / manifest-loader / id-validator
+    - `boot` = main init chain / App bootstrap / renderer-ready-watchdog
+    - `build` = deps / release / vite / ci / workflows / release sync
+    - New area needed? Add it to this list first (single source of truth), then use it. Past drift to avoid: `settings`+`settings-window`, `cursor-dom`+`cursors`, `cli`+`openpen-cli`, `docs`+`readme`.
 - **Breaking change**: `feat!:` prefix or `BREAKING CHANGE:` footer → release-please bumps major.
 - **Body**: 2–4 parallel bullets covering goal / change / verification / risks. Wrap at 72 chars.
 - **Version bumps and CHANGELOG entries are derived automatically by release-please from commit metadata.** Non-conforming commits silently disappear from release notes.
