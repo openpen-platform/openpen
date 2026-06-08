@@ -108,7 +108,7 @@
     "@openpen/plugin-manager": "*",
     "electron-log": "^5.4.4",
     "vue": "^3.5.35",
-    "vue-i18n": "^11.4.4",
+    "vue-i18n": "^11.4.5",
     "zod": "^3.25.76"
   },
   "overrides": {
