@@ -18,6 +18,7 @@ import { suspendShortcuts, resumeShortcuts } from './shortcut-manager.js';
 import { createOverlayPlatform } from './platform/overlay-platform.js';
 import { deriveLinuxWindowState } from './linux-window-state.js';
 import { IS_WAYLAND_SESSION as IS_WAYLAND } from './is-wayland-session.js';
+import { initCursorOs, hideOsCursor, showOsCursor } from './cursor-os.js';
 import log from 'electron-log/main.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -55,12 +56,7 @@ let activeDisplayId = -1;
 
 /** @type {boolean} Whether drawing mode is currently active. */
 let drawingMode = false;
-/** 10Hz timer that re-asserts overlay webContents focus while drawing
- *  mode is on, so macOS WindowServer keeps honouring `cursor: none`
- *  through real pointer events. Cleared on every drawing-mode toggle. */
-let cursorFocusRefreshTimer = null;
 
-const IS_WIN = process.platform === 'win32';
 // IS_WAYLAND (imported above from ./is-wayland-session.js, the shared predicate):
 // the Linux workarounds below (always-bar window, on-demand overlay, gsettings
 // shortcuts) target NATIVE WAYLAND only. On an X11/Xorg session the classic
@@ -154,15 +150,6 @@ let barHidden = false;
  */
 let _strokeActive = false;
 
-let winFocusTickCount = 0;
-let winOverlayFocusEventCount = 0;
-let winMainMoveTopCount = 0;
-function winDbg(tag, data) {
-  if (!IS_WIN) return;
-  const ts = Date.now();
-  log.info(`[WIN_CURSOR_DBG] ${tag} t=${ts}`, data ?? '');
-}
-
 /** @type {string} Vite dev-server URL or packaged dist entry. */
 let rendererEntry = '';
 
@@ -198,6 +185,43 @@ export function initWindowManager(entry) {
   rendererEntry = entry;
   registerIpcHandlers();
   registerScreenHotplugHandlers();
+  initCursorOs();
+  registerCursorCrashSafety();
+  registerCursorFocusHandlers();
+}
+
+/**
+ * Restore the OS cursor on any process teardown path so a crash/quit mid-drawing
+ * never leaves the system cursor hidden. SIGKILL bypasses these and is an
+ * accepted footgun (the user recovers by alt-tabbing).
+ */
+function registerCursorCrashSafety() {
+  app.on('before-quit', () => showOsCursor());
+  process.on('exit', () => showOsCursor());
+  // Restore the cursor on a fatal error, then exit non-zero: swallowing an
+  // uncaught exception leaves a zombie process whose crash is undetectable by
+  // any supervisor or the user.
+  process.on('uncaughtException', (err) => {
+    showOsCursor();
+    log.error('[window-manager] uncaught exception, exiting:', err);
+    process.exit(1);
+  });
+}
+
+/**
+ * macOS: CGDisplayHideCursor is process-wide, so if the user alt-tabs to another
+ * app mid-drawing the cursor would stay hidden over that app. Restore it whenever
+ * our windows lose focus and re-hide when they regain it, but only while drawing.
+ * Windows ShowCursor only affects our own HWNDs, so this is macOS-only.
+ */
+function registerCursorFocusHandlers() {
+  if (process.platform !== 'darwin') return;
+  app.on('browser-window-blur', () => {
+    if (drawingMode) showOsCursor();
+  });
+  app.on('browser-window-focus', () => {
+    if (drawingMode) hideOsCursor();
+  });
 }
 
 // ─── Debounce helper ──────────────────────────────────────────────────────────
@@ -734,20 +758,10 @@ export function createOverlayWindowForDisplay(display) {
   if (process.platform === 'win32') {
     win.on('focus', () => {
       if (!drawingMode) return;
-      winOverlayFocusEventCount += 1;
-      winDbg('overlay:focus-event-fired', {
-        displayId: display.id,
-        cumulativeCount: winOverlayFocusEventCount,
-      });
       setImmediate(() => {
         const topWin = mainWindowsByDisplayId.get(display.id);
         if (topWin && !topWin.isDestroyed()) {
           topWin.moveTop();
-          winMainMoveTopCount += 1;
-          winDbg('main:moveTop-fired (from overlay focus race)', {
-            displayId: display.id,
-            cumulativeMoveTopCount: winMainMoveTopCount,
-          });
         }
       });
     });
@@ -778,23 +792,10 @@ function setDrawingModeState(enabled) {
   const prev = drawingMode;
 
   const activeOverlay = overlayWindowsByDisplayId.get(activeDisplayId);
-  const activeMainForLog = mainWindowsByDisplayId.get(activeDisplayId);
-  winDbg('setDrawingModeState:enter', {
-    prev,
-    next: enabled,
-    activeDisplayId,
-    overlayExists: !!(activeOverlay && !activeOverlay.isDestroyed()),
-    overlayFocused: activeOverlay && !activeOverlay.isDestroyed() ? activeOverlay.isFocused() : null,
-    mainExists: !!(activeMainForLog && !activeMainForLog.isDestroyed()),
-    mainFocused: activeMainForLog && !activeMainForLog.isDestroyed() ? activeMainForLog.isFocused() : null,
-  });
 
-  // Same-state reentry would tear down the cursor wake-up burst
-  // mid-flight (timer clear at the top of the block) and re-broadcast
-  // DRAWING_MODE_CHANGED, racing the renderer's cursor/passthrough
-  // wiring with itself.
+  // Same-state reentry would re-broadcast DRAWING_MODE_CHANGED, racing the
+  // renderer's passthrough wiring with itself.
   if (enabled === prev) {
-    winDbg('setDrawingModeState:noop-same-state', { state: enabled });
     return;
   }
 
@@ -809,24 +810,17 @@ function setDrawingModeState(enabled) {
   // those clear _strokeActive on destroy rather than block. Mac/Win/X11 keep a
   // persistent overlay, so there is nothing to lose and no gate.
   if (!enabled && IS_WAYLAND && _strokeActive) {
-    winDbg('setDrawingModeState:blocked-mid-stroke', {});
     return;
   }
 
   drawingMode = enabled;
 
-  if (enabled) {
-    winFocusTickCount = 0;
-    winOverlayFocusEventCount = 0;
-    winMainMoveTopCount = 0;
-  }
-
-  // Clear any previous cursor-focus refresh timer; it gets re-armed below
-  // only when entering drawing mode.
-  if (cursorFocusRefreshTimer) {
-    clearInterval(cursorFocusRefreshTimer);
-    cursorFocusRefreshTimer = null;
-  }
+  // Hide/show the OS cursor through the native platform API. No-op on Linux and
+  // any platform without bindings. The DOM cursor rendered by the overlay takes
+  // over while drawing; on exit the native cursor is restored immediately
+  // (no dependence on a subsequent pointer move).
+  if (enabled) hideOsCursor();
+  else showOsCursor();
 
   // Wayland: the fullscreen drawing overlay only exists while drawing — created
   // on enter, destroyed on exit. A fresh map is the only stable way to show a
@@ -853,131 +847,10 @@ function setDrawingModeState(enabled) {
   });
 
   if (!IS_WAYLAND && activeOverlay && !activeOverlay.isDestroyed()) {
-    // Tell the persistent overlay's renderer, before the cursor wake-up burst so
-    // it has set `cursor: none` by the time the synthetic mouseMove triggers
-    // macOS WindowServer to re-evaluate. (On Wayland the on-demand overlay learns
-    // drawing mode via its own did-finish-load.) The OS-cursor wake-up below is a
-    // separate, later migration.
+    // Tell the persistent overlay's renderer so it shows/hides its DOM cursor.
+    // (On Wayland the on-demand overlay learns drawing mode via its own
+    // did-finish-load.)
     activeOverlay.webContents.send(OVERLAY.DRAWING_MODE_CHANGED, drawingMode);
-
-    if (drawingMode && !IS_WAYLAND) {
-      // Cursor wake-up: focus the web view (renderer-level only — does
-      // NOT steal OS focus from the screen-shared app) and synthesise
-      // a 1-pixel mouseMove followed by a move back to the real cursor
-      // point. macOS WindowServer needs both render focus and a
-      // non-zero-delta pointer event to commit to the cursor:none
-      // surface the renderer just installed.
-      //
-      // Burst fires at three staggered intervals. WindowServer's cursor
-      // re-evaluation cadence is non-deterministic from JS's viewpoint,
-      // and a single burst occasionally lands outside its sampling
-      // window. Three independent shots widen the catch surface from
-      // one ~16ms frame to ~150ms without flooding the renderer's
-      // input pipeline. Each call is idempotent: same position; the
-      // renderer cursor:none is already set, duplicate events just
-      // re-trigger evaluation against the same correct surface.
-      const fireCursorWakeup = (tag) => {
-        if (!drawingMode) return;
-        // Re-resolve the active overlay so multi-display switches that
-        // happen during the 30-180ms burst window route the wake-up to
-        // the right window.
-        const overlay = overlayWindowsByDisplayId.get(activeDisplayId);
-        if (!overlay || overlay.isDestroyed()) return;
-        try {
-          overlay.webContents.focus();
-          const point = screen.getCursorScreenPoint();
-          const bounds = overlay.getBounds();
-          const localX = point.x - bounds.x;
-          const localY = point.y - bounds.y;
-          overlay.webContents.sendInputEvent({
-            type: 'mouseMove',
-            x: localX + 1,
-            y: localY,
-          });
-          overlay.webContents.sendInputEvent({
-            type: 'mouseMove',
-            x: localX,
-            y: localY,
-          });
-          winDbg(`AD-7 burst:${tag} fired`, { localX, localY });
-        } catch (err) {
-          log.warn(`[window-manager] synthetic cursor mouseMove dropped at ${tag}:`, err?.message);
-          winDbg(`AD-7 burst:${tag} THREW`, { error: err?.message });
-        }
-      };
-      setTimeout(() => fireCursorWakeup('30ms'), 30);
-      setTimeout(() => fireCursorWakeup('80ms'), 80);
-      setTimeout(() => fireCursorWakeup('180ms'), 180);
-
-      // Sustained cursor-focus refresh while drawing mode is on. The
-      // wake-up burst stops at 180ms, but on macOS WindowServer
-      // re-evaluates cursor via OS-level tracking on any real
-      // pointermove that follows, and that re-evaluation ignores the
-      // webview's `cursor: none` unless the webContents is currently
-      // render-focused. Without a sustained refresh the OS cursor
-      // snaps back to arrow the first time another window steals
-      // render focus (settings dialog, system UI, dock hover). DWM
-      // on Windows also keys SetCursor delivery off the focused
-      // webContents, so the same refresh keeps the HWND cursor
-      // honouring `cursor: none` across focus drift.
-      //
-      // Re-resolve the active overlay each tick — `activeDisplayId`
-      // can change mid-session (user drags the ball / bar across
-      // displays), and capturing the entry-time overlay would leave
-      // the new active overlay unrefreshed AND churn focus on the
-      // stale one. Body guard auto-clears the interval on exit.
-      cursorFocusRefreshTimer = setInterval(() => {
-        if (!drawingMode) {
-          clearInterval(cursorFocusRefreshTimer);
-          cursorFocusRefreshTimer = null;
-          return;
-        }
-        const overlay = overlayWindowsByDisplayId.get(activeDisplayId);
-        if (!overlay || overlay.isDestroyed()) return;
-        try {
-          overlay.webContents.focus();
-          winFocusTickCount += 1;
-          // Sample every 10th tick (1s cadence) so the log stays readable.
-          // Tick 1 captured explicitly to anchor t=0 since the burst spans 30-180ms.
-          if (winFocusTickCount === 1 || winFocusTickCount % 10 === 0) {
-            const mainWin = mainWindowsByDisplayId.get(activeDisplayId);
-            winDbg('cursorFocusRefreshTimer:tick', {
-              tickN: winFocusTickCount,
-              overlayFocused: overlay.isFocused(),
-              mainFocused: mainWin && !mainWin.isDestroyed() ? mainWin.isFocused() : null,
-              overlayFocusEventsSoFar: winOverlayFocusEventCount,
-              mainMoveTopsSoFar: winMainMoveTopCount,
-            });
-          }
-        } catch {
-          /* best-effort */
-        }
-      }, 100);
-    } else if (IS_WIN) {
-      // Win exit cursor refresh: the HWND cursor remains at whatever
-      // Chromium last issued via SetCursor (cursor:none from drawing
-      // mode) until Windows fires a fresh WM_SETCURSOR, which only
-      // happens on real pointer movement. Toggling setIgnoreMouseEvents
-      // on the main window flips WS_EX_LAYERED/WS_EX_TRANSPARENT, which
-      // DWM treats as a window-state change and re-evaluates the
-      // cursor. Final state ends at (true, forward:true) — the steady-
-      // state default; the passthrough guard re-syncs to (false) on the
-      // next real mouseMove if the pointer is over an interactive
-      // element. Delay 50ms so the renderer has applied body cursor:''
-      // before the flip.
-      setTimeout(() => {
-        if (drawingMode) return;
-        const mainWin = mainWindowsByDisplayId.get(activeDisplayId);
-        if (!mainWin || mainWin.isDestroyed()) return;
-        try {
-          mainWin.setIgnoreMouseEvents(false);
-          mainWin.setIgnoreMouseEvents(true, { forward: true });
-          winDbg('exit cursor-refresh ignoreMouseEvents-toggle fired');
-        } catch (err) {
-          winDbg('exit cursor-refresh ignoreMouseEvents-toggle THREW', { error: err?.message });
-        }
-      }, 50);
-    }
   }
 
   // Notify the active display's main window (ControlBar.vue visual indicators).
