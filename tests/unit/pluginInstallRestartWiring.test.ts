@@ -5,7 +5,7 @@
  * with handlers that merely closed the dialog, so the button did nothing —
  * these tests pin the wiring in every host panel.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import { createI18n } from 'vue-i18n'
@@ -58,7 +58,21 @@ function mountPanel(component: unknown) {
 
 describe('install-progress restart wiring', () => {
   beforeEach(() => {
-    ;(window as { openPenApi?: unknown }).openPenApi = { relaunchApp: vi.fn() }
+    // A truthy-but-partial stub turns the panels' optional-chained API calls
+    // into TypeErrors, so every method the mounted hooks touch must exist.
+    ;(window as { openPenApi?: unknown }).openPenApi = {
+      relaunchApp: vi.fn(),
+      getModuleManifests: vi.fn(async () => []),
+      onModuleManifests: vi.fn(() => () => {}),
+      getSettings: vi.fn(async () => ({})),
+      getInitialDisabledModules: vi.fn(async () => []),
+      updateSettings: vi.fn(async () => {}),
+      onSettingsUpdated: vi.fn(() => () => {}),
+    }
+  })
+
+  afterEach(() => {
+    delete (window as { openPenApi?: unknown }).openPenApi
   })
 
   it('browse panel: restart emit relaunches the app', () => {

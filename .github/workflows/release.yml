@@ -104,7 +104,7 @@ jobs:
     # Package release-PR merges create no GitHub Release (skip-github-release:
     # SDK packages are npm-only per spec), so releases_created stays false for
     # them — the head-commit check keeps npm publish firing on those merges.
-    if: ${{ always() && (needs.release-please.outputs.releases_created == 'true' || github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'chore(main): release')) && github.server_url == 'https://github.com' }}
+    if: "${{ always() && (needs.release-please.outputs.releases_created == 'true' || github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'chore(main): release')) && github.server_url == 'https://github.com' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
