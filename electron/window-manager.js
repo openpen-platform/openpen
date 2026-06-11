@@ -27,6 +27,17 @@ const __dirname = path.dirname(__filename);
 /** @type {Map<number, BrowserWindow>} Per-display control-bar windows, keyed by display.id. */
 const mainWindowsByDisplayId = new Map();
 
+/**
+ * @type {Set<number>} display.id of control-bar windows that have already
+ * self-revealed (CONTENT_READY or the 3s fallback fired). Only these are safe
+ * for `reconcileStandardBarWindows()` to `win.show()`: a window created
+ * `show:false` must not be force-shown before its first paint or DWM may flash
+ * an empty transparent frame (the same hazard the CONTENT_READY gate guards).
+ * Hotplugging a monitor while the bar is visible is the trigger — the new
+ * display's window is still pre-CONTENT_READY when reconcile runs.
+ */
+const readyMainDisplayIds = new Set();
+
 /** @type {Map<number, BrowserWindow>} Per-display overlay windows, keyed by display.id. */
 const overlayWindowsByDisplayId = new Map();
 
@@ -360,6 +371,9 @@ function _reconcileDisplayWindows() {
       if (overlayWin && !overlayWin.isDestroyed()) overlayWin.moveTop();
       if (!mainWin.isDestroyed()) mainWin.moveTop();
     }
+    // A display added during hotplug shows its window on CONTENT_READY; reconcile
+    // so a newly-present display matches barHidden instead of always appearing.
+    reconcileStandardBarWindows();
   } else {
     reconcileLinuxWindows();
   }
@@ -467,7 +481,8 @@ export function createMainWindowForDisplay(display) {
   // Fallback: if CONTENT_READY never arrives (renderer crash, slow cold-start),
   // force-show after 3 s so the window isn't permanently invisible.
   const showTimeoutId = setTimeout(() => {
-    if (!win.isDestroyed() && !win.isVisible()) {
+    readyMainDisplayIds.add(display.id);
+    if (!win.isDestroyed() && !win.isVisible() && !barHidden) {
       log.warn(`[WindowManager] CONTENT_READY timeout, force-showing main window for display ${display.id}`);
       win.show();
       log.info(`[WindowManager] main window visible: ${win.isVisible()} (display ${display.id})`);
@@ -476,7 +491,8 @@ export function createMainWindowForDisplay(display) {
 
   win.webContents.ipc.once(WINDOW.CONTENT_READY, () => {
     clearTimeout(showTimeoutId);
-    if (!win.isDestroyed()) {
+    readyMainDisplayIds.add(display.id);
+    if (!win.isDestroyed() && !barHidden) {
       win.show();
       log.info(`[WindowManager] main window visible: ${win.isVisible()} (display ${display.id})`);
     }
@@ -493,6 +509,7 @@ export function createMainWindowForDisplay(display) {
   win.on('closed', () => {
     clearTimeout(showTimeoutId);
     mainWindowsByDisplayId.delete(display.id);
+    readyMainDisplayIds.delete(display.id);
     if (activeDisplayId === display.id) activeDisplayId = -1;
   });
 }
@@ -979,31 +996,53 @@ export function closeSettingsWindow() {
 // ─── Show / hide ──────────────────────────────────────────────────────────────
 
 /**
+ * Standard-path (non-Wayland) analogue of reconcileLinuxWindows for the user-driven
+ * bar visibility. Each display owns its own transparent fullscreen control-bar window
+ * (the ball renders only on the active display); they must hide/show together so the
+ * single `barHidden` flag stays a true derived state across every display. Toggling
+ * only the active display's window would let a display drift out of sync — switching
+ * the active display or hot-plugging a monitor while hidden would re-reveal the bar.
+ * Settings-open dims the active window via opacity, not visibility, so it composes
+ * cleanly with this reconcile.
+ *
+ * Reveal is gated on `readyMainDisplayIds`: a window created `show:false` owns its
+ * own first reveal via the CONTENT_READY handler (which already respects barHidden).
+ * Reconcile must not force-show a pre-CONTENT_READY window or DWM may flash an empty
+ * transparent frame — the exact hazard the show:false gate exists to prevent. A
+ * monitor hot-plugged while the bar is visible hits this: its window is still
+ * pre-CONTENT_READY when reconcile runs, so it is left to self-reveal. Hide is
+ * applied to every window unconditionally — hiding never flashes.
+ */
+function reconcileStandardBarWindows() {
+  if (IS_WAYLAND) return;
+  for (const [id, win] of mainWindowsByDisplayId) {
+    if (win.isDestroyed()) continue;
+    if (barHidden) {
+      if (win.isVisible()) win.hide();
+    } else if (!win.isVisible() && readyMainDisplayIds.has(id)) {
+      win.show();
+    }
+  }
+}
+
+/**
  * Show the control bar. `barHidden` is the single cross-platform source of truth
  * for the user-driven hide/show (toggleBar shortcut + tray hide). On Wayland the
  * visibility is owned solely by reconcileLinuxWindows() (a direct win.show() here
  * would be a second window-mutating path, violating the single-coordinator rule);
- * elsewhere the persistent main window is shown directly.
+ * elsewhere every per-display window is reconciled to barHidden.
  */
 export function showMainWindow() {
   barHidden = false;
-  if (IS_WAYLAND) {
-    reconcileLinuxWindows();
-  } else {
-    const win = mainWindowsByDisplayId.get(activeDisplayId);
-    if (win && !win.isDestroyed()) win.show();
-  }
+  if (IS_WAYLAND) reconcileLinuxWindows();
+  else reconcileStandardBarWindows();
   _barHiddenChangedCb?.(false);
 }
 
 export function hideMainWindow() {
   barHidden = true;
-  if (IS_WAYLAND) {
-    reconcileLinuxWindows();
-  } else {
-    const win = mainWindowsByDisplayId.get(activeDisplayId);
-    if (win && !win.isDestroyed()) win.hide();
-  }
+  if (IS_WAYLAND) reconcileLinuxWindows();
+  else reconcileStandardBarWindows();
   _barHiddenChangedCb?.(true);
 }
 
@@ -1050,6 +1089,9 @@ export function setMainWindowPosition({ x, y }) {
  */
 export function setActiveDisplayId(displayId) {
   activeDisplayId = displayId;
+  // Re-derive per-display bar visibility for the new active display: switching
+  // displays while the bar is hidden must not re-reveal it on the new display.
+  reconcileStandardBarWindows();
 }
 
 // ─── Getters ──────────────────────────────────────────────────────────────────
