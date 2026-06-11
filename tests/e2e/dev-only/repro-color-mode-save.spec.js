@@ -25,7 +25,7 @@ async function getMainWindow(electronApp) {
         const url = w.url();
         if (!url.includes('window=overlay') && !url.includes('window=settings')) {
           await w.waitForLoadState('domcontentloaded');
-          await w.waitForSelector('.float-ball, .control-bar', { timeout: 20000 });
+          await w.waitForSelector('[data-testid="floatball-btn"], [data-testid="control-bar"]', { timeout: 20000 });
           return w;
         }
       } catch (_) { /* window may be closing */ }
@@ -36,15 +36,15 @@ async function getMainWindow(electronApp) {
 }
 
 async function expandControlBar(mainWin) {
-  const expanded = await mainWin.evaluate(() => document.querySelector('.control-bar') !== null);
+  const expanded = await mainWin.evaluate(() => document.querySelector('[data-testid="control-bar"]') !== null);
   if (expanded) return;
-  await mainWin.waitForSelector('.float-ball', { timeout: 10000 });
+  await mainWin.waitForSelector('[data-testid="floatball-btn"]', { timeout: 10000 });
   await mainWin.evaluate(() => {
-    document.querySelector('.float-ball')?.dispatchEvent(
+    document.querySelector('[data-testid="floatball-btn"]')?.dispatchEvent(
       new MouseEvent('click', { bubbles: true, cancelable: true })
     );
   });
-  await mainWin.waitForSelector('.control-bar', { timeout: 5000 });
+  await mainWin.waitForSelector('[data-testid="control-bar"]', { timeout: 5000 });
 }
 
 async function openSettings(electronApp, mainWin) {
@@ -58,7 +58,7 @@ async function openSettings(electronApp, mainWin) {
   const settingsWin = await winPromise;
   await settingsWin.waitForLoadState('domcontentloaded');
   await settingsWin.waitForSelector('[data-testid="settings-window"]', { timeout: 10000 });
-  await settingsWin.waitForSelector('.color-chip.selected', { timeout: 8000 });
+  await settingsWin.waitForSelector('[data-testid^="settings-color-chip-"][aria-pressed="true"]', { timeout: 8000 });
   return settingsWin;
 }
 

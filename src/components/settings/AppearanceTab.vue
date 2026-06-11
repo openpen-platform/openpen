@@ -88,6 +88,7 @@ function setTheme(theme: string) {
       </div>
       <select
         class="cw-select"
+        data-testid="settings-language-select"
         :value="draft.language"
         :aria-label="t('displayLanguage')"
         @change="setLanguage(($event.target as HTMLSelectElement).value)"
@@ -123,12 +124,14 @@ function setTheme(theme: string) {
         <div class="cw-row-label">{{ t('accentColor') }}</div>
         <div class="cw-row-sub">{{ t('accentColorSub') }}</div>
       </div>
-      <div class="color-chips">
+      <div class="color-chips" data-testid="settings-color-chips">
         <button
           v-for="chip in ACCENT_COLORS"
           :key="chip.id"
           class="color-chip"
+          :data-testid="`settings-color-chip-${chip.id}`"
           :class="{ selected: selectedAccentId === chip.id }"
+          :aria-pressed="selectedAccentId === chip.id"
           :style="{ background: chip.gradient }"
           :title="chip.label"
           :aria-label="chip.label"
@@ -143,7 +146,7 @@ function setTheme(theme: string) {
         <div class="cw-row-label">{{ t('ballOpacity') }}</div>
         <div class="cw-row-sub">{{ t('ballOpacitySub') }}</div>
       </div>
-      <div class="opacity-row">
+      <div class="opacity-row" data-testid="settings-opacity-row">
         <AppSlider
           v-model="opacityPercent"
           :min="20"

@@ -25,21 +25,21 @@ describe('ModuleRow', () => {
       description: 'Free-form pen tool.',
       isEnabled: true,
     })
-    expect(wrapper.find('.modules-row-name').text()).toBe('Freehand')
-    expect(wrapper.find('.modules-row-desc').text()).toBe('Free-form pen tool.')
+    expect(wrapper.find('[data-testid="module-row-name"]').text()).toBe('Freehand')
+    expect(wrapper.find('[data-testid="module-row-desc"]').text()).toBe('Free-form pen tool.')
   })
 
-  it('hides .modules-version when version prop is undefined', () => {
+  it('hides version element when version prop is undefined', () => {
     const wrapper = mountRow({
       id: '@openpen/freehand',
       displayName: 'Freehand',
       description: 'Free-form pen tool.',
       isEnabled: true,
     })
-    expect(wrapper.find('.modules-version').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="module-row-version"]').exists()).toBe(false)
   })
 
-  it('hides .modules-version when version prop is empty string', () => {
+  it('hides version element when version prop is empty string', () => {
     const wrapper = mountRow({
       id: '@openpen/freehand',
       displayName: 'Freehand',
@@ -47,10 +47,10 @@ describe('ModuleRow', () => {
       version: '',
       isEnabled: true,
     })
-    expect(wrapper.find('.modules-version').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="module-row-version"]').exists()).toBe(false)
   })
 
-  it('shows .modules-version when version prop is provided', () => {
+  it('shows version element when version prop is provided', () => {
     const wrapper = mountRow({
       id: 'my-plugin',
       displayName: 'My Plugin',
@@ -58,8 +58,8 @@ describe('ModuleRow', () => {
       version: '1.0.0',
       isEnabled: true,
     })
-    expect(wrapper.find('.modules-version').exists()).toBe(true)
-    expect(wrapper.find('.modules-version').text()).toBe('v1.0.0')
+    expect(wrapper.find('[data-testid="module-row-version"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="module-row-version"]').text()).toBe('v1.0.0')
   })
 
   it('emits update:enabled when toggle is clicked', async () => {
@@ -69,7 +69,7 @@ describe('ModuleRow', () => {
       description: 'Free-form pen tool.',
       isEnabled: true,
     })
-    await wrapper.find('button.app-toggle').trigger('click')
+    await wrapper.find('[data-testid="module-row-toggle"]').trigger('click')
     const emitted = wrapper.emitted('update:enabled')
     expect(emitted).toBeTruthy()
     expect(emitted![0]).toEqual([false])
@@ -84,8 +84,8 @@ describe('ModuleRow', () => {
       isEnabled: true,
       removable: true,
     })
-    expect(wrapper.find('.modules-row-actions').exists()).toBe(true)
-    expect(wrapper.find('.mp-remove-btn').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="module-row-actions"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="module-row-remove-btn"]').exists()).toBe(true)
   })
 
   it('hides remove button when removable is not set', () => {
@@ -95,8 +95,8 @@ describe('ModuleRow', () => {
       description: 'Free-form pen tool.',
       isEnabled: true,
     })
-    expect(wrapper.find('.modules-row-actions').exists()).toBe(false)
-    expect(wrapper.find('.mp-remove-btn').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="module-row-actions"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="module-row-remove-btn"]').exists()).toBe(false)
   })
 
   it('emits remove when remove button is clicked', async () => {
@@ -107,7 +107,7 @@ describe('ModuleRow', () => {
       isEnabled: true,
       removable: true,
     })
-    await wrapper.find('.mp-remove-btn').trigger('click')
+    await wrapper.find('[data-testid="module-row-remove-btn"]').trigger('click')
     expect(wrapper.emitted('remove')).toBeTruthy()
   })
 
@@ -120,7 +120,7 @@ describe('ModuleRow', () => {
       isEnabled: true,
       hasUpdate: true,
     })
-    expect(wrapper.find('.mp-badge-update').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="module-row-update-badge"]').exists()).toBe(true)
   })
 
   it('hides update badge when hasUpdate is false', () => {
@@ -132,6 +132,6 @@ describe('ModuleRow', () => {
       isEnabled: true,
       hasUpdate: false,
     })
-    expect(wrapper.find('.mp-badge-update').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="module-row-update-badge"]').exists()).toBe(false)
   })
 })

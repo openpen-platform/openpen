@@ -48,7 +48,7 @@ async function openSettingsWindow() {
   throw new Error('Settings window did not open within timeout');
 }
 
-test('inspect .pac-modal computed styles and height interpolation', async () => {
+test('inspect pac-modal computed styles and height interpolation', async () => {
   await openSettingsWindow();
 
   // Wait for settings window to fully load
@@ -56,24 +56,24 @@ test('inspect .pac-modal computed styles and height interpolation', async () => 
   await settingsWin.waitForSelector('[data-testid="settings-window"]', { timeout: 10000 });
 
   // Navigate: Modules top-level tab (defaults to Marketplace sub-tab)
-  await settingsWin.click('.stg-tab:has-text("Modules")');
+  await settingsWin.click('[data-testid="tab-modules"]');
   await settingsWin.waitForTimeout(300);
 
-  // Click "Add source" button to open .pac-modal
-  const addSourceBtn = settingsWin.locator('.mt-add-source-btn');
+  // Click "Add source" button to open pac-modal
+  const addSourceBtn = settingsWin.getByTestId('plugins-add-source-btn');
   await addSourceBtn.waitFor({ state: 'visible', timeout: 5000 });
   await addSourceBtn.click();
   await settingsWin.waitForTimeout(300);
 
-  // Wait for .pac-modal to appear
-  await settingsWin.waitForSelector('.pac-modal', { timeout: 5000 });
+  // Wait for pac-modal to appear
+  await settingsWin.waitForSelector('[data-testid="pac-modal"]', { timeout: 5000 });
 
   // --- Capture initial computed styles ---
   const initialData = await settingsWin.evaluate(() => {
-    const modal = document.querySelector('.pac-modal');
-    const overlay = document.querySelector('.pac-overlay');
+    const modal = document.querySelector('[data-testid="pac-modal"]');
+    const overlay = document.querySelector('[data-testid="pac-overlay"]');
 
-    if (!modal) return { error: '.pac-modal not found' };
+    if (!modal) return { error: 'pac-modal not found' };
 
     const cs = window.getComputedStyle(modal);
     const overlayCs = overlay ? window.getComputedStyle(overlay) : null;
@@ -88,11 +88,8 @@ test('inspect .pac-modal computed styles and height interpolation', async () => 
         transitionDuration:       cs.transitionDuration,
         transitionTimingFunction: cs.transitionTimingFunction,
         display:                  cs.display,
-        // Check if height is explicitly set (auto vs computed px)
         heightInlineStyle:        modal.style.height,
-        // overflow matters for clipping
         overflow:                 cs.overflow,
-        // Flex layout info
         flexDirection:            cs.flexDirection,
         position:                 cs.position,
         boxSizing:                cs.boxSizing,
@@ -107,14 +104,14 @@ test('inspect .pac-modal computed styles and height interpolation', async () => 
       } : null,
       rectHeight: rect.height,
       rectWidth:  rect.width,
-      // Active sub-tab at initial state
-      activeSubTab: document.querySelector('.mp-custom-sub-tab.active')?.textContent?.trim() ?? 'none',
-      // All sub-tabs available
-      allSubTabs: Array.from(document.querySelectorAll('.mp-custom-sub-tab')).map(b => ({
+      activeSubTab: document.querySelector('[data-testid="pac-tab-local"][aria-pressed="true"], [data-testid="pac-tab-github"][aria-pressed="true"]')?.textContent?.trim() ?? 'none',
+      allSubTabs: [
+        document.querySelector('[data-testid="pac-tab-local"]'),
+        document.querySelector('[data-testid="pac-tab-github"]'),
+      ].filter(Boolean).map(b => ({
         text: b.textContent?.trim(),
         active: b.classList.contains('active'),
       })),
-      // Verify interpolate-size on :root
       rootInterpolateSize: window.getComputedStyle(document.documentElement).interpolateSize ?? 'NOT_EXPOSED',
     };
   });
@@ -123,8 +120,11 @@ test('inspect .pac-modal computed styles and height interpolation', async () => 
   console.log(JSON.stringify(initialData, null, 2));
 
   // --- Switch to the OTHER sub-tab and capture immediately ---
-  // Click the non-active sub-tab
-  const otherTab = settingsWin.locator('.mp-custom-sub-tab:not(.active)');
+  const localTabActive = await settingsWin.evaluate(() =>
+    document.querySelector('[data-testid="pac-tab-local"]')?.classList.contains('active')
+  );
+  const otherTabTestId = localTabActive ? 'pac-tab-github' : 'pac-tab-local';
+  const otherTab = settingsWin.getByTestId(otherTabTestId);
   const otherTabCount = await otherTab.count();
   console.log(`\n=== OTHER SUB-TAB COUNT: ${otherTabCount} ===`);
 
@@ -135,7 +135,7 @@ test('inspect .pac-modal computed styles and height interpolation', async () => 
 
   // Record height right before click
   const heightBeforeClick = await settingsWin.evaluate(() => {
-    const modal = document.querySelector('.pac-modal');
+    const modal = document.querySelector('[data-testid="pac-modal"]');
     return modal ? modal.getBoundingClientRect().height : -1;
   });
   console.log(`\n=== HEIGHT BEFORE CLICK: ${heightBeforeClick}px ===`);
@@ -143,19 +143,18 @@ test('inspect .pac-modal computed styles and height interpolation', async () => 
   // Click the other tab
   await otherTab.first().click();
 
-  // Capture immediately after click (~10ms) — done synchronously in one evaluate
+  // Capture immediately after click
   const immediateData = await settingsWin.evaluate(() => {
-    const modal = document.querySelector('.pac-modal');
-    if (!modal) return { error: '.pac-modal not found after tab switch' };
+    const modal = document.querySelector('[data-testid="pac-modal"]');
+    if (!modal) return { error: 'pac-modal not found after tab switch' };
     const cs = window.getComputedStyle(modal);
     const rect = modal.getBoundingClientRect();
     return {
       heightPx:            rect.height,
       computedHeight:      cs.height,
-      activeSubTab:        document.querySelector('.mp-custom-sub-tab.active')?.textContent?.trim() ?? 'none',
-      // If vue used v-if, the old content DOM should be gone
-      localTabContentExists: !!document.querySelector('.mp-drop-zone'),
-      githubTabContentExists: !!document.querySelector('.mp-input-field'),
+      activeSubTab:        document.querySelector('[data-testid="pac-tab-local"][aria-pressed="true"], [data-testid="pac-tab-github"][aria-pressed="true"]')?.textContent?.trim() ?? 'none',
+      localTabContentExists: !!document.querySelector('[data-testid="pac-drop-zone"]'),
+      githubTabContentExists: !!document.querySelector('[data-testid="pac-repo-input"]'),
     };
   });
 
@@ -166,16 +165,16 @@ test('inspect .pac-modal computed styles and height interpolation', async () => 
   await settingsWin.waitForTimeout(400);
 
   const finalData = await settingsWin.evaluate(() => {
-    const modal = document.querySelector('.pac-modal');
-    if (!modal) return { error: '.pac-modal not found after wait' };
+    const modal = document.querySelector('[data-testid="pac-modal"]');
+    if (!modal) return { error: 'pac-modal not found after wait' };
     const cs = window.getComputedStyle(modal);
     const rect = modal.getBoundingClientRect();
     return {
       heightPx:            rect.height,
       computedHeight:      cs.height,
-      activeSubTab:        document.querySelector('.mp-custom-sub-tab.active')?.textContent?.trim() ?? 'none',
-      localTabContentExists:  !!document.querySelector('.mp-drop-zone'),
-      githubTabContentExists: !!document.querySelector('.mp-input-field'),
+      activeSubTab:        document.querySelector('[data-testid="pac-tab-local"][aria-pressed="true"], [data-testid="pac-tab-github"][aria-pressed="true"]')?.textContent?.trim() ?? 'none',
+      localTabContentExists:  !!document.querySelector('[data-testid="pac-drop-zone"]'),
+      githubTabContentExists: !!document.querySelector('[data-testid="pac-repo-input"]'),
     };
   });
 
@@ -193,14 +192,12 @@ test('inspect .pac-modal computed styles and height interpolation', async () => 
   console.log(`\nHeight changed at all: ${heightChanged}`);
   console.log(`Height appears to have jumped instantly (no intermediate): ${jumpedInstantly}`);
 
-  // --- Additional diagnostic: check for Vue scoped attribute on .pac-modal ---
+  // --- Additional diagnostic: check for Vue scoped attribute on pac-modal ---
   const scopedAttrData = await settingsWin.evaluate(() => {
-    const modal = document.querySelector('.pac-modal');
+    const modal = document.querySelector('[data-testid="pac-modal"]');
     if (!modal) return null;
-    // Vue scoped CSS adds data-v-XXXXXXXX attributes
     const attrs = Array.from(modal.attributes).map(a => a.name);
     const scopedAttrs = attrs.filter(a => a.startsWith('data-v-'));
-    // Get all stylesheets and find rules matching .pac-modal
     const matchingRules = [];
     for (const sheet of document.styleSheets) {
       try {
@@ -220,6 +217,6 @@ test('inspect .pac-modal computed styles and height interpolation', async () => 
     return { scopedAttrs, matchingRules };
   });
 
-  console.log('\n=== .pac-modal SCOPED ATTRIBUTES & MATCHING CSS RULES ===');
+  console.log('\n=== pac-modal SCOPED ATTRIBUTES & MATCHING CSS RULES ===');
   console.log(JSON.stringify(scopedAttrData, null, 2));
 });

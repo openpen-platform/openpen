@@ -240,6 +240,7 @@ usePassthroughGuard(contentEl)
         ref="content"
         class="openpen-modal-content openpen-interactive"
         :class="{ 'openpen-modal-danger': danger }"
+        :data-testid="danger ? 'modal-dialog-danger' : 'modal-dialog'"
         @interact-outside="(e: Event) => persistent && e.preventDefault()"
         @escape-key-down="(e: KeyboardEvent) => persistent && e.preventDefault()"
       >

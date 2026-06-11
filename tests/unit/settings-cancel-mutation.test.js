@@ -113,7 +113,7 @@ describe('SettingsView cancel → no enableDragAutoSnap mutation', () => {
     const wrapper = await mountSettingsView(api);
 
     // User opens settings window and immediately clicks Cancel without interaction.
-    await wrapper.find('.stg-btn-cancel').trigger('click');
+    await wrapper.find('[data-testid="cancel-btn"]').trigger('click');
     await flushPromises();
 
     // The watcher must have been fully gated — no preview sent.
@@ -124,7 +124,7 @@ describe('SettingsView cancel → no enableDragAutoSnap mutation', () => {
     const api = makeApi({ enableDragAutoSnap: true });
     const wrapper = await mountSettingsView(api);
 
-    await wrapper.find('.stg-btn-cancel').trigger('click');
+    await wrapper.find('[data-testid="cancel-btn"]').trigger('click');
     await flushPromises();
 
     const falseSnapCalls = api.previewSettings.mock.calls.filter(
@@ -137,7 +137,7 @@ describe('SettingsView cancel → no enableDragAutoSnap mutation', () => {
     const api = makeApi({ enableDragAutoSnap: true });
     const wrapper = await mountSettingsView(api);
 
-    await wrapper.find('.stg-btn-cancel').trigger('click');
+    await wrapper.find('[data-testid="cancel-btn"]').trigger('click');
     await flushPromises();
 
     expect(api.revertSettings).toHaveBeenCalledOnce();
@@ -147,7 +147,7 @@ describe('SettingsView cancel → no enableDragAutoSnap mutation', () => {
     const api = makeApi({ enableDragAutoSnap: true });
     const wrapper = await mountSettingsView(api);
 
-    await wrapper.find('.stg-btn-cancel').trigger('click');
+    await wrapper.find('[data-testid="cancel-btn"]').trigger('click');
     await flushPromises();
 
     // Ordering: revert must complete before close.
@@ -163,7 +163,7 @@ describe('SettingsView cancel → no enableDragAutoSnap mutation', () => {
     // Record all previewSettings calls at this baseline (before cancel).
     const callsBefore = api.previewSettings.mock.calls.length;
 
-    await wrapper.find('.stg-btn-cancel').trigger('click');
+    await wrapper.find('[data-testid="cancel-btn"]').trigger('click');
     await flushPromises();
 
     // No new calls with enableDragAutoSnap=false should appear after cancel.
@@ -241,7 +241,7 @@ describe('SettingsView cancel → no enableDragAutoSnap mutation', () => {
       return { enableDragAutoSnap: true };
     });
 
-    await wrapper.find('.stg-btn-cancel').trigger('click');
+    await wrapper.find('[data-testid="cancel-btn"]').trigger('click');
     await flushPromises();
 
     // The gate must have been false during the entire cancel. No false snap call.

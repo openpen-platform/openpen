@@ -26,7 +26,8 @@ import {
 withDefaults(defineProps<{
   modelValue: boolean
   ariaLabel?: string
-}>(), { ariaLabel: '' })
+  testid?: string
+}>(), { ariaLabel: '', testid: undefined })
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
@@ -44,6 +45,7 @@ function onCheckedChange(val: boolean) {
     :model-value="modelValue"
     :aria-label="ariaLabel"
     :aria-pressed="modelValue"
+    :data-testid="testid"
     @update:model-value="onCheckedChange"
   >
     <SwitchThumb class="app-toggle-thumb" />

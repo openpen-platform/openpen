@@ -5,9 +5,11 @@ import { AppToggle } from '@openpen/module-api/uikit';
 describe('AppToggle', () => {
   it('renders a button element', () => {
     const wrapper = mount(AppToggle, {
-      props: { modelValue: false },
+      props: { modelValue: false, testid: 'app-toggle-sample' },
     });
-    expect(wrapper.find('button.app-toggle').exists()).toBe(true);
+    const btn = wrapper.find('[data-testid="app-toggle-sample"]');
+    expect(btn.exists()).toBe(true);
+    expect(btn.element.tagName).toBe('BUTTON');
   });
 
   it('has class "on" when modelValue is true', () => {

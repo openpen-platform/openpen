@@ -23,13 +23,14 @@ function select(pos: NotificationPosition): void {
 </script>
 
 <template>
-  <div class="position-picker" role="radiogroup" aria-label="Notification position">
+  <div class="position-picker" data-testid="position-picker" role="radiogroup" aria-label="Notification position">
     <button
       v-for="cell in CELLS"
       :key="cell"
       type="button"
       class="position-cell"
       :class="{ 'position-cell--active': modelValue === cell }"
+      :data-testid="`position-cell-${cell}`"
       :aria-label="cell"
       :aria-checked="modelValue === cell"
       role="radio"

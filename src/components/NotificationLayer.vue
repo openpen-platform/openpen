@@ -77,8 +77,8 @@ function variantIconColor(variant: string): string {
 </script>
 
 <template>
-  <div class="notification-layer" aria-live="polite" aria-atomic="false">
-    <TransitionGroup name="notif" tag="div" class="notification-stack" :style="positionStyle">
+  <div class="notification-layer" data-testid="notification-layer" aria-live="polite" aria-atomic="false">
+    <TransitionGroup name="notif" tag="div" class="notification-stack" data-testid="notification-stack" :style="positionStyle">
       <div
         v-for="item in notificationQueue"
         :key="item.id"

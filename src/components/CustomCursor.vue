@@ -9,6 +9,7 @@ const { cursorRef, visible, current } = useCustomCursor()
     v-if="visible && current"
     ref="cursorRef"
     class="openpen-custom-cursor"
+    data-testid="canvas-custom-cursor"
     aria-hidden="true"
     v-html="current.svgMarkup"
   />

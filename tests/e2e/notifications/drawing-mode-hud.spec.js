@@ -46,7 +46,7 @@ test('NotificationLayer container is present in the overlay window', async () =>
   const overlayWin = await getOverlayWindow();
   // Wait for Vue components to mount.
   await overlayWin.waitForTimeout(500);
-  const layer = overlayWin.locator('.notification-layer');
+  const layer = overlayWin.getByTestId('notification-layer');
   await expect(layer).toBeAttached({ timeout: 3000 });
 });
 
@@ -165,7 +165,7 @@ test('notificationPosition defaults to top-center — notification-stack has top
   await overlayWin.waitForTimeout(400);
 
   const stackStyle = await overlayWin.evaluate(() => {
-    const stack = document.querySelector('.notification-stack');
+    const stack = document.querySelector('[data-testid="notification-stack"]');
     if (!stack) return null;
     const s = stack.style;
     return { top: s.top, left: s.left, transform: s.transform };

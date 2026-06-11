@@ -20,7 +20,7 @@ describe('AppSlider', () => {
       props: { modelValue: 5, min: 1, max: 20, step: 1 },
     });
     // Reka UI SliderRoot renders a div with data-orientation
-    const root = wrapper.find('.app-slider-root');
+    const root = wrapper.find('[data-testid="app-slider-root"]');
     expect(root.exists()).toBe(true);
     expect(root.attributes('data-orientation')).toBe('horizontal');
   });
@@ -29,16 +29,16 @@ describe('AppSlider', () => {
     const wrapper = mount(AppSlider, {
       props: { modelValue: 5, min: 1, max: 20, step: 1 },
     });
-    expect(wrapper.find('.app-slider-track').exists()).toBe(true);
-    expect(wrapper.find('.app-slider-range').exists()).toBe(true);
-    expect(wrapper.find('.app-slider-thumb').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="app-slider-track"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="app-slider-range"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="app-slider-thumb"]').exists()).toBe(true);
   });
 
   it('applies correct width via style on root', () => {
     const wrapper = mount(AppSlider, {
       props: { modelValue: 10, min: 1, max: 20, step: 1, width: '72px' },
     });
-    const root = wrapper.find('.app-slider-root');
+    const root = wrapper.find('[data-testid="app-slider-root"]');
     expect(root.element.style.width).toBe('72px');
   });
 
@@ -56,7 +56,7 @@ describe('AppSlider', () => {
     const wrapper = mount(AppSlider, {
       props: { modelValue: 5, min: 1, max: 20, step: 1, orientation: 'vertical', width: '64px' },
     });
-    const root = wrapper.find('.app-slider-root');
+    const root = wrapper.find('[data-testid="app-slider-root"]');
     expect(root.exists()).toBe(true);
     expect(root.attributes('data-orientation')).toBe('vertical');
     expect(root.classes()).toContain('app-slider-root--vertical');
@@ -68,7 +68,7 @@ describe('AppSlider', () => {
     const wrapper = mount(AppSlider, {
       props: { modelValue: 5, min: 1, max: 20, step: 1 },
     });
-    const root = wrapper.find('.app-slider-root');
+    const root = wrapper.find('[data-testid="app-slider-root"]');
     expect(root.classes()).not.toContain('app-slider-root--vertical');
   });
 
@@ -76,9 +76,9 @@ describe('AppSlider', () => {
     const wrapper = mount(AppSlider, {
       props: { modelValue: 5, min: 1, max: 20, step: 2 },
     });
-    const root = wrapper.find('.app-slider-root');
+    const root = wrapper.find('[data-testid="app-slider-root"]');
     // Reka UI renders aria-valuemin / aria-valuemax on the thumb
-    const thumb = wrapper.find('.app-slider-thumb');
+    const thumb = wrapper.find('[data-testid="app-slider-thumb"]');
     expect(thumb.exists()).toBe(true);
     // Root element has the min/max accessible via aria
     expect(root.exists()).toBe(true);
@@ -90,14 +90,14 @@ describe('AppSlider', () => {
     const wrapper = mount(AppSlider, {
       props: { modelValue: 5, min: 1, max: 20, step: 1 },
     });
-    expect(wrapper.find('.app-slider-root').classes()).not.toContain('app-slider-root--inverted');
+    expect(wrapper.find('[data-testid="app-slider-root"]').classes()).not.toContain('app-slider-root--inverted');
   });
 
   it('adds app-slider-root--inverted class when inverted=true (vertical)', () => {
     const wrapper = mount(AppSlider, {
       props: { modelValue: 5, min: 1, max: 20, step: 1, orientation: 'vertical', width: '64px', inverted: true },
     });
-    const root = wrapper.find('.app-slider-root');
+    const root = wrapper.find('[data-testid="app-slider-root"]');
     expect(root.classes()).toContain('app-slider-root--inverted');
   });
 
@@ -105,7 +105,7 @@ describe('AppSlider', () => {
     const wrapper = mount(AppSlider, {
       props: { modelValue: 5, min: 1, max: 20, step: 1, inverted: true },
     });
-    expect(wrapper.find('.app-slider-root').classes()).toContain('app-slider-root--inverted');
+    expect(wrapper.find('[data-testid="app-slider-root"]').classes()).toContain('app-slider-root--inverted');
   });
 
   it('passes inverted=true down to SliderRoot', () => {
@@ -139,8 +139,8 @@ describe('AppSlider', () => {
     const wrapper = mount(AppSlider, {
       props: { modelValue: 5, min: 1, max: 20, step: 1, orientation: 'vertical', width: '64px', inverted: false },
     });
-    expect(wrapper.find('.app-slider-root').classes()).not.toContain('app-slider-root--inverted');
+    expect(wrapper.find('[data-testid="app-slider-root"]').classes()).not.toContain('app-slider-root--inverted');
     await wrapper.setProps({ inverted: true });
-    expect(wrapper.find('.app-slider-root').classes()).toContain('app-slider-root--inverted');
+    expect(wrapper.find('[data-testid="app-slider-root"]').classes()).toContain('app-slider-root--inverted');
   });
 });

@@ -23,7 +23,7 @@ async function getMainWindow() {
         const url = win.url();
         if (url.includes('window=overlay') || url.includes('window=settings')) continue;
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
-        const ready = await win.evaluate(() => !!document.querySelector('.float-ball, .control-bar'));
+        const ready = await win.evaluate(() => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]'));
         if (ready) return win;
       } catch {
         // Ignore windows that are still starting up.
@@ -63,7 +63,7 @@ async function prepareDrawState(mainWin, overlayWin) {
 }
 
 async function drawOneStroke(overlayWin) {
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
   await canvas.dispatchEvent('pointerdown', { clientX: 120, clientY: 120, pointerId: 1, buttons: 1, bubbles: true });
   await canvas.dispatchEvent('pointermove', { clientX: 260, clientY: 160, pointerId: 1, buttons: 1, bubbles: true });
   await canvas.dispatchEvent('pointerup', { clientX: 260, clientY: 160, pointerId: 1, bubbles: true });
@@ -72,7 +72,7 @@ async function drawOneStroke(overlayWin) {
 
 async function hasAnyPixels(overlayWin) {
   return overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas) return false;
     const ctx = canvas.getContext('2d');
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;

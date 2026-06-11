@@ -65,7 +65,7 @@ test('first stroke after launch uses persisted defaultColor + defaultWidth', asy
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
   await overlayWin.waitForTimeout(200);
 
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
 
   // Long horizontal stroke so the center band is visible and unambiguous.
   await canvas.dispatchEvent('pointerdown', {
@@ -82,7 +82,7 @@ test('first stroke after launch uses persisted defaultColor + defaultWidth', asy
   await overlayWin.waitForTimeout(300);
 
   const sample = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas) return null;
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
@@ -115,7 +115,7 @@ test('first stroke after launch uses persisted defaultColor + defaultWidth', asy
   // counting fully-opaque pixels in a vertical sample at the stroke's
   // x midpoint.
   const widthInPixels = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     const ctx = canvas.getContext('2d');
     const dpr = canvas.width / canvas.clientWidth;
     const cx = Math.round(250 * dpr);
@@ -165,7 +165,7 @@ test('opening + closing the settings window does NOT reset the user-changed stro
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
   await overlayWin.waitForTimeout(200);
 
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
   await canvas.dispatchEvent('pointerdown', {
     clientX: 80, clientY: 320, pointerId: 1, buttons: 1, bubbles: true,
   });
@@ -180,7 +180,7 @@ test('opening + closing the settings window does NOT reset the user-changed stro
   await overlayWin.waitForTimeout(300);
 
   const sample = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     const ctx = canvas.getContext('2d');
     const dpr = canvas.width / canvas.clientWidth;
     const py = Math.round(320 * dpr);

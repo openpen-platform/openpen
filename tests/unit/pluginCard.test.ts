@@ -27,16 +27,16 @@ function mountCard(props: InstanceType<typeof PluginCard>['$props']) {
 describe('PluginCard (browse mode)', () => {
   it('not installed: shows Install button and no installed badge', () => {
     const wrapper = mountCard({ entry: makeEntry(), installedVersion: null })
-    expect(wrapper.find('.mp-install-btn').exists()).toBe(true)
-    expect(wrapper.find('.mp-badge-installed').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="plugin-install-btn"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="plugin-installed-badge"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('Todo Overlay')
     expect(wrapper.text()).toContain('@alice/todo')
   })
 
   it('installed: shows installed badge, no active Install button', () => {
     const wrapper = mountCard({ entry: makeEntry(), installedVersion: '1.2.0' })
-    expect(wrapper.find('.mp-badge-installed').exists()).toBe(true)
-    const installBtn = wrapper.find('.mp-install-btn:not(:disabled)')
+    expect(wrapper.find('[data-testid="plugin-installed-badge"]').exists()).toBe(true)
+    const installBtn = wrapper.find('[data-testid="plugin-install-btn"]:not([disabled])')
     expect(installBtn.exists()).toBe(false)
   })
 
@@ -45,7 +45,7 @@ describe('PluginCard (browse mode)', () => {
       entry: makeEntry({ latestVersion: '1.3.0' }),
       installedVersion: '1.2.0',
     })
-    expect(wrapper.find('.mp-badge-update').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="plugin-update-badge"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('1.3.0')
   })
 
@@ -55,14 +55,14 @@ describe('PluginCard (browse mode)', () => {
       installedVersion: null,
       incompatible: true,
     })
-    const installBtn = wrapper.find('.mp-install-btn')
+    const installBtn = wrapper.find('[data-testid="plugin-install-btn"]')
     expect(installBtn.attributes('disabled')).toBeDefined()
     expect(wrapper.find('[aria-disabled="true"]').exists()).toBe(true)
   })
 
   it('emits install event when Install button clicked', async () => {
     const wrapper = mountCard({ entry: makeEntry(), installedVersion: null })
-    await wrapper.find('.mp-install-btn').trigger('click')
+    await wrapper.find('[data-testid="plugin-install-btn"]').trigger('click')
     expect(wrapper.emitted('install')).toBeTruthy()
     expect(wrapper.emitted('install')![0]).toEqual(['@alice/todo', '1.2.0'])
   })

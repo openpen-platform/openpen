@@ -3,8 +3,8 @@ import { mount } from '@vue/test-utils';
 import { AppSegmented } from '@openpen/module-api/uikit';
 
 const OPTIONS = [
-  { value: 'slider', label: 'Slider' },
-  { value: 'popup',  label: 'Popup' },
+  { value: 'slider', label: 'Slider', testid: 'app-seg-opt-slider' },
+  { value: 'popup',  label: 'Popup',  testid: 'app-seg-opt-popup' },
 ];
 
 describe('AppSegmented', () => {
@@ -12,7 +12,7 @@ describe('AppSegmented', () => {
     const wrapper = mount(AppSegmented, {
       props: { modelValue: 'slider', options: OPTIONS },
     });
-    expect(wrapper.findAll('button.app-seg-btn').length).toBe(2);
+    expect(wrapper.findAll('[data-testid^="app-seg-opt-"]').length).toBe(2);
   });
 
   it('renders correct labels', () => {
@@ -46,7 +46,7 @@ describe('AppSegmented', () => {
     const wrapper = mount(AppSegmented, {
       props: { modelValue: 'slider', options: OPTIONS },
     });
-    expect(wrapper.find('.app-seg').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="app-seg"]').exists()).toBe(true);
   });
 
   it('supports 3 options', () => {

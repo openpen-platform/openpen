@@ -111,6 +111,7 @@ function activateIfNeeded() {
         <!-- Brush Erase option -->
         <button
           class="cb-menu-item"
+          data-testid="eraser-mode-brush"
           :class="{ active: activeToolId === 'eraser' }"
           @click="activateBrushErase"
         >
@@ -127,6 +128,7 @@ function activateIfNeeded() {
         <!-- Stroke Erase option -->
         <button
           class="cb-menu-item"
+          data-testid="eraser-mode-stroke"
           :class="{ active: activeToolId === 'stroke-eraser' }"
           @click="activateStrokeErase"
         >

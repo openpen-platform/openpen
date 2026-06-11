@@ -36,31 +36,33 @@ function formatRelative(isoString: string): string {
 </script>
 
 <template>
-  <li class="modules-row">
+  <li class="modules-row" :data-testid="`module-row-${props.id}`">
     <div class="modules-row-info">
-      <div class="modules-row-name">{{ props.displayName }}</div>
-      <div class="modules-row-desc">{{ props.description }}</div>
+      <div class="modules-row-name" data-testid="module-row-name">{{ props.displayName }}</div>
+      <div class="modules-row-desc" data-testid="module-row-desc">{{ props.description }}</div>
       <div class="modules-row-meta">
         <code class="modules-id">{{ props.id }}</code>
-        <span v-if="props.version" class="modules-version">v{{ props.version }}</span>
-        <span v-if="props.hasUpdate" class="mp-badge-update">{{ t('pluginFilterUpdate') }}</span>
+        <span v-if="props.version" class="modules-version" data-testid="module-row-version">v{{ props.version }}</span>
+        <span v-if="props.hasUpdate" class="mp-badge-update" data-testid="module-row-update-badge">{{ t('pluginFilterUpdate') }}</span>
         <span v-if="props.installedAt" class="modules-installed-at">
           {{ t('moduleInstalledAt', { time: formatRelative(props.installedAt) }) }}
         </span>
       </div>
     </div>
-    <div v-if="props.removable" class="modules-row-actions">
+    <div v-if="props.removable" class="modules-row-actions" data-testid="module-row-actions">
       <AppToggle
         :model-value="props.isEnabled"
         :aria-label="props.isEnabled ? t('moduleEnabledLabel') : t('moduleDisabledLabel')"
+        testid="module-row-toggle"
         @update:model-value="(v) => emit('update:enabled', v)"
       />
-      <button class="mp-remove-btn" @click="emit('remove')">{{ t('pluginRemove') }}</button>
+      <button class="mp-remove-btn" data-testid="module-row-remove-btn" @click="emit('remove')">{{ t('pluginRemove') }}</button>
     </div>
     <AppToggle
       v-else
       :model-value="props.isEnabled"
       :aria-label="props.isEnabled ? t('moduleEnabledLabel') : t('moduleDisabledLabel')"
+      testid="module-row-toggle"
       @update:model-value="(v) => emit('update:enabled', v)"
     />
   </li>

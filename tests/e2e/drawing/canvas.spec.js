@@ -35,14 +35,14 @@ async function getOverlayWindow() {
 
 test('overlay canvas element exists and is visible', async () => {
   const overlayWin = await getOverlayWindow();
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
   await expect(canvas).toBeVisible({ timeout: 3000 });
 });
 
 test('canvas has DPR-scaled width/height attributes', async () => {
   const overlayWin = await getOverlayWindow();
   const result = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas) return null;
     return {
       attrWidth: canvas.width,
@@ -64,7 +64,7 @@ test('pointer down/move/up in drawing mode draws without throwing', async () => 
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
   await overlayWin.waitForTimeout(200);
 
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
 
   await canvas.dispatchEvent('pointerdown', { clientX: 100, clientY: 100, pointerId: 1, buttons: 1, bubbles: true });
   await canvas.dispatchEvent('pointermove', { clientX: 150, clientY: 130, pointerId: 1, buttons: 1, bubbles: true });
@@ -87,7 +87,7 @@ test('strokes persist after leaving drawing mode', async () => {
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
   await overlayWin.waitForTimeout(200);
 
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
 
   // Draw a visible line.
   await canvas.dispatchEvent('pointerdown', { clientX: 50, clientY: 50, pointerId: 1, buttons: 1, bubbles: true });
@@ -113,7 +113,7 @@ test('strokes persist after leaving drawing mode', async () => {
 
   // Verify non-transparent pixels remain on the canvas.
   const hasPixels = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas) return false;
     const ctx = canvas.getContext('2d');
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
@@ -134,7 +134,7 @@ test('canvas rejects pointer events outside of drawing mode (pointer-events: non
   await overlayWin.waitForTimeout(100);
 
   const pointerEvents = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     return canvas ? window.getComputedStyle(canvas).pointerEvents : null;
   });
   expect(pointerEvents).toBe('none');
@@ -148,7 +148,7 @@ test('canvas pointer-events is auto in drawing mode', async () => {
   await overlayWin.waitForTimeout(200);
 
   const pointerEvents = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     return canvas ? window.getComputedStyle(canvas).pointerEvents : null;
   });
   expect(pointerEvents).toBe('auto');

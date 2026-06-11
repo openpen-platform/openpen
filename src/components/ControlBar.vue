@@ -769,6 +769,7 @@ onUnmounted(() => {
         ref="controlBarEl"
         class="control-bar"
         data-testid="control-bar"
+        :data-bar-layout="effectiveBarLayout"
         :class="{
           [effectiveBarLayout]: effectiveBarLayout !== 'horizontal',
           'is-vertical': isVertical,
@@ -782,6 +783,7 @@ onUnmounted(() => {
         <div
           v-show="isDrawingMode"
           class="draw-mode-badge"
+          data-testid="controlbar-draw-mode-badge"
           aria-label="Drawing mode active"
         >
           <span class="draw-mode-badge-dot" />

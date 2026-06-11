@@ -42,11 +42,11 @@ test('a drawing-exit issued mid-stroke is ignored; exit proceeds after pointer-u
   let overlay = null;
   for (const w of app.windows()) if (w.url().includes('role=overlay-bar')) overlay = w;
   expect(overlay).not.toBeNull();
-  await overlay.waitForSelector('.overlay-canvas', { timeout: 10000 });
+  await overlay.waitForSelector('[data-testid="canvas-overlay"]', { timeout: 10000 });
 
   // Begin a stroke and hold (no pointer-up yet).
   await overlay.evaluate(() => {
-    document.querySelector('.overlay-canvas').dispatchEvent(
+    document.querySelector('[data-testid="canvas-overlay"]').dispatchEvent(
       new PointerEvent('pointerdown', { clientX: 200, clientY: 200, bubbles: true, pointerId: 1 }),
     );
   });
@@ -59,7 +59,7 @@ test('a drawing-exit issued mid-stroke is ignored; exit proceeds after pointer-u
 
   // Release the pointer, then exit → now the overlay is torn down.
   await overlay.evaluate(() => {
-    document.querySelector('.overlay-canvas').dispatchEvent(
+    document.querySelector('[data-testid="canvas-overlay"]').dispatchEvent(
       new PointerEvent('pointerup', { clientX: 220, clientY: 220, bubbles: true, pointerId: 1 }),
     );
   });

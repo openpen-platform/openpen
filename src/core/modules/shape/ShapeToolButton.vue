@@ -94,6 +94,7 @@ function activateToolIfNeeded() {
     <template #popover-content>
       <div
         class="shape-popover shape-popover-content"
+        data-testid="controlbar-shape-popover"
         :class="{ 'shape-popover-content--vertical': isVertical }"
       >
         <ShapePopover :vertical="isVertical" />

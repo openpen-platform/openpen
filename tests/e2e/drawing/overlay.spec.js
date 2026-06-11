@@ -55,7 +55,7 @@ test('overlay window URL contains ?window=overlay', async () => {
 
 test('overlay canvas starts without the drawing-mode class', async () => {
   const overlayWin = await getOverlayWindow();
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
   await expect(canvas).toBeVisible({ timeout: 3000 });
 
   const cls = await canvas.getAttribute('class');
@@ -71,7 +71,7 @@ test('setDrawingMode(true) adds drawing-mode class to the canvas', async () => {
   );
   await overlayWin.waitForTimeout(200);
 
-  const cls = await overlayWin.locator('.overlay-canvas').getAttribute('class');
+  const cls = await overlayWin.getByTestId('canvas-overlay').getAttribute('class');
   expect(cls).toContain('drawing-mode');
 });
 
@@ -89,7 +89,7 @@ test('setDrawingMode(false) removes drawing-mode class from the canvas', async (
   );
   await overlayWin.waitForTimeout(200);
 
-  const cls = await overlayWin.locator('.overlay-canvas').getAttribute('class');
+  const cls = await overlayWin.getByTestId('canvas-overlay').getAttribute('class');
   expect(cls).not.toContain('drawing-mode');
 });
 
@@ -102,7 +102,7 @@ test('canvas and body cursor are hidden in drawing mode (DOM cursor takes over)'
   );
   await overlayWin.waitForTimeout(200);
 
-  const cursor = await overlayWin.locator('.overlay-canvas').evaluate(
+  const cursor = await overlayWin.getByTestId('canvas-overlay').evaluate(
     el => window.getComputedStyle(el).cursor,
   );
   expect(cursor).toBe('none');
@@ -130,7 +130,7 @@ test('canvas cursor stays none in all drawing-mode states', async () => {
   );
   await overlayWin.waitForTimeout(100);
 
-  const cursor = await overlayWin.locator('.overlay-canvas').evaluate(
+  const cursor = await overlayWin.getByTestId('canvas-overlay').evaluate(
     el => window.getComputedStyle(el).cursor,
   );
   expect(cursor).toBe('none');

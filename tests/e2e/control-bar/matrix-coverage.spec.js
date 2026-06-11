@@ -604,7 +604,7 @@ test.describe('Bug 1 regression: vbar-free (vertical+snap=off) popups must open 
       await expect(bar).toBeVisible({ timeout: 2000 });
 
       // Verify the bar is actually in vbar-free mode.
-      const isVbarFree = await win.evaluate(() => document.querySelector('[data-testid="control-bar"].vbar-free') !== null);
+      const isVbarFree = await win.evaluate(() => document.querySelector('[data-testid="control-bar"][data-bar-layout="vbar-free"]') !== null);
       if (!isVbarFree) {
         // Settings may not have taken effect (timing); skip gracefully.
         test.info().annotations.push({ type: 'skip-reason', description: 'vbar-free class not present' });
@@ -701,7 +701,7 @@ test.describe('A3: vertical barLayout with snap=ON — snap wins, bar is NOT vba
 
     await expandBar(win);
 
-    const isVbarFree = await win.evaluate(() => document.querySelector('[data-testid="control-bar"].vbar-free') !== null);
+    const isVbarFree = await win.evaluate(() => document.querySelector('[data-testid="control-bar"][data-bar-layout="vbar-free"]') !== null);
     expect(isVbarFree, 'A3: snap=ON should override vertical barLayout; vbar-free must not appear').toBe(false);
 
     await assertBarInViewport(win);

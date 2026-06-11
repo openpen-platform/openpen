@@ -260,21 +260,21 @@ watch(() => props.modelValue, () => {
 </script>
 
 <template>
-  <div class="color-picker-popup" @pointerdown.stop>
+  <div class="color-picker-popup" data-testid="cp-popup" @pointerdown.stop>
     <div class="cp-tabs">
-      <button class="cp-tab" :class="{ active: activeTab === 'solid' }" @click="switchTab('solid')">{{ t('openpen.color.tabSolid') }}</button>
-      <button class="cp-tab" :class="{ active: activeTab === 'gradient' }" @click="switchTab('gradient')">{{ t('openpen.color.tabGradient') }}</button>
+      <button class="cp-tab" data-testid="cp-tab-solid" :class="{ active: activeTab === 'solid' }" @click="switchTab('solid')">{{ t('openpen.color.tabSolid') }}</button>
+      <button class="cp-tab" data-testid="cp-tab-gradient" :class="{ active: activeTab === 'gradient' }" @click="switchTab('gradient')">{{ t('openpen.color.tabGradient') }}</button>
     </div>
 
     <div v-if="activeTab === 'solid'" class="cp-solid-panel">
       <h4 class="cp-solid-title">{{ t('openpen.color.sectionColor') }}</h4>
       <div class="cp-sv-wrapper">
-        <canvas ref="svCanvasRef" class="cp-sv-canvas" width="220" height="120"
+        <canvas ref="svCanvasRef" class="cp-sv-canvas" data-testid="cp-sv-canvas" width="220" height="120"
           @pointerdown="onSVPointerDown" @pointermove="onSVPointerMove"
           @pointerup="onSVPointerUp" @pointercancel="onSVPointerUp" />
         <div class="cp-sv-thumb" :style="{ left: svThumbLeft, top: svThumbTop }" aria-hidden="true" />
       </div>
-      <div class="cp-solid-hue" :title="t('openpen.color.hueDrag')"
+      <div class="cp-solid-hue" data-testid="cp-solid-hue" :title="t('openpen.color.hueDrag')"
         @pointerdown="onSolidHuePointerDown" @pointermove="onSolidHuePointerMove"
         @pointerup="onSolidHuePointerUp" @pointercancel="onSolidHuePointerUp">
         <div class="cp-solid-bar-thumb" :style="{ left: hueThumbLeft, background: hueColor }" />
@@ -285,13 +285,13 @@ watch(() => props.modelValue, () => {
         <div class="cp-solid-bar-thumb" :style="{ left: solidToneThumbLeft, background: currentSolidHex }" />
       </div>
       <div class="cp-presets" role="group" :aria-label="t('openpen.color.presets')">
-        <button v-for="p in PRESETS" :key="p" class="cp-color-preset"
+        <button v-for="p in PRESETS" :key="p" class="cp-color-preset" :data-testid="`cp-preset-${p.replace('#','')}`"
           :style="{ background: p }"
           :class="{ active: currentSolidHex.toUpperCase() === p.toUpperCase() }"
           :aria-label="p" @click="selectPreset(p)" />
       </div>
       <div class="cp-solid-hex-row">
-        <input class="cp-solid-hex-input" type="text" :value="hexInput.toUpperCase()"
+        <input class="cp-solid-hex-input" data-testid="cp-solid-hex-input" type="text" :value="hexInput.toUpperCase()"
           maxlength="7" spellcheck="false" :aria-label="t('openpen.color.hexValue')" @input="onHexInput" />
         <div class="cp-solid-hex-preview" :style="{ background: currentSolidHex }" />
       </div>
@@ -301,21 +301,21 @@ watch(() => props.modelValue, () => {
       <h4 class="cp-solid-title">{{ t('openpen.color.sectionGradient') }}</h4>
       <div class="cp-grad-targets">
         <div class="cp-grad-stop">
-          <button class="cp-grad-well" :class="{ active: gradTarget === 'from' }"
+          <button class="cp-grad-well" data-testid="cp-grad-well-from" :class="{ active: gradTarget === 'from' }"
             :style="{ background: gradFrom }" :aria-label="t('openpen.color.gradientFromColor')"
             @click="selectGradTarget('from')" />
           <span class="cp-grad-label">{{ t('openpen.color.gradientFrom') }}</span>
         </div>
-        <div class="cp-grad-preview" :style="{ background: gradPreviewStyle }" :aria-label="t('openpen.color.gradientPreview')" />
+        <div class="cp-grad-preview" data-testid="cp-grad-preview" :style="{ background: gradPreviewStyle }" :aria-label="t('openpen.color.gradientPreview')" />
         <div class="cp-grad-stop">
-          <button class="cp-grad-well" :class="{ active: gradTarget === 'to' }"
+          <button class="cp-grad-well" data-testid="cp-grad-well-to" :class="{ active: gradTarget === 'to' }"
             :style="{ background: gradTo }" :aria-label="t('openpen.color.gradientToColor')"
             @click="selectGradTarget('to')" />
           <span class="cp-grad-label">{{ t('openpen.color.gradientTo') }}</span>
         </div>
       </div>
       <div class="cp-sv-wrapper">
-        <canvas ref="svCanvasRef" class="cp-sv-canvas" width="220" height="120"
+        <canvas ref="svCanvasRef" class="cp-sv-canvas" data-testid="cp-sv-canvas" width="220" height="120"
           @pointerdown="onSVPointerDown" @pointermove="onSVPointerMove"
           @pointerup="onSVPointerUp" @pointercancel="onSVPointerUp" />
         <div class="cp-sv-thumb" :style="{ left: svThumbLeft, top: svThumbTop }" aria-hidden="true" />
@@ -327,7 +327,7 @@ watch(() => props.modelValue, () => {
         <div class="cp-hue-thumb" :style="{ left: hueThumbLeft }" aria-hidden="true" />
       </div>
       <div class="cp-presets" role="group" :aria-label="t('openpen.color.presets')">
-        <button v-for="p in PRESETS" :key="p" class="cp-color-preset"
+        <button v-for="p in PRESETS" :key="p" class="cp-color-preset" :data-testid="`cp-preset-${p.replace('#','')}`"
           :style="{ background: p }"
           :class="{ active: currentSolidHex.toUpperCase() === p.toUpperCase() }"
           :aria-label="p" @click="selectPreset(p)" />

@@ -172,7 +172,7 @@ test.describe('PluginConflictDialog — plugin id collision', () => {
 
     // Assert ball is visible (app booted normally).
     await mainWin.waitForLoadState('domcontentloaded');
-    const ball = await mainWin.$('.float-ball');
+    const ball = await mainWin.$('[data-testid="floatball-btn"]');
     // Ball should be present in the DOM (may be hidden due to styling).
     expect(ball).not.toBeNull();
   });

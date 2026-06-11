@@ -181,16 +181,19 @@ function handleUpgradeConfirm() {
       <nav class="mt-sub-tabs" aria-label="Modules sub-navigation">
         <button
           class="mt-sub-tab"
+          data-testid="mt-sub-tab-marketplace"
           :class="{ active: activeTab === 'marketplace' }"
           @click="activeTab = 'marketplace'"
         >{{ t('pluginsSubtabMarketplace') }}</button>
         <button
           class="mt-sub-tab"
+          data-testid="mt-sub-tab-installed"
           :class="{ active: activeTab === 'installed' }"
           @click="activeTab = 'installed'"
         >{{ t('pluginsSubtabInstalled') }}</button>
         <button
           class="mt-sub-tab"
+          data-testid="mt-sub-tab-builtin"
           :class="{ active: activeTab === 'builtin' }"
           @click="activeTab = 'builtin'"
         >{{ t('modulesSubtabBuiltIn') }}</button>
@@ -198,6 +201,7 @@ function handleUpgradeConfirm() {
       <button
         v-if="activeTab !== 'builtin'"
         class="mt-add-source-btn"
+        data-testid="plugins-add-source-btn"
         @click="addCustomOpen = true"
       >
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

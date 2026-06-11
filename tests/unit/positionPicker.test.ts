@@ -17,7 +17,7 @@ describe('PositionPicker', () => {
     const wrapper = mount(PositionPicker, {
       props: { modelValue: 'top-center' },
     })
-    const cells = wrapper.findAll('.position-cell')
+    const cells = wrapper.findAll('[data-testid^="position-cell-"]')
     expect(cells).toHaveLength(9)
   })
 
@@ -25,8 +25,9 @@ describe('PositionPicker', () => {
     const wrapper = mount(PositionPicker, {
       props: { modelValue: 'top-center' },
     })
-    const activeCell = wrapper.find('.position-cell--active')
+    const activeCell = wrapper.find('[data-testid="position-cell-top-center"]')
     expect(activeCell.exists()).toBe(true)
+    expect(activeCell.classes()).toContain('position-cell--active')
     expect(activeCell.attributes('aria-label')).toBe('top-center')
   })
 
@@ -34,7 +35,7 @@ describe('PositionPicker', () => {
     const wrapper = mount(PositionPicker, {
       props: { modelValue: 'top-center' },
     })
-    const cells = wrapper.findAll('.position-cell')
+    const cells = wrapper.findAll('[data-testid^="position-cell-"]')
     // Third cell is top-right.
     await cells[2].trigger('click')
     expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['top-right'])
@@ -44,7 +45,7 @@ describe('PositionPicker', () => {
     const wrapper = mount(PositionPicker, {
       props: { modelValue: 'center' },
     })
-    const cells = wrapper.findAll('.position-cell')
+    const cells = wrapper.findAll('[data-testid^="position-cell-"]')
     const labels = cells.map((c) => c.attributes('aria-label'))
     expect(labels).toEqual(POSITIONS)
   })
@@ -53,15 +54,14 @@ describe('PositionPicker', () => {
     const wrapper = mount(PositionPicker, {
       props: { modelValue: 'bottom-right' },
     })
-    const cells = wrapper.findAll('.position-cell')
-    const last = cells[8]
-    expect(last.classes()).toContain('position-cell--active')
+    const lastCell = wrapper.find('[data-testid="position-cell-bottom-right"]')
+    expect(lastCell.classes()).toContain('position-cell--active')
   })
 
   it('container has role="radiogroup"', () => {
     const wrapper = mount(PositionPicker, {
       props: { modelValue: 'center' },
     })
-    expect(wrapper.find('.position-picker').attributes('role')).toBe('radiogroup')
+    expect(wrapper.find('[data-testid="position-picker"]').attributes('role')).toBe('radiogroup')
   })
 })

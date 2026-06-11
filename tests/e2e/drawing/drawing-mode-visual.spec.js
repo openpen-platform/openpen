@@ -4,7 +4,7 @@
  * Scenarios:
  * 1. Entering drawing mode adds drawing-active class to float-ball
  * 2. Entering drawing mode adds drawing-active class to control-bar (expanded)
- * 3. Entering drawing mode makes .draw-mode-badge visible
+ * 3. Entering drawing mode makes draw-mode-badge visible
  * 4. Exiting drawing mode removes drawing-active class and hides the badge
  */
 import { test, expect } from '@playwright/test';
@@ -31,7 +31,7 @@ async function getMainWindow() {
       try {
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
         const hasMainUi = await win.evaluate(
-          () => !!document.querySelector('.float-ball, .control-bar-wrapper'),
+          () => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="controlbar-panel"]'),
         );
         if (hasMainUi) return win;
       } catch {
@@ -40,12 +40,12 @@ async function getMainWindow() {
     }
     await new Promise((r) => setTimeout(r, 300));
   }
-  throw new Error('Main window with .float-ball not found within 20s');
+  throw new Error('Main window with floatball-btn not found within 20s');
 }
 
-/** Expand the control bar so .control-bar element is in the DOM. */
+/** Expand the control bar so control-bar element is in the DOM. */
 async function expandBar(win) {
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
   await expect(ball).toBeVisible({ timeout: 3000 });
   await ball.click();
   // Wait for bar transition (350ms expand).
@@ -61,11 +61,7 @@ test('drawing mode OFF: float-ball does not have drawing-active class', async ()
   await win.evaluate(() => window.openPenApi?.setDrawingMode(false));
   await win.waitForTimeout(200);
 
-  // If bar is expanded, click outside to trigger collapse (mouseleave → collapse timer).
-  // Use keyboard shortcut or direct IPC unavailable; simulate mousemove to trigger passthrough.
-  // Instead, wait for the ball — collapse.spec.js shows it auto-collapses after 3s mouseleave.
-  // Simpler: wait up to 4s for ball to appear (auto-collapse timeout is 3s).
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
   await expect(ball).toBeVisible({ timeout: 5000 });
   const cls = await ball.getAttribute('class');
   expect(cls).not.toContain('drawing-active');
@@ -81,7 +77,7 @@ test('drawing mode ON: float-ball gets drawing-active class', async () => {
   await win.evaluate(() => window.openPenApi?.setDrawingMode(true));
   await win.waitForTimeout(200);
 
-  const ball = win.locator('.float-ball');
+  const ball = win.getByTestId('floatball-btn');
   await expect(ball).toBeVisible({ timeout: 3000 });
   const cls = await ball.getAttribute('class');
   expect(cls).toContain('drawing-active');
@@ -100,7 +96,7 @@ test('drawing mode ON with bar expanded: control-bar gets drawing-active class',
   await win.evaluate(() => window.openPenApi?.setDrawingMode(true));
   await win.waitForTimeout(200);
 
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   await expect(bar).toBeVisible({ timeout: 3000 });
   const cls = await bar.getAttribute('class');
   expect(cls).toContain('drawing-active');
@@ -110,18 +106,18 @@ test('drawing mode ON with bar expanded: control-bar gets drawing-active class',
   await win.waitForTimeout(150);
 });
 
-test('drawing mode ON: .draw-mode-badge is visible inside control-bar', async () => {
+test('drawing mode ON: draw-mode-badge is visible inside control-bar', async () => {
   const win = await getMainWindow();
 
   // Bar should already be expanded from prior test; ensure it is.
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barVisible = await bar.isVisible().catch(() => false);
   if (!barVisible) await expandBar(win);
 
   await win.evaluate(() => window.openPenApi?.setDrawingMode(true));
   await win.waitForTimeout(200);
 
-  const badge = win.locator('.draw-mode-badge');
+  const badge = win.getByTestId('controlbar-draw-mode-badge');
   await expect(badge).toBeVisible({ timeout: 3000 });
 
   // Cleanup.
@@ -133,7 +129,7 @@ test('drawing mode OFF: drawing-active removed from bar, badge hidden', async ()
   const win = await getMainWindow();
 
   // Bar should be expanded; ensure it is.
-  const bar = win.locator('.control-bar');
+  const bar = win.getByTestId('control-bar');
   const barVisible = await bar.isVisible().catch(() => false);
   if (!barVisible) await expandBar(win);
 
@@ -146,6 +142,6 @@ test('drawing mode OFF: drawing-active removed from bar, badge hidden', async ()
   const cls = await bar.getAttribute('class');
   expect(cls).not.toContain('drawing-active');
 
-  const badge = win.locator('.draw-mode-badge');
+  const badge = win.getByTestId('controlbar-draw-mode-badge');
   await expect(badge).toBeHidden({ timeout: 2000 });
 });

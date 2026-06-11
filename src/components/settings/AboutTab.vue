@@ -11,17 +11,17 @@ const appVersion = __APP_VERSION__;
 
     <div class="cw-row">
       <div class="cw-row-label">{{ t('version') }}</div>
-      <span class="about-val">{{ appVersion }}</span>
+      <span class="about-val" data-testid="about-version">{{ appVersion }}</span>
     </div>
 
     <div class="cw-row">
       <div class="cw-row-label">{{ t('license') }}</div>
-      <span class="about-val">{{ t('licenseValue') }}</span>
+      <span class="about-val" data-testid="about-license">{{ t('licenseValue') }}</span>
     </div>
 
     <div class="cw-row">
       <div class="cw-row-label">{{ t('author') }}</div>
-      <span class="about-val">openpen/navishachiku</span>
+      <span class="about-val" data-testid="about-author">openpen/navishachiku</span>
     </div>
 
     <div class="desc-row">

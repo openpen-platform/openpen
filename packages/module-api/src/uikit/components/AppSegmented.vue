@@ -46,6 +46,7 @@ function onValueChange(val: unknown) {
 <template>
   <RadioGroupRoot
     class="app-seg"
+    data-testid="app-seg"
     :class="{ 'app-seg--disabled': disabled }"
     :model-value="modelValue"
     :disabled="disabled"

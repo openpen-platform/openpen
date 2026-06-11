@@ -42,13 +42,13 @@ const hasUpdate = computed(() =>
       <span v-if="incompatible" class="mp-badge-incompatible">
         {{ t('pluginRequires', { version: entry.minAppVersion }) }}
       </span>
-      <span v-else-if="hasUpdate" class="mp-badge-update" style="display:inline-flex;align-items:center;gap:4px;">
+      <span v-else-if="hasUpdate" class="mp-badge-update" data-testid="plugin-update-badge" style="display:inline-flex;align-items:center;gap:4px;">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>
         </svg>
         Update {{ entry.latestVersion }}
       </span>
-      <span v-else-if="isInstalled" class="mp-badge-installed">{{ t('pluginInstalled') }}</span>
+      <span v-else-if="isInstalled" class="mp-badge-installed" data-testid="plugin-installed-badge">{{ t('pluginInstalled') }}</span>
     </div>
 
     <div class="mp-card-desc">{{ entry.description }}</div>
@@ -62,6 +62,7 @@ const hasUpdate = computed(() =>
       <button
         v-if="!isInstalled && !incompatible"
         class="mp-install-btn"
+        data-testid="plugin-install-btn"
         :title="t('pluginInstall')"
         @click.stop="emit('install', entry.id, entry.latestVersion)"
       >
@@ -70,6 +71,7 @@ const hasUpdate = computed(() =>
       <button
         v-else-if="!isInstalled && incompatible"
         class="mp-install-btn mp-install-btn-disabled"
+        data-testid="plugin-install-btn"
         disabled
         :title="t('pluginRequires', { version: entry.minAppVersion })"
       >

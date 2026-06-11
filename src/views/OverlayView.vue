@@ -85,6 +85,7 @@ onUnmounted(() => {
   <canvas
     ref="canvasRef"
     class="overlay-canvas"
+    data-testid="canvas-overlay"
     :class="{ 'drawing-mode': isDrawingMode }"
     aria-hidden="true"
   />

@@ -61,6 +61,7 @@ function handleOpenBackupDir() {
       <p class="diag-desc">{{ t('diagnosticsDescription') }}</p>
       <button
         class="diag-open-btn"
+        data-testid="diag-open-btn"
         :disabled="events.length === 0"
         @click="handleOpenBackupDir"
       >
@@ -69,16 +70,17 @@ function handleOpenBackupDir() {
     </div>
 
     <!-- Empty state -->
-    <div v-if="events.length === 0" class="diag-empty">
+    <div v-if="events.length === 0" class="diag-empty" data-testid="diag-empty">
       {{ t('diagnosticsEmpty') }}
     </div>
 
     <!-- Event list -->
-    <ul v-else class="diag-list">
+    <ul v-else class="diag-list" data-testid="diag-list">
       <li
         v-for="event in events"
         :key="event.id"
         class="diag-row"
+        data-testid="diag-row"
       >
         <!-- Timestamp row -->
         <div class="diag-meta">
@@ -86,7 +88,7 @@ function handleOpenBackupDir() {
             {{ t('diagnosticsDetectedAt', { time: formatRelative(event.detectedAt) }) }}
           </span>
           <!-- Layer chip -->
-          <span class="diag-layer-chip" :class="`diag-layer-${event.layer.toLowerCase()}`">
+          <span class="diag-layer-chip" data-testid="diag-layer-chip" :class="`diag-layer-${event.layer.toLowerCase()}`">
             {{ layerLabel(event.layer) }}
           </span>
         </div>
@@ -107,11 +109,12 @@ function handleOpenBackupDir() {
           <button
             v-if="event.acknowledgedAt === null"
             class="diag-ack-btn"
+            data-testid="diag-ack-btn"
             @click="acknowledge(event.id)"
           >
             {{ t('diagnosticsAcknowledge') }}
           </button>
-          <span v-else class="diag-acked-label">
+          <span v-else class="diag-acked-label" data-testid="diag-acked-label">
             {{ t('diagnosticsAcknowledged', { time: formatRelative(event.acknowledgedAt) }) }}
           </span>
         </div>

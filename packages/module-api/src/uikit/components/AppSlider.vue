@@ -98,6 +98,7 @@ function onValueChange(val: number[] | undefined) {
 <template>
   <SliderRoot
     class="app-slider-root"
+    data-testid="app-slider-root"
     :class="{ 'app-slider-root--vertical': isVertical, 'app-slider-root--inverted': inverted }"
     :style="rootStyle"
     :model-value="[modelValue]"
@@ -108,10 +109,10 @@ function onValueChange(val: number[] | undefined) {
     :inverted="inverted"
     @update:model-value="onValueChange"
   >
-    <SliderTrack class="app-slider-track">
-      <SliderRange class="app-slider-range" />
+    <SliderTrack class="app-slider-track" data-testid="app-slider-track">
+      <SliderRange class="app-slider-range" data-testid="app-slider-range" />
     </SliderTrack>
-    <SliderThumb class="app-slider-thumb" />
+    <SliderThumb class="app-slider-thumb" data-testid="app-slider-thumb" />
   </SliderRoot>
 </template>
 

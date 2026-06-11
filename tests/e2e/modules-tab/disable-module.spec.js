@@ -45,22 +45,22 @@ async function getMainWindow(electronApp) {
   }
   if (!mainWin) throw new Error('Main window not found within timeout');
   await mainWin.waitForLoadState('domcontentloaded');
-  await mainWin.waitForSelector('.float-ball, .control-bar', { timeout: 20000 });
+  await mainWin.waitForSelector('[data-testid="floatball-btn"], [data-testid="control-bar"]', { timeout: 20000 });
   return mainWin;
 }
 
 async function expandControlBar(mainWin) {
   const alreadyExpanded = await mainWin.evaluate(() =>
-    document.querySelector('.control-bar') !== null,
+    document.querySelector('[data-testid="control-bar"]') !== null,
   );
   if (alreadyExpanded) return;
-  await mainWin.waitForSelector('.float-ball', { timeout: 10000 });
+  await mainWin.waitForSelector('[data-testid="floatball-btn"]', { timeout: 10000 });
   await mainWin.evaluate(() => {
-    document.querySelector('.float-ball')?.dispatchEvent(
+    document.querySelector('[data-testid="floatball-btn"]')?.dispatchEvent(
       new MouseEvent('click', { bubbles: true, cancelable: true }),
     );
   });
-  await mainWin.waitForSelector('.control-bar', { timeout: 5000 });
+  await mainWin.waitForSelector('[data-testid="control-bar"]', { timeout: 5000 });
 }
 
 async function openSettingsToModulesTab(mainWin, electronApp) {
@@ -82,10 +82,10 @@ async function openSettingsToModulesTab(mainWin, electronApp) {
   await settingsWin.waitForLoadState('domcontentloaded');
   await settingsWin.waitForSelector('[data-testid="settings-window"]', { timeout: 10000 });
   // Navigate to Modules tab → Built-in sub-tab.
-  await settingsWin.click('.stg-tab:has-text("Modules")');
+  await settingsWin.click('[data-testid="tab-modules"]');
   await settingsWin.waitForTimeout(200);
-  await settingsWin.click('.mt-sub-tab:has-text("Built-in")');
-  await settingsWin.waitForSelector('.modules-list', { timeout: 5000 });
+  await settingsWin.click('[data-testid="mt-sub-tab-builtin"]');
+  await settingsWin.waitForSelector('[data-testid="modules-list"]', { timeout: 5000 });
   return settingsWin;
 }
 
@@ -99,12 +99,12 @@ test.describe('Modules tab — disable/enable freehand', () => {
     let settingsWin = await openSettingsToModulesTab(mainWin, app);
 
     // Confirm freehand row is present.
-    await settingsWin.waitForSelector('.modules-row', { timeout: 5000 });
-    const freehandRow = settingsWin.locator('.modules-row', { hasText: 'freehand' }).first();
+    await settingsWin.waitForSelector('[data-testid^="module-row-"]', { timeout: 5000 });
+    const freehandRow = settingsWin.locator('[data-testid^="module-row-"]', { hasText: 'freehand' }).first();
     await expect(freehandRow).toBeVisible();
 
     // The toggle should currently be ON (checked).
-    const toggle = freehandRow.locator('.app-toggle');
+    const toggle = freehandRow.getByTestId('module-row-toggle');
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
 
     // Click the toggle — expect confirmation dialog to open instead of immediate disable.
@@ -112,17 +112,17 @@ test.describe('Modules tab — disable/enable freehand', () => {
     await settingsWin.waitForTimeout(300);
 
     // Dialog must appear.
-    await expect(settingsWin.locator('.openpen-modal-danger')).toBeVisible();
+    await expect(settingsWin.getByTestId('modal-dialog-danger')).toBeVisible();
 
     // Click the Disable confirm button.
-    await settingsWin.locator('.openpen-modal-danger').getByRole('button', { name: 'Disable' }).click();
+    await settingsWin.getByTestId('modal-dialog-danger').getByRole('button', { name: 'Disable' }).click();
     await settingsWin.waitForTimeout(300);
 
     // Dialog should close.
-    await expect(settingsWin.locator('.openpen-modal-danger')).not.toBeVisible();
+    await expect(settingsWin.getByTestId('modal-dialog-danger')).not.toBeVisible();
 
     // Restart banner must appear.
-    await expect(settingsWin.locator('.app-banner-warning')).toBeVisible();
+    await expect(settingsWin.getByTestId('modules-restart-banner')).toBeVisible();
 
     // Close settings and electron.
     await mainWin.evaluate(() => window.openPenApi?.closeSettingsWindow());
@@ -145,8 +145,8 @@ test.describe('Modules tab — disable/enable freehand', () => {
     let mainWin = await getMainWindow(app);
     let settingsWin = await openSettingsToModulesTab(mainWin, app);
 
-    const freehandRow = settingsWin.locator('.modules-row', { hasText: 'freehand' }).first();
-    const toggle = freehandRow.locator('.app-toggle');
+    const freehandRow = settingsWin.locator('[data-testid^="module-row-"]', { hasText: 'freehand' }).first();
+    const toggle = freehandRow.getByTestId('module-row-toggle');
 
     // Should currently be OFF.
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
@@ -156,10 +156,10 @@ test.describe('Modules tab — disable/enable freehand', () => {
     await settingsWin.waitForTimeout(300);
 
     // No dialog should appear.
-    await expect(settingsWin.locator('.openpen-modal-danger')).not.toBeVisible();
+    await expect(settingsWin.getByTestId('modal-dialog-danger')).not.toBeVisible();
 
     // Restart banner appears because state diverged from boot snapshot.
-    await expect(settingsWin.locator('[data-testid="modules-restart-banner"]')).toBeVisible();
+    await expect(settingsWin.getByTestId('modules-restart-banner')).toBeVisible();
 
     await mainWin.evaluate(() => window.openPenApi?.closeSettingsWindow());
     await app.close();
@@ -202,14 +202,14 @@ test.describe('Modules tab — disable/enable freehand', () => {
     await settingsWin.waitForSelector('[data-testid="settings-window"]', { timeout: 10000 });
 
     // Navigate to Modules top-level tab, then switch to the Installed sub-tab.
-    await settingsWin.click('.stg-tab:has-text("Modules")');
+    await settingsWin.click('[data-testid="tab-modules"]');
     await settingsWin.waitForTimeout(200);
-    await settingsWin.click('.mt-sub-tab:has-text("Installed")');
+    await settingsWin.click('[data-testid="mt-sub-tab-installed"]');
     await settingsWin.waitForTimeout(300);
 
     // Empty state should be visible.
-    await expect(settingsWin.locator('.modules-empty')).toBeVisible();
-    await expect(settingsWin.locator('.modules-empty')).toContainText('No plugins installed.');
+    await expect(settingsWin.getByTestId('plugins-empty-state')).toBeVisible();
+    await expect(settingsWin.getByTestId('plugins-empty-state')).toContainText('No plugins installed.');
 
     await app.close();
   });

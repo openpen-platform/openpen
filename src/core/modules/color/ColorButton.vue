@@ -85,7 +85,7 @@ watch(() => snapEdge?.value, () => { modalManager?.close('color') })
         :aria-label="t('openpen.color.button')"
         :class="{ active }"
       >
-        <span class="cb-color-swatch" :style="colorBtnStyle" />
+        <span class="cb-color-swatch" data-testid="controlbar-color-swatch" :style="colorBtnStyle" />
       </button>
     </template>
     <template #content>

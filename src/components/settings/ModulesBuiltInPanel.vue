@@ -101,11 +101,11 @@ onUnmounted(() => { stop() })
       {{ t('modulesRestartRequired') }}
     </AppBanner>
 
-    <div v-if="rows.length === 0" class="modules-empty">
+    <div v-if="rows.length === 0" class="modules-empty" data-testid="modules-empty">
       {{ t('pluginBrowseEmpty') }}
     </div>
 
-    <ul v-else class="modules-list">
+    <ul v-else class="modules-list" data-testid="modules-list">
       <ModuleRow
         v-for="row in rows"
         :key="row.id"

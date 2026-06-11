@@ -48,7 +48,7 @@ async function getMainWindow() {
         // Either the collapsed ball OR the expanded bar identifies the main
         // window — Vue's Transition unmounts whichever isn't active.
         const hasMainUi = await win.evaluate(
-          () => !!document.querySelector('.float-ball, .control-bar')
+          () => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]')
         );
         if (hasMainUi) return win;
       } catch { /* keep polling */ }
@@ -62,14 +62,14 @@ test('AppSlider scoped styles are inlined (prod)', async () => {
   const win = await getMainWindow();
 
   // Expand the bar so the inline stroke-width slider mounts.
-  await win.locator('.float-ball').click();
+  await win.getByTestId('floatball-btn').click();
   await win.waitForTimeout(400);
 
   // AppSlider thumb spec (AppSlider.vue): 14×14, background #fff.
   // If `<style scoped>` was dropped, both dimensions collapse to 0 and the
   // background falls back to the UA default (transparent).
   const thumb = await win.evaluate(() => {
-    const el = document.querySelector('.app-slider-thumb');
+    const el = document.querySelector('[data-testid="app-slider-thumb"]');
     if (!el) return { found: false };
     const r = el.getBoundingClientRect();
     const cs = getComputedStyle(el);
@@ -84,13 +84,13 @@ test('AppSlider scoped styles are inlined (prod)', async () => {
 test('AppPopover unscoped styles + open lifecycle (prod)', async () => {
   const win = await getMainWindow();
   // Bar should already be expanded from the previous test, but be defensive.
-  const expanded = await win.locator('.control-bar').isVisible().catch(() => false);
+  const expanded = await win.getByTestId('control-bar').isVisible().catch(() => false);
   if (!expanded) {
-    await win.locator('.float-ball').click();
+    await win.getByTestId('floatball-btn').click();
     await win.waitForTimeout(400);
   }
 
-  const colorBtn = win.locator('.cb-color-btn').first();
+  const colorBtn = win.getByTestId('controlbar-color-btn');
   await expect(colorBtn).toBeVisible();
   await colorBtn.click();
 
@@ -100,12 +100,12 @@ test('AppPopover unscoped styles + open lifecycle (prod)', async () => {
   // the SFC's <style> block was dropped, the element still mounts but
   // background/padding/shadow all fall back to UA defaults.
   await win.waitForFunction(
-    () => !!document.querySelector('.openpen-popover-content[data-state="open"]'),
+    () => !!document.querySelector('[data-testid="controlbar-popover"][data-state="open"]'),
     { timeout: 5000 }
   );
 
   const probe = await win.evaluate(() => {
-    const el = document.querySelector('.openpen-popover-content');
+    const el = document.querySelector('[data-testid="controlbar-popover"]');
     const cs = getComputedStyle(el);
     return {
       bg: cs.backgroundColor,

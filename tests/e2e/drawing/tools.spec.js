@@ -23,7 +23,7 @@ async function getMainWindow() {
         const url = win.url();
         if (url.includes('window=overlay') || url.includes('window=settings')) continue;
         await win.waitForLoadState('domcontentloaded', { timeout: 3000 });
-        const ready = await win.evaluate(() => !!document.querySelector('.float-ball, .control-bar'));
+        const ready = await win.evaluate(() => !!document.querySelector('[data-testid="floatball-btn"], [data-testid="control-bar"]'));
         if (ready) return win;
       } catch {
         // Ignore windows still initializing.
@@ -53,7 +53,7 @@ async function getOverlayWindow() {
 test('expanded control bar shows the tool buttons (freehand, line, shape)', async () => {
   const mainWin = await getMainWindow();
 
-  const ball = mainWin.locator('.float-ball');
+  const ball = mainWin.getByTestId('floatball-btn');
   await ball.click();
   await mainWin.waitForTimeout(400);
 
@@ -66,9 +66,9 @@ test('freehand is the default active tool', async () => {
   const mainWin = await getMainWindow();
   const overlayWin = await getOverlayWindow();
 
-  const bar = mainWin.locator('.control-bar');
+  const bar = mainWin.getByTestId('control-bar');
   if (!(await bar.isVisible())) {
-    await mainWin.locator('.float-ball').click();
+    await mainWin.getByTestId('floatball-btn').click();
     await mainWin.waitForTimeout(400);
   }
 
@@ -85,9 +85,9 @@ test('clicking the line tool makes it active', async () => {
   const mainWin = await getMainWindow();
   const overlayWin = await getOverlayWindow();
 
-  const bar = mainWin.locator('.control-bar');
+  const bar = mainWin.getByTestId('control-bar');
   if (!(await bar.isVisible())) {
-    await mainWin.locator('.float-ball').click();
+    await mainWin.getByTestId('floatball-btn').click();
     await mainWin.waitForTimeout(400);
   }
 
@@ -111,9 +111,9 @@ test('clicking the line tool makes it active', async () => {
 test('clicking the shape tool switches mode only; the caret opens the sub-panel', async () => {
   const mainWin = await getMainWindow();
 
-  const bar = mainWin.locator('.control-bar');
+  const bar = mainWin.getByTestId('control-bar');
   if (!(await bar.isVisible())) {
-    await mainWin.locator('.float-ball').click();
+    await mainWin.getByTestId('floatball-btn').click();
     await mainWin.waitForTimeout(400);
   }
 
@@ -123,16 +123,16 @@ test('clicking the shape tool switches mode only; the caret opens the sub-panel'
   // Clicking the main button switches tool without auto-opening the sub-panel.
   const shapeBtn = mainWin.locator('[data-testid="controlbar-shape-btn"]');
   await expect(shapeBtn).toHaveClass(/active/);
-  await expect(mainWin.locator('.shape-popover')).not.toBeVisible();
+  await expect(mainWin.getByTestId('controlbar-shape-popover')).not.toBeVisible();
 
   // Only the caret opens the shape sub-panel.
   await mainWin.locator('[data-testid="controlbar-shape-caret"]').click();
   await mainWin.waitForTimeout(100);
 
   // Shape chips and the fill toggle should now be visible.
-  await expect(mainWin.locator('.shape-chip[aria-label="Rectangle"]')).toBeVisible();
-  await expect(mainWin.locator('.shape-chip[aria-label="Circle"]')).toBeVisible();
-  await expect(mainWin.locator('.app-toggle[aria-label="Toggle fill"]')).toBeVisible();
+  await expect(mainWin.getByTestId('shape-chip-rect')).toBeVisible();
+  await expect(mainWin.getByTestId('shape-chip-circle')).toBeVisible();
+  await expect(mainWin.getByRole('switch', { name: 'Toggle fill' })).toBeVisible();
 });
 
 test('setActiveTool IPC is callable and does not throw', async () => {
@@ -155,7 +155,7 @@ test('line tool draws non-transparent pixels on the canvas', async () => {
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
   await overlayWin.waitForTimeout(200);
 
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
 
   await canvas.dispatchEvent('pointerdown', { clientX: 50, clientY: 50, pointerId: 1, buttons: 1, bubbles: true });
   await canvas.dispatchEvent('pointermove', { clientX: 150, clientY: 150, pointerId: 1, buttons: 1, bubbles: true });
@@ -163,7 +163,7 @@ test('line tool draws non-transparent pixels on the canvas', async () => {
   await overlayWin.waitForTimeout(200);
 
   const hasPixels = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas) return false;
     const ctx = canvas.getContext('2d');
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
@@ -190,7 +190,7 @@ test('shape tool draws non-transparent pixels for a rectangle', async () => {
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
   await overlayWin.waitForTimeout(200);
 
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
 
   await canvas.dispatchEvent('pointerdown', { clientX: 80, clientY: 80, pointerId: 1, buttons: 1, bubbles: true });
   await canvas.dispatchEvent('pointermove', { clientX: 200, clientY: 180, pointerId: 1, buttons: 1, bubbles: true });
@@ -198,7 +198,7 @@ test('shape tool draws non-transparent pixels for a rectangle', async () => {
   await overlayWin.waitForTimeout(200);
 
   const hasPixels = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas) return false;
     const ctx = canvas.getContext('2d');
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
@@ -246,11 +246,11 @@ async function getOverlayWindowForEraser() {
 }
 
 async function expandControlBar(win) {
-  await win.waitForSelector('.float-ball, .control-bar', { timeout: 10000 });
-  const bar = win.locator('.control-bar');
+  await win.waitForSelector('[data-testid="floatball-btn"], [data-testid="control-bar"]', { timeout: 10000 });
+  const bar = win.getByTestId('control-bar');
   const barVisible = await bar.isVisible().catch(() => false);
   if (!barVisible) {
-    await win.locator('.float-ball').click();
+    await win.getByTestId('floatball-btn').click();
     await win.waitForTimeout(500);
   }
 }
@@ -280,14 +280,14 @@ test('brush eraser drag erases strokes along its path', async () => {
   await overlayWin.waitForTimeout(200);
   await waitForOverlayTool(overlayWin, 'freehand');
 
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
   await canvas.dispatchEvent('pointerdown', { clientX: 80, clientY: 150, pointerId: 1, buttons: 1, bubbles: true });
   await canvas.dispatchEvent('pointermove', { clientX: 340, clientY: 150, pointerId: 1, buttons: 1, bubbles: true });
   await canvas.dispatchEvent('pointerup', { clientX: 340, clientY: 150, pointerId: 1, bubbles: true });
   await overlayWin.waitForTimeout(120);
 
   const baseline = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas) return null;
     const ctx = canvas.getContext('2d');
     const ratio = canvas.width / canvas.clientWidth;
@@ -325,7 +325,7 @@ test('brush eraser drag erases strokes along its path', async () => {
   await overlayWin.waitForTimeout(120);
 
   const widthWhileDragging = await overlayWin.evaluate((b) => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas || !b) return -1;
     const ctx = canvas.getContext('2d');
     let count = 0;
@@ -340,7 +340,7 @@ test('brush eraser drag erases strokes along its path', async () => {
   await overlayWin.waitForTimeout(120);
 
   const widthAfterCommit = await overlayWin.evaluate((b) => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas || !b) return -1;
     const ctx = canvas.getContext('2d');
     let count = 0;
@@ -359,7 +359,7 @@ test('brush eraser drag erases strokes along its path', async () => {
 test('stroke eraser removes only strokes it hits', async () => {
   const mainWin = await getMainWindowForEraser();
   const overlayWin = await getOverlayWindowForEraser();
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
 
   await mainWin.evaluate(() => {
     window.openPenApi?.clearCanvas();
@@ -382,7 +382,7 @@ test('stroke eraser removes only strokes it hits', async () => {
   await expandControlBar(mainWin);
   await mainWin.locator('[data-testid="controlbar-eraser-caret"]').click();
   await mainWin.waitForTimeout(250);
-  await mainWin.locator('.cb-menu-item[class*="active"], .cb-menu-item').filter({ hasText: 'Stroke Erase' }).click();
+  await mainWin.getByTestId('eraser-mode-stroke').click();
   await mainWin.waitForTimeout(200);
   await waitForOverlayTool(overlayWin, 'stroke-eraser');
 
@@ -392,7 +392,7 @@ test('stroke eraser removes only strokes it hits', async () => {
   await overlayWin.waitForTimeout(150);
 
   const sample = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas) return { first: 0, second: 0 };
     const ctx = canvas.getContext('2d');
     const ratio = canvas.width / canvas.clientWidth;
@@ -435,7 +435,7 @@ test('stroke eraser removes only strokes it hits', async () => {
 test('the clear button empties the canvas', async () => {
   const mainWin = await getMainWindowForEraser();
   const overlayWin = await getOverlayWindowForEraser();
-  const canvas = overlayWin.locator('.overlay-canvas');
+  const canvas = overlayWin.getByTestId('canvas-overlay');
 
   await mainWin.evaluate(() => {
     window.openPenApi?.setActiveTool({ tool: 'freehand' });
@@ -449,7 +449,7 @@ test('the clear button empties the canvas', async () => {
   await overlayWin.waitForTimeout(120);
 
   await expandControlBar(mainWin);
-  const clearBtn = mainWin.locator('.cb-clear-btn');
+  const clearBtn = mainWin.getByTestId('controlbar-clear-btn');
   await clearBtn.click();
 
   // The confirm dialog may appear when confirmBeforeClearCanvas is ON (default).
@@ -463,7 +463,7 @@ test('the clear button empties the canvas', async () => {
   await overlayWin.waitForTimeout(150);
 
   const hasPixels = await overlayWin.evaluate(() => {
-    const canvas = document.querySelector('.overlay-canvas');
+    const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     if (!canvas) return true;
     const ctx = canvas.getContext('2d');
     const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;

@@ -112,11 +112,10 @@ test('settings window receives exactly one CONTENT_READY signal', async () => {
   const settingsWin = await winPromise;
   await settingsWin.waitForLoadState('domcontentloaded');
   await settingsWin.waitForSelector('[data-testid="settings-window"]', { timeout: 10000 });
-  // Wait for hydration: .color-chip.selected only appears after loadSettings()
-  // populates draft.defaultColor. CSS-class selector here is a scope-deferred
-  // violation of test-selector-spec.md — tracked under todo task #29 (Phase 1
-  // testid migration); AppearanceTab's color chip needs a data-testid first.
-  await settingsWin.waitForSelector('.color-chip.selected', { timeout: 8000 });
+  // Wait for hydration: aria-pressed="true" only appears after loadSettings()
+  // populates draft.defaultColor and Vue binds the aria-pressed attribute on
+  // the selected color chip.
+  await settingsWin.waitForSelector('[data-testid^="settings-color-chip-"][aria-pressed="true"]', { timeout: 8000 });
 
   // Allow a generous window for any straggler signal from App.vue to land before
   // reading the counter. The assertion is on the count, not on this timeout.

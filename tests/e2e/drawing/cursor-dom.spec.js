@@ -75,7 +75,7 @@ test('DOM cursor is not visible when drawing mode is off', async () => {
   await setDrawingMode(mainWin, false);
   await overlayWin.waitForTimeout(150);
 
-  const count = await overlayWin.locator('.openpen-custom-cursor').count();
+  const count = await overlayWin.getByTestId('canvas-custom-cursor').count();
   expect(count).toBe(0);
 });
 
@@ -93,7 +93,7 @@ test('DOM cursor transform tracks pointer position (minus hotspot)', async () =>
   await overlayWin.waitForTimeout(80);
 
   const transform = await overlayWin
-    .locator('.openpen-custom-cursor')
+    .getByTestId('canvas-custom-cursor')
     .evaluate((el) => el.style.transform);
   // freehand hotspot is (2, 22) → expected translate ~ (498px, 378px)
   expect(transform).toMatch(/translate3d\(498px,\s*378px,\s*0(px)?\)/);

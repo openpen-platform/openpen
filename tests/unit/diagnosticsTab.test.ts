@@ -68,7 +68,7 @@ describe('DiagnosticsTab', () => {
   it('renders the empty state when no events exist', () => {
     const wrapper = mountTab([])
     expect(wrapper.text()).toContain('No issues detected.')
-    expect(wrapper.find('.diag-list').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="diag-list"]').exists()).toBe(false)
   })
 
   it('renders one row per event', () => {
@@ -77,8 +77,8 @@ describe('DiagnosticsTab', () => {
       makeEvent({ id: 'e2', layer: 'L2', acknowledgedAt: new Date().toISOString() }),
     ]
     const wrapper = mountTab(events)
-    expect(wrapper.findAll('.diag-row')).toHaveLength(2)
-    expect(wrapper.find('.diag-empty').exists()).toBe(false)
+    expect(wrapper.findAll('[data-testid="diag-row"]')).toHaveLength(2)
+    expect(wrapper.find('[data-testid="diag-empty"]').exists()).toBe(false)
   })
 
   it('shows the Acknowledge button only for pending events', () => {
@@ -86,34 +86,34 @@ describe('DiagnosticsTab', () => {
     const acked = makeEvent({ id: 'p2', acknowledgedAt: new Date().toISOString() })
     const wrapper = mountTab([pending, acked])
 
-    const ackBtns = wrapper.findAll('.diag-ack-btn')
+    const ackBtns = wrapper.findAll('[data-testid="diag-ack-btn"]')
     expect(ackBtns).toHaveLength(1)
 
-    const ackedLabels = wrapper.findAll('.diag-acked-label')
+    const ackedLabels = wrapper.findAll('[data-testid="diag-acked-label"]')
     expect(ackedLabels).toHaveLength(1)
   })
 
   it('calls acknowledge with the correct id when Acknowledge is clicked', async () => {
     const wrapper = mountTab([makeEvent({ id: 'target-id', acknowledgedAt: null })])
-    await wrapper.find('.diag-ack-btn').trigger('click')
+    await wrapper.find('[data-testid="diag-ack-btn"]').trigger('click')
     await flushPromises()
     expect(mockAcknowledge).toHaveBeenCalledWith('target-id')
   })
 
   it('shows layer label text in the chip', () => {
     const wrapper = mountTab([makeEvent({ layer: 'L1' })])
-    expect(wrapper.find('.diag-layer-chip').text()).toContain('Settings file failed to parse')
+    expect(wrapper.find('[data-testid="diag-layer-chip"]').text()).toContain('Settings file failed to parse')
   })
 
   it('disables Open backups folder button when events list is empty', () => {
     const wrapper = mountTab([])
-    const btn = wrapper.find('.diag-open-btn')
+    const btn = wrapper.find('[data-testid="diag-open-btn"]')
     expect((btn.element as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('enables Open backups folder button when events exist', () => {
     const wrapper = mountTab([makeEvent()])
-    const btn = wrapper.find('.diag-open-btn')
+    const btn = wrapper.find('[data-testid="diag-open-btn"]')
     expect((btn.element as HTMLButtonElement).disabled).toBe(false)
   })
 })

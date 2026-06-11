@@ -57,7 +57,7 @@ async function openSettingsWindow() {
 
 async function navigateToPluginsTab() {
   // Click Modules top-level tab; Marketplace sub-tab is the default.
-  await settingsWin.click('.stg-tab:has-text("Modules")');
+  await settingsWin.click('[data-testid="tab-modules"]');
   await settingsWin.waitForTimeout(300);
 }
 
@@ -77,7 +77,7 @@ test('Browse sub-tab renders shell', async () => {
 test('Install progress dialog: appears when Install clicked on a card', async () => {
   // This test requires at least one card to be visible in Browse view.
   // If catalog fetch fails in test environment, skip gracefully.
-  const installBtns = settingsWin.locator('.mp-install-btn:not([disabled])');
+  const installBtns = settingsWin.locator('[data-testid="plugin-install-btn"]:not([disabled])');
   const count = await installBtns.count().catch(() => 0);
 
   if (count === 0) {
@@ -96,7 +96,7 @@ test('Install progress dialog: appears when Install clicked on a card', async ()
 
 test('"Add source" button opens modal with Local folder sub-tab', async () => {
   // The Marketplace sub-tab is already active from the previous test.
-  const addBtn = settingsWin.locator('.mt-add-source-btn');
+  const addBtn = settingsWin.getByTestId('plugins-add-source-btn');
   await expect(addBtn).toBeVisible();
   await addBtn.click();
   await settingsWin.waitForTimeout(200);

@@ -88,6 +88,7 @@ function toggleFilled(val: boolean) {
       :key="s.id"
       class="shape-chip"
       :class="{ active: currentShape === s.id }"
+      :data-testid="`shape-chip-${s.id}`"
       :aria-label="resolveLabel(s.label, s.id)"
       :data-tip="resolveLabel(s.label, s.id)"
       role="button"

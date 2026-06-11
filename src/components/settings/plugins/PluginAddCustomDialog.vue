@@ -153,8 +153,8 @@ function install() {
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="pac-overlay" @click.self="emit('update:open', false)">
-      <div class="pac-modal mp-custom-modal">
+    <div v-if="open" class="pac-overlay" data-testid="pac-overlay" @click.self="emit('update:open', false)">
+      <div class="pac-modal mp-custom-modal" data-testid="pac-modal">
         <!-- Header -->
         <div class="pac-header">
           <div class="pac-title">{{ t('pluginAddCustomTitle') }}</div>
@@ -167,10 +167,10 @@ function install() {
 
         <!-- Source sub-tabs -->
         <div class="mp-custom-sub-tabs">
-          <button class="mp-custom-sub-tab" :class="{ active: activeTab === 'local' }" @click="activeTab = 'local'">
+          <button class="mp-custom-sub-tab" data-testid="pac-tab-local" :class="{ active: activeTab === 'local' }" :aria-pressed="activeTab === 'local'" @click="activeTab = 'local'">
             {{ t('pluginTabLocal') }}
           </button>
-          <button class="mp-custom-sub-tab" :class="{ active: activeTab === 'github' }" @click="activeTab = 'github'">
+          <button class="mp-custom-sub-tab" data-testid="pac-tab-github" :class="{ active: activeTab === 'github' }" :aria-pressed="activeTab === 'github'" @click="activeTab = 'github'">
             {{ t('pluginTabGitHub') }}
           </button>
         </div>
@@ -184,6 +184,7 @@ function install() {
           <div v-if="activeTab === 'local'" class="mp-tab-content">
             <div
               class="mp-drop-zone"
+              data-testid="pac-drop-zone"
               :class="{ 'is-drag-active': dragActive }"
               @dragenter.prevent="handleDragOver"
               @dragover.prevent="handleDragOver"
@@ -219,6 +220,7 @@ function install() {
               v-model="repoUrl"
               type="text"
               class="mp-input-field"
+              data-testid="pac-repo-input"
               :placeholder="t('pluginRepoPlaceholder')"
               :aria-label="t('pluginRepoLabel')"
               @blur="validateRepoUrl"

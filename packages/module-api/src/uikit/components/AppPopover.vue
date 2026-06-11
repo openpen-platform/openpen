@@ -203,6 +203,7 @@ usePassthroughGuard(contentEl)
         :avoid-collisions="true"
         :side-offset="props.gap"
         class="openpen-popover-content openpen-interactive"
+        data-testid="controlbar-popover"
       >
         <slot name="content" />
         <!-- Arrow geometry: 14×8 sharp triangle. Fill shares
