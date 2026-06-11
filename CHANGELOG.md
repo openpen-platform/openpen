@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/openpen-platform/openpen/compare/v1.4.0...v1.4.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* **plugins:** serve openpen-plugin scheme with CORS so renderer imports work on Electron 42 ([cd156f0](https://github.com/openpen-platform/openpen/commit/cd156f0cfbf240196c8f6f0f4e6ce320ef83b482))
+
 ## [1.4.0](https://github.com/openpen-platform/openpen/compare/v1.3.0...v1.4.0) (2026-06-11)
 
 
