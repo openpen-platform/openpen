@@ -96,9 +96,15 @@ vi.mock('electron', () => {
     return instance;
   });
 
-  const app = { isPackaged: false };
+  const app = { isPackaged: false, on: vi.fn() };
   return { app, BrowserWindow, ipcMain: { on: vi.fn(), handle: vi.fn() }, screen };
 });
+
+vi.mock('../../electron/cursor-os.js', () => ({
+  initCursorOs: vi.fn(),
+  hideOsCursor: vi.fn(),
+  showOsCursor: vi.fn(),
+}));
 
 vi.mock('../../electron/ipc-channels.js', () => ({
   WINDOW: {
