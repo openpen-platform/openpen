@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/openpen-platform/openpen/compare/module-api@1.2.0...module-api@1.3.0) (2026-06-11)
+
+
+### Features
+
+* **module-api:** add commitStroke host API for async-placement tools ([c8b1807](https://github.com/openpen-platform/openpen/commit/c8b18072ffff8ecaa14d70e237c069b55b218035))
+
 ## [1.2.0](https://github.com/openpen-platform/openpen/compare/v1.1.1...v1.2.0) (2026-05-24)
 
 
