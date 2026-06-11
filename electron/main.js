@@ -80,9 +80,13 @@ function broadcastLifecycle(eventName) {
 }
 
 // Register the openpen-plugin:// scheme before app-ready so renderers can
-// dynamically import plugin modules via this privileged scheme.
+// dynamically import plugin modules via this privileged scheme. corsEnabled is
+// required for cross-origin ES-module import() of this scheme: the renderer
+// origin (vite dev server in dev, file:// in prod) differs from the scheme, and
+// Chromium treats module loads as CORS requests — without it every plugin
+// import is blocked before the protocol handler is even consulted.
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'openpen-plugin', privileges: { standard: true, secure: true, supportFetchAPI: true } },
+  { scheme: 'openpen-plugin', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } },
 ]);
 
 // Windows: prevent Chromium from throttling our transparent always-on-top
@@ -234,7 +238,10 @@ app.whenReady().then(async () => {
   if (_isSecondaryInstance) return;
   try {
   // openpen-plugin://<pluginId>/<file> → ~/.openpen/plugins/<pluginId>/<file>
-  protocol.handle('openpen-plugin', (request) => {
+  // Responses carry Access-Control-Allow-Origin: the corsEnabled scheme makes
+  // the renderer's module import() a CORS request, so a response without the
+  // header is rejected by the renderer even though the file was served.
+  protocol.handle('openpen-plugin', async (request) => {
     const url = new URL(request.url);
     const resolved = resolvePluginFilePath(url.hostname, url.pathname);
     if (!resolved.ok) {
@@ -243,7 +250,10 @@ app.whenReady().then(async () => {
     if (!fs.existsSync(resolved.filePath)) {
       return new Response('Plugin file not found', { status: 404 });
     }
-    return net.fetch(pathToFileURL(resolved.filePath).toString());
+    const fileRes = await net.fetch(pathToFileURL(resolved.filePath).toString());
+    const headers = new Headers(fileRes.headers);
+    headers.set('Access-Control-Allow-Origin', '*');
+    return new Response(fileRes.body, { status: fileRes.status, headers });
   });
 
   try {
