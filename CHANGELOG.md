@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.3](https://github.com/openpen-platform/openpen/compare/v1.4.2...v1.4.3) (2026-06-11)
+
+
+### Bug Fixes
+
+* show the OS cursor over the control bar while drawing; wire plugin restart buttons ([467e395](https://github.com/openpen-platform/openpen/commit/467e395d1391e92d377896fb50c808f72bd8307e))
+
 ## [1.4.2](https://github.com/openpen-platform/openpen/compare/v1.4.1...v1.4.2) (2026-06-11)
 
 
