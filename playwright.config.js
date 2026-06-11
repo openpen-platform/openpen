@@ -25,6 +25,7 @@ const STANDARD_ONLY = [
   // test, which carries its own inline IS_WAYLAND_SESSION skip — so the file
   // stays in `functional` on both sessions for its IPC/tray/lifecycle coverage.
   '**/app/settings.spec.js',
+  '**/settings/layout-tab.spec.ts',
   '**/control-bar/ball-screen-pos.spec.js',
   '**/control-bar/bar-bounds-stale.spec.js',
   '**/control-bar/clear-canvas-confirm.spec.js',
@@ -87,7 +88,7 @@ export default defineConfig({
       // The functional suite. testIgnore drops the specs that can't pass on the
       // current session (forced via XDG_SESSION_TYPE by the test:e2e:* scripts).
       name: 'functional',
-      testMatch: '**/*.spec.js',
+      testMatch: '**/*.spec.{js,ts}',
       testIgnore: [PROD_SMOKE, ...(IS_WAYLAND_SESSION ? STANDARD_ONLY : WAYLAND_ONLY)],
     },
     {

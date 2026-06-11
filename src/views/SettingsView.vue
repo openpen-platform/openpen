@@ -9,6 +9,7 @@ import ModulesTab from '../components/settings/ModulesTab.vue';
 import ShortcutsTab from '../components/settings/ShortcutsTab.vue';
 import AboutTab from '../components/settings/AboutTab.vue';
 import DiagnosticsTab from '../components/settings/DiagnosticsTab.vue';
+import LayoutTab from '../components/settings/LayoutTab.vue';
 import { pluginSettingsTabs } from '../services/plugin-registry';
 import { resolveLabel } from '../services/i18n-utils';
 import { getAppConfig } from '../services/config-bridge';
@@ -138,6 +139,7 @@ const TABS = computed<TabEntry[]>(() => [
   { id: 'appearance',  label: t('tabAppearance'),  component: AppearanceTab,  props: { draft } },
   { id: 'behavior',    label: t('tabBehavior'),    component: BehaviorTab,    props: { draft } },
   { id: 'features',    label: t('tabFeatures'),    component: FeaturesTab,    props: {} },
+  { id: 'layout',      label: t('tabLayout'),      component: LayoutTab,      props: {} },
   { id: 'modules',     label: t('tabModules'),     component: ModulesTab,     props: {} },
   { id: 'shortcuts',   label: t('tabShortcuts'),   component: ShortcutsTab,   props: {} },
   { id: 'about',       label: t('tabAbout'),       component: AboutTab,       props: {} },
@@ -151,6 +153,11 @@ const TABS = computed<TabEntry[]>(() => [
 ]);
 
 const activeTabEntry = computed(() => TABS.value.find((tab) => tab.id === activeTab.value));
+
+// The Layout tab persists every change immediately through its own IPC channel
+// and has no draft concept, so the global Cancel/Save footer would falsely imply
+// its edits are revertible. Hide the footer while it is active.
+const showFooter = computed(() => activeTab.value !== 'layout');
 </script>
 
 <template>
@@ -220,7 +227,7 @@ const activeTabEntry = computed(() => TABS.value.find((tab) => tab.id === active
     </div>
 
     <!-- Footer -->
-    <div class="stg-footer">
+    <div v-if="showFooter" class="stg-footer">
       <button class="stg-btn stg-btn-cancel" data-testid="cancel-btn" @click="handleCancel">{{ t('cancel') }}</button>
       <button class="stg-btn stg-btn-save" data-testid="save-btn" @click="handleSave">{{ t('save') }}</button>
     </div>

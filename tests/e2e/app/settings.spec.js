@@ -407,7 +407,7 @@ test('About tab shows the version number', async () => {
   const settingsWin = await openSettingsViaUI(mainWin);
   expect(settingsWin).not.toBeNull();
 
-  await settingsWin.locator(SETTINGS_TAB_SELECTOR).nth(5).click();
+  await settingsWin.getByTestId('tab-about').click();
   const aboutText = await settingsWin.getByTestId('about-version').textContent();
   expect(aboutText).toMatch(/\d+\.\d+\.\d+/);
 
