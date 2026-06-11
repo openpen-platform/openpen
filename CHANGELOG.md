@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.4.0](https://github.com/openpen-platform/openpen/compare/v1.3.0...v1.4.0) (2026-06-11)
+
+
+### Features
+
+* **module-api:** add commitStroke host API for async-placement tools ([c8b1807](https://github.com/openpen-platform/openpen/commit/c8b18072ffff8ecaa14d70e237c069b55b218035))
+* **settings:** add ControlBar Layout tab ([e1d6d12](https://github.com/openpen-platform/openpen/commit/e1d6d12a62edffa7db2c44bbb5e14baf1905f3af))
+
+
+### Bug Fixes
+
+* **positioning:** animate the control bar after a display-topology change ([1a7e1a3](https://github.com/openpen-platform/openpen/commit/1a7e1a3caefbe5d08a94a2898fbb6bdd24dda465))
+* reconcile control-bar visibility across all displays ([7ccb63e](https://github.com/openpen-platform/openpen/commit/7ccb63eaf60a2add10a8ee5c9d690cbc329f534d))
+
 ## [1.3.0](https://github.com/openpen-platform/openpen/compare/openpen@v1.2.0...openpen@v1.3.0) (2026-05-31)
 
 
