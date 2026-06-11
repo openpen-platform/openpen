@@ -50,7 +50,7 @@ async function getMainWindow(): Promise<Page> {
   }
   if (!mainWin) throw new Error('Main window not found within timeout');
   await mainWin.waitForLoadState('domcontentloaded');
-  await mainWin.waitForSelector('.float-ball, .control-bar', { timeout: 20000 });
+  await mainWin.waitForSelector('[data-testid="floatball-btn"], [data-testid="control-bar"]', { timeout: 20000 });
   return mainWin;
 }
 
@@ -64,15 +64,15 @@ async function getLayout(win: Page): Promise<ControlBarLayout> {
 }
 
 async function expandControlBar(mainWin: Page): Promise<void> {
-  const expanded = await mainWin.evaluate(() => document.querySelector('.control-bar') !== null);
+  const expanded = await mainWin.evaluate(() => document.querySelector('[data-testid="control-bar"]') !== null);
   if (expanded) return;
-  await mainWin.waitForSelector('.float-ball', { timeout: 10000 });
+  await mainWin.waitForSelector('[data-testid="floatball-btn"]', { timeout: 10000 });
   await mainWin.evaluate(() => {
-    document.querySelector('.float-ball')?.dispatchEvent(
+    document.querySelector('[data-testid="floatball-btn"]')?.dispatchEvent(
       new MouseEvent('click', { bubbles: true, cancelable: true }),
     );
   });
-  await mainWin.waitForSelector('.control-bar', { timeout: 5000 });
+  await mainWin.waitForSelector('[data-testid="control-bar"]', { timeout: 5000 });
 }
 
 /** Open settings via the gear button (real user flow) and switch to the Layout tab. */
