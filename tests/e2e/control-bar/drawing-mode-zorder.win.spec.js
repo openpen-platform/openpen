@@ -48,6 +48,24 @@ async function getMainWindow() {
   throw new Error('Unable to locate main window with .float-ball/.control-bar within 40s');
 }
 
+// Built-in tool buttons in expand order. Each renders via AppButton, which
+// marks the active tool with the `.active` class on its `.app-btn` element and
+// forwards these stable data-testids. Keep in sync with the module ToolButton
+// components (controlbar-<tool>-btn) if a built-in tool is added or renamed.
+const TOOL_TESTIDS = [
+  'controlbar-freehand-btn',
+  'controlbar-line-btn',
+  'controlbar-shape-btn',
+  'controlbar-eraser-btn',
+];
+
+async function isToolActive(win, testid) {
+  const btn = win.getByTestId(testid);
+  if (!(await btn.isVisible().catch(() => false))) return false;
+  const cls = (await btn.getAttribute('class')) ?? '';
+  return /\bactive\b/.test(cls);
+}
+
 test('control bar tool buttons respond while drawing mode is active', async () => {
   test.skip(process.platform !== 'win32', 'Windows-only z-order check');
 
@@ -58,46 +76,39 @@ test('control bar tool buttons respond while drawing mode is active', async () =
   await win.waitForTimeout(400);
   await expect(win.getByTestId('control-bar')).toBeVisible({ timeout: 5000 });
 
-  // Record the active tool before entering drawing mode.
-  const toolBefore = await win.evaluate(() => {
-    const active = document.querySelector('[data-tool][aria-pressed="true"], [data-tool].active');
-    return active?.dataset?.tool ?? null;
-  });
+  // Resolve the tool buttons currently mounted in the bar.
+  const presentTools = [];
+  for (const testid of TOOL_TESTIDS) {
+    if (await win.getByTestId(testid).isVisible().catch(() => false)) {
+      presentTools.push(testid);
+    }
+  }
+  expect(presentTools.length, 'tool buttons must be present in the DOM').toBeGreaterThan(0);
+
+  // Record which tool is active before entering drawing mode.
+  let activeBefore = null;
+  for (const testid of presentTools) {
+    if (await isToolActive(win, testid)) {
+      activeBefore = testid;
+      break;
+    }
+  }
 
   // Enter drawing mode via IPC (same path the shortcut takes).
   await win.evaluate(() => window.openPenApi?.setDrawingMode?.(true));
   await win.waitForTimeout(200);
 
-  // Click a tool button in the control bar. If the overlay is covering the bar
-  // the click lands on the canvas instead and the tool does not change.
-  const toolButtons = win.locator('[data-tool]');
-  const count = await toolButtons.count();
-  expect(count, 'tool buttons must be present in the DOM').toBeGreaterThan(0);
+  // Click a tool button that is NOT the currently active one. If the overlay is
+  // covering the bar the click lands on the canvas instead and the tool button
+  // never gains the `.active` class.
+  const target = presentTools.find((testid) => testid !== activeBefore);
+  expect(target, 'could not find a non-active tool button to click').toBeTruthy();
 
-  // Click the first tool button that is NOT the currently active one.
-  let clicked = false;
-  for (let i = 0; i < count; i++) {
-    const btn = toolButtons.nth(i);
-    const toolId = await btn.getAttribute('data-tool');
-    if (toolId && toolId !== toolBefore) {
-      await btn.click({ force: false });
-      clicked = true;
+  await win.getByTestId(target).click({ force: false });
 
-      // Verify the tool actually changed via IPC — proves the click reached
-      // the control bar and was not consumed by the overlay canvas.
-      await win.waitForFunction(
-        (expectedTool) => {
-          const active = document.querySelector('[data-tool][aria-pressed="true"], [data-tool].active');
-          return active?.dataset?.tool === expectedTool;
-        },
-        toolId,
-        { timeout: 3000 }
-      );
-      break;
-    }
-  }
-
-  expect(clicked, 'could not find a non-active tool button to click').toBe(true);
+  // Verify the clicked tool actually became active — proves the click reached
+  // the control bar and was not consumed by the overlay canvas.
+  await expect(win.getByTestId(target)).toHaveClass(/\bactive\b/, { timeout: 3000 });
 
   // Exit drawing mode and restore state.
   await win.evaluate(() => window.openPenApi?.setDrawingMode?.(false));

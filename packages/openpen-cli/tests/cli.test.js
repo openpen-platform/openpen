@@ -22,6 +22,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const CLI_BIN = path.resolve(__dirname, '../bin/openpen.js')
 const FIXTURE_DIR = path.resolve(__dirname, 'fixture-plugin')
 
+// The CLI resolves its plugins dir from os.homedir(). On POSIX that honours
+// $HOME, but on Windows os.homedir() reads %USERPROFILE% (falling back to
+// %HOMEDRIVE%%HOMEPATH%) and ignores $HOME entirely — so a test that only sets
+// HOME would let the CLI write to (and assert against) the real user profile on
+// Windows. Redirect every variable os.homedir() consults so the install dir is
+// isolated to the temp dir on all platforms. HOMEDRIVE + HOMEPATH must
+// concatenate back to `dir`, so split the temp dir at its drive letter rather
+// than leaving HOMEDRIVE empty (which makes %HOMEDRIVE%%HOMEPATH% point at the
+// wrong location if USERPROFILE is ever ignored).
+function homeEnv(dir) {
+  const match = /^([A-Za-z]:)(.*)$/.exec(dir)
+  const homeDrive = match ? match[1] : ''
+  const homePath = match ? match[2] : dir
+  return {
+    HOME: dir,
+    USERPROFILE: dir,
+    HOMEDRIVE: homeDrive,
+    HOMEPATH: homePath,
+  }
+}
+
 // ── Fixture setup ─────────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -57,10 +78,7 @@ describe('openpen plugin add <local-path>', () => {
         [CLI_BIN, 'plugin', 'add', FIXTURE_DIR, '--yes'],
         {
           encoding: 'utf-8',
-          env: {
-            ...process.env,
-            HOME: tmpPluginsDir,
-          },
+          env: { ...process.env, ...homeEnv(tmpPluginsDir) },
         },
       )
 
@@ -90,7 +108,7 @@ describe('openpen plugin add <local-path>', () => {
         [CLI_BIN, 'plugin', 'add', badFixture, '--yes'],
         {
           encoding: 'utf-8',
-          env: { ...process.env, HOME: tmpPluginsDir },
+          env: { ...process.env, ...homeEnv(tmpPluginsDir) },
         },
       )
 
@@ -112,7 +130,7 @@ describe('openpen plugin install security prompt', () => {
         [CLI_BIN, 'plugin', 'add', FIXTURE_DIR, '--yes'],
         {
           encoding: 'utf-8',
-          env: { ...process.env, HOME: tmpPluginsDir },
+          env: { ...process.env, ...homeEnv(tmpPluginsDir) },
         },
       )
 
@@ -134,7 +152,7 @@ describe('openpen plugin install security prompt', () => {
         [CLI_BIN, 'plugin', 'add', FIXTURE_DIR, '-y'],
         {
           encoding: 'utf-8',
-          env: { ...process.env, HOME: tmpPluginsDir },
+          env: { ...process.env, ...homeEnv(tmpPluginsDir) },
         },
       )
 
@@ -154,7 +172,7 @@ describe('openpen plugin install security prompt', () => {
         [CLI_BIN, 'plugin', 'add', FIXTURE_DIR],
         {
           encoding: 'utf-8',
-          env: { ...process.env, HOME: tmpPluginsDir },
+          env: { ...process.env, ...homeEnv(tmpPluginsDir) },
         },
       )
 
@@ -174,7 +192,7 @@ describe('openpen plugin install security prompt', () => {
         [CLI_BIN, 'plugin', 'add', FIXTURE_DIR],
         {
           encoding: 'utf-8',
-          env: { ...process.env, HOME: tmpPluginsDir },
+          env: { ...process.env, ...homeEnv(tmpPluginsDir) },
         },
       )
 

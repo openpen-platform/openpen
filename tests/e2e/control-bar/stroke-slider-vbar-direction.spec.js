@@ -96,40 +96,63 @@ async function dragBall(win, deltaX, deltaY, steps = 10) {
   await win.waitForTimeout(450);
 }
 
+// Wait until the ball's painted DOM position reaches the requested viewport
+// coordinate (0,0 = workArea top-left), so the subsequent drag reads a fresh
+// boundingBox instead of the pre-teleport spot. Polls the observable ball
+// center instead of sleeping a fixed interval.
+async function waitForBallAt(win, viewportX, viewportY) {
+  await expect(async () => {
+    const box = await win.getByTestId('floatball-btn').boundingBox();
+    expect(box).not.toBeNull();
+    expect(Math.abs(box.x + box.width / 2 - viewportX)).toBeLessThanOrEqual(2);
+    expect(Math.abs(box.y + box.height / 2 - viewportY)).toBeLessThanOrEqual(2);
+  }).toPass({ timeout: 2000 });
+}
+
+async function teleportBall(win, wa, x, y) {
+  await win.evaluate(
+    async ({ x, y }) => {
+      await window.openPenApi?.sendPositioningIntent?.({ type: 'drag-start' });
+      await window.openPenApi?.sendPositioningIntent?.({ type: 'drag-move', ballScreenPos: { x, y } });
+      await window.openPenApi?.sendPositioningIntent?.({
+        type: 'drag-end', ballScreenPos: { x, y }, hadMotion: true,
+        enableDragAutoSnap: false, barBounds: null,
+      });
+    },
+    { x: Math.round(x), y: Math.round(y) },
+  );
+  await waitForBallAt(win, Math.round(x) - wa.x, Math.round(y) - wa.y);
+}
+
+async function currentSnapEdge(win) {
+  const cls = await win.getByTestId('floatball-btn').getAttribute('class');
+  const match = cls?.match(/edge-(left|right|top|bottom)/);
+  return match?.[1] ?? null;
+}
+
+// These vbar tests only make sense once the ball is actually snapped to the
+// target side edge — the bar layout (vbar-left/-right) follows the snap. The
+// drag gesture reads the ball's DOM position, so a teleport the renderer has
+// not yet repainted can start the gesture from a stale spot and snap to the
+// wrong edge under load. Confirm the edge and retry the gesture if it missed,
+// rather than proceeding on an unverified layout.
 async function snapToEdge(win, wa, edge) {
   const midY = wa.y + Math.floor(wa.height / 2);
 
-  if (edge === 'left') {
-    await win.evaluate(
-      async ({ x, y }) => {
-        await window.openPenApi?.sendPositioningIntent?.({ type: 'drag-start' });
-        await window.openPenApi?.sendPositioningIntent?.({ type: 'drag-move', ballScreenPos: { x, y } });
-        await window.openPenApi?.sendPositioningIntent?.({
-          type: 'drag-end', ballScreenPos: { x, y }, hadMotion: true,
-          enableDragAutoSnap: false, barBounds: null,
-        });
-      },
-      { x: wa.x + 30, y: midY },
-    );
-    await win.waitForTimeout(150);
-    await dragBall(win, -120, 0);
-  } else if (edge === 'right') {
-    await win.evaluate(
-      async ({ x, y }) => {
-        await window.openPenApi?.sendPositioningIntent?.({ type: 'drag-start' });
-        await window.openPenApi?.sendPositioningIntent?.({ type: 'drag-move', ballScreenPos: { x, y } });
-        await window.openPenApi?.sendPositioningIntent?.({
-          type: 'drag-end', ballScreenPos: { x, y }, hadMotion: true,
-          enableDragAutoSnap: false, barBounds: null,
-        });
-      },
-      { x: wa.x + wa.width - 30, y: midY },
-    );
-    await win.waitForTimeout(150);
-    await dragBall(win, 120, 0);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (edge === 'left') {
+      await teleportBall(win, wa, wa.x + 30, midY);
+      await dragBall(win, -120, 0);
+    } else if (edge === 'right') {
+      await teleportBall(win, wa, wa.x + wa.width - 30, midY);
+      await dragBall(win, 120, 0);
+    }
+
+    if ((await currentSnapEdge(win)) === edge) return;
+    await win.waitForTimeout(200);
   }
 
-  await win.waitForTimeout(300);
+  expect(await currentSnapEdge(win), `ball failed to snap to ${edge} after 3 attempts`).toBe(edge);
 }
 
 /** Ensure the stroke-width module uses slider style (vbar shows vertical AppSlider). */

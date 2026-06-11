@@ -75,7 +75,20 @@ async function expandBar(win) {
   await expect(win.getByTestId('control-bar')).toBeVisible();
 }
 
-async function setBallScreenPos(win, screenX, screenY) {
+// Wait until the ball's painted DOM position reaches the requested viewport
+// coordinate (0,0 = workArea top-left), so a subsequent drag gesture reads a
+// fresh boundingBox rather than the pre-teleport spot. Polls the observable
+// ball center instead of sleeping a fixed interval.
+async function waitForBallAt(win, viewportX, viewportY) {
+  await expect(async () => {
+    const box = await win.getByTestId('floatball-btn').boundingBox();
+    expect(box).not.toBeNull();
+    expect(Math.abs(box.x + box.width / 2 - viewportX)).toBeLessThanOrEqual(2);
+    expect(Math.abs(box.y + box.height / 2 - viewportY)).toBeLessThanOrEqual(2);
+  }).toPass({ timeout: 2000 });
+}
+
+async function setBallScreenPos(win, wa, screenX, screenY) {
   await win.evaluate(
     async ({ x, y }) => {
       await window.openPenApi?.sendPositioningIntent?.({ type: 'drag-start' });
@@ -90,7 +103,7 @@ async function setBallScreenPos(win, screenX, screenY) {
     },
     { x: Math.round(screenX), y: Math.round(screenY) },
   );
-  await win.waitForTimeout(150);
+  await waitForBallAt(win, Math.round(screenX) - wa.x, Math.round(screenY) - wa.y);
 }
 
 async function dragBall(win, deltaX, deltaY, steps = 10) {
@@ -110,25 +123,43 @@ async function dragBall(win, deltaX, deltaY, steps = 10) {
   await win.waitForTimeout(450);
 }
 
+async function currentSnapEdge(win) {
+  const cls = await win.getByTestId('floatball-btn').getAttribute('class');
+  const match = cls?.match(/edge-(left|right|top|bottom)/);
+  return match?.[1] ?? null;
+}
+
+// Drag the ball to the target edge and confirm the engine actually landed the
+// snap there before the caller proceeds. The drag gesture reads the ball's DOM
+// position, so a teleport that the renderer hasn't repainted yet can make the
+// gesture start from a stale spot and snap to the wrong edge under load.
+// setBallScreenPos waits for the ball to repaint at the requested spot, then we
+// retry the gesture until the edge is confirmed instead of asserting on a single
+// sample — the invariant (ball IS on `edge`) is unchanged, only its stability.
 async function snapBallToEdge(win, wa, edge) {
   const midX = wa.x + Math.floor(wa.width / 2);
   const midY = wa.y + Math.floor(wa.height / 2);
 
-  if (edge === 'left') {
-    await setBallScreenPos(win, wa.x + 30, midY);
-    await dragBall(win, -120, 0);
-  } else if (edge === 'right') {
-    await setBallScreenPos(win, wa.x + wa.width - 30, midY);
-    await dragBall(win, 120, 0);
-  } else if (edge === 'top') {
-    await setBallScreenPos(win, midX, wa.y + 30);
-    await dragBall(win, 0, -120);
-  } else if (edge === 'bottom') {
-    await setBallScreenPos(win, midX, wa.y + wa.height - 30);
-    await dragBall(win, 0, 120);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (edge === 'left') {
+      await setBallScreenPos(win, wa, wa.x + 30, midY);
+      await dragBall(win, -120, 0);
+    } else if (edge === 'right') {
+      await setBallScreenPos(win, wa, wa.x + wa.width - 30, midY);
+      await dragBall(win, 120, 0);
+    } else if (edge === 'top') {
+      await setBallScreenPos(win, wa, midX, wa.y + 30);
+      await dragBall(win, 0, -120);
+    } else if (edge === 'bottom') {
+      await setBallScreenPos(win, wa, midX, wa.y + wa.height - 30);
+      await dragBall(win, 0, 120);
+    }
+
+    if ((await currentSnapEdge(win)) === edge) return;
+    await win.waitForTimeout(200);
   }
 
-  await win.waitForTimeout(200);
+  expect(await currentSnapEdge(win), `ball failed to snap to ${edge} after 3 attempts`).toBe(edge);
 }
 
 /**
@@ -141,16 +172,44 @@ async function assertPopupInBounds(win, popupSelector = '.openpen-popover-conten
   const popup = win.locator(popupSelector).first();
   await expect(popup).toBeVisible({ timeout: 3000 });
 
-  const [popupBox, viewport] = await Promise.all([
-    popup.boundingBox(),
-    win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight })),
-  ]);
+  // Poll the geometry: the clamp runs after the popover mounts, so a single
+  // sample can catch the popup mid-reposition under load. The asserted bound is
+  // unchanged — toPass just retries until the layout settles or times out. The
+  // 250ms snap/clamp animation settles well within this window; the budget is
+  // sized to the real animation, not an arbitrarily long ceiling.
+  await expect(async () => {
+    const [popupBox, viewport] = await Promise.all([
+      popup.boundingBox(),
+      win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight })),
+    ]);
 
-  expect(popupBox).not.toBeNull();
-  expect(popupBox.x).toBeGreaterThanOrEqual(-1);
-  expect(popupBox.y).toBeGreaterThanOrEqual(-1);
-  expect(popupBox.x + popupBox.width).toBeLessThanOrEqual(viewport.width + 1);
-  expect(popupBox.y + popupBox.height).toBeLessThanOrEqual(viewport.height + 1);
+    expect(popupBox).not.toBeNull();
+    expect(popupBox.x).toBeGreaterThanOrEqual(-1);
+    expect(popupBox.y).toBeGreaterThanOrEqual(-1);
+    expect(popupBox.x + popupBox.width).toBeLessThanOrEqual(viewport.width + 1);
+    expect(popupBox.y + popupBox.height).toBeLessThanOrEqual(viewport.height + 1);
+  }).toPass({ timeout: 2000 });
+}
+
+// Shared by the G4 cases: the expanded bar must sit fully inside the viewport
+// (= workArea). Polls the geometry so an in-flight clamp/snap animation gets a
+// chance to settle instead of failing on the first frame.
+async function assertBarInBounds(win) {
+  const bar = win.getByTestId('control-bar');
+  await expect(bar).toBeVisible({ timeout: 3000 });
+
+  await expect(async () => {
+    const [barBox, viewport] = await Promise.all([
+      bar.boundingBox(),
+      win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight })),
+    ]);
+
+    expect(barBox).not.toBeNull();
+    expect(barBox.x).toBeGreaterThanOrEqual(-1);
+    expect(barBox.y).toBeGreaterThanOrEqual(-1);
+    expect(barBox.x + barBox.width).toBeLessThanOrEqual(viewport.width + 1);
+    expect(barBox.y + barBox.height).toBeLessThanOrEqual(viewport.height + 1);
+  }).toPass({ timeout: 2000 });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -162,7 +221,7 @@ test('G1: color picker stays inside viewport at free position (screen center)', 
   await ensureBallMode(win);
 
   const wa = await electronApp.evaluate(({ screen }) => screen.getPrimaryDisplay().workArea);
-  await setBallScreenPos(win, wa.x + Math.floor(wa.width / 2), wa.y + Math.floor(wa.height / 2));
+  await setBallScreenPos(win, wa, wa.x + Math.floor(wa.width / 2), wa.y + Math.floor(wa.height / 2));
   await expandBar(win);
 
   await win.getByTestId('controlbar-color-btn').click();
@@ -284,18 +343,10 @@ test('G4: expanded bar bounds stay inside viewport at free position (screen cent
   await ensureBallMode(win);
 
   const wa = await electronApp.evaluate(({ screen }) => screen.getPrimaryDisplay().workArea);
-  await setBallScreenPos(win, wa.x + Math.floor(wa.width / 2), wa.y + Math.floor(wa.height / 2));
+  await setBallScreenPos(win, wa, wa.x + Math.floor(wa.width / 2), wa.y + Math.floor(wa.height / 2));
   await expandBar(win);
 
-  const bar = win.getByTestId('control-bar');
-  const barBox = await bar.boundingBox();
-  const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
-
-  expect(barBox).not.toBeNull();
-  expect(barBox.x).toBeGreaterThanOrEqual(-1);
-  expect(barBox.y).toBeGreaterThanOrEqual(-1);
-  expect(barBox.x + barBox.width).toBeLessThanOrEqual(viewport.width + 1);
-  expect(barBox.y + barBox.height).toBeLessThanOrEqual(viewport.height + 1);
+  await assertBarInBounds(win);
 });
 
 test('G4: expanded bar bounds stay inside viewport at snap-left', async () => {
@@ -306,15 +357,7 @@ test('G4: expanded bar bounds stay inside viewport at snap-left', async () => {
   await snapBallToEdge(win, wa, 'left');
   await expandBar(win);
 
-  const bar = win.getByTestId('control-bar');
-  const barBox = await bar.boundingBox();
-  const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
-
-  expect(barBox).not.toBeNull();
-  expect(barBox.x).toBeGreaterThanOrEqual(-1);
-  expect(barBox.y).toBeGreaterThanOrEqual(-1);
-  expect(barBox.x + barBox.width).toBeLessThanOrEqual(viewport.width + 1);
-  expect(barBox.y + barBox.height).toBeLessThanOrEqual(viewport.height + 1);
+  await assertBarInBounds(win);
 });
 
 test('G4: expanded bar bounds stay inside viewport at snap-right', async () => {
@@ -325,15 +368,7 @@ test('G4: expanded bar bounds stay inside viewport at snap-right', async () => {
   await snapBallToEdge(win, wa, 'right');
   await expandBar(win);
 
-  const bar = win.getByTestId('control-bar');
-  const barBox = await bar.boundingBox();
-  const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
-
-  expect(barBox).not.toBeNull();
-  expect(barBox.x).toBeGreaterThanOrEqual(-1);
-  expect(barBox.y).toBeGreaterThanOrEqual(-1);
-  expect(barBox.x + barBox.width).toBeLessThanOrEqual(viewport.width + 1);
-  expect(barBox.y + barBox.height).toBeLessThanOrEqual(viewport.height + 1);
+  await assertBarInBounds(win);
 });
 
 test('G4: expanded bar bounds stay inside viewport at snap-top', async () => {
@@ -344,15 +379,7 @@ test('G4: expanded bar bounds stay inside viewport at snap-top', async () => {
   await snapBallToEdge(win, wa, 'top');
   await expandBar(win);
 
-  const bar = win.getByTestId('control-bar');
-  const barBox = await bar.boundingBox();
-  const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
-
-  expect(barBox).not.toBeNull();
-  expect(barBox.x).toBeGreaterThanOrEqual(-1);
-  expect(barBox.y).toBeGreaterThanOrEqual(-1);
-  expect(barBox.x + barBox.width).toBeLessThanOrEqual(viewport.width + 1);
-  expect(barBox.y + barBox.height).toBeLessThanOrEqual(viewport.height + 1);
+  await assertBarInBounds(win);
 });
 
 test('G4: expanded bar bounds stay inside viewport at snap-bottom', async () => {
@@ -363,13 +390,5 @@ test('G4: expanded bar bounds stay inside viewport at snap-bottom', async () => 
   await snapBallToEdge(win, wa, 'bottom');
   await expandBar(win);
 
-  const bar = win.getByTestId('control-bar');
-  const barBox = await bar.boundingBox();
-  const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
-
-  expect(barBox).not.toBeNull();
-  expect(barBox.x).toBeGreaterThanOrEqual(-1);
-  expect(barBox.y).toBeGreaterThanOrEqual(-1);
-  expect(barBox.x + barBox.width).toBeLessThanOrEqual(viewport.width + 1);
-  expect(barBox.y + barBox.height).toBeLessThanOrEqual(viewport.height + 1);
+  await assertBarInBounds(win);
 });

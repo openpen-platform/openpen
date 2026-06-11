@@ -141,15 +141,24 @@ async function getWorkArea() {
 async function assertBarInViewport(win, tolerance = 2) {
   const bar = win.getByTestId('control-bar');
   await expect(bar).toBeVisible({ timeout: 3000 });
-  const [barBox, vp] = await Promise.all([
-    bar.boundingBox(),
-    win.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight })),
-  ]);
-  expect(barBox).not.toBeNull();
-  expect(barBox.x, 'bar left overflows viewport').toBeGreaterThanOrEqual(-tolerance);
-  expect(barBox.y, 'bar top overflows viewport').toBeGreaterThanOrEqual(-tolerance);
-  expect(barBox.x + barBox.width, 'bar right overflows viewport').toBeLessThanOrEqual(vp.w + tolerance);
-  expect(barBox.y + barBox.height, 'bar bottom overflows viewport').toBeLessThanOrEqual(vp.h + tolerance);
+  // Poll the geometry: the workArea clamp runs after the bar mounts/snaps, so a
+  // single sample can land mid-animation under load. The asserted invariant is
+  // unchanged — toPass retries until the layout settles or times out. The budget
+  // is sized to the real 250ms snap / 350ms bar-enter animation, not an
+  // arbitrarily long ceiling that would stretch the failure path.
+  let barBox;
+  await expect(async () => {
+    const [box, vp] = await Promise.all([
+      bar.boundingBox(),
+      win.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight })),
+    ]);
+    expect(box).not.toBeNull();
+    expect(box.x, 'bar left overflows viewport').toBeGreaterThanOrEqual(-tolerance);
+    expect(box.y, 'bar top overflows viewport').toBeGreaterThanOrEqual(-tolerance);
+    expect(box.x + box.width, 'bar right overflows viewport').toBeLessThanOrEqual(vp.w + tolerance);
+    expect(box.y + box.height, 'bar bottom overflows viewport').toBeLessThanOrEqual(vp.h + tolerance);
+    barBox = box;
+  }).toPass({ timeout: 2000 });
   return barBox;
 }
 
@@ -163,16 +172,22 @@ async function assertPopupInViewportAndAxis(win, isVerticalBar, tolerance = 2) {
   const popup = win.locator('[class~="openpen-popover-content"][data-state="open"]').first();
   await expect(popup).toBeVisible({ timeout: 4000 });
 
-  const [popupBox, vp] = await Promise.all([
-    popup.boundingBox(),
-    win.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight })),
-  ]);
+  // Poll the geometry: the popover clamps after it mounts, so a single sample
+  // can catch it mid-reposition under load. toPass retries the same invariant.
+  let popupBox;
+  await expect(async () => {
+    const [box, vp] = await Promise.all([
+      popup.boundingBox(),
+      win.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight })),
+    ]);
 
-  expect(popupBox, 'popup bounding box is null').not.toBeNull();
-  expect(popupBox.x, 'popup left overflows viewport').toBeGreaterThanOrEqual(-tolerance);
-  expect(popupBox.y, 'popup top overflows viewport').toBeGreaterThanOrEqual(-tolerance);
-  expect(popupBox.x + popupBox.width, 'popup right overflows viewport').toBeLessThanOrEqual(vp.w + tolerance);
-  expect(popupBox.y + popupBox.height, 'popup bottom overflows viewport').toBeLessThanOrEqual(vp.h + tolerance);
+    expect(box, 'popup bounding box is null').not.toBeNull();
+    expect(box.x, 'popup left overflows viewport').toBeGreaterThanOrEqual(-tolerance);
+    expect(box.y, 'popup top overflows viewport').toBeGreaterThanOrEqual(-tolerance);
+    expect(box.x + box.width, 'popup right overflows viewport').toBeLessThanOrEqual(vp.w + tolerance);
+    expect(box.y + box.height, 'popup bottom overflows viewport').toBeLessThanOrEqual(vp.h + tolerance);
+    popupBox = box;
+  }).toPass({ timeout: 2000 });
 
   // I4: axis invariant
   const dataSide = await popup.getAttribute('data-side');
@@ -236,18 +251,24 @@ async function dragBall(win, deltaX, deltaY, steps = 10) {
 async function assertBallInViewport(win, tolerance = 2) {
   const ball = win.getByTestId('floatball-btn');
   await expect(ball).toBeVisible({ timeout: 3000 });
-  const [ballBox, vp] = await Promise.all([
-    ball.boundingBox(),
-    win.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight })),
-  ]);
-  expect(ballBox).not.toBeNull();
-  const cx = ballBox.x + ballBox.width / 2;
-  const cy = ballBox.y + ballBox.height / 2;
-  expect(cx, 'ball center X left of viewport').toBeGreaterThanOrEqual(BALL_HALF - tolerance);
-  expect(cy, 'ball center Y above viewport').toBeGreaterThanOrEqual(BALL_HALF - tolerance);
-  expect(cx, 'ball center X right of viewport').toBeLessThanOrEqual(vp.w - BALL_HALF + tolerance);
-  expect(cy, 'ball center Y below viewport').toBeLessThanOrEqual(vp.h - BALL_HALF + tolerance);
-  return { cx, cy };
+  // Poll: the ball settles into the clamped position after a snap/drag, so a
+  // single sample can read it mid-flight under load. Same invariant, retried.
+  let center;
+  await expect(async () => {
+    const [ballBox, vp] = await Promise.all([
+      ball.boundingBox(),
+      win.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight })),
+    ]);
+    expect(ballBox).not.toBeNull();
+    const cx = ballBox.x + ballBox.width / 2;
+    const cy = ballBox.y + ballBox.height / 2;
+    expect(cx, 'ball center X left of viewport').toBeGreaterThanOrEqual(BALL_HALF - tolerance);
+    expect(cy, 'ball center Y above viewport').toBeGreaterThanOrEqual(BALL_HALF - tolerance);
+    expect(cx, 'ball center X right of viewport').toBeLessThanOrEqual(vp.w - BALL_HALF + tolerance);
+    expect(cy, 'ball center Y below viewport').toBeLessThanOrEqual(vp.h - BALL_HALF + tolerance);
+    center = { cx, cy };
+  }).toPass({ timeout: 2000 });
+  return center;
 }
 
 // ─── Axis A: Settings combinations ───────────────────────────────────────────
