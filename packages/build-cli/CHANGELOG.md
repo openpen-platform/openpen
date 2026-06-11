@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/openpen-platform/openpen/compare/v1.1.0...build@1.1.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* **release-please:** correct per-package CHANGELOG path nesting ([d151e9d](https://github.com/openpen-platform/openpen/commit/d151e9def2fa82234b1c24a1d7f83f06988c0e36))
+
 ## [1.1.0](https://github.com/openpen-platform/openpen/compare/v1.0.1...v1.1.0) (2026-05-24)
 
 
