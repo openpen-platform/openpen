@@ -77,6 +77,11 @@ describe('@openpen/module-api/host contract', () => {
       const result = getAllStrokes()
       expect(Array.isArray(result)).toBe(true)
     })
+
+    it('exports commitStroke as a function', async () => {
+      const { commitStroke } = await import('./index')
+      expect(typeof commitStroke).toBe('function')
+    })
   })
 
   // ── Popup Anchor ────────────────────────────────────────────────────────────

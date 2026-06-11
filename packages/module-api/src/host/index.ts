@@ -29,7 +29,7 @@ export {
 } from './color-utils'
 
 // ── Stroke Store ──────────────────────────────────────────────────────────────
-export { getAllStrokes, removeStrokeById, pushCommand } from './stroke-store'
+export { getAllStrokes, removeStrokeById, pushCommand, commitStroke } from './stroke-store'
 export type { Stroke } from './stroke-store'
 
 // ── Popup Anchor ──────────────────────────────────────────────────────────────

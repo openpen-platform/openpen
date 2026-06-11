@@ -173,6 +173,64 @@ See `packages/plugin-starter/src/demo-tool.ts` for a complete, type-checked refe
 - **Type**: `HtmlOverlayContribution[]`
 - **Purpose**: Mount HTML / Vue components above the canvas (text annotations, image stickers, radial QuickMenu). This slot is stable (not reserved) because without it, future text-annotation plugins would force a canvas redesign. Architectural slots must land early.
 
+## Host stroke service {#host-stroke-service}
+
+Most tools return their finished `Stroke` from `onPointerUp` and the host commits
+it for you. Tools that finalise a stroke **outside** that synchronous return —
+async-placement tools like a text annotation that opens an editor, an arrow whose
+endpoints are confirmed in a second step, or a step-marker placed after a dialog —
+need to commit the stroke themselves. The host stroke service exposes that path
+plus read + history access, imported from `@openpen/module-api/host`:
+
+```ts
+import { commitStroke, getAllStrokes, removeStrokeById, pushCommand } from '@openpen/module-api/host'
+```
+
+### `commitStroke(stroke)`
+
+Atomically commits a finished stroke: appends it to the stroke store, records an
+`ADD_STROKE` history command, and requests a canvas redraw — all in one call.
+
+```ts
+// Async-placement tool: stroke is finalised after a deferred interaction.
+async function placeText(point: Point, style: StrokeStyle) {
+  const text = await openTextEditor(point)
+  if (text === null) return // user cancelled — commit nothing
+  commitStroke({
+    id: crypto.randomUUID(),
+    tool: 'text',
+    points: [point],
+    style,
+    text,
+  })
+}
+```
+
+- **Equivalence**: `commitStroke(stroke)` is semantically identical to returning
+  the same `stroke` from a synchronous `onPointerUp`. Both append the stroke and
+  push one `ADD_STROKE` command, so the result fully participates in undo/redo —
+  a single undo removes exactly the committed stroke, a redo restores it.
+- **Not idempotent**: each call appends a stroke and a history entry. Calling
+  `commitStroke(stroke)` twice with the same object adds **two** strokes. Commit
+  exactly once per finished stroke; guard your async paths against double-fire.
+- **No sanitize (full-trust)**: the stroke shape is the caller's responsibility.
+  The host performs no validation in v1 — supply a valid `Stroke` (unique `id`,
+  a `tool` matching your contribution, well-formed `points` / `style`).
+
+### `getAllStrokes()` / `removeStrokeById(id)` / `pushCommand(command)`
+
+The remaining read + history surface, used by tools that inspect or mutate
+existing strokes (e.g. a stroke-eraser):
+
+- `getAllStrokes(): Stroke[]` — current strokes in z-order.
+- `removeStrokeById(id): boolean` — remove a stroke by id; returns whether one
+  was removed. Pair with `pushCommand` to make the removal undoable.
+- `pushCommand(command)` — record a history command (`ADD_STROKE` /
+  `REMOVE_STROKE` / `CLEAR_ALL`) so the operation participates in undo/redo.
+
+For canvas-wide operations (clear all, undo, redo) use host commands rather than
+mutating the store directly — those helpers are not part of this service.
+
 ## `canvas.stroke.transformers` — ⏳ reserved {#canvas-stroke-transformers}
 
 - **Contribution key**: `strokeTransformers`

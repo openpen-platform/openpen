@@ -2,8 +2,12 @@
  * @openpen/module-api/host — Stroke Store
  *
  * Proxies the stroke store read + history APIs through the host registry.
- * Only the minimum surface required by stroke-eraser (and similar tools)
- * is exposed: getAllStrokes, removeStrokeById, pushCommand.
+ * The exposed surface:
+ *   - getAllStrokes / removeStrokeById / pushCommand: read + history access
+ *     required by stroke-eraser (and similar tools).
+ *   - commitStroke: atomic add + ADD_STROKE history + redraw for async-placement
+ *     tools (e.g. text) that finalise a stroke outside the synchronous
+ *     onPointerUp return. Not idempotent — calling it twice appends twice.
  *
  * Host-internal state mutation helpers (clearAll, addStroke, undo, redo)
  * are intentionally NOT exposed here — modules must use hostCommands for
@@ -20,6 +24,9 @@ export const removeStrokeById: ModuleHost['removeStrokeById'] = (id) =>
 
 export const pushCommand: ModuleHost['pushCommand'] = (command) =>
   _useHost().pushCommand(command)
+
+export const commitStroke: ModuleHost['commitStroke'] = (stroke) =>
+  _useHost().commitStroke(stroke)
 
 // Re-export Stroke type via the public SDK types, not host internals.
 export type { Stroke } from '../types/tool'

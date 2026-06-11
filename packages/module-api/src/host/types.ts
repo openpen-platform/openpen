@@ -162,6 +162,19 @@ export interface ModuleHost {
   removeStrokeById: (id: string) => boolean
   pushCommand: (command: HistoryCommand) => void
 
+  /**
+   * Atomically commit a finished stroke: append it to the store, record an
+   * ADD_STROKE history command, and request a canvas redraw. The commit path
+   * for tools that produce strokes outside the synchronous pointer-up return
+   * (e.g. async-placement tools that finalise after a deferred interaction).
+   *
+   * Semantically equivalent to the host's synchronous onPointerUp commit and
+   * fully participates in undo/redo. NOT idempotent: calling it twice with the
+   * same stroke appends two strokes and two history entries. The stroke shape
+   * is the caller's responsibility — v1 is full-trust and performs no sanitize.
+   */
+  commitStroke: (stroke: Stroke) => void
+
   // Host commands
   hostCommands: HostCommandsAPI
 

@@ -16,7 +16,7 @@
 import { registerHost } from '@openpen/module-api/host/registry'
 
 import { emit, on } from './core/runtime/event-bus'
-import { getAllStrokes, removeStrokeById, pushCommand } from './services/stroke-store'
+import { addStroke, getAllStrokes, removeStrokeById, pushCommand } from './services/stroke-store'
 import { hostCommands } from './services/host-commands'
 import {
   resolveColorStyle,
@@ -40,6 +40,11 @@ export function bootstrapHost(): void {
     getAllStrokes,
     removeStrokeById,
     pushCommand,
+    commitStroke: (stroke) => {
+      addStroke(stroke)
+      pushCommand({ type: 'ADD_STROKE', stroke })
+      emit('canvas-redraw-requested')
+    },
     hostCommands,
     colorUtils: {
       resolveColorStyle,

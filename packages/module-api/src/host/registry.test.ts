@@ -19,6 +19,7 @@ function makeStubHost(): ModuleHost {
     getAllStrokes: () => [],
     removeStrokeById: () => false,
     pushCommand: noop,
+    commitStroke: noop,
     hostCommands: {
       controlBar: { togglePin: noop },
       canvas: { clear: noop },
