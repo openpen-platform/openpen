@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/openpen-platform/openpen/compare/v1.1.0...openpen-cli@1.2.0) (2026-06-11)
+
+
+### Features
+
+* **openpen-cli:** add security prompt before plugin install ([d9342ae](https://github.com/openpen-platform/openpen/commit/d9342ae12810859c42a8378aaa54686355c05db6))
+
+
+### Bug Fixes
+
+* **cli:** substitute package.json name in scaffold ([b28742f](https://github.com/openpen-platform/openpen/commit/b28742f73d796f872aa95e167701c73c78f257db))
+* **release-please:** correct per-package CHANGELOG path nesting ([d151e9d](https://github.com/openpen-platform/openpen/commit/d151e9def2fa82234b1c24a1d7f83f06988c0e36))
+
 ## [1.1.0](https://github.com/openpen-platform/openpen/compare/v1.0.3...v1.1.0) (2026-05-24)
 
 
