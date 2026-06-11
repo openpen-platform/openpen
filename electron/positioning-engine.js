@@ -54,7 +54,7 @@ const EXPAND_CLAMP_DURATION_MS = 80;
  *   animation?: {
  *     durationMs: number;
  *     easing: 'easeOutBack' | 'easeOutCubic' | 'linear';
- *     purpose: 'snap' | 'summon' | 'clamp' | 'expand-precompute';
+ *     purpose: 'snap' | 'summon' | 'clamp' | 'expand-precompute' | 'display-change';
  *   };
  * }} PositioningOutput
  *
@@ -344,6 +344,9 @@ function _handleDisplayChanged() {
   const displays = _getAllDisplays();
   if (displays.length === 0) return { state: { ..._state }, windowCommands: [] };
 
+  const prevX = _state.ballScreenPos.x;
+  const prevY = _state.ballScreenPos.y;
+
   // Re-clamp ball to the active display's (or nearest) workArea.
   const { ballX, ballY, display } = (() => {
     const result = clampToWorkArea(
@@ -376,10 +379,25 @@ function _handleDisplayChanged() {
     },
   ]);
 
-  return {
+  const output = {
     state: { ..._state },
     windowCommands,
   };
+
+  // When the topology change re-clamps the ball to a new position (e.g. an
+  // external monitor is unplugged and the ball migrates to the primary
+  // workArea), animate the move so it slides in like a drag-snap instead of
+  // teleporting. Only emit the hint when the ball actually moved — an
+  // unchanged position would otherwise drive a no-op 250ms interpolation.
+  if (Math.abs(ballX - prevX) > 0.5 || Math.abs(ballY - prevY) > 0.5) {
+    output.animation = {
+      durationMs: SNAP_DURATION_MS,
+      easing: 'easeOutCubic',
+      purpose: 'display-change',
+    };
+  }
+
+  return output;
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────

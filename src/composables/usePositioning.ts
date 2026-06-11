@@ -28,7 +28,7 @@ interface PositioningState {
 interface AnimationHint {
   durationMs: number
   easing: 'easeOutBack' | 'easeOutCubic' | 'linear'
-  purpose: 'snap' | 'summon' | 'clamp' | 'expand-precompute'
+  purpose: 'snap' | 'summon' | 'clamp' | 'expand-precompute' | 'display-change'
 }
 
 interface ViewportPoint {
@@ -130,6 +130,18 @@ function ensureSubscription(): void {
   if (stateUnsub !== null) return
   stateUnsub = window.openPenApi?.onPositioningStateChanged?.((payload: unknown) => {
     const { state, animation } = payload as { state: PositioningState; animation: AnimationHint | null }
+    // A display-change broadcast follows a topology change, so the workArea
+    // origins in cachedDisplays (captured on mount) are stale. Refresh them
+    // before applyState computes the target viewport, otherwise toViewport
+    // subtracts an old workArea origin (or fails to find the active display
+    // entirely) and the ball animates from/to an off-screen coordinate.
+    if (animation?.purpose === 'display-change' && window.openPenApi?.getDisplayInfo) {
+      void window.openPenApi.getDisplayInfo().then((displays) => {
+        if (displays?.length) cachedDisplays.value = displays
+        applyState(state, animation)
+      })
+      return
+    }
     applyState(state, animation)
   }) ?? null
 }
