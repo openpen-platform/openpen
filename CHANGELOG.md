@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/openpen-platform/openpen/compare/v1.4.1...v1.4.2) (2026-06-11)
+
+
+### Bug Fixes
+
+* **build:** restore macOS ad-hoc signing by pinning electron-builder to ~26.8.1 ([ecbcca1](https://github.com/openpen-platform/openpen/commit/ecbcca135e74d877dcc373d9e552880f56985767))
+
 ## [1.4.1](https://github.com/openpen-platform/openpen/compare/v1.4.0...v1.4.1) (2026-06-11)
 
 
