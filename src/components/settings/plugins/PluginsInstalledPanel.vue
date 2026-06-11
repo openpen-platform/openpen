@@ -102,6 +102,11 @@ function handleRestart() {
   window.openPenApi?.relaunchApp()
 }
 
+function restartFromProgress() {
+  showInstallProgress.value = false
+  handleRestart()
+}
+
 async function confirmRemove() {
   removeDialogOpen.value = false
   const { ok, error } = await marketplace.removePlugin(removeTargetId.value)
@@ -218,7 +223,7 @@ onUnmounted(() => {
       :percent="marketplace.installPercent.value"
       :error-message="marketplace.installError.value"
       @dismiss="() => { showInstallProgress = false; marketplace.resetInstallState() }"
-      @restart="() => { showInstallProgress = false }"
+      @restart="restartFromProgress"
       @retry="() => {}"
     />
   </div>

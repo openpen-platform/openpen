@@ -52,6 +52,11 @@ function dismissProgress() {
   marketplace.resetInstallState()
 }
 
+function restartFromProgress() {
+  dismissProgress()
+  window.openPenApi?.relaunchApp()
+}
+
 async function refresh() {
   await marketplace.fetchCatalog()
 }
@@ -156,7 +161,7 @@ onMounted(async () => {
       :error-message="marketplace.installError.value"
       @dismiss="dismissProgress"
       @retry="() => startInstall(installTargetId, installTargetVersion)"
-      @restart="() => { dismissProgress() }"
+      @restart="restartFromProgress"
     />
   </div>
 </template>

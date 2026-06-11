@@ -1210,6 +1210,15 @@ function registerIpcHandlers() {
     // (ignore=false), so the overlay's own pointerleave never fires and the
     // DOM cursor would otherwise freeze at the control-bar edge.
     if (drawingMode) {
+      // The OS cursor is hidden process-wide while drawing (cursor-os), and the
+      // overlay's DOM cursor stands in for it. Over the control bar the main
+      // window disables passthrough (ignore=false) and the DOM cursor hides, so
+      // the OS cursor MUST reappear or the bar has no pointer at all; re-hide it
+      // when passthrough resumes (ignore=true) and we are still drawing. Both
+      // calls are idempotent via cursor-os's own hidden-state guard.
+      if (ignore) hideOsCursor();
+      else showOsCursor();
+
       for (const [displayId, mainWin] of mainWindowsByDisplayId) {
         if (mainWin !== sendingWin) continue;
         const overlay = overlayWindowsByDisplayId.get(displayId);
