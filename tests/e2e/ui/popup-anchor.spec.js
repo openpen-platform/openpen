@@ -42,12 +42,31 @@ async function getMainWindow() {
   return mainWin;
 }
 
-async function setBallScreenPos(win, screenX, screenY) {
+async function waitForBallAt(win, viewportX, viewportY) {
+  await expect(async () => {
+    const box = await win.getByTestId('floatball-btn').boundingBox();
+    expect(box).not.toBeNull();
+    expect(Math.abs(box.x + box.width / 2 - viewportX)).toBeLessThanOrEqual(2);
+    expect(Math.abs(box.y + box.height / 2 - viewportY)).toBeLessThanOrEqual(2);
+  }).toPass({ timeout: 2000 });
+}
+
+async function setBallScreenPos(win, wa, screenX, screenY) {
   await win.evaluate(
-    ({ x, y }) => window.openPenApi?.sendPositioningIntent?.({ type: 'teleport', screenX: x, screenY: y }),
-    { x: screenX, y: screenY },
+    async ({ x, y }) => {
+      await window.openPenApi?.sendPositioningIntent?.({ type: 'drag-start' });
+      await window.openPenApi?.sendPositioningIntent?.({ type: 'drag-move', ballScreenPos: { x, y } });
+      await window.openPenApi?.sendPositioningIntent?.({
+        type: 'drag-end',
+        ballScreenPos: { x, y },
+        hadMotion: true,
+        enableDragAutoSnap: false,
+        barBounds: null,
+      });
+    },
+    { x: Math.round(screenX), y: Math.round(screenY) },
   );
-  await win.waitForTimeout(200);
+  await waitForBallAt(win, Math.round(screenX) - wa.x, Math.round(screenY) - wa.y);
 }
 
 async function assertInBounds(win, box) {
@@ -152,20 +171,16 @@ async function snapTo(win, edge) {
 
   for (let attempt = 0; attempt < 3; attempt++) {
     if (edge === 'bottom') {
-      await setBallScreenPos(win, wa.x + Math.floor(wa.width / 2), wa.y + wa.height - 30);
-      await win.waitForTimeout(200);
+      await setBallScreenPos(win, wa, wa.x + Math.floor(wa.width / 2), wa.y + wa.height - 30);
       await dragBall(win, 0, 120);
     } else if (edge === 'top') {
-      await setBallScreenPos(win, wa.x + Math.floor(wa.width / 2), wa.y + 30);
-      await win.waitForTimeout(200);
+      await setBallScreenPos(win, wa, wa.x + Math.floor(wa.width / 2), wa.y + 30);
       await dragBall(win, 0, -120);
     } else if (edge === 'left') {
-      await setBallScreenPos(win, wa.x + 30, wa.y + Math.floor(wa.height / 2));
-      await win.waitForTimeout(200);
+      await setBallScreenPos(win, wa, wa.x + 30, wa.y + Math.floor(wa.height / 2));
       await dragBall(win, -120, 0);
     } else if (edge === 'right') {
-      await setBallScreenPos(win, wa.x + wa.width - 30, wa.y + Math.floor(wa.height / 2));
-      await win.waitForTimeout(200);
+      await setBallScreenPos(win, wa, wa.x + wa.width - 30, wa.y + Math.floor(wa.height / 2));
       await dragBall(win, 120, 0);
     }
 
