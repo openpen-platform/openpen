@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/openpen-platform/openpen/compare/v1.4.3...v1.5.0) (2026-06-12)
+
+
+### Features
+
+* **In-app auto-update via GitHub Releases** ([469f062](https://github.com/openpen-platform/openpen/commit/469f062c4d5a1db8eba21988684681c448456545))
+  * OpenPen now checks GitHub Releases for new versions on launch (toggle in Settings → Behavior) and on demand from Settings → About.
+  * Windows (installer) and Linux (AppImage) download updates in the background with a live progress bar and apply them on "Restart & install"; Windows uses blockmap delta downloads so updates only fetch what changed.
+  * macOS surfaces new versions with a direct link to the download page — in-place install requires a code-signed build and will activate in a future release once signing is in place.
+  * The About tab presents update activity as a callout banner with a per-version "Later" dismissal, localized in English, 日本語, 简体中文, and 繁體中文.
+  * Windows portable builds hide the update controls entirely (a portable .exe has no installer to apply an update).
+
 ## [1.4.3](https://github.com/openpen-platform/openpen/compare/v1.4.2...v1.4.3) (2026-06-11)
 
 
