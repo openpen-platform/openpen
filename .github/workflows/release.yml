@@ -99,7 +99,7 @@ jobs:
             release/*.AppImage
             release/*.zip
             release/latest*.yml
-            release/*.blockmap
+            release/*.exe.blockmap
 
   npm-publish:
     name: Publish to npm
