@@ -288,4 +288,20 @@ export default {
   licenseValue: 'GPL-3.0',
   author: '作者',
   description: '一個可讓用戶在畫面頂層透過滑鼠繪製圖形的桌面應用程式，適合在線上會議分享畫面時標記重點。',
+
+  // 軟體更新
+  sectionUpdates: '軟體更新',
+  autoCheckUpdate: '啟動時檢查更新',
+  autoCheckUpdateSub: '每次啟動 OpenPen 時自動向 GitHub 檢查是否有新版本',
+  checkForUpdate: '檢查更新',
+  updateChecking: '正在檢查更新⋯',
+  updateAvailable: '已有新版本 {version}，下載中⋯',
+  updateAvailableNotifyOnly: '已有新版本 {version}',
+  updateDownloading: '正在下載更新⋯ {percent}%',
+  updateReady: '版本 {version} 已下載完成，可安裝',
+  updateUpToDate: '目前已是最新版本',
+  updateError: '檢查更新失敗：{error}',
+  updateRestartInstall: '重新啟動並安裝',
+  updateOpenDownloadPage: '前往下載頁',
+  updateLater: '稍後',
 };

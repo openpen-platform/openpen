@@ -129,6 +129,22 @@ const barLayoutOptions = computed(() => [
       />
     </div>
   </div>
+
+  <div class="cw-section">
+    <div class="cw-section-title">{{ t('sectionUpdates') }}</div>
+
+    <div class="cw-row">
+      <div>
+        <div class="cw-row-label">{{ t('autoCheckUpdate') }}</div>
+        <div class="cw-row-sub">{{ t('autoCheckUpdateSub') }}</div>
+      </div>
+      <AppToggle
+        :model-value="draft.autoCheckUpdate"
+        :aria-label="t('autoCheckUpdate')"
+        @update:model-value="draft.autoCheckUpdate = $event"
+      />
+    </div>
+  </div>
 </template>
 
 <style scoped>

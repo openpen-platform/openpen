@@ -97,6 +97,9 @@ jobs:
             release/*.dmg
             release/*.exe
             release/*.AppImage
+            release/*.zip
+            release/latest*.yml
+            release/*.blockmap
 
   npm-publish:
     name: Publish to npm

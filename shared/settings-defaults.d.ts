@@ -31,6 +31,8 @@ export interface AppSettings {
   notifyOnDrawingMode: boolean
   notificationPosition: NotificationPosition
   confirmBeforeClearCanvas: boolean
+  /** Whether to check GitHub Releases for a newer version on launch. */
+  autoCheckUpdate: boolean
   disabledModules: string[]
   /**
    * Plugin id collision resolutions chosen by the user.

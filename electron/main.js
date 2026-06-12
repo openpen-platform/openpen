@@ -7,11 +7,12 @@ import { app, BrowserWindow, ipcMain, protocol, net, session, screen } from 'ele
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, applyLinuxWindowPositioning } from './window-manager.js';
+import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, applyLinuxWindowPositioning, destroyAllWindowsForUpdate } from './window-manager.js';
 import { initTrayManager, setTrayWarning, setTrayDrawingMode, setTrayBarHidden } from './tray-manager.js';
 import { initShortcutManager, unregisterAllShortcuts, onShortcutsSuspendChange } from './shortcut-manager.js';
-import { initSettingsStore, getSetting, flushWrites } from './settings-store.js';
+import { initSettingsStore, getSetting, updateSettings, flushWrites } from './settings-store.js';
 import { initDiagnosticsManager } from './diagnostics-manager.js';
+import { initUpdateManager } from './update-manager.js';
 import { initPluginMetaManager } from './plugin-meta-manager.js';
 import { initI18n } from './i18n/index.js';
 import { initConfigLoader } from './config-loader.js';
@@ -303,6 +304,15 @@ app.whenReady().then(async () => {
     onShortcutConflict: (accelerator) => {
       setTrayWarning(`⚠️ OpenPen: shortcut ${accelerator} is taken by another app`);
     },
+  });
+
+  // In-app auto-update over GitHub Releases. Guarded internally by app.isPackaged
+  // (dev/test builds ship no app-update.yml). Authoritative update state lives
+  // here; the renderer only renders snapshots and issues check / install intents.
+  initUpdateManager({
+    autoCheckEnabled: getSetting('autoCheckUpdate'),
+    persistAutoCheck: (enabled) => updateSettings({ autoCheckUpdate: enabled }),
+    prepareForInstall: destroyAllWindowsForUpdate,
   });
 
   // Linux/GNOME: globalShortcut can't grab keys on Wayland, so register the

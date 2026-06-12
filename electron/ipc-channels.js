@@ -184,6 +184,30 @@ export const SYSTEM = {
   TRANSPARENT_RENDERING_BROKEN: 'system:transparent-rendering-broken',
 }
 
+/** In-app auto-update (electron-updater driven, GitHub Releases feed). */
+export const UPDATE = {
+  /** renderer → main (invoke): pull the current update state snapshot
+   *  (checking / available / downloading / downloaded / error + version). */
+  GET_STATE: 'update:get-state',
+  /** renderer → main (invoke): trigger an on-demand update check. */
+  CHECK: 'update:check',
+  /** renderer → main (invoke): persist the auto-check-on-launch preference. */
+  SET_AUTO_CHECK: 'update:set-auto-check',
+  /** renderer → main (one-way): quit and install the downloaded update. */
+  QUIT_AND_INSTALL: 'update:quit-and-install',
+  /** renderer → main (one-way): open the Releases download page in the OS
+   *  browser (notify-only platforms, where in-place install is impossible). */
+  OPEN_DOWNLOAD_PAGE: 'update:open-download-page',
+  /** main → renderer (broadcast): a newer version is available. */
+  AVAILABLE: 'update:available',
+  /** main → renderer (broadcast): download progress { percent }. */
+  DOWNLOAD_PROGRESS: 'update:download-progress',
+  /** main → renderer (broadcast): the update is downloaded and ready to install. */
+  DOWNLOADED: 'update:downloaded',
+  /** main → renderer (broadcast): full update state snapshot changed. */
+  STATE_CHANGED: 'update:state-changed',
+}
+
 /** Plugin install metadata sidecar (installedAt timestamps). */
 export const PLUGIN_META = {
   /** renderer → main (invoke): pull all plugin meta entries. */

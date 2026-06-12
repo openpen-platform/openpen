@@ -289,4 +289,20 @@ export default {
   licenseValue: 'GPL-3.0',
   author: '作者',
   description: '会議やプレゼンテーション中に画面上に注釈を描くためのデスクトップアプリです。',
+
+  // アップデート
+  sectionUpdates: 'アップデート',
+  autoCheckUpdate: '起動時にアップデートを確認',
+  autoCheckUpdateSub: 'OpenPen の起動ごとに GitHub で新しいバージョンを自動的に確認します',
+  checkForUpdate: 'アップデートを確認',
+  updateChecking: 'アップデートを確認中⋯',
+  updateAvailable: 'バージョン {version} が利用可能です。ダウンロード中⋯',
+  updateAvailableNotifyOnly: 'バージョン {version} が利用可能です',
+  updateDownloading: 'アップデートをダウンロード中⋯ {percent}%',
+  updateReady: 'バージョン {version} のインストール準備が整いました',
+  updateUpToDate: '最新バージョンを使用しています',
+  updateError: 'アップデートの確認に失敗しました：{error}',
+  updateRestartInstall: '再起動してインストール',
+  updateOpenDownloadPage: 'ダウンロードページを開く',
+  updateLater: '後で',
 };

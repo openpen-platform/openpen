@@ -288,4 +288,20 @@ export default {
   licenseValue: 'GPL-3.0',
   author: 'Author',
   description: 'A desktop app for drawing annotations on screen during meetings and presentations.',
+
+  // Updates
+  sectionUpdates: 'Updates',
+  autoCheckUpdate: 'Check for updates on launch',
+  autoCheckUpdateSub: 'Automatically check GitHub for a newer version each time OpenPen starts',
+  checkForUpdate: 'Check for updates',
+  updateChecking: 'Checking for updates…',
+  updateAvailable: 'Version {version} is available, downloading…',
+  updateAvailableNotifyOnly: 'Version {version} is available',
+  updateDownloading: 'Downloading update… {percent}%',
+  updateReady: 'Version {version} is ready to install',
+  updateUpToDate: 'You are on the latest version',
+  updateError: 'Update check failed: {error}',
+  updateRestartInstall: 'Restart & install',
+  updateOpenDownloadPage: 'Open download page',
+  updateLater: 'Later',
 };

@@ -15,6 +15,24 @@ interface DiagnosticsState {
   events: readonly DiagnosticsEvent[]
 }
 
+/** Snapshot of the in-app auto-update state (authoritative copy lives in main). */
+interface UpdateState {
+  status: 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error'
+  /** Target version once known (update-available / downloaded), otherwise null. */
+  version: string | null
+  /** Download progress 0–100. */
+  percent: number
+  /** Error message when status === 'error', otherwise null. */
+  error: string | null
+  /** Whether check-on-launch is enabled. */
+  autoCheckEnabled: boolean
+  /** False on a portable build, where no installer exists to apply an update. */
+  supported: boolean
+  /** True where in-place install is impossible (unsigned macOS): the app only
+   *  announces the new version and links to the Releases download page. */
+  notifyOnly: boolean
+}
+
 /** Structured entry in the plugin network audit log ring buffer. */
 interface AuditLogEntry {
   /** Electron webRequest details.id — used internally to back-fill statusCode in onCompleted. */
@@ -223,6 +241,17 @@ interface OpenPenApi {
     line?: number
     column?: number
   }): void
+
+  // In-app auto-update
+  getUpdateState(): Promise<UpdateState>
+  checkForUpdate(): Promise<UpdateState>
+  setAutoCheckUpdate(enabled: boolean): Promise<UpdateState>
+  quitAndInstallUpdate(): void
+  openUpdateDownloadPage(): void
+  onUpdateStateChanged(cb: (state: UpdateState) => void): () => void
+  onUpdateAvailable(cb: (payload: { version: string | null }) => void): () => void
+  onUpdateDownloadProgress(cb: (payload: { percent: number }) => void): () => void
+  onUpdateDownloaded(cb: (payload: { version: string | null }) => void): () => void
 
   // Audit log (read-only)
   getAuditLogEntries(opts?: { limit?: number; since?: number; pluginId?: string | null }): Promise<AuditLogEntry[]>

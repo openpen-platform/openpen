@@ -1154,6 +1154,22 @@ export function getAllOverlayWindows() {
   return Array.from(overlayWindowsByDisplayId.values());
 }
 
+/**
+ * Tear down every transparent frameless window before the auto-updater
+ * relaunches into the installer. electron-updater's quitAndInstall runs the
+ * platform installer and then relaunches; on macOS a lingering screen-saver-
+ * level transparent overlay can survive the quit transition long enough to
+ * paint a ghost surface over the installer. Destroying all windows here leaves
+ * the desktop clean for the install + relaunch.
+ */
+export function destroyAllWindowsForUpdate() {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.destroy();
+  }
+  mainWindowsByDisplayId.clear();
+  overlayWindowsByDisplayId.clear();
+}
+
 // ─── IPC handlers ─────────────────────────────────────────────────────────────
 
 function registerIpcHandlers() {

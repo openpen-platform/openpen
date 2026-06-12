@@ -289,4 +289,20 @@ export default {
   licenseValue: 'GPL-3.0',
   author: '作者',
   description: '一个可让用户在屏幕顶层通过鼠标绘制图形的桌面应用程序，适合在线上会议分享画面时标记重点。',
+
+  // 软件更新
+  sectionUpdates: '软件更新',
+  autoCheckUpdate: '启动时检查更新',
+  autoCheckUpdateSub: '每次启动 OpenPen 时自动向 GitHub 检查是否有新版本',
+  checkForUpdate: '检查更新',
+  updateChecking: '正在检查更新⋯',
+  updateAvailable: '已有新版本 {version}，下载中⋯',
+  updateAvailableNotifyOnly: '已有新版本 {version}',
+  updateDownloading: '正在下载更新⋯ {percent}%',
+  updateReady: '版本 {version} 已下载完成，可安装',
+  updateUpToDate: '当前已是最新版本',
+  updateError: '检查更新失败：{error}',
+  updateRestartInstall: '重启并安装',
+  updateOpenDownloadPage: '前往下载页',
+  updateLater: '稍后',
 };

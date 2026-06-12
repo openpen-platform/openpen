@@ -339,6 +339,42 @@ contextBridge.exposeInMainWorld('openPenApi', {
    */
   recordError: (payload) => ipcRenderer.send('log:record-error', payload),
 
+  // ── In-app auto-update ───────────────────────────────────────────────
+  /** Pull the current update-state snapshot (authoritative state lives in main). */
+  getUpdateState: () => ipcRenderer.invoke('update:get-state'),
+  /** Trigger an on-demand update check. Resolves with the resulting state snapshot. */
+  checkForUpdate: () => ipcRenderer.invoke('update:check'),
+  /** Persist the auto-check-on-launch preference. */
+  setAutoCheckUpdate: (enabled) => ipcRenderer.invoke('update:set-auto-check', enabled),
+  /** Quit and install the downloaded update (only valid once status === 'downloaded'). */
+  quitAndInstallUpdate: () => ipcRenderer.send('update:quit-and-install'),
+  /** Open the Releases download page in the OS browser (notify-only platforms). */
+  openUpdateDownloadPage: () => ipcRenderer.send('update:open-download-page'),
+  /** Subscribe to full update-state snapshots broadcast from main. */
+  onUpdateStateChanged: (callback) => {
+    const handler = (_, state) => callback(state);
+    ipcRenderer.on('update:state-changed', handler);
+    return () => ipcRenderer.removeListener('update:state-changed', handler);
+  },
+  /** Subscribe to the "update available" transition. */
+  onUpdateAvailable: (callback) => {
+    const handler = (_, payload) => callback(payload);
+    ipcRenderer.on('update:available', handler);
+    return () => ipcRenderer.removeListener('update:available', handler);
+  },
+  /** Subscribe to download-progress events { percent }. */
+  onUpdateDownloadProgress: (callback) => {
+    const handler = (_, payload) => callback(payload);
+    ipcRenderer.on('update:download-progress', handler);
+    return () => ipcRenderer.removeListener('update:download-progress', handler);
+  },
+  /** Subscribe to the "update downloaded / ready to install" transition. */
+  onUpdateDownloaded: (callback) => {
+    const handler = (_, payload) => callback(payload);
+    ipcRenderer.on('update:downloaded', handler);
+    return () => ipcRenderer.removeListener('update:downloaded', handler);
+  },
+
   // ── Audit log (read-only) ────────────────────────────────────────────
   /**
    * Fetch structured audit-log entries from the main-process ring buffer.
