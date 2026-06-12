@@ -1,6 +1,6 @@
 {
   ".": "1.4.3",
-  "packages/build-cli": "1.1.0",
+  "packages/build-cli": "1.1.1",
   "packages/module-api": "1.3.0",
   "packages/openpen-cli": "1.2.0",
   "packages/plugin-manager": "1.1.1"
