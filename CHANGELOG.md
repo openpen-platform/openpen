@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/openpen-platform/openpen/compare/v1.4.3...v1.5.0) (2026-06-12)
+
+
+### Features
+
+* in-app auto-update via GitHub Releases ([469f062](https://github.com/openpen-platform/openpen/commit/469f062c4d5a1db8eba21988684681c448456545))
+
 ## [1.4.3](https://github.com/openpen-platform/openpen/compare/v1.4.2...v1.4.3) (2026-06-11)
 
 
