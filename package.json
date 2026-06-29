@@ -125,8 +125,8 @@
     "@openpen/plugin-manager": "*",
     "electron-log": "^5.4.4",
     "electron-updater": "^6.8.3",
-    "koffi": "^3.0.2",
-    "vue": "^3.5.38",
+    "koffi": "^3.1.0",
+    "vue": "^3.5.39",
     "vue-draggable-plus": "0.6.1",
     "vue-i18n": "^11.4.6",
     "zod": "^3.25.76"
