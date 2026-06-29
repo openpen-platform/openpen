@@ -21,17 +21,17 @@ importers:
         specifier: ^6.8.3
         version: 6.8.9
       koffi:
-        specifier: ^3.0.2
-        version: 3.0.2
+        specifier: ^3.1.0
+        version: 3.1.0
       vue:
-        specifier: ^3.5.38
-        version: 3.5.38(typescript@6.0.3)
+        specifier: ^3.5.39
+        version: 3.5.39(typescript@6.0.3)
       vue-draggable-plus:
         specifier: 0.6.1
         version: 0.6.1(@types/sortablejs@1.15.9)
       vue-i18n:
         specifier: ^11.4.6
-        version: 11.4.6(vue@3.5.38(typescript@6.0.3))
+        version: 11.4.6(vue@3.5.39(typescript@6.0.3))
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -53,7 +53,7 @@ importers:
         version: 6.0.3(rollup@4.62.2)
       '@vitejs/plugin-vue':
         specifier: ~6.0.7
-        version: 6.0.7(vite@6.0.15(@types/node@26.0.1)(jiti@2.7.0)(lightningcss@1.32.0))(vue@3.5.38(typescript@6.0.3))
+        version: 6.0.7(vite@6.0.15(@types/node@26.0.1)(jiti@2.7.0)(lightningcss@1.32.0))(vue@3.5.39(typescript@6.0.3))
       '@vitest/coverage-v8':
         specifier: ~3.2.4
         version: 3.2.4(vitest@3.2.4(@types/debug@4.1.13)(@types/node@26.0.1)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(lightningcss@1.32.0))
@@ -62,7 +62,7 @@ importers:
         version: 3.5.39
       '@vue/test-utils':
         specifier: ^2.4.11
-        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.38(vue@3.5.38(typescript@6.0.3)))(vue@3.5.38(typescript@6.0.3))
+        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@6.0.3)))(vue@3.5.39(typescript@6.0.3))
       electron:
         specifier: ~42.5.1
         version: 42.5.1
@@ -668,73 +668,73 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@koromix/koffi-darwin-arm64@3.0.2':
-    resolution: {integrity: sha512-OaL5EViEvsdbc8Ut90zY44AKF3mq6JBqkK/xLkGaSXcLsOJUsD+XaPAZb/WOWcKVg7On31wP+4hB7MwHQPdiUg==}
+  '@koromix/koffi-darwin-arm64@3.1.0':
+    resolution: {integrity: sha512-VEt5r3fXTfbejr83PnuOP0H7s9Zmazcs+lofu96DOcRkistlMsn59wYyWiKpyAjs9PCgm0Ykh62ChZ3CGMmIOg==}
     cpu: [arm64]
     os: [darwin]
 
-  '@koromix/koffi-darwin-x64@3.0.2':
-    resolution: {integrity: sha512-ZkBKudZkIOy5yVcp8cUTFCrE5DSgxkcH26mUxV6m8JgUtvtps4iMIGAAZLSq5aouvQQKhbKpXtZ3YdzpcytM+g==}
+  '@koromix/koffi-darwin-x64@3.1.0':
+    resolution: {integrity: sha512-n/tVRB9xIzdXT5H3zZt8ueThgWTSDL+yU7PWnU8wbZPBSawP/otx3swQyd6nMOqj1bmHgSHopiKSBXRS9pllmg==}
     cpu: [x64]
     os: [darwin]
 
-  '@koromix/koffi-freebsd-arm64@3.0.2':
-    resolution: {integrity: sha512-eVHMjYL6yMc7GOdH0juDVEYFU4D9Az6cqyI7+ytWwovwAjHNtf96S17Ag/aI2qs7WVCoHceKDdMUATzs5grvMw==}
+  '@koromix/koffi-freebsd-arm64@3.1.0':
+    resolution: {integrity: sha512-vazoPYIhOAlXZksVIqDRMIID4VeUZKx8F3dR90hOobT2ATyOkqNS5dv5UCV7Q7DSq22lQTrdbvENBAhROzCp0w==}
     cpu: [arm64]
     os: [freebsd]
 
-  '@koromix/koffi-freebsd-ia32@3.0.2':
-    resolution: {integrity: sha512-qiSkR5fF/oa8MIukjsXMmFPC/FWGfUtw3ee+jgURg0R+Tuhlvqlfh50W4rQ0Y0faITJcF+3wmCI6WSt7p4iCkA==}
+  '@koromix/koffi-freebsd-ia32@3.1.0':
+    resolution: {integrity: sha512-Vm7Uc97ru6RTSVmae2zCZZQeaizqVZ8WoU4+gG4H03Qe+WOj7kbKt/MxT7VBzdbPYIU5ZJeG/ZED1YlZyab6eQ==}
     cpu: [ia32]
     os: [freebsd]
 
-  '@koromix/koffi-freebsd-x64@3.0.2':
-    resolution: {integrity: sha512-RDqoD8tBiRoe1C/lZEdMWETKk2dTR298XgJ9PBXbw2ETMVpIX+ci++X+j+4e7J3kVldxHLdFCykNei6d1wmhTA==}
+  '@koromix/koffi-freebsd-x64@3.1.0':
+    resolution: {integrity: sha512-N+VuVWjoiYPy1Go5mRadZ3B6RM5Qz+eCLhj2LXrMlefbUJ+O4gg7teCUGvPGfBEHDgmSN4yYUrfQmdJC10vOYw==}
     cpu: [x64]
     os: [freebsd]
 
-  '@koromix/koffi-linux-arm64@3.0.2':
-    resolution: {integrity: sha512-zIm5NlzFuxt4f6mDjwTDgfzu8oZngcALTmOkWbp7HSeWdjQeiy8JRaSOEpfzlIlqWoPxhRUX5Yniqkt8564VnA==}
+  '@koromix/koffi-linux-arm64@3.1.0':
+    resolution: {integrity: sha512-Wx5iOkeALe2ympLdiYwRpIg5qUkyQIv8N2foZ9rRker0uE7ZtXew2RRkbEgMir4b0yDYR1zyXd6B62GUzLtZ/g==}
     cpu: [arm64]
     os: [linux]
 
-  '@koromix/koffi-linux-ia32@3.0.2':
-    resolution: {integrity: sha512-Le3JxJswxBhO3OeeSWA400/v2sTPwTWz/IIc6ARc4SbTGUcz2jm6jXXQviW01r5OvCQ+w2Q2T4PxP+eaRa2+fQ==}
+  '@koromix/koffi-linux-ia32@3.1.0':
+    resolution: {integrity: sha512-1DjYm1QehXU0dgn0uE+FGYOb3Of7GiTMqLS+ZI2gbl1b+h76sz4LRBvDVrQyAmSMVVU8/7696S21YgE/iBhBVg==}
     cpu: [ia32]
     os: [linux]
 
-  '@koromix/koffi-linux-loong64@3.0.2':
-    resolution: {integrity: sha512-TiPOFy4OX0tLhKwL6oSOhDIhwd5b48x7nxCBT8u6IW+nLXMIo2j+jla1h9niQ8HVGknGOzu48k55KVl0YMsaew==}
+  '@koromix/koffi-linux-loong64@3.1.0':
+    resolution: {integrity: sha512-NOa0LdyltdESz3oeTqUH6MErHVoJOHoeXIsEp6xIMTUh4eKXEtlDQeoK6EYqo0DnBt83Xud95qLvi4Aw12pG4Q==}
     cpu: [loong64]
     os: [linux]
 
-  '@koromix/koffi-linux-riscv64@3.0.2':
-    resolution: {integrity: sha512-U44szVAHW4WKTV0s6K6rjeZEURJ0CFHbZC0Ik3lpzvEidbOu8dTft7OGNr4hhBvx/XaeLMCCebPLBoYZZNW2Dg==}
+  '@koromix/koffi-linux-riscv64@3.1.0':
+    resolution: {integrity: sha512-Ye6kiXZCGxGtAIXSly6XuOP5tJZNYOZ2eVg33k1MilKrzimAy9Mpw4d6e9+Sfsc1jesgeNYs1sb5iaI8HS3ncA==}
     cpu: [riscv64]
     os: [linux]
 
-  '@koromix/koffi-linux-x64@3.0.2':
-    resolution: {integrity: sha512-bm4qT+e59KWn4V/jK8uF1RV2k0/JJvmGPUj4qCJ3E9663H+6ZLqz1rpCdgXSEA95f5CNR3RWcgjQwxgKO9xFtQ==}
+  '@koromix/koffi-linux-x64@3.1.0':
+    resolution: {integrity: sha512-3yQTOkQrMna4VX+yeyfYImBjLlGrItMpsWyfaW1uSiz/A6GRydqdwYH7DWnp4Z+RSGYZpsewkf7byMc8pOOQKA==}
     cpu: [x64]
     os: [linux]
 
-  '@koromix/koffi-openbsd-ia32@3.0.2':
-    resolution: {integrity: sha512-tUu2LMSyeCSe1DbJKZrjGOKRQzDhj/RAw4rVdlHXlU/B26sdyKZjEwE3GxVlYDdEBX4FiYYmoVuG3BwGWSefCw==}
+  '@koromix/koffi-openbsd-ia32@3.1.0':
+    resolution: {integrity: sha512-/cDoFHb9yx4+yoT3GUpnKnfi3W2drG+/Ewo0TTZaQHb4PsxnYYyT6V8+t4cL5XXbQcTTcOsZxpmBRrn0NBa3dA==}
     cpu: [ia32]
     os: [openbsd]
 
-  '@koromix/koffi-openbsd-x64@3.0.2':
-    resolution: {integrity: sha512-o4QZwsKIQvlMSIJaCXsu8d2sz4bbKEJrZhmnCeT/SKEU1VEiegmDn/I6DYrg5mOMDC15GWlUP1qP6AsVlrxqXA==}
+  '@koromix/koffi-openbsd-x64@3.1.0':
+    resolution: {integrity: sha512-CoQdqgnKvWgTXXZlUst8cBRQEov7QsxlTN2WAsu9wez01Xe6gEcH/zYePANualzzCbnaELfe5P0rA80QkoDuPA==}
     cpu: [x64]
     os: [openbsd]
 
-  '@koromix/koffi-win32-ia32@3.0.2':
-    resolution: {integrity: sha512-Yz/iP2xLaq8t3TFy5+f2Oww7rBpXgZ4YRexdYffSm2EwcnDeCtPudQSjIiKyEBdvDsU2vQetTrxyqDHStXXocw==}
+  '@koromix/koffi-win32-ia32@3.1.0':
+    resolution: {integrity: sha512-WjrA+DEkpy0xEHu48+NSOboHhTnzkIfsFuq3d/WrSs+T9WflWRng3jC7mdJxmR4eHb6i6BqjW3k/U0mNUTjFPA==}
     cpu: [ia32]
     os: [win32]
 
-  '@koromix/koffi-win32-x64@3.0.2':
-    resolution: {integrity: sha512-zozoHzvSi61jch4sKqFi3ATsDC7lviFthoivzPKVk4VeJvFeSdqueKoYGHNXEzfhIXn9Y5K85l9a59nwfutkUA==}
+  '@koromix/koffi-win32-x64@3.1.0':
+    resolution: {integrity: sha512-tnK5+IkzQBauQAQSzuyjso8OOIQRlaTZS39xIWpfqVYDLVDIuLDQk/WwHcOrR5yxlDrZq9ygiebBTOfcJFia7w==}
     cpu: [x64]
     os: [win32]
 
@@ -1379,26 +1379,14 @@ packages:
   '@volar/typescript@2.4.28':
     resolution: {integrity: sha512-Ja6yvWrbis2QtN4ClAKreeUZPVYMARDYZl9LMEv1iQ1QdepB6wn0jTRxA9MftYmYa4DQ4k/DaSZpFPUfxl8giw==}
 
-  '@vue/compiler-core@3.5.38':
-    resolution: {integrity: sha512-s99aGxWYig9ErHbct27KXEGhrBYlRI6c4MwAgXErOAbX9xiW37/uMa+XUDO69zLz83dng8UUZ70CTOJrLrYrEQ==}
-
   '@vue/compiler-core@3.5.39':
     resolution: {integrity: sha512-16KBTEXAJCpDr0mwlw+AZyhu8iyC7R3S2vBwsI7QnWJU6X3WKc9VKeNEZpiMdZ569qWhz9574L3vV55qRL0Vtw==}
-
-  '@vue/compiler-dom@3.5.38':
-    resolution: {integrity: sha512-JTqp25l8aFfJYF7/KmsXZjAxJz7T+SjmTJLoXVjHtc2BrSgSiW2n9Aem/cWq1OPe68A8JL06B3eVdhlP0H4TVw==}
 
   '@vue/compiler-dom@3.5.39':
     resolution: {integrity: sha512-oQPigALqYbNxTNPvNgSOe+czwVExfbVF02lz8jP0S3AXJiu3jxYDygNUiqSep4ezzW8XgnubqH63My2A7JR/vg==}
 
-  '@vue/compiler-sfc@3.5.38':
-    resolution: {integrity: sha512-DuA2GiZawSEW442iw/9+Fkol8hTgb4Ke5KkhmSry65QA7YuyMbIdy8p0XZRMvNwJdgRz307W8g1CSzdvS4nuNg==}
-
   '@vue/compiler-sfc@3.5.39':
     resolution: {integrity: sha512-d0ki86iOyN8LoZPBmk5SJWNwHP19CnDDCfuo//+2WJa2g5Ke0Jay983PIBIcSSzldC68I8DrD5GrHV3OSDfodg==}
-
-  '@vue/compiler-ssr@3.5.38':
-    resolution: {integrity: sha512-7s+W5Gc42FGxZMcuwl8H5B29T8BJPMdBT7KHFE+BbAuZ/iTEdTtv7z2XiMjiaUUw4w3ZcCEdHs36RuYJ2VA7bA==}
 
   '@vue/compiler-ssr@3.5.39':
     resolution: {integrity: sha512-Ce7/wvwMHai74bdszfXExdazFigYnlF9zgCmEQUcM1j0fOymlouZ7XilTYNo8oUjhlnjYOZbGrcYKuqjz89Ucw==}
@@ -1409,22 +1397,19 @@ packages:
   '@vue/language-core@3.3.5':
     resolution: {integrity: sha512-UkKu5nhX89fg4VhlG/FOeI10G3cj/7radKT/cy9BT4Q9qJmJlSTAc/dP63Xqs29aypN4f39xUV6PsLNk/dcD6g==}
 
-  '@vue/reactivity@3.5.38':
-    resolution: {integrity: sha512-pG6LV/NDNRbKizcUjFFLAfjaL8mcv4DmR9avNcUw2gDHBzZneuS2TWCmp633ynzxz9YYKNeEPK2I8Wraqy2HUQ==}
+  '@vue/reactivity@3.5.39':
+    resolution: {integrity: sha512-TpsuBJ9gGlZa5d23XcM2y8EXanz9dZeVDQBXRwzy46ItgvM+rWpzs+UVM0wcRLxGvcav0HE5jz2gNL53xlRAog==}
 
-  '@vue/runtime-core@3.5.38':
-    resolution: {integrity: sha512-iyW8WVfF1CpCXxncZY5Ei6rSd6oZr5DgEom//fUjRBRl56AXPD+s9ATvukRt77ZFTuYlnVA1bxY+dJB94tWVYw==}
+  '@vue/runtime-core@3.5.39':
+    resolution: {integrity: sha512-9GLtNyRvPAUMbX+7ono0RC2j0guo2LXVi8LvcmAooImACUKm0oFf0jjwbX8/H0AE/t1nxhAkn8RSl9PMCzzxZw==}
 
-  '@vue/runtime-dom@3.5.38':
-    resolution: {integrity: sha512-apX2wt9sdfDshS+a2xueFZLVpt0GkRJZSoPmrW/SA4yzXTznhfcMVW59gr7h4YQeY0vJhdJkk2rsIDwgfFgC5A==}
+  '@vue/runtime-dom@3.5.39':
+    resolution: {integrity: sha512-7Y6aAGboKcXAZ3ECuUy7RrS5yy2r47dhTp2SKaJmYxjopImaVFaNa5Ne66NwGovsrxVAl5S5rwc7m22UG7Lmww==}
 
-  '@vue/server-renderer@3.5.38':
-    resolution: {integrity: sha512-vue8vbf2QlV4quHqzwmJy6dWfmRhP1J8l4wtZg60CL6VoKqcPY2oe7may3+1d9qfpedjK5PRLFqd5k3Isj9mUw==}
+  '@vue/server-renderer@3.5.39':
+    resolution: {integrity: sha512-yZSakiAGw85rZfG7UM8akMnIF+FmeiNk47uvHf2nVBBSe+dIKUhZuZq9+XgJhbV3nS5Z4ALH23/MpXofW+mbcw==}
     peerDependencies:
-      vue: 3.5.38
-
-  '@vue/shared@3.5.38':
-    resolution: {integrity: sha512-FTW0AFZNaK5/mOqvGBwVfUlNLU38TiQn4+DQgIFUnrBBJQ1crMJ82yeGQLV5jyKFsO8yRukpbuP7x+nRbH6aug==}
+      vue: 3.5.39
 
   '@vue/shared@3.5.39':
     resolution: {integrity: sha512-l1rrBtBfTnmxvtsvdQDXltUUy8S1Y+ZaqdfUzmAnJkTd8Z8rv5v/ytW+TKiqEOWyHPoqtPlNFSs0lhRmYVSHVA==}
@@ -1587,8 +1572,8 @@ packages:
       bare-buffer:
         optional: true
 
-  bare-os@3.9.1:
-    resolution: {integrity: sha512-6M5XjcnsygQNPMCMPXSK379xrJFiZ/AEMNBmFEmQW8d/789VQATvriyi5r0HYTL9TkQ26rn3kgdTG3aisbrXkQ==}
+  bare-os@3.9.3:
+    resolution: {integrity: sha512-fF4Q7QsyKVF5Rj0qvI8BgUNjqzC2JvQlpTaPLjVJVxYVUX5Zr9un+y3w1HmA4nNKdFmRBT8z/WmrjvXzXVerKQ==}
     engines: {bare: '>=1.14.0'}
 
   bare-path@3.0.1:
@@ -2403,8 +2388,8 @@ packages:
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
-  koffi@3.0.2:
-    resolution: {integrity: sha512-YS4sGzlVMhFNNkKbkB3tcLKJxH9WGP3jHTxi4Eyx+ieMRKVz4K2i+6rebYr9ngHN36jhIW6YXnxkzBeOQ51lsw==}
+  koffi@3.1.0:
+    resolution: {integrity: sha512-0mCvdjTJBXioiaKNz0vajAEdWtfM5qyhVXSq+wQrrU3odzNvl/J7Cqna79QpNo9mfoKpQgGsyFFDRtDACCwGrQ==}
 
   lazy-val@1.0.5:
     resolution: {integrity: sha512-0/BnGCCfyUMkBpeDgWihanIAF9JmZhHBgUhEqzvf+adhNGLoP6TaiI5oF8oyb3I45P+PcnrqihSf01M0l0G5+Q==}
@@ -3321,8 +3306,8 @@ packages:
     peerDependencies:
       typescript: '>=5.0.0'
 
-  vue@3.5.38:
-    resolution: {integrity: sha512-vAMKHfImQlYSy0C+PBue4s3ERZ2xGKfgZg5GXAsLInq1dyh2H78ILVP5sK0KPFPVW4kv+OGCIvBEondcjpZp7A==}
+  vue@3.5.39:
+    resolution: {integrity: sha512-xmZCYabFGcirU8r0fTuvl/LICc1OU620rnqepaJDL/a141ZigkG7AyaxQLdqJ02ZRYzWe6YPaDHeQx7MfknQfA==}
     peerDependencies:
       typescript: '*'
     peerDependenciesMeta:
@@ -3875,46 +3860,46 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@koromix/koffi-darwin-arm64@3.0.2':
+  '@koromix/koffi-darwin-arm64@3.1.0':
     optional: true
 
-  '@koromix/koffi-darwin-x64@3.0.2':
+  '@koromix/koffi-darwin-x64@3.1.0':
     optional: true
 
-  '@koromix/koffi-freebsd-arm64@3.0.2':
+  '@koromix/koffi-freebsd-arm64@3.1.0':
     optional: true
 
-  '@koromix/koffi-freebsd-ia32@3.0.2':
+  '@koromix/koffi-freebsd-ia32@3.1.0':
     optional: true
 
-  '@koromix/koffi-freebsd-x64@3.0.2':
+  '@koromix/koffi-freebsd-x64@3.1.0':
     optional: true
 
-  '@koromix/koffi-linux-arm64@3.0.2':
+  '@koromix/koffi-linux-arm64@3.1.0':
     optional: true
 
-  '@koromix/koffi-linux-ia32@3.0.2':
+  '@koromix/koffi-linux-ia32@3.1.0':
     optional: true
 
-  '@koromix/koffi-linux-loong64@3.0.2':
+  '@koromix/koffi-linux-loong64@3.1.0':
     optional: true
 
-  '@koromix/koffi-linux-riscv64@3.0.2':
+  '@koromix/koffi-linux-riscv64@3.1.0':
     optional: true
 
-  '@koromix/koffi-linux-x64@3.0.2':
+  '@koromix/koffi-linux-x64@3.1.0':
     optional: true
 
-  '@koromix/koffi-openbsd-ia32@3.0.2':
+  '@koromix/koffi-openbsd-ia32@3.1.0':
     optional: true
 
-  '@koromix/koffi-openbsd-x64@3.0.2':
+  '@koromix/koffi-openbsd-x64@3.1.0':
     optional: true
 
-  '@koromix/koffi-win32-ia32@3.0.2':
+  '@koromix/koffi-win32-ia32@3.1.0':
     optional: true
 
-  '@koromix/koffi-win32-x64@3.0.2':
+  '@koromix/koffi-win32-x64@3.1.0':
     optional: true
 
   '@malept/cross-spawn-promise@2.0.0':
@@ -4397,11 +4382,11 @@ snapshots:
       '@typescript-eslint/types': 8.62.0
       eslint-visitor-keys: 5.0.1
 
-  '@vitejs/plugin-vue@6.0.7(vite@6.0.15(@types/node@26.0.1)(jiti@2.7.0)(lightningcss@1.32.0))(vue@3.5.38(typescript@6.0.3))':
+  '@vitejs/plugin-vue@6.0.7(vite@6.0.15(@types/node@26.0.1)(jiti@2.7.0)(lightningcss@1.32.0))(vue@3.5.39(typescript@6.0.3))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
       vite: 6.0.15(@types/node@26.0.1)(jiti@2.7.0)(lightningcss@1.32.0)
-      vue: 3.5.38(typescript@6.0.3)
+      vue: 3.5.39(typescript@6.0.3)
 
   '@vitest/coverage-v8@3.2.4(vitest@3.2.4(@types/debug@4.1.13)(@types/node@26.0.1)(jiti@2.7.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(lightningcss@1.32.0))':
     dependencies:
@@ -4476,14 +4461,6 @@ snapshots:
       path-browserify: 1.0.1
       vscode-uri: 3.1.0
 
-  '@vue/compiler-core@3.5.38':
-    dependencies:
-      '@babel/parser': 7.29.7
-      '@vue/shared': 3.5.38
-      entities: 7.0.1
-      estree-walker: 2.0.2
-      source-map-js: 1.2.1
-
   '@vue/compiler-core@3.5.39':
     dependencies:
       '@babel/parser': 7.29.7
@@ -4492,27 +4469,10 @@ snapshots:
       estree-walker: 2.0.2
       source-map-js: 1.2.1
 
-  '@vue/compiler-dom@3.5.38':
-    dependencies:
-      '@vue/compiler-core': 3.5.38
-      '@vue/shared': 3.5.38
-
   '@vue/compiler-dom@3.5.39':
     dependencies:
       '@vue/compiler-core': 3.5.39
       '@vue/shared': 3.5.39
-
-  '@vue/compiler-sfc@3.5.38':
-    dependencies:
-      '@babel/parser': 7.29.7
-      '@vue/compiler-core': 3.5.38
-      '@vue/compiler-dom': 3.5.38
-      '@vue/compiler-ssr': 3.5.38
-      '@vue/shared': 3.5.38
-      estree-walker: 2.0.2
-      magic-string: 0.30.21
-      postcss: 8.5.16
-      source-map-js: 1.2.1
 
   '@vue/compiler-sfc@3.5.39':
     dependencies:
@@ -4525,11 +4485,6 @@ snapshots:
       magic-string: 0.30.21
       postcss: 8.5.16
       source-map-js: 1.2.1
-
-  '@vue/compiler-ssr@3.5.38':
-    dependencies:
-      '@vue/compiler-dom': 3.5.38
-      '@vue/shared': 3.5.38
 
   '@vue/compiler-ssr@3.5.39':
     dependencies:
@@ -4548,40 +4503,38 @@ snapshots:
       path-browserify: 1.0.1
       picomatch: 4.0.4
 
-  '@vue/reactivity@3.5.38':
+  '@vue/reactivity@3.5.39':
     dependencies:
-      '@vue/shared': 3.5.38
+      '@vue/shared': 3.5.39
 
-  '@vue/runtime-core@3.5.38':
+  '@vue/runtime-core@3.5.39':
     dependencies:
-      '@vue/reactivity': 3.5.38
-      '@vue/shared': 3.5.38
+      '@vue/reactivity': 3.5.39
+      '@vue/shared': 3.5.39
 
-  '@vue/runtime-dom@3.5.38':
+  '@vue/runtime-dom@3.5.39':
     dependencies:
-      '@vue/reactivity': 3.5.38
-      '@vue/runtime-core': 3.5.38
-      '@vue/shared': 3.5.38
+      '@vue/reactivity': 3.5.39
+      '@vue/runtime-core': 3.5.39
+      '@vue/shared': 3.5.39
       csstype: 3.2.3
 
-  '@vue/server-renderer@3.5.38(vue@3.5.38(typescript@6.0.3))':
+  '@vue/server-renderer@3.5.39(vue@3.5.39(typescript@6.0.3))':
     dependencies:
-      '@vue/compiler-ssr': 3.5.38
-      '@vue/shared': 3.5.38
-      vue: 3.5.38(typescript@6.0.3)
-
-  '@vue/shared@3.5.38': {}
+      '@vue/compiler-ssr': 3.5.39
+      '@vue/shared': 3.5.39
+      vue: 3.5.39(typescript@6.0.3)
 
   '@vue/shared@3.5.39': {}
 
-  '@vue/test-utils@2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.38(vue@3.5.38(typescript@6.0.3)))(vue@3.5.38(typescript@6.0.3))':
+  '@vue/test-utils@2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@6.0.3)))(vue@3.5.39(typescript@6.0.3))':
     dependencies:
       '@vue/compiler-dom': 3.5.39
       js-beautify: 1.15.4
-      vue: 3.5.38(typescript@6.0.3)
+      vue: 3.5.39(typescript@6.0.3)
       vue-component-type-helpers: 3.3.4
     optionalDependencies:
-      '@vue/server-renderer': 3.5.38(vue@3.5.38(typescript@6.0.3))
+      '@vue/server-renderer': 3.5.39(vue@3.5.39(typescript@6.0.3))
 
   '@xmldom/xmldom@0.8.13': {}
 
@@ -4793,11 +4746,11 @@ snapshots:
       - bare-abort-controller
       - react-native-b4a
 
-  bare-os@3.9.1: {}
+  bare-os@3.9.3: {}
 
   bare-path@3.0.1:
     dependencies:
-      bare-os: 3.9.1
+      bare-os: 3.9.3
 
   bare-stream@2.13.3(bare-events@2.9.1):
     dependencies:
@@ -5782,22 +5735,22 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  koffi@3.0.2:
+  koffi@3.1.0:
     optionalDependencies:
-      '@koromix/koffi-darwin-arm64': 3.0.2
-      '@koromix/koffi-darwin-x64': 3.0.2
-      '@koromix/koffi-freebsd-arm64': 3.0.2
-      '@koromix/koffi-freebsd-ia32': 3.0.2
-      '@koromix/koffi-freebsd-x64': 3.0.2
-      '@koromix/koffi-linux-arm64': 3.0.2
-      '@koromix/koffi-linux-ia32': 3.0.2
-      '@koromix/koffi-linux-loong64': 3.0.2
-      '@koromix/koffi-linux-riscv64': 3.0.2
-      '@koromix/koffi-linux-x64': 3.0.2
-      '@koromix/koffi-openbsd-ia32': 3.0.2
-      '@koromix/koffi-openbsd-x64': 3.0.2
-      '@koromix/koffi-win32-ia32': 3.0.2
-      '@koromix/koffi-win32-x64': 3.0.2
+      '@koromix/koffi-darwin-arm64': 3.1.0
+      '@koromix/koffi-darwin-x64': 3.1.0
+      '@koromix/koffi-freebsd-arm64': 3.1.0
+      '@koromix/koffi-freebsd-ia32': 3.1.0
+      '@koromix/koffi-freebsd-x64': 3.1.0
+      '@koromix/koffi-linux-arm64': 3.1.0
+      '@koromix/koffi-linux-ia32': 3.1.0
+      '@koromix/koffi-linux-loong64': 3.1.0
+      '@koromix/koffi-linux-riscv64': 3.1.0
+      '@koromix/koffi-linux-x64': 3.1.0
+      '@koromix/koffi-openbsd-ia32': 3.1.0
+      '@koromix/koffi-openbsd-x64': 3.1.0
+      '@koromix/koffi-win32-ia32': 3.1.0
+      '@koromix/koffi-win32-x64': 3.1.0
 
   lazy-val@1.0.5: {}
 
@@ -6710,13 +6663,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vue-i18n@11.4.6(vue@3.5.38(typescript@6.0.3)):
+  vue-i18n@11.4.6(vue@3.5.39(typescript@6.0.3)):
     dependencies:
       '@intlify/core-base': 11.4.6
       '@intlify/devtools-types': 11.4.6
       '@intlify/shared': 11.4.6
       '@vue/devtools-api': 6.6.4
-      vue: 3.5.38(typescript@6.0.3)
+      vue: 3.5.39(typescript@6.0.3)
 
   vue-tsc@3.3.5(typescript@6.0.3):
     dependencies:
@@ -6724,13 +6677,13 @@ snapshots:
       '@vue/language-core': 3.3.5
       typescript: 6.0.3
 
-  vue@3.5.38(typescript@6.0.3):
+  vue@3.5.39(typescript@6.0.3):
     dependencies:
-      '@vue/compiler-dom': 3.5.38
-      '@vue/compiler-sfc': 3.5.38
-      '@vue/runtime-dom': 3.5.38
-      '@vue/server-renderer': 3.5.38(vue@3.5.38(typescript@6.0.3))
-      '@vue/shared': 3.5.38
+      '@vue/compiler-dom': 3.5.39
+      '@vue/compiler-sfc': 3.5.39
+      '@vue/runtime-dom': 3.5.39
+      '@vue/server-renderer': 3.5.39(vue@3.5.39(typescript@6.0.3))
+      '@vue/shared': 3.5.39
     optionalDependencies:
       typescript: 6.0.3
 
