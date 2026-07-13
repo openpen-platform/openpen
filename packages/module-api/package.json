@@ -63,7 +63,7 @@
     "sdk"
   ],
   "dependencies": {
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.12",
     "reka-ui": "~2.10.1"
   },
   "peerDependencies": {
