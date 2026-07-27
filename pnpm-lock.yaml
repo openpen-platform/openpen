@@ -21,8 +21,8 @@ importers:
         specifier: ^6.8.3
         version: 6.8.9
       koffi:
-        specifier: ^3.1.1
-        version: 3.1.1
+        specifier: ^3.1.2
+        version: 3.1.2
       vue:
         specifier: ^3.5.40
         version: 3.5.40(typescript@6.0.3)
@@ -30,8 +30,8 @@ importers:
         specifier: 0.6.1
         version: 0.6.1(@types/sortablejs@1.15.9)
       vue-i18n:
-        specifier: ^11.4.7
-        version: 11.4.7(vue@3.5.40(typescript@6.0.3))
+        specifier: ^11.4.8
+        version: 11.4.8(vue@3.5.40(typescript@6.0.3))
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -633,20 +633,20 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@intlify/core-base@11.4.7':
-    resolution: {integrity: sha512-MSB/sBKwEWJTILvQIhg2rnIcwPpLayo3wGwvVA+dJTNeUBD9GoqQgAaSOLdI9iOPDHCm9YoVnLqpfzza98MpkQ==}
+  '@intlify/core-base@11.4.8':
+    resolution: {integrity: sha512-A+Q7SKm5oEcy1E/cghqd7n/St4XjTqLhiiyDuieNcMrJcrHlkY5n0jp7Q9dD3txvVHzvsmBVV5M9wD5/s1zfzw==}
     engines: {node: '>= 22'}
 
-  '@intlify/devtools-types@11.4.7':
-    resolution: {integrity: sha512-GSz+J+hqH+AEpAHIYya6fSufS30OaMnG39HiZX7DmGKi3+aaLvassCfsXENEc4Wr4m68q2YP0QdMdB3D9UeAXg==}
+  '@intlify/devtools-types@11.4.8':
+    resolution: {integrity: sha512-MGpID+rlfzGUbNcnC20bm5NMSBHPrvx0atLTfv9dftn3kjXw1hGKDcIcwrO99tSrZEc2i+hczRL7ks8qXsHPkQ==}
     engines: {node: '>= 22'}
 
-  '@intlify/message-compiler@11.4.7':
-    resolution: {integrity: sha512-bHxmh7n94N4N1evADeb7XTkc3jTw6Ki5biMFZVSX6Jmk+iehy8/maeH2XUsBI27rtKIK+Hzc6QnVAKggUwylKw==}
+  '@intlify/message-compiler@11.4.8':
+    resolution: {integrity: sha512-vbzk17dYwduYiv52EK61+FDCyhfVg1uPUtPmiD/d45W99uJIcXywrweOBcHv7n9/iEqmXiMGT52bgJbZDQqK3w==}
     engines: {node: '>= 22'}
 
-  '@intlify/shared@11.4.7':
-    resolution: {integrity: sha512-OtjPZan3No2OZZFnMUiCVsXC6+j+XRwEywaFDk0AoayAbLuPesyDloXhJZLl9JUl5vHZeQUkYSbEA8VX+CWMjg==}
+  '@intlify/shared@11.4.8':
+    resolution: {integrity: sha512-XbRgrv+XEuvDr7UCY55oibVrh+o4u+A0VB6nSL0F5Z8LcZxE/8j573LYG6bCrOigIcHdGpSNI7Rh5UpC5/B/eg==}
     engines: {node: '>= 22'}
 
   '@isaacs/cliui@8.0.2':
@@ -674,78 +674,78 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@koromix/koffi-darwin-arm64@3.1.1':
-    resolution: {integrity: sha512-+Dl0zQDh1Wb55AWOn9hp7K30qgkODvrvN+ZNkFOh81Q0oFX/rpJQtocgjAuYk2zFAcajSeVDumkcHMPwnKSXzA==}
+  '@koromix/koffi-darwin-arm64@3.1.2':
+    resolution: {integrity: sha512-32pU4pNZABIz+l9DNJl51Y+jur4vv+SF4Ip2CSF4OUg1xUyefoLpX0NttDmzGITIrneUEVSEN+dT22524ESKBw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@koromix/koffi-darwin-x64@3.1.1':
-    resolution: {integrity: sha512-cDFAKn1qdZBFLrp7dAc9QUDw3l4xAhTJbOdPWWb0LxssVicUdHcRCLZGrDsmPW2tpH6LGNNeLgqRpAoD2Mo8iA==}
+  '@koromix/koffi-darwin-x64@3.1.2':
+    resolution: {integrity: sha512-S+H6LQgUoMj77BqDegwlRaxwLXDfwvSJGuceOqtH0I5V8rzKLmu/hC7NBlxOoAlvKlcV63FtdNiE2E9YSltffg==}
     cpu: [x64]
     os: [darwin]
 
-  '@koromix/koffi-freebsd-arm64@3.1.1':
-    resolution: {integrity: sha512-zaP7FJISI/scQW9Wa5QicY3a09WmtKBWSbmC+5nfCqPzwWe7Hx2so74Er7mPsDfCiMMR0Ya+evKbJQDkfyXicg==}
+  '@koromix/koffi-freebsd-arm64@3.1.2':
+    resolution: {integrity: sha512-fD0ow2PBE60nw7K6xcbala6qwXxfcYeU62tduNeIPvx0KoWhU2rMKZiDNe+iI5TQb3rxYYjjP+aF2Sdm9y6EXQ==}
     cpu: [arm64]
     os: [freebsd]
 
-  '@koromix/koffi-freebsd-ia32@3.1.1':
-    resolution: {integrity: sha512-7GejVb688TLM8rbjfc0oezJrATxZc0dn801xWEDJekN2DgmRXu7HquGqWQ6z3NeSq7ZxEggz4T3xtlbCysQapA==}
+  '@koromix/koffi-freebsd-ia32@3.1.2':
+    resolution: {integrity: sha512-t8OmL+hoJGDLZDnuLjgLemSYrXX99M7Md+zJX8bMHOtiNbFtkGXn/mV21Pb1ik9JhBXjwK1r4hvBPNlqTMGrHg==}
     cpu: [ia32]
     os: [freebsd]
 
-  '@koromix/koffi-freebsd-x64@3.1.1':
-    resolution: {integrity: sha512-XLiCFP9OFCyOoGTjAimtDKLhzhfo34WcP1ShVWxRzNCWDGjfz8BYjwd69cp/cDSUXZbxamqs4+/6vmkePq9wxA==}
+  '@koromix/koffi-freebsd-x64@3.1.2':
+    resolution: {integrity: sha512-axbLgiM4Y2vyDOTqlXCI8vkg9wqjwSRsmoWXSKreA5YFJwnYA6Sc4aHMz+qZgUSfFei52Qrv1RGhDyo4kHvqhA==}
     cpu: [x64]
     os: [freebsd]
 
-  '@koromix/koffi-linux-arm64@3.1.1':
-    resolution: {integrity: sha512-HA9xINK7G4dRAkpfnBWD9VfuyIBgW1SuK+KPHjksUwRMOnhgqP8J/JqgrAzdzcDiefGBkqEacIP776OUwz7knQ==}
+  '@koromix/koffi-linux-arm64@3.1.2':
+    resolution: {integrity: sha512-f0hqAIlFcL9wlRGJ/uCfyfspqnGaASk2gLx1UAP3RBgMQl68D1e+fiHNdXa7g9d76ttmpA8/PGNAqc1X4Byy1Q==}
     cpu: [arm64]
     os: [linux]
 
-  '@koromix/koffi-linux-ia32@3.1.1':
-    resolution: {integrity: sha512-jG7IFytmP8K5Qtbx0ro0ZeuX3JjSsLxmYhq+nmXDdrtOAlxIsWGynuiDLS6Jk3vOchVii2m6Y2f/L3GLG2fG5A==}
+  '@koromix/koffi-linux-ia32@3.1.2':
+    resolution: {integrity: sha512-UGLPuqeOV/UArsK6oeB5yI/XjSWkFqFlBTC9rUbezBuHJhSibk1EMv7QC0cvtDMu18bo+ucqXWPzh42oT5yYlw==}
     cpu: [ia32]
     os: [linux]
 
-  '@koromix/koffi-linux-loong64@3.1.1':
-    resolution: {integrity: sha512-CIsT1cNnih8FuU52Me/IVlJBpH28SQfoDeYPctJswgJzaARktusF7m4MUbtR1PBDjuquCVM4/vFyNdOzfPonvA==}
+  '@koromix/koffi-linux-loong64@3.1.2':
+    resolution: {integrity: sha512-jI0+gM2oDsJ7reOt3XPyO7lyQtZ1CT6NR2uqGQcQVM43cyXBAVYYCUxEH3LHCbgumFaZ+LueIUgbMSwb9pHBxQ==}
     cpu: [loong64]
     os: [linux]
 
-  '@koromix/koffi-linux-riscv64@3.1.1':
-    resolution: {integrity: sha512-9D6RmqeKsSvs3U6jILJU9PcAjMwKKyn7yLxNBb5k6z9PCoUoGJ3/BrhXAX0qjrLLwEiIpP/hS/40RuXvH8Lc3Q==}
+  '@koromix/koffi-linux-riscv64@3.1.2':
+    resolution: {integrity: sha512-yB99adXBRd5T+xXG+f6nnUkC3jCI0iXvPU6RqD9Kx7aZP4Y4NNUWJ5Q4FaP9jb1XmZLY4pGBUiHt8u03Yl7NyA==}
     cpu: [riscv64]
     os: [linux]
 
-  '@koromix/koffi-linux-x64@3.1.1':
-    resolution: {integrity: sha512-pyTcX5fePeYbt7TZAwRby69wdlRx3PT+g15ra5IYdat/Pgh3qAKEYeZ+uu7WpPGOy43p/oSRqqZoa2kORzozlA==}
+  '@koromix/koffi-linux-x64@3.1.2':
+    resolution: {integrity: sha512-Oxvo6F3Edzy/Jm2EtbHWkJ2xRB0mXDAe63k5+USL5uiGE5xZjwEUDOBKIhv2BpCZSOAJrfoojFFogj6+ICKQhw==}
     cpu: [x64]
     os: [linux]
 
-  '@koromix/koffi-openbsd-ia32@3.1.1':
-    resolution: {integrity: sha512-iPnPzvG2HOfdzaiG1drdkt86sAqmTPDv9mAf+5gL7mRzkeeQC88EVGboRy7eXwdXn7R+v0ntA3iQxdHrBn6yXw==}
+  '@koromix/koffi-openbsd-ia32@3.1.2':
+    resolution: {integrity: sha512-SSWzUhL8Ex84JTsO67+MdWZrdwgOzoOrQ0+ZbB+UsivHoAxmWLHKWZaSafNqyBZtxGY1EgtR8AIPouWE9U+Zfw==}
     cpu: [ia32]
     os: [openbsd]
 
-  '@koromix/koffi-openbsd-x64@3.1.1':
-    resolution: {integrity: sha512-/Xqc3R0SVoMCYjMPZnJ9bULtRo364+dKmnQhfDrI83tSpxUHRw7HRNf12vBeL+hPgKxSBjtMpWfQ/ZIyVyLFag==}
+  '@koromix/koffi-openbsd-x64@3.1.2':
+    resolution: {integrity: sha512-0ZuI4St7chq3M0d3VivvKIqacZ7RhgohdR476V3HpJkaNdfIywsJIw+GBvqkQahu+4A2Rpu6yQJpWSrfk/Z+Jw==}
     cpu: [x64]
     os: [openbsd]
 
-  '@koromix/koffi-win32-arm64@3.1.1':
-    resolution: {integrity: sha512-JhqHauEwQvdcWUERxrV5HH/DT9W7hY1A1eU6/o8tB+yck+D3kt5elpRDBt9KjpW6h+vHPy3V0sjDvO0CXyabTA==}
+  '@koromix/koffi-win32-arm64@3.1.2':
+    resolution: {integrity: sha512-8Wn6phw7y53uI52+aBPAqEfZ5pj/HCjg/YtdthqSWYHy+d0MhyASKlcmuP0B5raxQnnA1Bm9LC8UO3M3RojeBw==}
     cpu: [arm64]
     os: [win32]
 
-  '@koromix/koffi-win32-ia32@3.1.1':
-    resolution: {integrity: sha512-ZRuyYmlGS/rCc966qqs0qREXDW4FRdul7rDF1VgSWHbVmdc196PUgUT+blq/GjZgTwqzeEXtMRgM+cU8krHjvA==}
+  '@koromix/koffi-win32-ia32@3.1.2':
+    resolution: {integrity: sha512-FkKaPBMawgHMNnp1FwLldXMNvEa139GXkxPi9JD9xU71Kh/ZmuEYHGSD6JwZDmDr4jekVrBrr+eGZ+j6C2mkXg==}
     cpu: [ia32]
     os: [win32]
 
-  '@koromix/koffi-win32-x64@3.1.1':
-    resolution: {integrity: sha512-KqHPmvj6QILhNyI/To8QSihHsijeVGIYYPBOUnXEpcnH2LuLbargY4Hd6dDeTN3Z90uUUxN+1FWz1UnhVzFOiA==}
+  '@koromix/koffi-win32-x64@3.1.2':
+    resolution: {integrity: sha512-FeFC59UU1XX4J3ZaqKrsrEzczzB5qksMJo7/R45vIg8mGNVSLMVE85JRiZpjcp9i5Lbav5Vw47QvwFzBgIfvlw==}
     cpu: [x64]
     os: [win32]
 
@@ -2397,8 +2397,8 @@ packages:
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
-  koffi@3.1.1:
-    resolution: {integrity: sha512-mRX6AMeeKCxSOeOopqAcLAl5jcNvge7NAG8l7rF/8gGJATI0tdHFYjteIdE0mGOtWdsrJOij+PjnP8Q9c1gwgA==}
+  koffi@3.1.2:
+    resolution: {integrity: sha512-wVwuE21TBl8/si6E0hPorKR2PJ2q33mEWVETANrtSp3kFM8fi2FcD/J5wmxu0T4TBcqmMQ4xKuF1X1ayFmphzw==}
 
   lazy-val@1.0.5:
     resolution: {integrity: sha512-0/BnGCCfyUMkBpeDgWihanIAF9JmZhHBgUhEqzvf+adhNGLoP6TaiI5oF8oyb3I45P+PcnrqihSf01M0l0G5+Q==}
@@ -3295,8 +3295,8 @@ packages:
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
 
-  vue-i18n@11.4.7:
-    resolution: {integrity: sha512-j6RyshdPPzqLiMAUpnpvZGFPM+rRoWi14Sl5yTsquvoW0/56DWyvhAj2o9TO2YXGvb6teg8T0xrYO9jR3urvdw==}
+  vue-i18n@11.4.8:
+    resolution: {integrity: sha512-0ULeHP6Z9CGvAm67S77ZEp41cfGXIREGL8qfhos2BMgcQQewtQcDKuojt6jjasAD/S8GwfTp2ySPmDSpwvrCMQ==}
     engines: {node: '>= 22'}
     peerDependencies:
       vue: ^3.0.0
@@ -3815,23 +3815,23 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@intlify/core-base@11.4.7':
+  '@intlify/core-base@11.4.8':
     dependencies:
-      '@intlify/devtools-types': 11.4.7
-      '@intlify/message-compiler': 11.4.7
-      '@intlify/shared': 11.4.7
+      '@intlify/devtools-types': 11.4.8
+      '@intlify/message-compiler': 11.4.8
+      '@intlify/shared': 11.4.8
 
-  '@intlify/devtools-types@11.4.7':
+  '@intlify/devtools-types@11.4.8':
     dependencies:
-      '@intlify/core-base': 11.4.7
-      '@intlify/shared': 11.4.7
+      '@intlify/core-base': 11.4.8
+      '@intlify/shared': 11.4.8
 
-  '@intlify/message-compiler@11.4.7':
+  '@intlify/message-compiler@11.4.8':
     dependencies:
-      '@intlify/shared': 11.4.7
+      '@intlify/shared': 11.4.8
       source-map-js: 1.2.1
 
-  '@intlify/shared@11.4.7': {}
+  '@intlify/shared@11.4.8': {}
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -3862,49 +3862,49 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@koromix/koffi-darwin-arm64@3.1.1':
+  '@koromix/koffi-darwin-arm64@3.1.2':
     optional: true
 
-  '@koromix/koffi-darwin-x64@3.1.1':
+  '@koromix/koffi-darwin-x64@3.1.2':
     optional: true
 
-  '@koromix/koffi-freebsd-arm64@3.1.1':
+  '@koromix/koffi-freebsd-arm64@3.1.2':
     optional: true
 
-  '@koromix/koffi-freebsd-ia32@3.1.1':
+  '@koromix/koffi-freebsd-ia32@3.1.2':
     optional: true
 
-  '@koromix/koffi-freebsd-x64@3.1.1':
+  '@koromix/koffi-freebsd-x64@3.1.2':
     optional: true
 
-  '@koromix/koffi-linux-arm64@3.1.1':
+  '@koromix/koffi-linux-arm64@3.1.2':
     optional: true
 
-  '@koromix/koffi-linux-ia32@3.1.1':
+  '@koromix/koffi-linux-ia32@3.1.2':
     optional: true
 
-  '@koromix/koffi-linux-loong64@3.1.1':
+  '@koromix/koffi-linux-loong64@3.1.2':
     optional: true
 
-  '@koromix/koffi-linux-riscv64@3.1.1':
+  '@koromix/koffi-linux-riscv64@3.1.2':
     optional: true
 
-  '@koromix/koffi-linux-x64@3.1.1':
+  '@koromix/koffi-linux-x64@3.1.2':
     optional: true
 
-  '@koromix/koffi-openbsd-ia32@3.1.1':
+  '@koromix/koffi-openbsd-ia32@3.1.2':
     optional: true
 
-  '@koromix/koffi-openbsd-x64@3.1.1':
+  '@koromix/koffi-openbsd-x64@3.1.2':
     optional: true
 
-  '@koromix/koffi-win32-arm64@3.1.1':
+  '@koromix/koffi-win32-arm64@3.1.2':
     optional: true
 
-  '@koromix/koffi-win32-ia32@3.1.1':
+  '@koromix/koffi-win32-ia32@3.1.2':
     optional: true
 
-  '@koromix/koffi-win32-x64@3.1.1':
+  '@koromix/koffi-win32-x64@3.1.2':
     optional: true
 
   '@malept/cross-spawn-promise@2.0.0':
@@ -5747,23 +5747,23 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  koffi@3.1.1:
+  koffi@3.1.2:
     optionalDependencies:
-      '@koromix/koffi-darwin-arm64': 3.1.1
-      '@koromix/koffi-darwin-x64': 3.1.1
-      '@koromix/koffi-freebsd-arm64': 3.1.1
-      '@koromix/koffi-freebsd-ia32': 3.1.1
-      '@koromix/koffi-freebsd-x64': 3.1.1
-      '@koromix/koffi-linux-arm64': 3.1.1
-      '@koromix/koffi-linux-ia32': 3.1.1
-      '@koromix/koffi-linux-loong64': 3.1.1
-      '@koromix/koffi-linux-riscv64': 3.1.1
-      '@koromix/koffi-linux-x64': 3.1.1
-      '@koromix/koffi-openbsd-ia32': 3.1.1
-      '@koromix/koffi-openbsd-x64': 3.1.1
-      '@koromix/koffi-win32-arm64': 3.1.1
-      '@koromix/koffi-win32-ia32': 3.1.1
-      '@koromix/koffi-win32-x64': 3.1.1
+      '@koromix/koffi-darwin-arm64': 3.1.2
+      '@koromix/koffi-darwin-x64': 3.1.2
+      '@koromix/koffi-freebsd-arm64': 3.1.2
+      '@koromix/koffi-freebsd-ia32': 3.1.2
+      '@koromix/koffi-freebsd-x64': 3.1.2
+      '@koromix/koffi-linux-arm64': 3.1.2
+      '@koromix/koffi-linux-ia32': 3.1.2
+      '@koromix/koffi-linux-loong64': 3.1.2
+      '@koromix/koffi-linux-riscv64': 3.1.2
+      '@koromix/koffi-linux-x64': 3.1.2
+      '@koromix/koffi-openbsd-ia32': 3.1.2
+      '@koromix/koffi-openbsd-x64': 3.1.2
+      '@koromix/koffi-win32-arm64': 3.1.2
+      '@koromix/koffi-win32-ia32': 3.1.2
+      '@koromix/koffi-win32-x64': 3.1.2
 
   lazy-val@1.0.5: {}
 
@@ -6672,11 +6672,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vue-i18n@11.4.7(vue@3.5.40(typescript@6.0.3)):
+  vue-i18n@11.4.8(vue@3.5.40(typescript@6.0.3)):
     dependencies:
-      '@intlify/core-base': 11.4.7
-      '@intlify/devtools-types': 11.4.7
-      '@intlify/shared': 11.4.7
+      '@intlify/core-base': 11.4.8
+      '@intlify/devtools-types': 11.4.8
+      '@intlify/shared': 11.4.8
       '@vue/devtools-api': 6.6.4
       vue: 3.5.40(typescript@6.0.3)
 

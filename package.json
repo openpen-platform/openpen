@@ -125,10 +125,10 @@
     "@openpen/plugin-manager": "*",
     "electron-log": "^5.4.4",
     "electron-updater": "^6.8.3",
-    "koffi": "^3.1.1",
+    "koffi": "^3.1.2",
     "vue": "^3.5.40",
     "vue-draggable-plus": "0.6.1",
-    "vue-i18n": "^11.4.7",
+    "vue-i18n": "^11.4.8",
     "zod": "^3.25.76"
   },
   "overrides": {
