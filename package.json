@@ -136,7 +136,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "~1.62.0",
+    "@playwright/test": "~1.62.1",
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-replace": "^6.0.3",
@@ -155,6 +155,6 @@
     "typescript-eslint": "^8.65.0",
     "vite": "~6.0.11",
     "vitest": "~3.2.4",
-    "vue-tsc": "~3.3.8"
+    "vue-tsc": "~3.3.9"
   }
 }
