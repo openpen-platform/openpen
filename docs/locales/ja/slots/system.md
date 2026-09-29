@@ -30,7 +30,7 @@ interface ShortcutContribution {
 }
 ```
 
-- `userCustomizable: true` かつ `label` を持つ shortcut は、**設定 → ショートカット** の module グループ内に表示され、ユーザーがキーを再割り当てできます。ユーザーが選択したキーは `config.json → customShortcuts[moduleId/shortcutId]` に保存されます。
+- `userCustomizable: true` かつ `label` を持つ shortcut は、**設定 → ショートカット** の module グループ内に表示され、ユーザーがキーを再割り当てできます。ユーザーが選択したキーは `config.json → moduleShortcuts["<moduleId>/<shortcutId>"]` に保存されます。
 - `label` は `userCustomizable` の値にかかわらず表示されます。省略するとショートカットタブ全体から非表示になります。
 
 ## `system.window.behaviors` — ⏳ 予約済み {#system-window-behaviors}

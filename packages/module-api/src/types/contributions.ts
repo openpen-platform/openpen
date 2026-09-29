@@ -246,7 +246,7 @@ export interface ShortcutContribution {
   label?: string | LocaleMap
   /** Optional secondary description shown below the label in the shortcuts settings panel. */
   sublabel?: string | LocaleMap
-  /** When true, the user can rebind this key. The chosen key is persisted under `config.json → customShortcuts`. */
+  /** When true, the user can rebind this key. The chosen key is persisted under `config.json → moduleShortcuts["<moduleId>/<shortcutId>"]`. */
   userCustomizable?: boolean
 }
 

@@ -30,7 +30,7 @@ interface ShortcutContribution {
 }
 ```
 
-- `userCustomizable: true` 且有 `label` 的快捷鍵，會出現在**設定 → 快捷鍵**的 module 群組下，使用者可在此重新綁定按鍵。使用者自訂的按鍵儲存於 `config.json → customShortcuts[moduleId/shortcutId]`。
+- `userCustomizable: true` 且有 `label` 的快捷鍵，會出現在**設定 → 快捷鍵**的 module 群組下，使用者可在此重新綁定按鍵。使用者自訂的按鍵儲存於 `config.json → moduleShortcuts["<moduleId>/<shortcutId>"]`。
 - `label` 無論 `userCustomizable` 為何都會顯示；省略 `label` 時，該快捷鍵將完全不出現在「快捷鍵」頁籤中。
 
 ## `system.window.behaviors` — ⏳ 保留中 {#system-window-behaviors}
