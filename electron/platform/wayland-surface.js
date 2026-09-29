@@ -20,10 +20,13 @@ export class WaylandSurface {
   }
 
   /**
-   * Make a window click-through. A bare `setIgnoreMouseEvents(true)` sets an
-   * empty wl_surface input region, which Mutter honours — clicks fall through to
-   * the desktop beneath. `{forward:true}` is unimplemented on Linux (electron
-   * #16777), so it is deliberately omitted.
+   * Best-effort click-through. It does not take effect on Mutter: the Ozone
+   * Wayland backend always submits a full-window wl_surface input region, so a
+   * bare `setIgnoreMouseEvents(true)` still captures every click. The Wayland
+   * window model therefore never relies on it for passthrough — windows that
+   * must not block the desktop are kept small or destroyed instead.
+   * `{forward:true}` is unimplemented on Linux (electron #16777), so it is
+   * omitted.
    * @param {import('electron').BrowserWindow} win
    */
   setClickThrough(win) {

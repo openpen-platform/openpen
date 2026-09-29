@@ -119,10 +119,12 @@ function _isVirtioGpu() {
 // Linux setup, two parts:
 //
 //   1. Ozone Wayland — register as a native Wayland client instead of falling
-//      back to Xwayland. Wayland-native input regions are honoured by Mutter
-//      so click-through (setIgnoreMouseEvents) and overlay collapse behave
-//      correctly. Without this, Mutter ignores X11 SHAPE input regions from
-//      Xwayland clients and the desktop locks up after collapse. Always on.
+//      back to Xwayland. Neither path makes a surface click-through on
+//      Mutter: the Ozone Wayland backend always submits a full-window input
+//      region, and Mutter ignores X11 SHAPE input regions from Xwayland
+//      clients (the desktop locks up after collapse). The Wayland window model
+//      in window-manager.js therefore never relies on setIgnoreMouseEvents for
+//      passthrough. Always on.
 //
 //   2. Hardware acceleration disabled — but only on virtio-gpu (KVM/QEMU/UTM
 //      VMs). On that driver Chromium's Viz GPU process crashes during

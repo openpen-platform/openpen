@@ -82,9 +82,10 @@ const platform = createOverlayPlatform();
 // ─── Linux (native Wayland) control-bar window constants ────────────────────────
 //
 // On native Wayland/Mutter a single fullscreen transparent window cannot do
-// per-pixel "bar clickable, rest click-through": setIgnoreMouseEvents is
-// all-or-nothing, {forward:true} is unimplemented, and getCursorScreenPoint is
-// frozen while the surface has an empty input region — so hover can't be
+// per-pixel "bar clickable, rest click-through": setIgnoreMouseEvents(true)
+// never makes the surface click-through (the Ozone Wayland backend always
+// submits a full-window input region), {forward:true} is unimplemented, and
+// getCursorScreenPoint is unsupported on Wayland — so hover can't be
 // detected (empirically verified). The only Wayland-legal model is a physically
 // small window that captures only its own area; the desktop outside it stays
 // usable.
@@ -687,7 +688,8 @@ export function createOverlayWindowForDisplay(display) {
   const { x, y, width, height } = display.workArea;
 
   // Linux/Wayland overlay model: on Mutter a visible fullscreen surface can be
-  // neither made click-through (setIgnoreMouseEvents(true) keeps capturing) nor
+  // neither made click-through (setIgnoreMouseEvents(true) keeps capturing —
+  // the Ozone Wayland backend always submits a full-window input region) nor
   // moved off-screen (a fullscreen window is pinned/maximized — setPosition is a
   // no-op), and hide/show re-maps a transparent <canvas> window which crashes
   // Viz on virtio-gpu (SIGTRAP). So the overlay is NOT created at boot; it is

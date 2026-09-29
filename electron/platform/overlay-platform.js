@@ -20,7 +20,8 @@
  *   re-detecting the platform.
  * @property {(win: import('electron').BrowserWindow) => void} setClickThrough
  *   Make a window click-through in the platform-correct way (Mac/Win/X11 keep
- *   {forward:true}; Wayland uses a bare empty input region).
+ *   {forward:true}; on Wayland it has no effect because the Ozone backend
+ *   always submits a full-window input region, so the surface keeps capturing).
  * @property {(enabled: boolean, deps: object) => void} applyDrawingMode
  *   Apply a drawing-mode transition's overlay-lifecycle: Standard toggles the
  *   persistent overlay's passthrough + keeps the bar on top; Wayland runs the
