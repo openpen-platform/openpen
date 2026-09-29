@@ -221,8 +221,22 @@ For reliable multi-platform releases, use CI jobs on all three OSes.
 
 1. Fork the repo and create a branch from `main`
 2. Make your changes with tests
-3. Run `npm run test:unit` — all tests must pass
-4. Open a PR with a clear description of what and why
+3. Open a PR with a clear description of what and why
+4. Work through the Definition of Done below; the PR template repeats it as a checklist
+
+### Definition of Done
+
+A PR is ready for review when every item holds. Items marked *if* apply only when their condition is met; otherwise tick them and add "n/a".
+
+- [ ] **Checks pass** — `npm run lint`, `npm run type-check` and `npm run test:unit` pass locally, and new behaviour is covered by a test. If the change touches behaviour covered by E2E specs, `npx playwright test tests/e2e/<scope>/` passes as well.
+- [ ] **No regressions** — no existing test was broken, skipped or deleted to make the change pass.
+- [ ] **Scope matches the description** — every changed file is explained by the PR description; unrelated fixes go in a separate PR.
+- [ ] **No leftovers** — no commented-out code, debug output or temporary workarounds.
+- [ ] **Follows existing conventions** — naming, formatting and error handling match the surrounding code (see [Code Style](#code-style)).
+- [ ] **Docs updated** *(if user-visible or plugin-facing behaviour changes)* — the affected pages under `docs/` and `packages/*/README.md` are updated in the same PR.
+- [ ] **Verified in the real app** *(if the change is visual)* — the PR includes a screenshot of the running Electron app taken with the OS screenshot tool; browser previews and Playwright screenshots do not show the transparent overlay.
+- [ ] **Plugin author flow still works** *(if the change touches `packages/`)* — [Build your first plugin](./docs/tutorials/build-your-first-plugin.md) still runs end to end.
+- [ ] **Signed off** — every commit carries a `Signed-off-by` line (see [Sign your commits](#sign-your-commits-dco)).
 
 ---
 

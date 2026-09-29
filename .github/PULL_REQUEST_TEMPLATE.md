@@ -25,15 +25,20 @@ Effect on next release:
 
 -
 
-## Test plan
+## Definition of Done
 
-- [ ] `npm run lint` passes
-- [ ] `npm run type-check` passes
-- [ ] `npm run test:unit` passes
-- [ ] Scope-targeted e2e: `npx playwright test tests/e2e/<scope>/`
-- [ ] Manual verification:
-- [ ] (UI changes) Tested on macOS / Windows desktop screenshot evidence attached
-- [ ] (Plugin SDK / docs changes) Fresh plugin author flow re-validated
+<!-- Each item is defined in CONTRIBUTING.md: https://github.com/openpen-platform/openpen/blob/main/CONTRIBUTING.md#definition-of-done
+     Items marked (if ...) apply only when their condition is met; otherwise tick them and add "n/a". -->
+
+- [ ] Checks pass
+- [ ] No regressions
+- [ ] Scope matches the description
+- [ ] No leftovers
+- [ ] Follows existing conventions
+- [ ] Docs updated (if user-visible or plugin-facing behaviour changes)
+- [ ] Verified in the real app (if the change is visual)
+- [ ] Plugin author flow still works (if the change touches `packages/`)
+- [ ] Signed off
 
 ## Notes for reviewer
 
