@@ -40,6 +40,46 @@ describe('removePlugin', () => {
     expect(fs.existsSync(destDir)).toBe(false)
   })
 
+  it('removes the scope directory when its last plugin is removed', async () => {
+    const pluginsDir = path.join(tmpDir, 'plugins')
+    makeInstalledPlugin(pluginsDir, '@alice/notes')
+
+    await removePlugin('@alice/notes', { pluginsDir })
+    expect(fs.existsSync(path.join(pluginsDir, '@alice'))).toBe(false)
+    expect(fs.existsSync(pluginsDir)).toBe(true)
+  })
+
+  it('removes the scope directory when only OS metadata files remain', async () => {
+    const pluginsDir = path.join(tmpDir, 'plugins')
+    makeInstalledPlugin(pluginsDir, '@alice/notes')
+    fs.writeFileSync(path.join(pluginsDir, '@alice', '.DS_Store'), '')
+    fs.writeFileSync(path.join(pluginsDir, '@alice', 'Thumbs.db'), '')
+
+    await removePlugin('@alice/notes', { pluginsDir })
+    expect(fs.existsSync(path.join(pluginsDir, '@alice'))).toBe(false)
+  })
+
+  it('keeps the scope directory when it holds a non-metadata file', async () => {
+    const pluginsDir = path.join(tmpDir, 'plugins')
+    makeInstalledPlugin(pluginsDir, '@alice/notes')
+    const userFile = path.join(pluginsDir, '@alice', 'notes.txt')
+    fs.writeFileSync(userFile, 'keep me')
+
+    await removePlugin('@alice/notes', { pluginsDir })
+    expect(fs.existsSync(userFile)).toBe(true)
+  })
+
+  it('keeps the scope directory and sibling plugins when others remain', async () => {
+    const pluginsDir = path.join(tmpDir, 'plugins')
+    makeInstalledPlugin(pluginsDir, '@alice/notes')
+    const siblingDir = makeInstalledPlugin(pluginsDir, '@alice/todo')
+
+    await removePlugin('@alice/notes', { pluginsDir })
+    expect(fs.existsSync(path.join(pluginsDir, '@alice'))).toBe(true)
+    expect(fs.existsSync(path.join(siblingDir, 'plugin.json'))).toBe(true)
+    expect(fs.existsSync(path.join(siblingDir, 'dist', 'renderer.js'))).toBe(true)
+  })
+
   it('throws when plugin is not installed', async () => {
     const pluginsDir = path.join(tmpDir, 'plugins')
     await expect(removePlugin('@alice/ghost', { pluginsDir }))
