@@ -15,8 +15,11 @@ Thank you for your interest in contributing to OpenPen.
 
 **Requirements:** Node.js 20+, npm 9+. Works on macOS, Windows, and Linux
 
+The repo uses npm workspaces — install with npm, **not** pnpm or yarn.
+
 ```bash
-git clone https://github.com/openpen-platform/openpen
+# Fork the repo, then clone your fork
+git clone https://github.com/<your-username>/openpen
 cd openpen
 npm install
 
@@ -101,14 +104,18 @@ For **plugin tools** (without modifying the core codebase), see [Module Architec
 ## Testing
 
 ```bash
-npm run test:unit       # Vitest unit tests
-npx playwright test     # E2E tests (Playwright + real Electron)
-npm run build           # Vite build verification
+npm run lint
+npm run type-check
+npm run test:unit                         # Vitest unit tests
+npx playwright test tests/e2e/<scope>/    # E2E specs for the area you changed (Playwright + real Electron)
+npm run build                             # Vite build verification
 ```
 
 Unit tests live in `tests/unit/`. E2E tests in `tests/e2e/`.
 
-All PRs must pass unit tests. E2E tests are run manually before releases.
+Run `npm run lint`, `npm run type-check` and `npm run test:unit` before every push. Run E2E specs when your change touches behaviour they cover (see the Definition of Done), and only the specs for that area; the full `npx playwright test` suite takes about 20 minutes, so keep it for changes that cut across many specs. CI runs lint, type-check, unit tests and an E2E smoke test against the production build on every PR.
+
+Browser previews at `localhost:5173` look nothing like the real app (transparent window, drawing overlay, system-tray behaviour), so visual checks must happen in the running Electron app — see the Definition of Done below.
 
 ---
 
@@ -219,10 +226,49 @@ For reliable multi-platform releases, use CI jobs on all three OSes.
 
 ## Submitting a Pull Request
 
-1. Fork the repo and create a branch from `main`
+1. Fork the repo and create a branch from `main` (see [Branch names](#branch-names))
 2. Make your changes with tests
-3. Open a PR with a clear description of what and why
+3. Open a PR against `main` with a Conventional Commits title (see [PR title](#pr-title)) and a clear description of what and why
 4. Work through the Definition of Done below; the PR template repeats it as a checklist
+
+### Branch names
+
+`<type>/<scope-or-description>` — examples:
+
+- `feat/laser-pointer-tool`
+- `fix/settings-dim-click`
+- `docs/plugin-quickstart-typo`
+- `chore/bump-electron`
+
+Allowed types: `feat`, `fix`, `docs`, `chore`, `build`, `ci`, `refactor`, `test`, `style`, `perf`, `revert`.
+
+### PR title
+
+OpenPen uses [Conventional Commits](https://www.conventionalcommits.org/) and [release-please](https://github.com/googleapis/release-please) for automated versioning. The PR title matters most: it becomes the squash commit message, and release-please reads it to decide the next version.
+
+```
+fix(settings-window): prevent dimmed main from stealing clicks
+feat(canvas): add laser pointer module
+docs(plugin-quickstart): correct degit subpath
+```
+
+Effect on the next release:
+
+| PR title prefix | Next version bump |
+|---|---|
+| `feat:` | minor (1.x.0) |
+| `fix:` | patch (1.0.x) |
+| `docs:` `chore:` `ci:` `build:` `style:` `test:` `refactor:` | no bump |
+| `feat!:` or footer `BREAKING CHANGE:` | major (2.0.0) — use sparingly, only when there is a true contract break |
+
+### Merge strategy
+
+All PRs are **squash-merged**. `main` stays linear and each commit on `main` corresponds to exactly one merged PR. Commit freely on your feature branch — its commit history is discarded after the squash.
+
+`main` is configured to require:
+- All CI checks green (lint / type-check / unit tests / E2E prod smoke)
+- A pull request (no direct pushes to `main`)
+- Linear history (no merge commits)
 
 ### Definition of Done
 
@@ -261,9 +307,21 @@ your GitHub identity. PRs without sign-off will be flagged for amendment.
 
 ---
 
+## License
+
+OpenPen is licensed under the GNU General Public License v3.0 or later, with the OpenPen Plugin Linking Exception (see [LICENSE](./LICENSE)). By contributing, you agree that your contributions are licensed under the same terms.
+
+---
+
+## Security
+
+For vulnerabilities and trust-model concerns, follow [SECURITY.md](./SECURITY.md). Do **not** open a public issue for security reports.
+
+---
+
 ## Building a Plugin Instead?
 
-If you want to add new drawing tools, shapes, or settings tabs **without modifying the core**, see the **[Module Architecture](./docs/concepts/module-architecture.md)** — it's the recommended way to extend OpenPen.
+If you want to add new drawing tools, shapes, or settings tabs **without modifying the core**, see the **[Module Architecture](./docs/concepts/module-architecture.md)** — it's the recommended way to extend OpenPen. To get started, follow [Build your first plugin](./docs/tutorials/build-your-first-plugin.md).
 
 ---
 

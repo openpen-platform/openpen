@@ -374,8 +374,8 @@ const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
 ### 直接导入 reka-ui
 
 ```ts
-// ❌ Not allowed for plugins — bypasses the module-api abstraction layer and
-//    ties your plugin to Reka UI's specific version
+// ❌ Plugins MUST NOT import reka-ui directly; this repository's
+//    import-boundary test rejects it in plugin-starter and the demo plugin
 import { ComboboxRoot } from 'reka-ui'
 
 // ✅ Import through module-api so your plugin survives a headless library swap
