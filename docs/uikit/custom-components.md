@@ -390,8 +390,8 @@ These tokens are **unchanged** in light mode — you can treat them as constants
 ### Importing reka-ui directly
 
 ```ts
-// ❌ Bypasses the module-api abstraction layer — breaks the import-boundary
-//    contract test and ties your plugin to Reka UI's specific version
+// ❌ Not allowed for plugins — bypasses the module-api abstraction layer and
+//    ties your plugin to Reka UI's specific version
 import { ComboboxRoot } from 'reka-ui'
 
 // ✅ Import through module-api so your plugin survives a headless library swap
@@ -430,4 +430,4 @@ import { AppToggle } from '@openpen/module-api/uikit'
 
 - [UIKit component wrappers](./index.md) — pre-built high-level components
 - [Design tokens reference](../reference/design-tokens.md) — full `--openpen-*` catalogue
-- [Primitives, escape hatch & peer dependency rules](./primitives.md) — Layer 2/3 access and importmap rules
+- [Primitives & peer dependency rules](./primitives.md) — primitive layer access and importmap rules

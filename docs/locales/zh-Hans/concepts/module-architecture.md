@@ -132,7 +132,7 @@ Plugin 只能从 `@openpen/module-api` 导入；宿主会在模块边界验证�
 - [`slots/index.md`](../slots/index.md) — 所有 slot、其状态及 contribution 形态。
 - [`guides/module-settings.md`](../guides/module-settings.md) — `settingsSchema`、`useModuleContext`、`settingsPanels` 与 `settingsTabs`。
 - [`uikit/index.md`](../uikit/index.md) — 面向 plugin 作者的 UIKit 封装。
-- [`uikit/primitives.md`](../uikit/primitives.md) — 基础组件、设计令牌及逃生舱指南。
+- [`uikit/primitives.md`](../uikit/primitives.md) — 基础组件与设计令牌。
 - [`guides/plugin-quickstart.md`](../guides/plugin-quickstart.md) — 从零到运行一个 plugin。
 - [`CONTRIBUTING.md`](../../CONTRIBUTING.md) — 向 OpenPen 核心贡献代码。
 - npm 上的 `@openpen/module-api` — TypeScript 类型与完整 API 面。

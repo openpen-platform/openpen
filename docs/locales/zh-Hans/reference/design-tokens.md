@@ -254,5 +254,5 @@ import '@openpen/module-api/uikit/tokens.css'
 ## 另请参阅
 
 - [UIKit 组件封装](../uikit/index.md) — 自动应用令牌的预制组件
-- [基础元素、逃生舱口与对等依赖规则](../uikit/primitives.md) — Layer 2/3 访问与 importmap 约定
+- [基础元素与对等依赖规则](../uikit/primitives.md) — 原语层访问与 importmap 约定
 - [自定义 UIKit 组件指南](../uikit/custom-components.md) — 使用令牌构建你自己的组件

@@ -1,6 +1,6 @@
 ---
 title: UIKit
-description: The component library for OpenPen plugin authors — three layers from high-level wrappers to escape hatches.
+description: The component library for OpenPen plugin authors — three layers from high-level wrappers to custom components.
 ---
 
 # OpenPen UIKit
@@ -37,7 +37,7 @@ front saves you from rewrites later.
 |---|---|---|---|---|---|
 | **Wrapper** | `@openpen/module-api/uikit` | Low | Automatic — tokens applied for you | Smallest | Low |
 | **Primitive re-export** | `@openpen/module-api/uikit` (named exports) | Medium | Token-driven — you write the CSS | Medium | High |
-| **Escape hatch** | Your own `reka-ui` (or any library) install | Self-managed | Self-managed | Largest | Unlimited |
+| **Custom component** | `@openpen/module-api/uikit` primitives + your own components | High | Token-driven — you write markup and CSS | Medium | Highest |
 
 ### Decision rule
 
@@ -52,15 +52,18 @@ comes with the headless primitives (focus trapping, ARIA attributes, keyboard
 close, etc.). You write your own CSS; you manage mutual exclusion and
 passthrough yourself (see `docs/uikit/primitives.md`).
 
-**Escape hatch** — use this for genuinely novel UI patterns that have no
-equivalent in the wrapper or primitive layers (for example, a graph editor or a
-3D viewport). You are free to install any library in your plugin's own
-`package.json`. The trade-off is that you now own visual consistency,
-accessibility, and long-term maintenance of that surface. In particular, if the
-host swaps its underlying headless library (see "If we ever swap the underlying
-headless library" below), any direct import you took will need a manual port by
-you — the host's wrapper API will stay stable, but third-party imports you
-bundled yourself will not.
+**Custom component** — use this for UI patterns that no wrapper covers (for
+example, a tags input, a number spinner, or a graph editor). Compose the
+primitive re-exports with your own markup, and style it with the `--openpen-*`
+design tokens so it follows the host theme. You own visual consistency and
+long-term maintenance of that surface. See
+[custom-components.md](./custom-components.md) for the full guide.
+
+Plugins MUST NOT install `reka-ui` in their own `package.json` or import it
+directly — every layer reaches headless primitives through
+`@openpen/module-api/uikit`. This is what keeps your plugin working if the host
+swaps its underlying headless library (see "If we ever swap the underlying
+headless library" below).
 
 > If you are unsure which layer to use, start with the Wrapper. You can always
 > drop to a lower layer later; going the other way is harder.
@@ -85,7 +88,7 @@ bundled yourself will not.
 | [`AppButtonDropdown`](./app-button-dropdown) | Wrapper | Split-mode button: main action + caret-triggered popover |
 | [`primitives`](./primitives) | Primitive re-export | Raw Reka UI re-exports for custom markup |
 
-See [`custom-components`](./custom-components) for the escape hatch layer (writing your own from scratch).
+See [`custom-components`](./custom-components) for the custom component layer (building your own on top of the primitives and design tokens).
 
 ---
 
@@ -111,7 +114,7 @@ project's needs, the host has a documented fallback order:
 |---|---|
 | **Wrapper** (`@openpen/module-api/uikit`) | No change to your code. The wrapper API — props, events, slots — is a stable contract managed by the host. |
 | **Primitive re-export** (`@openpen/module-api/uikit` named primitives) | A major-version bump will land. You will need a small, targeted port to update primitive component names or props that changed. |
-| **Escape hatch** (direct third-party library import) | You are responsible for porting that surface entirely. The host cannot help here because you opted out of the wrapper contract. |
+| **Custom component** (your own components on the primitive re-exports) | Same as the primitive layer for the primitives you compose; your own markup and CSS are unaffected. |
 
 This is documented up front so you can make an informed choice about which layer
 to invest in. The wrapper layer is a long-term contract the host team commits to

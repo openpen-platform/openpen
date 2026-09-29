@@ -178,7 +178,7 @@ Plugin 代码只能从以下路径导入：
 - plugin 内部的相对路径
 - `@openpen/module-api`（SDK）
 - `node:*`（仅限主进程处理器）
-- 第三方 npm 包
+- 第三方 npm 包，`reka-ui` 除外——headless 原语请从 `@openpen/module-api/uikit` 导入
 
 导入宿主内部模块（如 `src/services/...`）会被宿主的边界测试拒绝。SDK 已暴露你所需的一切。
 
@@ -253,5 +253,5 @@ const saveError = ref<string | null>(null)
 - **自定义 UIKit 组件** → [uikit/custom-components.md](../uikit/custom-components.md) — 构建超出内置包装器的小部件（标签输入、数字微调器、组合框）
 - **设计令牌** → [reference/design-tokens.md](../reference/design-tokens.md) — 你的样式继承的宿主调色板
 - **所有 contribution slot** → [slots/index.md](../slots/index.md)
-- **逃生舱原语** → [uikit/primitives.md](../uikit/primitives.md)
+- **Headless 原语** → [uikit/primitives.md](../uikit/primitives.md)
 - **架构深度解析** → [module-architecture.md](../concepts/module-architecture.md)

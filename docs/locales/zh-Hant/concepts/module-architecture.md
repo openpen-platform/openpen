@@ -132,7 +132,7 @@ plugin MUST 只從 `@openpen/module-api` 匯入；host 會在 module 邊界驗�
 - [`slots/index.md`](../slots/index.md) — 每個 slot、其狀態與 contribution 形狀。
 - [`guides/module-settings.md`](../guides/module-settings.md) — settingsSchema、`useModuleContext`、`settingsPanels` 與 `settingsTabs`。
 - [`uikit/index.md`](../uikit/index.md) — 供 plugin 作者使用的 UIKit wrapper。
-- [`uikit/primitives.md`](../uikit/primitives.md) — primitives、設計 token 與 escape-hatch 指引。
+- [`uikit/primitives.md`](../uikit/primitives.md) — primitives 與設計 token。
 - [`guides/plugin-quickstart.md`](../guides/plugin-quickstart.md) — 從零開始到一個可執行的 plugin。
 - [`CONTRIBUTING.md`](../../CONTRIBUTING.md) — 貢獻至 OpenPen 核心。
 - npm 上的 `@openpen/module-api` — TypeScript 型別與完整 API 介面。

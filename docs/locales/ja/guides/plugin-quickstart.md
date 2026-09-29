@@ -180,7 +180,7 @@ plugin のコードがインポートできるのは以下のみです:
 - plugin 内の相対パス
 - `@openpen/module-api` (SDK)
 - `node:*` (メインサイドハンドラーのみ)
-- サードパーティの npm パッケージ
+- サードパーティの npm パッケージ (`reka-ui` を除く — ヘッドレスプリミティブは `@openpen/module-api/uikit` からインポート)
 
 ホストの内部実装 (`src/services/...` など) のインポートはホストの境界テストで拒否されます。SDK が必要なものをすべて公開しています。
 
@@ -249,5 +249,5 @@ const saveError = ref<string | null>(null)
 - **カスタム UIKit コンポーネント** → [uikit/custom-components.md](../uikit/custom-components.md) — バンドル済みラッパーを超えたウィジェットの作成 (タグ入力、数値スピナー、コンボボックス)
 - **デザイントークン** → [reference/design-tokens.md](../reference/design-tokens.md) — スタイルが継承するホストパレット
 - **すべての contribution slot** → [slots/index.md](../slots/index.md)
-- **エスケープハッチプリミティブ** → [uikit/primitives.md](../uikit/primitives.md)
+- **ヘッドレスプリミティブ** → [uikit/primitives.md](../uikit/primitives.md)
 - **アーキテクチャの詳細** → [module-architecture.md](../concepts/module-architecture.md)

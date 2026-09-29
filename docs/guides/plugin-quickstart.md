@@ -177,7 +177,8 @@ Plugin code may only import from:
 - relative paths within the plugin
 - `@openpen/module-api` (the SDK)
 - `node:*` (main-side handlers only)
-- third-party npm packages
+- third-party npm packages, except `reka-ui` — import headless primitives from
+  `@openpen/module-api/uikit` instead
 
 Importing host internals (e.g. `src/services/...`) is rejected by the host's
 boundary tests. The SDK exposes everything you need.
@@ -255,5 +256,5 @@ switches to a compact single-line layout suited for dialogs and form areas.
 - **Custom UIKit components** → [uikit/custom-components.md](../uikit/custom-components.md) — building widgets beyond the bundled wrappers (tags input, number spinner, combobox)
 - **Design tokens** → [reference/design-tokens.md](../reference/design-tokens.md) — host palette your styles inherit
 - **All contribution slots** → [slots/index.md](../slots/index.md)
-- **Escape-hatch primitives** → [uikit/primitives.md](../uikit/primitives.md)
+- **Headless primitives** → [uikit/primitives.md](../uikit/primitives.md)
 - **Architecture deep-dive** → [module-architecture.md](../concepts/module-architecture.md)

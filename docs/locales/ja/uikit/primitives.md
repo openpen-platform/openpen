@@ -1,13 +1,13 @@
 ---
-title: プリミティブ、エスケープハッチ、デザイントークン
-description: AppPopover / AppDialog / AppSlider ラッパーを超えたマークアップやスタイルの完全な制御が必要な場合は、Reka UI プリミティブを直接使用してください。
+title: プリミティブとデザイントークン
+description: AppPopover / AppDialog / AppSlider ラッパーを超えたマークアップやスタイルの完全な制御が必要な場合は、@openpen/module-api/uikit のヘッドレスプリミティブを使用してください。
 translationType: machine
 translatedFrom: 8e4d741
 translatedAt: 2026-05-22T00:00:00Z
 language: ja
 ---
 
-# プリミティブ、エスケープハッチ、デザイントークン、アップストリーム通知
+# プリミティブ、デザイントークン、アップストリーム通知
 
 ---
 
@@ -63,9 +63,9 @@ import {
 
 ---
 
-## §2 エスケープハッチ (Layer 3)
+## §2 ヘッドレスライブラリの直接インポート禁止
 
-plugin は、自身の `package.json` に任意のヘッドレスまたはコンポーネントライブラリを直接インストールしても構いません。UIKit はこれをブロックしてはなりません。OpenPen のスタイルに視覚的に合わせること、および Electron 固有のエッジケースをすべて処理することは、plugin 作者の責任となります。
+plugin は、自身の `package.json` に `reka-ui` をインストールしたり、直接インポートしたりしてはなりません。ヘッドレスプリミティブが必要な場合は `@openpen/module-api/uikit` からインポートしてください (§1)。プリミティブでカバーされない UI パターンは、それらを土台にカスタムコンポーネントを構築してください。詳しくは [custom-components.md](./custom-components.md) を参照してください。
 
 ---
 

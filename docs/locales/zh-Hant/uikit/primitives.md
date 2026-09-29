@@ -1,13 +1,13 @@
 ---
-title: Primitives、Escape Hatch 與設計 Token
-description: 當你需要完整的標記或樣式控制，超出 AppPopover / AppDialog / AppSlider 包裝器所提供的範圍時，可直接使用 Reka UI primitives。
+title: Primitives 與設計 Token
+description: 當你需要完整的標記或樣式控制，超出 AppPopover / AppDialog / AppSlider 包裝器所提供的範圍時，可使用 @openpen/module-api/uikit 提供的 headless primitives。
 translationType: machine
 translatedFrom: 8e4d741
 translatedAt: 2026-05-22T00:00:00Z
 language: zh-Hant
 ---
 
-# Primitives、Escape Hatch、設計 Token 與上游注意事項
+# Primitives、設計 Token 與上游注意事項
 
 ---
 
@@ -63,9 +63,9 @@ import {
 
 ---
 
-## §2 Escape Hatch（第 3 層）
+## §2 不得直接 import headless 函式庫
 
-plugin **MAY** 直接在自己的 `package.json` 中安裝任何 headless 或元件程式庫。UIKit **MUST NOT** 封鎖此行為。視覺上符合 OpenPen 樣式，以及處理所有 Electron 特有的邊緣情況，均為 plugin 作者的責任。
+plugin **MUST NOT** 在自己的 `package.json` 中安裝 `reka-ui`，也不得直接 import 它。需要 headless primitive 時，從 `@openpen/module-api/uikit` 匯入（§1）。primitive 未涵蓋的 UI 模式，請以它們為基礎打造自訂元件——參閱 [custom-components.md](./custom-components.md)。
 
 ---
 

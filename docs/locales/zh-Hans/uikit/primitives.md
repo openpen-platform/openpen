@@ -1,13 +1,13 @@
 ---
-title: 原语、逃生舱与设计令牌
-description: 当你需要超越 AppPopover / AppDialog / AppSlider 封装组件所提供的标记或样式控制能力时，可直接使用 Reka UI 原语。
+title: 原语与设计令牌
+description: 当你需要超越 AppPopover / AppDialog / AppSlider 封装组件所提供的标记或样式控制能力时，可使用 @openpen/module-api/uikit 提供的 headless 原语。
 translationType: machine
 translatedFrom: 8e4d741
 translatedAt: 2026-05-22T00:00:00Z
 language: zh-Hans
 ---
 
-# 原语、逃生舱、设计令牌与上游声明
+# 原语、设计令牌与上游声明
 
 ---
 
@@ -63,9 +63,9 @@ import {
 
 ---
 
-## §2 逃生舱（第 3 层）
+## §2 不得直接导入无头库
 
-plugin MAY 直接在其自身的 `package.json` 中安装任意无头库或组件库。UIKit MUST NOT 阻止此行为。与 OpenPen 样式保持视觉一致、处理所有 Electron 特有的边界情况均由 plugin 作者自行负责。
+plugin MUST NOT 在其自身的 `package.json` 中安装 `reka-ui`，也不得直接导入它。需要无头原语时，从 `@openpen/module-api/uikit` 导入（§1）。原语未覆盖的 UI 模式，请以它们为基础构建自定义组件——参见 [custom-components.md](./custom-components.md)。
 
 ---
 

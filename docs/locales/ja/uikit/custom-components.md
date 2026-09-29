@@ -374,8 +374,8 @@ const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
 ### reka-ui を直接インポートする
 
 ```ts
-// ❌ Bypasses the module-api abstraction layer — breaks the import-boundary
-//    contract test and ties your plugin to Reka UI's specific version
+// ❌ Not allowed for plugins — bypasses the module-api abstraction layer and
+//    ties your plugin to Reka UI's specific version
 import { ComboboxRoot } from 'reka-ui'
 
 // ✅ Import through module-api so your plugin survives a headless library swap
@@ -414,4 +414,4 @@ import { AppToggle } from '@openpen/module-api/uikit'
 
 - [UIKit コンポーネントラッパー](./index.md) — 事前構築済みの高レベルコンポーネント
 - [デザイントークンリファレンス](../reference/design-tokens.md) — `--openpen-*` の全カタログ
-- [プリミティブ、エスケープハッチ、ピア依存ルール](./primitives.md) — レイヤー 2/3 アクセスとインポートマップのルール
+- [プリミティブとピア依存ルール](./primitives.md) — プリミティブレイヤーのアクセスとインポートマップのルール

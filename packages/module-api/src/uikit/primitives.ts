@@ -5,7 +5,7 @@
  * who need full control over markup and styling but still want Reka UI's
  * a11y / focus / keyboard navigation behaviour.
  *
- * Usage (escape hatch from high-level wrappers):
+ * Usage (when the high-level wrappers are not enough):
  *   import { PopoverRoot, PopoverTrigger, ... } from '@openpen/module-api/uikit'
  *   // or directly:
  *   import { ... } from '@openpen/module-api/uikit/primitives'  (if re-exported)

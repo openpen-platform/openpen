@@ -271,5 +271,5 @@ import '@openpen/module-api/uikit/tokens.css'
 ## See also
 
 - [UIKit component wrappers](../uikit/index.md) — pre-built components that apply tokens automatically
-- [Primitives, escape hatch & peer dependency rules](../uikit/primitives.md) — Layer 2/3 access and importmap contract
+- [Primitives & peer dependency rules](../uikit/primitives.md) — primitive layer access and importmap contract
 - [Custom UIKit components guide](../uikit/custom-components.md) — building your own components with tokens

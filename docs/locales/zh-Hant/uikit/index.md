@@ -1,6 +1,6 @@
 ---
 title: UIKit
-description: OpenPen plugin 作者專用的元件庫——從高階封裝到逃生艙口共三個層次。
+description: OpenPen plugin 作者專用的元件庫——從高階封裝到自訂元件共三個層次。
 translationType: machine
 translatedFrom: 8e4d741
 translatedAt: 2026-05-22T00:00:00Z
@@ -38,7 +38,7 @@ UIKit 提供三個遞升的 API 存取層次。事先選對層次，可以避免
 |---|---|---|---|---|---|
 | **封裝層（Wrapper）** | `@openpen/module-api/uikit` | 低 | 自動——設計 token 已套用 | 最小 | 低 |
 | **原始元件重新匯出（Primitive re-export）** | `@openpen/module-api/uikit`（具名匯出） | 中 | Token 驅動——你自己撰寫 CSS | 中 | 高 |
-| **逃生艙口（Escape hatch）** | 你自己安裝的 `reka-ui`（或任何函式庫） | 自行管理 | 自行管理 | 最大 | 無限制 |
+| **自訂元件（Custom component）** | `@openpen/module-api/uikit` 的 primitive＋你自己的元件 | 高 | Token 驅動——你自己撰寫標記與 CSS | 中 | 最高 |
 
 ### 決策原則
 
@@ -46,7 +46,9 @@ UIKit 提供三個遞升的 API 存取層次。事先選對層次，可以避免
 
 **原始元件重新匯出** — 當你需要完全掌控標記與樣式，但又想保留 headless primitive 帶來的無障礙功能與鍵盤導覽行為（焦點捕捉、ARIA 屬性、鍵盤關閉等）時，請使用此層。你自己撰寫 CSS；你自行管理互斥鎖與穿透（請參閱 `docs/uikit/primitives.md`）。
 
-**逃生艙口** — 當你的 UI 模式在封裝層或原始元件層均無對應實作時（例如圖形編輯器或 3D 視窗），請使用此層。你可以在 plugin 自己的 `package.json` 中自由安裝任何函式庫。代價是：視覺一致性、無障礙功能以及該介面的長期維護均由你負責。特別要注意的是，若 host 日後替換底層 headless 函式庫（參見下方「若我們替換底層 headless 函式庫」），你直接 import 的部分需要你自行移植——host 的封裝 API 會保持穩定，但你自行打包的第三方 import 則不會。
+**自訂元件** — 當沒有任何封裝元件涵蓋你的 UI 模式時（例如標籤輸入、數字微調器或圖形編輯器），請使用此層。以原始元件重新匯出搭配你自己的標記組成元件，並用 `--openpen-*` 設計 token 設定樣式，使其跟隨 host 佈景主題。視覺一致性與該介面的長期維護由你負責。完整指南請參閱 [custom-components.md](./custom-components.md)。
+
+Plugin **MUST NOT** 在自己的 `package.json` 中安裝 `reka-ui`，也不得直接 import 它——每一層都透過 `@openpen/module-api/uikit` 取得 headless primitive。這樣在 host 替換底層 headless 函式庫時（參見下方「若我們替換底層 headless 函式庫」），你的 plugin 才能繼續運作。
 
 > 若不確定要使用哪個層次，請從封裝層開始。之後可以隨時降到更底層；反向升層則困難得多。
 
@@ -70,7 +72,7 @@ UIKit 提供三個遞升的 API 存取層次。事先選對層次，可以避免
 | [`AppButtonDropdown`](./app-button-dropdown) | 封裝層 | 分離模式按鈕：主動作 + 插入號觸發 popover |
 | [`primitives`](./primitives) | 原始元件重新匯出 | 用於自訂標記的原始 Reka UI 重新匯出 |
 
-逃生艙口層（從頭自行撰寫）請參閱 [`custom-components`](./custom-components)。
+自訂元件層（以 primitive 與設計 token 自行打造元件）請參閱 [`custom-components`](./custom-components)。
 
 ---
 
@@ -90,6 +92,6 @@ OpenPen UIKit 目前以 **Reka UI** 作為其 headless 行為層。這是內部�
 |---|---|
 | **封裝層**（`@openpen/module-api/uikit`） | 你的程式碼無需修改。封裝 API——屬性、事件、插槽——是由 host 管理的穩定契約。 |
 | **原始元件重新匯出**（`@openpen/module-api/uikit` 具名 primitive） | 將發布主版本號升級。你需要進行小規模、有針對性的移植，以更新有變動的原始元件名稱或屬性。 |
-| **逃生艙口**（直接 import 第三方函式庫） | 你需自行負責完整移植該介面。host 無法在此提供協助，因為你已選擇退出封裝契約。 |
+| **自訂元件**（以原始元件重新匯出打造的自有元件） | 你組合的 primitive 與原始元件層相同；你自己的標記與 CSS 不受影響。 |
 
 這份說明提前記錄，讓你在選擇投入哪個層次時能做出知情的決定。封裝層是 host 團隊承諾在函式庫替換期間持續維護的長期契約。若長期穩定性比最大 UI 自由度更重要，封裝層是正確的選擇。

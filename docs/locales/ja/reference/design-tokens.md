@@ -252,5 +252,5 @@ import '@openpen/module-api/uikit/tokens.css'
 ## 関連ドキュメント
 
 - [UIKit コンポーネントラッパー](../uikit/index.md) — トークンを自動的に適用するビルド済みコンポーネント
-- [プリミティブ、エスケープハッチ & ピア依存ルール](../uikit/primitives.md) — レイヤー 2/3 アクセスと importmap コントラクト
+- [プリミティブ & ピア依存ルール](../uikit/primitives.md) — プリミティブレイヤーのアクセスと importmap コントラクト
 - [カスタム UIKit コンポーネントガイド](../uikit/custom-components.md) — トークンを使って独自コンポーネントをビルドする

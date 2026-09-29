@@ -1,9 +1,9 @@
 ---
-title: Primitives, Escape Hatch & Design Tokens
-description: Use Reka UI primitives directly when you need full markup or styling control beyond the AppPopover / AppDialog / AppSlider wrappers.
+title: Primitives & Design Tokens
+description: Use the headless primitives from @openpen/module-api/uikit when you need full markup or styling control beyond the AppPopover / AppDialog / AppSlider wrappers.
 ---
 
-# Primitives, Escape Hatch, Design Tokens & Upstream Notice
+# Primitives, Design Tokens & Upstream Notice
 
 ---
 
@@ -59,11 +59,13 @@ When walking this layer, the plugin author MUST self-manage:
 
 ---
 
-## §2 Escape Hatch (Layer 3)
+## §2 No direct headless library import
 
-A plugin MAY install any headless or component library directly in its own
-`package.json`. The UIKit MUST NOT block this. Visually matching OpenPen's style
-and handling all Electron-specific edge cases is the plugin author's responsibility.
+A plugin MUST NOT install `reka-ui` in its own `package.json` or import it
+directly. When you need a headless primitive, import it from
+`@openpen/module-api/uikit` (§1). For UI patterns the primitives do not cover,
+build a custom component on top of them — see
+[custom-components.md](./custom-components.md).
 
 ---
 

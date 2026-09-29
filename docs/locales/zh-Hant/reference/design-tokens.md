@@ -252,5 +252,5 @@ import '@openpen/module-api/uikit/tokens.css'
 ## 延伸閱讀
 
 - [UIKit 元件包裝器](../uikit/index.md) — 自動套用 token 的預建元件
-- [Primitives、逃生艙口與 peer dependency 規則](../uikit/primitives.md) — Layer 2/3 存取與 importmap 合約
+- [Primitives 與 peer dependency 規則](../uikit/primitives.md) — 原始元件層存取與 importmap 合約
 - [自訂 UIKit 元件指南](../uikit/custom-components.md) — 使用 token 建構自己的元件

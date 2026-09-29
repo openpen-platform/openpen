@@ -132,7 +132,7 @@ plugin は `@openpen/module-api` からのみインポートする必要があ�
 - [`slots/index.md`](../slots/index.md) — すべての slot、そのステータス、contribution の形式。
 - [`guides/module-settings.md`](../guides/module-settings.md) — `settingsSchema`、`useModuleContext`、`settingsPanels` と `settingsTabs` の違い。
 - [`uikit/index.md`](../uikit/index.md) — plugin 作者向け UIKit ラッパー。
-- [`uikit/primitives.md`](../uikit/primitives.md) — プリミティブ、デザイントークン、エスケープハッチのガイダンス。
+- [`uikit/primitives.md`](../uikit/primitives.md) — プリミティブとデザイントークン。
 - [`guides/plugin-quickstart.md`](../guides/plugin-quickstart.md) — ゼロから動作する plugin を作成するまで。
 - [`CONTRIBUTING.md`](../../CONTRIBUTING.md) — OpenPen コアへの貢献について。
 - `@openpen/module-api` on npm — TypeScript 型と完全な API サーフェス。

@@ -135,7 +135,7 @@ Plugins MUST only import from `@openpen/module-api`; the host validates this at 
 - [`slots/index.md`](../slots/index.md) — every slot, its status, and contribution shape.
 - [`guides/module-settings.md`](../guides/module-settings.md) — settingsSchema, `useModuleContext`, `settingsPanels` vs `settingsTabs`.
 - [`uikit/index.md`](../uikit/index.md) — UIKit wrappers for plugin authors.
-- [`uikit/primitives.md`](../uikit/primitives.md) — primitives, design tokens, and escape-hatch guidance.
+- [`uikit/primitives.md`](../uikit/primitives.md) — primitives and design tokens.
 - [`guides/plugin-quickstart.md`](../guides/plugin-quickstart.md) — from zero to a running plugin.
 - [`CONTRIBUTING.md`](../../CONTRIBUTING.md) — contributing to OpenPen core.
 - `@openpen/module-api` on npm — TypeScript types and full API surface.

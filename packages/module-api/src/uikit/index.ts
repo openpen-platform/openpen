@@ -12,9 +12,10 @@
  *   Note: you must manually handle modal-manager, animating guard,
  *   passthrough, and teleport target when walking this layer.
  *
- * Layer 3 — Escape Hatch (5% fully custom)
- *   Plugin installs reka-ui (or any library) directly in its own package.json.
- *   UIKit MUST NOT block this. Not handled here — plugin author's choice.
+ * Layer 3 — Custom Components (5% fully custom)
+ *   Plugin builds its own components on top of the Layer 2 primitives and the
+ *   --openpen-* design tokens. Plugins MUST NOT install or import reka-ui
+ *   directly; headless primitives come only from this entry point.
  *
  * See docs/uikit/index.md for the full trade-off description.
  */

@@ -7,7 +7,7 @@ Where to start, depending on what you want to do.
 - **Publishing?** → [guides/publishing.md](./guides/publishing.md) — build, install, distribute
 - **API lookup** → [uikit/](./uikit/index.md) (UI components) ·
   [slots/](./slots/index.md) (contribution slots) ·
-  [uikit/primitives.md](./uikit/primitives.md) (escape-hatch primitives)
+  [uikit/primitives.md](./uikit/primitives.md) (headless primitives)
 
 ## Understanding the architecture
 - [module-architecture.md](./concepts/module-architecture.md) — three-layer model + module contract

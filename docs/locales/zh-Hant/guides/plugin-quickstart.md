@@ -178,7 +178,7 @@ Plugin 程式碼只能從以下來源匯入：
 - plugin 內的相對路徑
 - `@openpen/module-api`（SDK）
 - `node:*`（僅限主程序端處理器）
-- 第三方 npm 套件
+- 第三方 npm 套件，`reka-ui` 除外——headless primitive 請從 `@openpen/module-api/uikit` 匯入
 
 匯入 host 內部模組（例如 `src/services/...`）會被 host 的邊界測試拒絕。
 SDK 已提供你所需的一切。
@@ -255,5 +255,5 @@ const saveError = ref<string | null>(null)
 - **自訂 UIKit 元件** → [uikit/custom-components.md](../uikit/custom-components.md) — 建置超出內建包裝器的 widget（標籤輸入、數字調節器、組合框）
 - **設計令牌** → [reference/design-tokens.md](../reference/design-tokens.md) — 你的樣式繼承的 host 調色盤
 - **所有 contribution slot** → [slots/index.md](../slots/index.md)
-- **逃生艙原語** → [uikit/primitives.md](../uikit/primitives.md)
+- **Headless 原語** → [uikit/primitives.md](../uikit/primitives.md)
 - **架構深入探討** → [module-architecture.md](../concepts/module-architecture.md)
