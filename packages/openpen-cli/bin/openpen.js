@@ -117,7 +117,7 @@ async function cmdCreate(pluginId) {
   console.log(`  cd ${name}`)
   console.log('  npm install')
   console.log('  npm run build')
-  console.log('  npm run pack')
+  console.log('  npx openpen-cli plugin add .')
 }
 
 function findStarterDir() {

@@ -73,4 +73,30 @@ describe('openpen create @scope/name', () => {
       fs.rmSync(tmpdir, { recursive: true, force: true })
     }
   })
+
+  it('prints next steps that end with a local install, not a release pack', () => {
+    const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-create-test-'))
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [CLI_BIN, 'create', '@demo/baz'],
+        {
+          encoding: 'utf-8',
+          cwd: tmpdir,
+          env: { ...process.env, HOME: tmpdir },
+        },
+      )
+
+      expect(result.status).toBe(0)
+      const steps = result.stdout.split('Next steps:')[1].trim().split('\n').map((l) => l.trim())
+      expect(steps).toEqual([
+        'cd baz',
+        'npm install',
+        'npm run build',
+        'npx openpen-cli plugin add .',
+      ])
+    } finally {
+      fs.rmSync(tmpdir, { recursive: true, force: true })
+    }
+  })
 })

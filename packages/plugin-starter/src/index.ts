@@ -18,9 +18,8 @@
  *   - Drop a settings tab into `ui.settings.tabs`.
  *   - Wire a global shortcut via `system.shortcuts`.
  *
- * Build with `npm run build`. Drop the resulting `dist/renderer.js`
- * (and `plugin.json`) into `~/.openpen/plugins/openpen-plugin-starter/`
- * and restart the app.
+ * Build with `npm run build`, install locally with
+ * `npx openpen-cli plugin add .`, then restart the app.
  */
 import { defineModule, z } from '@openpen/module-api'
 export { MODULE_ID } from './module-id'
@@ -49,14 +48,19 @@ export default defineModule({
    * are wired. ctx.notify() shows a short-lived toast — useful for "load
    * complete", "shortcut triggered", and other immediate-feedback scenarios.
    *
+   * The description tells a first-time user where the buttons landed: control-bar
+   * items without a `defaultGroup` go into the 'default' group, which the host
+   * renders after every built-in group, right before the Undo button.
+   *
    * Note: toasts only appear in the overlay window (NotificationLayer is only
    * mounted there). See docs/reference/notify-api.md.
    */
   setup(ctx) {
     ctx.notify({
       message: ctx.t('notif.ready'),
+      description: ctx.t('notif.location'),
       variant: 'success',
-      duration: 1800,
+      duration: 5000,
     })
   },
 

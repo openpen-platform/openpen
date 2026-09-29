@@ -62,7 +62,7 @@ to the same slots (`controlBar`, `settingsTabs`, `shortcuts`, and more).
 [Slot Reference](docs/slots/index.md)
 
 ```bash
-npx degit openpen-platform/openpen/packages/plugin-starter my-plugin
+npx openpen-cli create @yourscope/my-plugin
 ```
 
 **SDK packages on npm:**
