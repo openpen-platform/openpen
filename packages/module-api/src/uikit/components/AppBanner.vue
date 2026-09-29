@@ -44,9 +44,9 @@ withDefaults(defineProps<{
       </svg>
     </span>
 
-    <span class="app-banner-body"><slot /></span>
+    <span class="app-banner-body" data-testid="app-banner-body"><slot /></span>
 
-    <span v-if="$slots.actions" class="app-banner-actions">
+    <span v-if="$slots.actions" class="app-banner-actions" data-testid="app-banner-actions">
       <slot name="actions" />
     </span>
   </div>

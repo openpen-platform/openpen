@@ -133,7 +133,7 @@ test.describe('Modules tab — disable/enable freehand', () => {
     mainWin = await getMainWindow(app);
     await expandControlBar(mainWin);
 
-    const freehandBtn = mainWin.locator('[aria-label="Freehand"]');
+    const freehandBtn = mainWin.getByTestId('controlbar-freehand-btn');
     await expect(freehandBtn).toHaveCount(0);
 
     await app.close();
@@ -169,7 +169,7 @@ test.describe('Modules tab — disable/enable freehand', () => {
     mainWin = await getMainWindow(app);
     await expandControlBar(mainWin);
 
-    const freehandBtn = mainWin.locator('[aria-label="Freehand"]');
+    const freehandBtn = mainWin.getByTestId('controlbar-freehand-btn');
     await expect(freehandBtn).toHaveCount(1);
 
     await app.close();

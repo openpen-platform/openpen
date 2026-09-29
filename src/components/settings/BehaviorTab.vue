@@ -42,6 +42,7 @@ const barLayoutOptions = computed(() => [
       <AppToggle
         :model-value="draft.enableDragAutoSnap"
         :aria-label="t('dragAutoSnap')"
+        testid="settings-drag-auto-snap-toggle"
         @update:model-value="draft.enableDragAutoSnap = $event"
       />
     </div>
@@ -70,6 +71,7 @@ const barLayoutOptions = computed(() => [
         class="cw-select"
         :value="draft.autoCollapseDelay"
         :aria-label="t('autoCollapseDelay')"
+        data-testid="settings-auto-collapse-delay-select"
         @change="setDelay(Number(($event.target as HTMLSelectElement).value))"
       >
         <option v-for="opt in DELAY_OPTIONS" :key="opt.value" :value="opt.value">

@@ -26,7 +26,7 @@ describe('AppBanner contract', () => {
       props: { variant: 'success' },
       slots: { default: 'Test message' },
     })
-    expect(wrapper.find('.app-banner-body').text()).toContain('Test message')
+    expect(wrapper.find('[data-testid="app-banner-body"]').text()).toContain('Test message')
   })
 
   it('renders actions slot when provided', () => {
@@ -34,13 +34,13 @@ describe('AppBanner contract', () => {
       props: { variant: 'info' },
       slots: { actions: '<button>Retry</button>' },
     })
-    expect(wrapper.find('.app-banner-actions').exists()).toBe(true)
-    expect(wrapper.find('.app-banner-actions button').text()).toBe('Retry')
+    expect(wrapper.find('[data-testid="app-banner-actions"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="app-banner-actions"] button').text()).toBe('Retry')
   })
 
   it('does not render actions slot container when slot is absent', () => {
     const wrapper = mount(AppBanner, { props: { variant: 'warning' } })
-    expect(wrapper.find('.app-banner-actions').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="app-banner-actions"]').exists()).toBe(false)
   })
 
   const variants: BannerVariant[] = ['info', 'warning', 'success', 'error']

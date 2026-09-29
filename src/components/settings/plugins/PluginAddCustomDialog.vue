@@ -157,7 +157,7 @@ function install() {
       <div class="pac-modal mp-custom-modal" data-testid="pac-modal">
         <!-- Header -->
         <div class="pac-header">
-          <div class="pac-title">{{ t('pluginAddCustomTitle') }}</div>
+          <div class="pac-title" data-testid="modal-plugin-add-custom-title">{{ t('pluginAddCustomTitle') }}</div>
           <button class="pac-close" :aria-label="t('close')" @click="emit('update:open', false)">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M18 6 6 18M6 6l12 12"/>

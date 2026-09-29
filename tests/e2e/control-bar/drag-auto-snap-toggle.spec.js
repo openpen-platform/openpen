@@ -221,7 +221,7 @@ test('vbar-free: bar aspect ratio reflects vertical layout', async () => {
   const settingsWin = await openSettings(win);
   await goToBehaviorTab(settingsWin);
 
-  const snapToggle = settingsWin.locator('[aria-label="Snap to Screen Edges When Dragging"]');
+  const snapToggle = settingsWin.getByTestId('settings-drag-auto-snap-toggle');
   if ((await snapToggle.getAttribute('data-state')) !== 'unchecked') {
     await snapToggle.click();
     await settingsWin.waitForTimeout(200);
@@ -257,7 +257,7 @@ test('vbar-free: bar aspect ratio reflects vertical layout', async () => {
   const restore = await openSettings(win);
   await goToBehaviorTab(restore);
 
-  const rt = restore.locator('[aria-label="Snap to Screen Edges When Dragging"]');
+  const rt = restore.getByTestId('settings-drag-auto-snap-toggle');
   // Ensure snap is OFF first so the segmented control is enabled for interaction.
   if ((await rt.getAttribute('data-state')) !== 'unchecked') {
     await rt.click();
@@ -295,7 +295,7 @@ test('barLayout AppSegmented is disabled when snap=ON', async () => {
   await goToBehaviorTab(settingsWin);
 
   // Ensure snap is ON (default; but confirm to be safe).
-  const snapToggle = settingsWin.locator('[aria-label="Snap to Screen Edges When Dragging"]');
+  const snapToggle = settingsWin.getByTestId('settings-drag-auto-snap-toggle');
   const snapState = await snapToggle.getAttribute('data-state');
   if (snapState === 'unchecked') {
     await snapToggle.click();
@@ -326,7 +326,7 @@ test('horizontal near screen bottom: shape popup stays within viewport bounds', 
   // Disable snap, ensure horizontal layout.
   const setupWin = await openSettings(win);
   await goToBehaviorTab(setupWin);
-  const snapToggle = setupWin.locator('[aria-label="Snap to Screen Edges When Dragging"]');
+  const snapToggle = setupWin.getByTestId('settings-drag-auto-snap-toggle');
   if ((await snapToggle.getAttribute('data-state')) !== 'unchecked') {
     await snapToggle.click();
     await setupWin.waitForTimeout(200);
@@ -345,7 +345,7 @@ test('horizontal near screen bottom: shape popup stays within viewport bounds', 
   await expandBar(win);
   await win.waitForTimeout(400);
 
-  const caretBtn = win.locator('[aria-label="Shape options"]');
+  const caretBtn = win.getByTestId('controlbar-shape-caret');
   await caretBtn.click();
   await win.waitForTimeout(400);
 
@@ -370,7 +370,7 @@ test('horizontal near screen bottom: shape popup stays within viewport bounds', 
   await ensureBallMode(win);
   const restoreWin = await openSettings(win);
   await goToBehaviorTab(restoreWin);
-  const rt = restoreWin.locator('[aria-label="Snap to Screen Edges When Dragging"]');
+  const rt = restoreWin.getByTestId('settings-drag-auto-snap-toggle');
   if ((await rt.getAttribute('data-state')) === 'unchecked') {
     await rt.click();
     await restoreWin.waitForTimeout(200);

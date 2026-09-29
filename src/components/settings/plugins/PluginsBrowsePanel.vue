@@ -71,7 +71,7 @@ onMounted(async () => {
 <template>
   <div class="browse-panel" v-auto-animate>
     <!-- Loading state -->
-    <div v-if="marketplace.loading.value" class="browse-loading">
+    <div v-if="marketplace.loading.value" class="browse-loading" data-testid="settings-plugin-browse-loading">
       {{ t('pluginBrowseLoading') }}
     </div>
 
@@ -81,7 +81,7 @@ onMounted(async () => {
         <circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
       {{ marketplace.error.value }}
-      <button class="browse-retry-btn" @click="refresh">{{ t('pluginRetry') }}</button>
+      <button class="browse-retry-btn" data-testid="settings-plugin-browse-retry-btn" @click="refresh">{{ t('pluginRetry') }}</button>
     </div>
 
     <!-- Loaded -->

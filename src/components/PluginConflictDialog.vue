@@ -57,7 +57,7 @@ function quit() {
 
 <template>
   <Teleport to="body">
-    <div class="pcd-overlay" role="dialog" aria-modal="true" :aria-label="t('pluginConflictDialogTitle')">
+    <div class="pcd-overlay" role="dialog" aria-modal="true" :aria-label="t('pluginConflictDialogTitle')" data-testid="modal-plugin-conflict-dialog">
       <div class="pcd-panel openpen-interactive">
         <h2 class="pcd-title">{{ t('pluginConflictDialogTitle') }}</h2>
         <p class="pcd-description">{{ t('pluginConflictDialogDescription') }}</p>

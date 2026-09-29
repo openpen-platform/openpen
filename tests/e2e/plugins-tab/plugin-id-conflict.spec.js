@@ -154,7 +154,7 @@ test.describe('PluginConflictDialog — plugin id collision', () => {
   test('PluginConflictDialog is NOT shown on clean boot (no conflicts)', async () => {
     // With no plugins installed, no conflict dialog should appear.
     await mainWin.waitForLoadState('domcontentloaded');
-    const dialog = await mainWin.$('[aria-label="Plugin ID Conflict"]');
+    const dialog = await mainWin.$('[data-testid="modal-plugin-conflict-dialog"]');
     expect(dialog).toBeNull();
   });
 

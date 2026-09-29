@@ -191,7 +191,7 @@ test('tab switching: Appearance -> Behavior -> Features -> About', async () => {
   await expect(tabs.nth(1)).toHaveClass(/active/);
   await expect(tabs.nth(0)).not.toHaveClass(/active/);
   // Behavior tab: auto-collapse slider is its unique panel content.
-  await expect(settingsWin.getByText('Auto-collapse Delay')).toBeVisible();
+  await expect(settingsWin.getByTestId('settings-auto-collapse-delay-select')).toBeVisible();
 
   await tabs.nth(2).click();
   await expect(tabs.nth(2)).toHaveClass(/active/);

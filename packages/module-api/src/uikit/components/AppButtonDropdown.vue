@@ -108,6 +108,7 @@ function onCaretClick(): void {
   <div
     class="app-btn-dropdown-wrap"
     :class="{ 'app-btn-dropdown-wrap--vertical': isVertical }"
+    data-testid="app-button-dropdown-wrap"
   >
     <AppButton
       :variant="variant"
@@ -139,6 +140,7 @@ function onCaretClick(): void {
           <svg
             class="app-btn-dropdown-caret-icon"
             :class="`app-btn-dropdown-caret-icon--${caretRotation(open)}`"
+            data-testid="app-button-dropdown-caret-icon"
             width="10"
             height="10"
             viewBox="0 0 24 24"

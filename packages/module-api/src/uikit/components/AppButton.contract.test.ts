@@ -21,7 +21,8 @@ const SFC_SOURCE = readFileSync(join(__dirname, 'AppButton.vue'), 'utf-8')
 describe('AppButton', () => {
   it('renders a button element', () => {
     const wrapper = mount(AppButton)
-    expect(wrapper.find('button.app-btn').exists()).toBe(true)
+    expect(wrapper.find('button').exists()).toBe(true)
+    expect(wrapper.find('button').classes()).toContain('app-btn')
   })
 
   it('renders slot content', () => {

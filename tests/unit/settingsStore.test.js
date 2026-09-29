@@ -339,14 +339,14 @@ describe('setModuleSettings preserves every persisted section', () => {
   });
 
   it('writes moduleShortcuts to disk after a setModuleSettings call', async () => {
-    setModuleShortcut('my-mod:doStuff', 'CommandOrControl+B');
+    setModuleShortcut('my-mod/doStuff', 'CommandOrControl+B');
     await flushWrites();
 
     await setModuleSettings('my-mod', { foo: 1 }, 1);
 
     expect(writtenJson).not.toBeNull();
     const onDisk = JSON.parse(writtenJson);
-    expect(onDisk.moduleShortcuts).toEqual({ 'my-mod:doStuff': 'CommandOrControl+B' });
+    expect(onDisk.moduleShortcuts).toEqual({ 'my-mod/doStuff': 'CommandOrControl+B' });
     expect(onDisk.modules).toEqual({ 'my-mod': { foo: 1 } });
   });
 });

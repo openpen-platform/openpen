@@ -67,9 +67,9 @@ test('Browse sub-tab renders shell', async () => {
   await settingsWin.waitForTimeout(500);
 
   // Should show either loading, error, or a search bar (shell)
-  const hasSearch = await settingsWin.locator('[aria-label="Search modules…"]').isVisible().catch(() => false);
-  const hasLoading = await settingsWin.locator('text=Loading catalog').isVisible().catch(() => false);
-  const hasError = await settingsWin.locator('text=Retry').isVisible().catch(() => false);
+  const hasSearch = await settingsWin.getByTestId('settings-module-search-input').isVisible().catch(() => false);
+  const hasLoading = await settingsWin.getByTestId('settings-plugin-browse-loading').isVisible().catch(() => false);
+  const hasError = await settingsWin.getByTestId('settings-plugin-browse-retry-btn').isVisible().catch(() => false);
 
   expect(hasSearch || hasLoading || hasError).toBe(true);
 });
@@ -90,7 +90,7 @@ test('Install progress dialog: appears when Install clicked on a card', async ()
   await settingsWin.waitForTimeout(300);
 
   // Progress dialog or install dialog should appear
-  const dialogVisible = await settingsWin.locator('text=Installing').isVisible().catch(() => false);
+  const dialogVisible = await settingsWin.getByTestId('modal-plugin-install-progress-dialog').isVisible().catch(() => false);
   expect(dialogVisible).toBe(true);
 });
 
@@ -102,6 +102,6 @@ test('"Add source" button opens modal with Local folder sub-tab', async () => {
   await settingsWin.waitForTimeout(200);
 
   // Modal title and Local folder sub-tab should be visible
-  await expect(settingsWin.getByText('Add Custom Plugin')).toBeVisible();
+  await expect(settingsWin.getByTestId('modal-plugin-add-custom-title')).toBeVisible();
   await expect(settingsWin.getByRole('button', { name: /Local folder/i })).toBeVisible();
 });

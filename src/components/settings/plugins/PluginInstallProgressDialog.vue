@@ -83,7 +83,7 @@ const extractStatus = computed<StepStatus>(() => {
 <template>
   <Teleport to="body">
     <div v-if="open" class="pip-overlay">
-      <div class="pip-modal mp-progress-modal" v-auto-animate>
+      <div class="pip-modal mp-progress-modal" data-testid="modal-plugin-install-progress-dialog" v-auto-animate>
         <div class="pip-title">{{ titleText }}</div>
         <div v-if="subtitleText" class="pip-version">{{ subtitleText }}</div>
 

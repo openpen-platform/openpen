@@ -3,8 +3,21 @@ import pluginVue from 'eslint-plugin-vue'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  // Only lint src/; electron/, tests/, and packages/ are not covered yet.
-  { ignores: ['dist/**', 'release/**', 'electron/**', 'packages/**'] },
+  // Lint src/, tests/, and the test files under packages/. electron/ and the
+  // non-test sources of packages/ are not linted.
+  {
+    ignores: [
+      'dist/**',
+      'release/**',
+      'electron/**',
+      'packages/**',
+      '!packages/**/',
+      '!packages/**/*.test.{js,ts}',
+      '!packages/*/tests/**/*.{js,ts}',
+      'packages/**/node_modules/**',
+      'packages/**/dist/**',
+    ],
+  },
 
   js.configs.recommended,
 
@@ -14,11 +27,16 @@ export default tseslint.config(
   // Vue SFC rules — flat/essential, no stylistic opinions.
   ...pluginVue.configs['flat/essential'],
 
-  // tests/ — class-selector gate: locator('.'), querySelector('.'), wrapper.find('.')
-  // are forbidden as interaction selectors; use data-testid instead.
+  // Test files (tests/ and the test files under packages/) — class-selector gate:
+  // locator('.'), querySelector('.'), wrapper.find('.') are forbidden as
+  // interaction selectors; use data-testid instead.
   // Whitelist: toHaveClass / not.toHaveClass are pure state assertions, not selectors.
   {
-    files: ['tests/**/*.{js,ts}'],
+    files: [
+      'tests/**/*.{js,ts}',
+      'packages/**/*.test.{js,ts}',
+      'packages/*/tests/**/*.{js,ts}',
+    ],
     languageOptions: {
       globals: {
         // Browser globals (Playwright evaluate callbacks run in renderer context)

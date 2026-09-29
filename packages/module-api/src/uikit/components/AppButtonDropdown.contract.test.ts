@@ -11,6 +11,13 @@ import { ref } from 'vue'
 import AppButtonDropdown from './AppButtonDropdown.vue'
 import { IS_VERTICAL_KEY, SNAP_EDGE_KEY, type SnapEdge } from '../../inject-keys'
 
+const MAIN_TESTID = 'controlbar-shape-btn'
+const CARET_TESTID = 'controlbar-shape-caret'
+const MAIN = `[data-testid="${MAIN_TESTID}"]`
+const CARET = `[data-testid="${CARET_TESTID}"]`
+const WRAP = '[data-testid="app-button-dropdown-wrap"]'
+const CARET_ICON = '[data-testid="app-button-dropdown-caret-icon"]'
+
 function mountAppButtonDropdown(opts: {
   props?: Record<string, unknown>
   isVertical?: boolean
@@ -20,6 +27,8 @@ function mountAppButtonDropdown(opts: {
     props: {
       popoverId: 'test-dropdown',
       caretAriaLabel: 'Open options',
+      mainTestid: MAIN_TESTID,
+      caretTestid: CARET_TESTID,
       ...opts.props,
     },
     global: {
@@ -36,21 +45,24 @@ describe('AppButtonDropdown', () => {
 
   it('renders a wrap div + an AppButton + a caret button', () => {
     const wrapper = mountAppButtonDropdown()
-    expect(wrapper.find('.app-btn-dropdown-wrap').exists()).toBe(true)
-    expect(wrapper.find('button.app-btn').exists()).toBe(true)
-    expect(wrapper.find('button.app-btn-dropdown-caret').exists()).toBe(true)
+    expect(wrapper.find(WRAP).element.tagName).toBe('DIV')
+    expect(wrapper.find(WRAP).classes()).toContain('app-btn-dropdown-wrap')
+    expect(wrapper.find(MAIN).element.tagName).toBe('BUTTON')
+    expect(wrapper.find(MAIN).classes()).toContain('app-btn')
+    expect(wrapper.find(CARET).element.tagName).toBe('BUTTON')
+    expect(wrapper.find(CARET).classes()).toContain('app-btn-dropdown-caret')
   })
 
   it('wrap is flex-row in horizontal mode', () => {
     const wrapper = mountAppButtonDropdown({ isVertical: false })
-    expect(wrapper.find('.app-btn-dropdown-wrap').classes()).not.toContain(
+    expect(wrapper.find(WRAP).classes()).not.toContain(
       'app-btn-dropdown-wrap--vertical',
     )
   })
 
   it('wrap is flex-column in vertical mode', () => {
     const wrapper = mountAppButtonDropdown({ isVertical: true })
-    expect(wrapper.find('.app-btn-dropdown-wrap').classes()).toContain(
+    expect(wrapper.find(WRAP).classes()).toContain(
       'app-btn-dropdown-wrap--vertical',
     )
   })
@@ -59,14 +71,14 @@ describe('AppButtonDropdown', () => {
 
   it('caret has --vertical class in vertical mode', () => {
     const wrapper = mountAppButtonDropdown({ isVertical: true })
-    expect(wrapper.find('.app-btn-dropdown-caret').classes()).toContain(
+    expect(wrapper.find(CARET).classes()).toContain(
       'app-btn-dropdown-caret--vertical',
     )
   })
 
   it('caret has no --vertical class in horizontal mode', () => {
     const wrapper = mountAppButtonDropdown({ isVertical: false })
-    expect(wrapper.find('.app-btn-dropdown-caret').classes()).not.toContain(
+    expect(wrapper.find(CARET).classes()).not.toContain(
       'app-btn-dropdown-caret--vertical',
     )
   })
@@ -75,7 +87,7 @@ describe('AppButtonDropdown', () => {
 
   it('caret icon points down when popover is closed (default)', () => {
     const wrapper = mountAppButtonDropdown()
-    expect(wrapper.find('.app-btn-dropdown-caret-icon').classes()).toContain(
+    expect(wrapper.find(CARET_ICON).classes()).toContain(
       'app-btn-dropdown-caret-icon--down',
     )
   })
@@ -84,7 +96,7 @@ describe('AppButtonDropdown', () => {
 
   it('clicking the main button emits mainClick', async () => {
     const wrapper = mountAppButtonDropdown()
-    await wrapper.find('button.app-btn').trigger('click')
+    await wrapper.find(MAIN).trigger('click')
     expect(wrapper.emitted('mainClick')).toBeTruthy()
     expect(wrapper.emitted('mainClick')!.length).toBe(1)
     expect(wrapper.emitted('caretClick')).toBeFalsy()
@@ -92,7 +104,7 @@ describe('AppButtonDropdown', () => {
 
   it('clicking the caret emits caretClick', async () => {
     const wrapper = mountAppButtonDropdown()
-    await wrapper.find('button.app-btn-dropdown-caret').trigger('click')
+    await wrapper.find(CARET).trigger('click')
     expect(wrapper.emitted('caretClick')).toBeTruthy()
     expect(wrapper.emitted('caretClick')!.length).toBe(1)
     expect(wrapper.emitted('mainClick')).toBeFalsy()
@@ -102,19 +114,19 @@ describe('AppButtonDropdown', () => {
 
   it('disabled blocks main click', async () => {
     const wrapper = mountAppButtonDropdown({ props: { disabled: true } })
-    await wrapper.find('button.app-btn').trigger('click')
+    await wrapper.find(MAIN).trigger('click')
     expect(wrapper.emitted('mainClick')).toBeFalsy()
   })
 
   it('disabled blocks caret click', async () => {
     const wrapper = mountAppButtonDropdown({ props: { disabled: true } })
-    await wrapper.find('button.app-btn-dropdown-caret').trigger('click')
+    await wrapper.find(CARET).trigger('click')
     expect(wrapper.emitted('caretClick')).toBeFalsy()
   })
 
   it('disabled adds aria-disabled to caret', () => {
     const wrapper = mountAppButtonDropdown({ props: { disabled: true } })
-    const caret = wrapper.find('button.app-btn-dropdown-caret')
+    const caret = wrapper.find(CARET)
     expect(caret.attributes('aria-disabled')).toBe('true')
     expect(caret.classes()).toContain('app-btn-dropdown-caret--disabled')
   })
@@ -123,7 +135,7 @@ describe('AppButtonDropdown', () => {
 
   it('active flag propagates to the main AppButton', () => {
     const wrapper = mountAppButtonDropdown({ props: { active: true } })
-    expect(wrapper.find('button.app-btn').classes()).toContain('active')
+    expect(wrapper.find(MAIN).classes()).toContain('active')
   })
 
   // ── Aria-labels and testids ───────────────────────────────────────────────
@@ -135,8 +147,8 @@ describe('AppButtonDropdown', () => {
         caretAriaLabel: 'Shape options',
       },
     })
-    expect(wrapper.find('button.app-btn').attributes('aria-label')).toBe('Activate shape')
-    expect(wrapper.find('button.app-btn-dropdown-caret').attributes('aria-label')).toBe(
+    expect(wrapper.find(MAIN).attributes('aria-label')).toBe('Activate shape')
+    expect(wrapper.find(CARET).attributes('aria-label')).toBe(
       'Shape options',
     )
   })
@@ -144,14 +156,18 @@ describe('AppButtonDropdown', () => {
   it('main-testid and caret-testid render data-testid on respective buttons', () => {
     const wrapper = mountAppButtonDropdown({
       props: {
-        mainTestid: 'controlbar-shape-btn',
-        caretTestid: 'controlbar-shape-caret',
+        mainTestid: 'controlbar-rect-btn',
+        caretTestid: 'controlbar-rect-caret',
       },
     })
-    expect(wrapper.find('button.app-btn').attributes('data-testid')).toBe('controlbar-shape-btn')
-    expect(wrapper.find('button.app-btn-dropdown-caret').attributes('data-testid')).toBe(
-      'controlbar-shape-caret',
-    )
+    const main = wrapper.findAll('[data-testid="controlbar-rect-btn"]')
+    const caret = wrapper.findAll('[data-testid="controlbar-rect-caret"]')
+    expect(main).toHaveLength(1)
+    expect(main[0].element.tagName).toBe('BUTTON')
+    expect(main[0].classes()).toContain('app-btn')
+    expect(caret).toHaveLength(1)
+    expect(caret[0].element.tagName).toBe('BUTTON')
+    expect(caret[0].classes()).toContain('app-btn-dropdown-caret')
   })
 
   // ── Main tooltip ──────────────────────────────────────────────────────────
@@ -160,6 +176,6 @@ describe('AppButtonDropdown', () => {
     const wrapper = mountAppButtonDropdown({
       props: { mainTooltip: 'Shape tool' },
     })
-    expect(wrapper.find('button.app-btn').attributes('data-tip')).toBe('Shape tool')
+    expect(wrapper.find(MAIN).attributes('data-tip')).toBe('Shape tool')
   })
 })

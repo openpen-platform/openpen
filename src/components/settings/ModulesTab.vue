@@ -171,6 +171,7 @@ function handleUpgradeConfirm() {
         class="mt-search-input"
         :placeholder="t('pluginSearch')"
         :aria-label="t('pluginSearch')"
+        data-testid="settings-module-search-input"
         autocomplete="off"
         spellcheck="false"
       />
