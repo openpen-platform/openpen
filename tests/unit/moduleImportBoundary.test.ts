@@ -10,7 +10,7 @@
  *   - Relative paths (`./`, `../`) that resolve WITHIN the file's module root
  *   - `@openpen/module-api` (the public SDK)
  *   - `node:*` (only relevant for plugin main-side handlers)
- *   - Bare third-party packages (vue, zod, etc.)
+ *   - Bare third-party packages (vue, zod, etc.), except `reka-ui`
  *
  * Module root rules:
  *   - Built-in modules: `src/core/modules/<id>/` — any file inside foo/
@@ -55,6 +55,10 @@ const FORBIDDEN_SPECIFIERS: ReadonlyArray<RegExp> = [
   // is allowed to import this subpath. Plugin / module code MUST consume the
   // host via the proxy exports in @openpen/module-api/host instead.
   /^@openpen\/module-api\/host\/registry$/,
+  // Headless UI library behind the UIKit: modules and plugins reach its
+  // primitives only through @openpen/module-api/uikit, so the host can swap
+  // the library without breaking them.
+  /^reka-ui(\/|$)/,
 ]
 
 const IMPORT_FROM_RE = /(?:^|\s)import\s+[^'"\n]+from\s+['"]([^'"\n]+)['"]/g
@@ -179,24 +183,29 @@ function scanRoot(root: string): Violation[] {
   return violations
 }
 
+function formatViolations(root: string, violations: Violation[]): string {
+  const msg = violations
+    .map((v) => `  ${v.file}: ${JSON.stringify(v.spec)}`)
+    .join('\n')
+  return (
+    `Boundary violation(s) in ${root}:\n${msg}\n\n` +
+    `Modules and plugins may only import from:\n` +
+    `  - relative paths within the module's own root directory\n` +
+    `  - @openpen/module-api\n` +
+    `  - node:*\n` +
+    `  - third-party npm packages (bare specifiers), except reka-ui\n\n` +
+    `reka-ui: import primitives from @openpen/module-api/uikit instead.\n` +
+    `If you need a host API, expose it from @openpen/module-api/host ` +
+    `or @openpen/module-api/uikit.`
+  )
+}
+
 describe('module / plugin import boundaries', () => {
   for (const root of SCAN_ROOTS) {
     it(`${root} only imports approved sources`, () => {
       const violations = scanRoot(root)
       if (violations.length > 0) {
-        const msg = violations
-          .map((v) => `  ${v.file}: ${JSON.stringify(v.spec)}`)
-          .join('\n')
-        throw new Error(
-          `Boundary violation(s) in ${root}:\n${msg}\n\n` +
-            `Modules and plugins may only import from:\n` +
-            `  - relative paths within the module's own root directory\n` +
-            `  - @openpen/module-api\n` +
-            `  - node:*\n` +
-            `  - third-party npm packages (bare specifiers)\n\n` +
-            `If you need a host API, expose it from @openpen/module-api/host ` +
-            `or @openpen/module-api/uikit.`
-        )
+        throw new Error(formatViolations(root, violations))
       }
       expect(violations).toEqual([])
     })
@@ -212,5 +221,33 @@ describe('module / plugin import boundaries', () => {
     const escapingSpec = '../../runtime/event-bus'
     const allowed = isAllowed(escapingSpec, syntheticFile)
     expect(allowed).toBe(false)
+  })
+
+  it('rejects direct reka-ui imports from modules and plugins', () => {
+    // Headless primitives are reachable only through @openpen/module-api/uikit,
+    // so the host can swap the underlying library without breaking plugins.
+    const files = [
+      'src/core/modules/color/ColorButton.vue',
+      'examples/openpen-demo-plugin/src/DemoPanel.vue',
+      'packages/plugin-starter/src/StarterPanel.vue',
+    ].map((rel) => path.join(repoRoot, rel))
+    for (const file of files) {
+      expect(isAllowed('reka-ui', file)).toBe(false)
+      expect(isAllowed('reka-ui/dist/index.js', file)).toBe(false)
+    }
+    // Packages that only share the name prefix stay allowed.
+    expect(isAllowed('reka-ui-extras', files[2])).toBe(true)
+  })
+
+  it('points reka-ui violations at the UIKit primitives', () => {
+    const message = formatViolations('packages/plugin-starter/src', [
+      { file: 'packages/plugin-starter/src/StarterPanel.vue', spec: 'reka-ui' },
+    ])
+    expect(message).toContain(
+      'packages/plugin-starter/src/StarterPanel.vue: "reka-ui"'
+    )
+    expect(message).toContain(
+      'reka-ui: import primitives from @openpen/module-api/uikit instead'
+    )
   })
 })
