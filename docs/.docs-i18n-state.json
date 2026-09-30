@@ -1,8 +1,8 @@
 {
   "$schema": "https://openpen.dev/schemas/docs-i18n-state-v1.json",
   "version": 1,
-  "last_synced_commit": "36c1264",
-  "last_synced_at": "2026-05-22T02:35:58Z",
+  "last_synced_commit": "281ee6c",
+  "last_synced_at": "2026-09-30T13:09:59Z",
   "per_file_status": {
     "docs/concepts/module-architecture.md": {
       "translations": {
@@ -257,25 +257,31 @@
     "docs/slots/canvas.md": {
       "translations": {
         "zh-Hant": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
-          "translationType": "machine",
+          "translatedFrom": "281ee6c",
+          "translatedAt": "2026-09-30T13:07:51Z",
+          "translationType": "machine-pending-review",
           "llm_provider": "claude-sonnet",
-          "warnings": []
+          "warnings": [
+            "Q6 missing term slot"
+          ]
         },
         "zh-Hans": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
-          "translationType": "machine",
+          "translatedFrom": "281ee6c",
+          "translatedAt": "2026-09-30T13:07:35Z",
+          "translationType": "machine-pending-review",
           "llm_provider": "claude-sonnet",
-          "warnings": []
+          "warnings": [
+            "Q6 missing term slot"
+          ]
         },
         "ja": {
-          "translatedFrom": "8e4d741",
-          "translatedAt": "2026-05-22T00:30:00Z",
-          "translationType": "machine",
+          "translatedFrom": "281ee6c",
+          "translatedAt": "2026-09-30T13:07:49Z",
+          "translationType": "machine-pending-review",
           "llm_provider": "claude-sonnet",
-          "warnings": []
+          "warnings": [
+            "Q6 missing term slot"
+          ]
         }
       }
     },
@@ -774,6 +780,31 @@
           "translatedFrom": "8e4d741",
           "translatedAt": "2026-05-22T00:30:00Z",
           "translationType": "machine",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        }
+      }
+    },
+    "docs/troubleshooting/linux-wayland.md": {
+      "translations": {
+        "zh-Hant": {
+          "translatedFrom": "281ee6c",
+          "translatedAt": "2026-09-30T13:07:48Z",
+          "translationType": "machine-pending-review",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "zh-Hans": {
+          "translatedFrom": "281ee6c",
+          "translatedAt": "2026-09-30T13:09:38Z",
+          "translationType": "machine-pending-review",
+          "llm_provider": "claude-sonnet",
+          "warnings": []
+        },
+        "ja": {
+          "translatedFrom": "281ee6c",
+          "translatedAt": "2026-09-30T13:09:39Z",
+          "translationType": "machine-pending-review",
           "llm_provider": "claude-sonnet",
           "warnings": []
         }

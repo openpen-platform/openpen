@@ -1,9 +1,9 @@
 ---
 title: Canvas 插槽
 description: 8 个用于绘图工具、形状、笔触变换和画布图层的 contribution 插槽。
-translationType: machine
-translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translationType: machine-pending-review
+translatedFrom: 281ee6c
+translatedAt: 2026-09-30T13:07:35Z
 language: zh-Hans
 ---
 
@@ -174,6 +174,47 @@ import type { Tool, Stroke, Point, StrokeStyle, StrokeColor, PointerModifiers } 
 - **Contribution key**：`htmlOverlays`
 - **类型**：`HtmlOverlayContribution[]`
 - **用途**：在画布上方挂载 HTML / Vue 组件（文字注释、图片贴纸、径向快捷菜单）。此插槽稳定可用（非预留），因为若无此插槽，未来的文字注释 plugin 将迫使画布进行重新设计。架构性插槽必须提前落地。
+
+## 宿主笔触服务 {#host-stroke-service}
+
+大多数工具从 `onPointerUp` 返回已完成的 `Stroke`，由宿主代为提交。有些工具在该同步返回**之外**完成笔触，例如打开编辑器的异步放置类文字注释工具、端点需分两步确认的箭头，或在对话框之后放置的步骤标记，这类工具需要自行提交笔触。宿主笔触服务提供这条提交路径，以及读取与历史记录的访问能力，从 `@openpen/module-api/host` 导入：
+
+```ts
+import { commitStroke, getAllStrokes, removeStrokeById, pushCommand } from '@openpen/module-api/host'
+```
+
+### `commitStroke(stroke)`
+
+原子地提交一个已完成的笔触：将其追加到笔触存储，记录一条 `ADD_STROKE` 历史命令，并请求画布重绘，全部在一次调用中完成。
+
+```ts
+// Async-placement tool: stroke is finalised after a deferred interaction.
+async function placeText(point: Point, style: StrokeStyle) {
+  const text = await openTextEditor(point)
+  if (text === null) return // user cancelled — commit nothing
+  commitStroke({
+    id: crypto.randomUUID(),
+    tool: 'text',
+    points: [point],
+    style,
+    text,
+  })
+}
+```
+
+- **等价性**：`commitStroke(stroke)` 在语义上与在同步的 `onPointerUp` 中返回同一个 `stroke` 完全相同。两者都会追加该笔触并推入一条 `ADD_STROKE` 命令，因此结果完整参与撤销/重做：一次撤销恰好移除被提交的笔触，一次重做将其恢复。
+- **非幂等**：每次调用都会追加一个笔触和一条历史记录。对同一个对象调用两次 `commitStroke(stroke)` 会添加**两个**笔触。每个已完成的笔触应当仅提交一次；请在异步路径上防范重复触发。
+- **不做清理（完全信任）**：笔触的结构由调用方负责。v1 中宿主不做任何校验，请提供有效的 `Stroke`（唯一的 `id`、与你的 contribution 匹配的 `tool`、格式正确的 `points` / `style`）。
+
+### `getAllStrokes()` / `removeStrokeById(id)` / `pushCommand(command)`
+
+其余的读取与历史记录接口，供检查或修改现有笔触的工具使用（例如笔触橡皮擦）：
+
+- `getAllStrokes(): Stroke[]` — 按 z 轴顺序返回当前的笔触。
+- `removeStrokeById(id): boolean` — 按 id 移除笔触；返回是否移除了某个笔触。配合 `pushCommand` 使用，可使移除操作支持撤销。
+- `pushCommand(command)` — 记录一条历史命令（`ADD_STROKE` / `REMOVE_STROKE` / `CLEAR_ALL`），使该操作参与撤销/重做。
+
+对于画布范围的操作（清空全部、撤销、重做），请使用宿主命令，而非直接修改存储；这些辅助函数不属于本服务。
 
 ## `canvas.stroke.transformers` — ⏳ 预留 {#canvas-stroke-transformers}
 

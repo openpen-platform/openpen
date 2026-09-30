@@ -1,9 +1,9 @@
 ---
 title: Canvas スロット
 description: 描画ツール、シェイプ、ストローク変換、キャンバスレイヤーに対応する8つの contribution スロット。
-translationType: machine
-translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translationType: machine-pending-review
+translatedFrom: 281ee6c
+translatedAt: 2026-09-30T13:07:49Z
 language: ja
 ---
 
@@ -174,6 +174,47 @@ import type { Tool, Stroke, Point, StrokeStyle, StrokeColor, PointerModifiers } 
 - **Contribution キー**: `htmlOverlays`
 - **型**: `HtmlOverlayContribution[]`
 - **目的**: キャンバスの上に HTML / Vue コンポーネントをマウントします (テキストアノテーション、画像ステッカー、ラジアル QuickMenu)。このスロットは安定版 (予約済みではない) です。これがなければ、将来のテキストアノテーション plugin がキャンバスの再設計を強いることになるためです。アーキテクチャ上のスロットは早期に実装する必要があります。
+
+## ホストのストロークサービス {#host-stroke-service}
+
+多くのツールは完成した `Stroke` を `onPointerUp` から返し、ホストがそれをコミットします。テキストアノテーションのようにエディターを開く非同期配置ツール、端点を第 2 ステップで確定する矢印、ダイアログの後に配置されるステップマーカーなど、その同期的な return の**外**でストロークを確定するツールは、自分でストロークをコミットする必要があります。ホストのストロークサービスはそのための経路に加えて、読み取りと履歴へのアクセスを提供します。`@openpen/module-api/host` からインポートします。
+
+```ts
+import { commitStroke, getAllStrokes, removeStrokeById, pushCommand } from '@openpen/module-api/host'
+```
+
+### `commitStroke(stroke)`
+
+完成したストロークをアトミックにコミットします。ストロークストアへの追加、`ADD_STROKE` 履歴コマンドの記録、キャンバス再描画の要求を、1 回の呼び出しですべて行います。
+
+```ts
+// Async-placement tool: stroke is finalised after a deferred interaction.
+async function placeText(point: Point, style: StrokeStyle) {
+  const text = await openTextEditor(point)
+  if (text === null) return // user cancelled — commit nothing
+  commitStroke({
+    id: crypto.randomUUID(),
+    tool: 'text',
+    points: [point],
+    style,
+    text,
+  })
+}
+```
+
+- **等価性**: `commitStroke(stroke)` は、同じ `stroke` を同期的な `onPointerUp` から返す場合と意味的に同一です。どちらもストロークを追加し、`ADD_STROKE` コマンドを 1 つ push するため、結果は undo/redo に完全に参加します。1 回の undo でコミットしたストロークだけが取り除かれ、redo で復元されます。
+- **冪等ではありません**: 呼び出すたびにストロークと履歴エントリが追加されます。同じオブジェクトで `commitStroke(stroke)` を 2 回呼ぶと、ストロークが **2 つ** 追加されます。完成したストロークごとにちょうど 1 回だけコミットし、非同期の経路で二重発火しないよう保護してください。
+- **サニタイズなし (完全信頼)**: ストロークの形状は呼び出し側の責任です。v1 では ホストによる検証は行われません。有効な `Stroke` (一意の `id`、contribution と一致する `tool`、正しい形式の `points` / `style`) を渡してください。
+
+### `getAllStrokes()` / `removeStrokeById(id)` / `pushCommand(command)`
+
+残りの読み取りおよび履歴のインターフェースです。既存のストロークを調べたり変更したりするツール (ストロークイレーサーなど) が使用します。
+
+- `getAllStrokes(): Stroke[]` — 現在のストロークを z 順で返します。
+- `removeStrokeById(id): boolean` — id を指定してストロークを削除し、削除されたかどうかを返します。削除を undo 可能にするには `pushCommand` と組み合わせます。
+- `pushCommand(command)` — 履歴コマンド (`ADD_STROKE` / `REMOVE_STROKE` / `CLEAR_ALL`) を記録し、その操作を undo/redo に参加させます。
+
+キャンバス全体の操作 (全消去、undo、redo) では、ストアを直接変更せず ホストコマンドを使用してください。それらのヘルパーはこのサービスに含まれません。
 
 ## `canvas.stroke.transformers` — ⏳ 予約済み {#canvas-stroke-transformers}
 

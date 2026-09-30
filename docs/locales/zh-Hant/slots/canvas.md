@@ -1,9 +1,9 @@
 ---
 title: Canvas 插槽
 description: 8 個用於繪圖工具、形狀、筆觸變換及畫布圖層的 contribution 插槽。
-translationType: machine
-translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translationType: machine-pending-review
+translatedFrom: 281ee6c
+translatedAt: 2026-09-30T13:07:51Z
 language: zh-Hant
 ---
 
@@ -174,6 +174,47 @@ import type { Tool, Stroke, Point, StrokeStyle, StrokeColor, PointerModifiers } 
 - **Contribution 鍵**：`htmlOverlays`
 - **型別**：`HtmlOverlayContribution[]`
 - **用途**：在畫布上方掛載 HTML / Vue 元件（文字標注、圖片貼紙、輻射狀快捷選單）。此插槽為穩定狀態（非保留），原因在於若無此插槽，未來的文字標注 plugin 將迫使畫布進行重新設計。架構性插槽必須提早落地。
+
+## host 筆觸服務 {#host-stroke-service}
+
+多數工具會從 `onPointerUp` 回傳完成的 `Stroke`，由 host 代為提交。若工具在該同步回傳**之外**才完成筆觸——例如開啟編輯器的文字標注等非同步放置型工具、需第二步確認端點的箭頭，或在對話框之後才放置的步驟標記——則需自行提交筆觸。host 筆觸服務提供此路徑，以及讀取與 history 的存取，自 `@openpen/module-api/host` 匯入：
+
+```ts
+import { commitStroke, getAllStrokes, removeStrokeById, pushCommand } from '@openpen/module-api/host'
+```
+
+### `commitStroke(stroke)`
+
+以不可分割的方式提交已完成的筆觸：將其附加至 stroke store、記錄一筆 `ADD_STROKE` history 命令，並請求畫布重繪，全部在單一呼叫中完成。
+
+```ts
+// Async-placement tool: stroke is finalised after a deferred interaction.
+async function placeText(point: Point, style: StrokeStyle) {
+  const text = await openTextEditor(point)
+  if (text === null) return // user cancelled — commit nothing
+  commitStroke({
+    id: crypto.randomUUID(),
+    tool: 'text',
+    points: [point],
+    style,
+    text,
+  })
+}
+```
+
+- **等價性**：`commitStroke(stroke)` 在語意上等同於從同步的 `onPointerUp` 回傳同一個 `stroke`。兩者都會附加該筆觸並推入一筆 `ADD_STROKE` 命令，因此結果完整參與復原/重做——一次復原恰好移除該次提交的筆觸，重做則將其還原。
+- **非冪等**：每次呼叫都會附加一個筆觸與一筆 history 紀錄。以同一個物件呼叫 `commitStroke(stroke)` 兩次，會新增**兩個**筆觸。每個完成的筆觸只應提交一次；請為非同步路徑加上防止重複觸發的保護。
+- **不做 sanitize（完全信任）**：筆觸的結構由呼叫端負責。v1 中 host 不執行任何驗證——請提供有效的 `Stroke`（唯一的 `id`、與你的 contribution 相符的 `tool`、格式正確的 `points` / `style`）。
+
+### `getAllStrokes()` / `removeStrokeById(id)` / `pushCommand(command)`
+
+其餘的讀取與 history 介面，供檢視或修改既有筆觸的工具使用（例如筆觸橡皮擦）：
+
+- `getAllStrokes(): Stroke[]` — 依 z 順序回傳目前的筆觸。
+- `removeStrokeById(id): boolean` — 依 id 移除筆觸；回傳是否有筆觸被移除。搭配 `pushCommand` 使該次移除可復原。
+- `pushCommand(command)` — 記錄一筆 history 命令（`ADD_STROKE` / `REMOVE_STROKE` / `CLEAR_ALL`），使該操作參與復原/重做。
+
+對於整個畫布的操作（全部清除、復原、重做），請使用 host 命令，而非直接修改 store——這些輔助函式不屬於此服務。
 
 ## `canvas.stroke.transformers` — ⏳ 保留中 {#canvas-stroke-transformers}
 
