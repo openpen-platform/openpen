@@ -3,20 +3,25 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-      day: monday
+      interval: monthly
     open-pull-requests-limit: 5
     labels: ["dependencies"]
+    # Major bumps are evaluated by a maintainer on a branch, not proposed here.
+    # update-types in ignore only filters version updates; security updates
+    # still open.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
-      dev-dependencies:
-        dependency-type: development
-        update-types: [minor, patch]
-      production-minor-patch:
-        dependency-type: production
-        update-types: [minor, patch]
+      minor:
+        patterns: ["*"]
+        update-types: [minor]
+      patch:
+        patterns: ["*"]
+        update-types: [patch]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     labels: ["dependencies", "ci"]

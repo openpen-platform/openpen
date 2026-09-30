@@ -20,8 +20,29 @@ jobs:
       # Major bumps change runtime behaviour (an unreviewed electron major
       # shipped broken plugin loading and unsigned mac builds); they stay open
       # for manual staging review. Only patch/minor updates merge unattended.
+      # A grouped PR is checked dependency by dependency: one major, or one
+      # entry whose update type cannot be determined, keeps the whole PR open.
+      - name: Check every updated dependency
+        id: gate
+        env:
+          DEPS_JSON: ${{ steps.meta.outputs.updated-dependencies-json }}
+        run: |
+          deps=${DEPS_JSON:-[]}
+          count=$(jq 'length' <<<"$deps")
+          blocked=$(jq -r '[.[] | select(.updateType != "version-update:semver-minor" and .updateType != "version-update:semver-patch") | "\(.dependencyName) (\(if (.updateType // "") == "" then "unknown" else .updateType end))"] | join(", ")' <<<"$deps")
+          if [ "$count" -eq 0 ]; then
+            echo "No dependency metadata; leaving PR for manual review."
+            echo "merge=false" >> "$GITHUB_OUTPUT"
+          elif [ -n "$blocked" ]; then
+            echo "Not minor/patch: $blocked; leaving PR for manual review."
+            echo "merge=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "All $count updates are minor/patch."
+            echo "merge=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Enable auto-merge for patch/minor updates
-        if: steps.meta.outputs.update-type != 'version-update:semver-major'
+        if: steps.gate.outputs.merge == 'true'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
