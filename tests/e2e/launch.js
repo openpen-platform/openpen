@@ -3,9 +3,47 @@ import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
+
+/**
+ * Fail fast when the Electron binary has not been downloaded.
+ *
+ * The `electron` package fetches its binary lazily: when
+ * `node_modules/electron/dist` is missing, requiring the package runs
+ * `install.js` through `spawnSync`. Playwright requires it inside
+ * `electron.launch()`, so the download blocks the worker's event loop — no
+ * progress output, and the test timeout cannot fire. On a slow or stalled
+ * network the run hangs indefinitely. Checking up front turns that into an
+ * immediate error with the fix spelled out.
+ *
+ * Mirrors the lookup in `node_modules/electron/index.js` (`path.txt` plus the
+ * `ELECTRON_OVERRIDE_DIST_PATH` escape hatch) without triggering the download.
+ */
+export function assertElectronBinary() {
+  const electronDir = path.dirname(createRequire(import.meta.url).resolve('electron/package.json'));
+  const pathFile = path.join(electronDir, 'path.txt');
+  const executablePath = fs.existsSync(pathFile) ? fs.readFileSync(pathFile, 'utf-8') : null;
+
+  let binary = null;
+  if (process.env.ELECTRON_OVERRIDE_DIST_PATH) {
+    binary = path.join(process.env.ELECTRON_OVERRIDE_DIST_PATH, executablePath || 'electron');
+  } else if (executablePath) {
+    binary = path.join(electronDir, 'dist', executablePath);
+  }
+  if (binary && fs.existsSync(binary)) return;
+
+  throw new Error(
+    [
+      `[e2e] Electron binary not found${binary ? ` at ${binary}` : ` (${pathFile} missing)`}.`,
+      'The electron package downloads its binary on first use, which would block this run without output.',
+      'Download it once, then re-run the tests:',
+      '  npx install-electron',
+    ].join('\n'),
+  );
+}
 
 /**
  * Launch Electron with an isolated, English-seeded userData dir.
@@ -29,6 +67,7 @@ const ROOT = path.resolve(__dirname, '../..');
  * @returns {Promise<import('@playwright/test').ElectronApplication>}
  */
 export async function launchElectronApp(overrides = {}) {
+  assertElectronBinary();
   const { seedConfig, userDataDir: providedUserDataDir, ...electronOverrides } = overrides;
   const userDataDir = providedUserDataDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-e2e-'));
   if (seedConfig !== false && !providedUserDataDir) {

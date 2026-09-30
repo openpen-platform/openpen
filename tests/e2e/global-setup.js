@@ -14,8 +14,12 @@
  * Vite when Playwright finishes the run.
  */
 import { createServer } from 'vite';
+import { assertElectronBinary } from './launch.js';
 
 export default async function globalSetup() {
+  // Before booting Vite, so a missing binary fails the whole run in seconds.
+  assertElectronBinary();
+
   const vite = await createServer({
     // Silence the dev server's startup banner so playwright's reporter stays clean.
     logLevel: 'warn',
