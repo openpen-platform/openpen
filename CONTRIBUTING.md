@@ -13,7 +13,7 @@ Thank you for your interest in contributing to OpenPen.
 
 ## Development Setup
 
-**Requirements:** Node.js 20+, npm 9+. Works on macOS, Windows, and Linux
+**Requirements:** Node.js 22.12+, npm 9+. Works on macOS, Windows, and Linux
 
 The repo uses npm workspaces — install with npm, **not** pnpm or yarn.
 

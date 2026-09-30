@@ -14,7 +14,7 @@ language: zh-Hant
 
 ## 前置需求
 
-- Node.js 20+，npm 9+
+- Node.js 22.12+，npm 9+
 - OpenPen 1.0 或更新版本已安裝並執行中
 - 支援 TypeScript 的程式碼編輯器
 - `gh` CLI 已安裝並完成驗證（`gh auth login`）— 執行 `openpen publish` 時必要

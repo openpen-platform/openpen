@@ -9,7 +9,7 @@ From zero to a running OpenPen plugin in five minutes.
 
 ## Prerequisites
 
-- Node.js 20+, npm 9+
+- Node.js 22.12+, npm 9+
 - OpenPen 1.0 or later installed
 
 ---

@@ -14,7 +14,7 @@ language: zh-Hans
 
 ## 前提条件
 
-- Node.js 20+，npm 9+
+- Node.js 22.12+，npm 9+
 - 已安装并运行 OpenPen 1.0 或更高版本
 - 支持 TypeScript 的代码编辑器
 - 已安装并完成身份验证的 `gh` CLI（`gh auth login`）——`openpen publish` 所需

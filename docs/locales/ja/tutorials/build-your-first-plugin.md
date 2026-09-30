@@ -13,7 +13,7 @@ language: ja
 
 ## 前提条件
 
-- Node.js 20+、npm 9+
+- Node.js 22.12+、npm 9+
 - OpenPen 1.0 以降がインストールされ、起動していること
 - TypeScript をサポートするコードエディター
 - `gh` CLI がインストールされ、認証済みであること (`gh auth login`) — `openpen publish` に必要
