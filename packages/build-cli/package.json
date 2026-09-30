@@ -40,7 +40,7 @@
   "dependencies": {
     "vite": "^6.0.0",
     "@vitejs/plugin-vue": "^6.0.8",
-    "vite-plugin-css-injected-by-js": "~4.0.1",
+    "vite-plugin-css-injected-by-js": "~5.0.2",
     "archiver": "~7.0.1"
   },
   "peerDependencies": {
