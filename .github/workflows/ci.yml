@@ -63,5 +63,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npx install-electron
       - run: npm run build
       - run: npm run test:prod-smoke

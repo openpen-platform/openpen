@@ -63,6 +63,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Download Electron binary
+        run: npx install-electron
+
       - name: Build renderer
         run: npm run build
 
