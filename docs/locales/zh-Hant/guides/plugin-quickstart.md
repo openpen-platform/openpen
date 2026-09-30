@@ -13,7 +13,7 @@ language: zh-Hant
 
 ## 前置條件
 
-- Node.js 20+，npm 9+
+- Node.js 22.12+，npm 9+
 - 已安裝 OpenPen 1.0 或更新版本
 
 ---

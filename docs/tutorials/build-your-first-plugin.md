@@ -10,7 +10,7 @@ and publish it to the community catalog — all using the `openpen` CLI.
 
 ## Prerequisites
 
-- Node.js 20+, npm 9+
+- Node.js 22.12+, npm 9+
 - OpenPen 1.0 or later installed and running
 - A code editor with TypeScript support
 - `gh` CLI installed and authenticated (`gh auth login`) — required for `openpen publish`
