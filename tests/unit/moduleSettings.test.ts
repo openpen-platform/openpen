@@ -197,6 +197,18 @@ describe('updateSettings()', () => {
     expect(setModuleSettings).not.toHaveBeenCalled()
   })
 
+  it('rejection carries .issues with the failing path; the removed .errors is absent', async () => {
+    buildApiMock()
+    const { ctx } = makeModuleWithContext('mod-invalid-shape')
+
+    const err = await ctx.updateSettings<MySettings>({ opacity: 999 }).then(
+      () => { throw new Error('expected updateSettings to reject') },
+      (e: unknown) => e as { issues?: Array<{ path: unknown[] }>; errors?: unknown },
+    )
+    expect(err.issues?.map((i) => i.path)).toEqual([['opacity']])
+    expect(err.errors).toBeUndefined()
+  })
+
   it('throws synchronously if settingsSchema is undefined', async () => {
     buildApiMock()
     // Module with no schema
@@ -342,5 +354,25 @@ describe('migration', () => {
       { color: 'green', opacity: 0.3 },
       2,
     )
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Default fill — bootstrap falls back to settingsSchema.safeParse({})
+// ---------------------------------------------------------------------------
+
+describe('default fill from an empty object', () => {
+  it('fills nested defaults when the nested object uses .prefault({})', () => {
+    const schema = z.object({
+      grid: z.object({ size: z.number().default(8) }).prefault({}),
+    })
+    expect(schema.safeParse({})).toEqual({ success: true, data: { grid: { size: 8 } } })
+  })
+
+  it('skips inner defaults when the nested object uses .default({})', () => {
+    const schema = z.object({
+      grid: z.object({ size: z.number().default(8) }).default({} as { size: number }),
+    })
+    expect(schema.safeParse({})).toEqual({ success: true, data: { grid: {} } })
   })
 })

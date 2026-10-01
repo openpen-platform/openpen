@@ -7,8 +7,10 @@ This is the **only** import path that built-in modules and plugins are allowed t
 ## Install
 
 ```bash
-npm install @openpen/module-api zod
+npm install @openpen/module-api zod@^4
 ```
+
+`@openpen/module-api` re-exports Zod 4. The `zod` install only provides type definitions to your editor and must match the major version the host ships; a leftover Zod 3 install makes `settingsSchema` fail to type-check.
 
 > **Import `z` from `@openpen/module-api`, not from `'zod'` directly.**
 > The build externalises `'zod'` — a direct `import { z } from 'zod'` in a
@@ -39,6 +41,10 @@ export default defineModule({
   },
 })
 ```
+
+### Migrating to Zod 4
+
+The re-exported `z` moved from Zod 3 to Zod 4. Three changes affect settings schemas: nested object defaults need `.prefault({})` instead of `.default({})`, the `required_error` / `invalid_type_error` / `errorMap` parameters are ignored, and a rejected `ctx.updateSettings()` error exposes `.issues` but no longer `.errors`. See [Module Settings](../../docs/guides/module-settings.md#zod-4-behaviour-to-watch-for) for examples.
 
 ### `setup(ctx)` — Module initialisation
 

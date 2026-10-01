@@ -30,6 +30,42 @@ export default defineModule({
 - Default values declared with `.default()` are merged with the stored values on every `getSettings()` read — you never receive `undefined` for a key that has a default.
 - Use the `z` re-export; do not add Zod as a separate dependency.
 
+### Zod 4 behaviour to watch for
+
+`@openpen/module-api` re-exports Zod 4. Schemas written for Zod 3 mostly keep working, but three changes affect settings schemas directly:
+
+**Nested object defaults need `.prefault()`.** When a stored value is missing or fails validation, the host rebuilds the settings from an empty object. In Zod 4, `.default(value)` returns `value` as-is without parsing it, so the inner defaults of a nested object are skipped. Use `.prefault({})`, which parses the empty object and fills the inner defaults:
+
+```ts
+settingsSchema: z.object({
+  // ✅ { grid: { size: 8 } }
+  grid: z.object({ size: z.number().default(8) }).prefault({}),
+})
+```
+
+In TypeScript, `.default({})` on this schema is a type error because `{}` has no `size`. In plain JavaScript, or behind a type cast, it yields `{ grid: {} }` and `settings.grid.size` reads as `undefined` without any error. Flat primitive defaults such as `z.number().default(0.8)` are unaffected.
+
+**`required_error`, `invalid_type_error`, and `errorMap` are ignored.** Custom messages passed through these parameters no longer appear; issues carry Zod's default English message. Pass a single `error` option instead:
+
+```ts
+z.string({ error: 'Pick a colour' })
+z.number().min(1, { error: 'Must be at least 1' })
+```
+
+**Rejected `updateSettings()` errors have no `.errors`.** The promise still rejects with a `ZodError`, but the `.errors` alias is gone. Read `.issues`:
+
+```ts
+try {
+  await ctx.updateSettings({ opacity: 2 })
+} catch (err) {
+  const issues = (err as z.ZodError).issues // [{ path: ['opacity'], code: 'too_big', ... }]
+}
+```
+
+Issue codes were renamed as well (for example `invalid_enum_value` is now `invalid_value`, `invalid_string` is now `invalid_format`), and default messages were reworded. Match on `path` rather than on message text.
+
+The full list of changes is in the [Zod 4 migration guide](https://zod.dev/v4/changelog).
+
 ---
 
 ## Reading and writing settings from a Vue component

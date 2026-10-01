@@ -15,9 +15,8 @@ import type { ModuleSetupContext } from './types/module'
  * @example
  * ```ts
  * // MySettingsPanel.vue
- * import { useModuleContext } from '@openpen/module-api'
+ * import { useModuleContext, z } from '@openpen/module-api'
  * import { onMounted, onUnmounted, ref } from 'vue'
- * import { z } from 'zod'
  *
  * const MySchema = z.object({ color: z.string().default('#fff') })
  * type MySettings = z.infer<typeof MySchema>

@@ -71,6 +71,11 @@ export interface OpenPenModule {
    * made via `ctx.updateSettings()`; writes that fail validation reject
    * with the underlying `ZodError`.
    *
+   * Nested object fields that need their inner defaults filled from an
+   * empty or invalid stored value MUST use `.prefault({})`, not
+   * `.default({})`: the host rebuilds invalid settings from `{}`, and
+   * `.default()` returns its value without parsing it.
+   *
    * Modules that intend to call `ctx.updateSettings()` MUST declare
    * this field; calling `updateSettings` without a schema throws at
    * runtime so the missing contract surfaces during development.
@@ -144,7 +149,8 @@ export interface ModuleSetupContext {
    * result against `settingsSchema` (Zod), and persists to `config.json`.
    * Resolves once the write is durable; rejects with the underlying
    * `ZodError` if the merged object fails validation (no I/O happens
-   * on validation failure).
+   * on validation failure). Read the failures from `error.issues`;
+   * `ZodError` has no `.errors` property.
    *
    * The in-memory snapshot returned by `getSettings()` is updated
    * before the Promise resolves; subscribers registered via

@@ -34,6 +34,42 @@ export default defineModule({
 - 使用 `.default()` 声明的默认值会在每次 `getSettings()` 读取时与存储的值合并——对于具有默认值的键，你永远不会收到 `undefined`。
 - 请使用 `z` 重新导出；不要将 Zod 作为单独的依赖项添加。
 
+### Zod 4 需要注意的行为
+
+`@openpen/module-api` 重新导出的是 Zod 4。为 Zod 3 编写的模式大多仍可运行，但有三项变更会直接影响设置模式：
+
+**嵌套对象的默认值需改用 `.prefault()`。** 存储的值缺失或验证失败时，宿主会以空对象重建设置。在 Zod 4 中，`.default(value)` 会原样返回 `value`、不再解析它，因此嵌套对象内层的默认值会被跳过。请改用 `.prefault({})`，它会解析空对象并填入内层默认值：
+
+```ts
+settingsSchema: z.object({
+  // ✅ { grid: { size: 8 } }
+  grid: z.object({ size: z.number().default(8) }).prefault({}),
+})
+```
+
+在 TypeScript 中，此模式写 `.default({})` 会是类型错误，因为 `{}` 没有 `size`。在纯 JavaScript 或经过类型断言时，它会得到 `{ grid: {} }`，读取 `settings.grid.size` 会拿到 `undefined`，且不会抛出任何错误。像 `z.number().default(0.8)` 这类扁平的原始类型默认值不受影响。
+
+**`required_error`、`invalid_type_error` 与 `errorMap` 会被忽略。** 通过这些参数传入的自定义消息不再出现，issue 改为携带 Zod 默认的英文消息。请改传单一的 `error` 选项：
+
+```ts
+z.string({ error: 'Pick a colour' })
+z.number().min(1, { error: 'Must be at least 1' })
+```
+
+**`updateSettings()` 拒绝时的错误没有 `.errors`。** Promise 仍以 `ZodError` 拒绝，但 `.errors` 别名已移除。请读取 `.issues`：
+
+```ts
+try {
+  await ctx.updateSettings({ opacity: 2 })
+} catch (err) {
+  const issues = (err as z.ZodError).issues // [{ path: ['opacity'], code: 'too_big', ... }]
+}
+```
+
+issue code 也有改名（例如 `invalid_enum_value` 改为 `invalid_value`、`invalid_string` 改为 `invalid_format`），默认消息的措辞也变了。请比对 `path`，不要比对消息文本。
+
+完整的变更列表见 [Zod 4 迁移指南](https://zod.dev/v4/changelog)。
+
 ---
 
 ## 在 Vue 组件中读写设置

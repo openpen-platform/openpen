@@ -34,6 +34,42 @@ export default defineModule({
 - `.default()` で宣言されたデフォルト値は、`getSettings()` を読み取るたびに保存済みの値とマージされるため、デフォルト値を持つキーに対して `undefined` を受け取ることはありません。
 - `z` は再エクスポートを使用してください。Zod を別途の依存関係として追加しないでください。
 
+### Zod 4 で注意すべき挙動
+
+`@openpen/module-api` が再エクスポートするのは Zod 4 です。Zod 3 向けに書いたスキーマの多くはそのまま動作しますが、次の 3 つの変更は設定スキーマに直接影響します。
+
+**ネストしたオブジェクトのデフォルト値には `.prefault()` を使います。** 保存済みの値が欠けている、または検証に失敗した場合、ホストは空オブジェクトから設定を再構築します。Zod 4 の `.default(value)` は `value` を解析せずにそのまま返すため、ネストしたオブジェクト内側のデフォルト値が適用されません。空オブジェクトを解析して内側のデフォルト値を埋める `.prefault({})` を使ってください。
+
+```ts
+settingsSchema: z.object({
+  // ✅ { grid: { size: 8 } }
+  grid: z.object({ size: z.number().default(8) }).prefault({}),
+})
+```
+
+TypeScript では、このスキーマに `.default({})` を書くと `{}` に `size` がないため型エラーになります。素の JavaScript や型キャストを経由した場合は `{ grid: {} }` となり、`settings.grid.size` はエラーなしで `undefined` になります。`z.number().default(0.8)` のようなフラットなプリミティブのデフォルト値は影響を受けません。
+
+**`required_error`、`invalid_type_error`、`errorMap` は無視されます。** これらのパラメーターで渡したカスタムメッセージは表示されず、issue には Zod 既定の英語メッセージが入ります。代わりに単一の `error` オプションを渡してください。
+
+```ts
+z.string({ error: 'Pick a colour' })
+z.number().min(1, { error: 'Must be at least 1' })
+```
+
+**`updateSettings()` が拒否したときのエラーには `.errors` がありません。** Promise は引き続き `ZodError` で拒否されますが、`.errors` エイリアスは削除されました。`.issues` を読んでください。
+
+```ts
+try {
+  await ctx.updateSettings({ opacity: 2 })
+} catch (err) {
+  const issues = (err as z.ZodError).issues // [{ path: ['opacity'], code: 'too_big', ... }]
+}
+```
+
+issue code も改名されています（例: `invalid_enum_value` は `invalid_value`、`invalid_string` は `invalid_format`）。既定メッセージの文言も変わりました。メッセージ文字列ではなく `path` で照合してください。
+
+変更の全一覧は [Zod 4 移行ガイド](https://zod.dev/v4/changelog) を参照してください。
+
 ---
 
 ## Vue コンポーネントから設定を読み書きする
