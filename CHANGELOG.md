@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.6.0](https://github.com/openpen-platform/openpen/compare/v1.5.0...v1.6.0) (2026-10-03)
+
+
+### Features
+
+* **module-api:** upgrade zod to 4 ([c25ffab](https://github.com/openpen-platform/openpen/commit/c25ffab8ade237df24e60b5c22f4c61559935a1b))
+
+
+### Bug Fixes
+
+* **cli:** point new plugin authors at the local install flow ([77bdf3d](https://github.com/openpen-platform/openpen/commit/77bdf3d35c0e980ef94bb9eda49f8003bd5562a5))
+* **plugin:** remove empty scope directory after uninstalling a plugin ([624e75b](https://github.com/openpen-platform/openpen/commit/624e75bb310a1a38f0dcfbfab5923f89dfdfb087))
+* **tests:** isolate marketplace e2e installs in a sandbox HOME ([e9d14b4](https://github.com/openpen-platform/openpen/commit/e9d14b4e4746d72c21634c6c4721c2655f12e4ef))
+* **tests:** sandbox HOME for every e2e launch ([0bcb5d1](https://github.com/openpen-platform/openpen/commit/0bcb5d177d1410d51184c17a2bd1ebde3e8128bc))
+
 ## [1.5.0](https://github.com/openpen-platform/openpen/compare/v1.4.3...v1.5.0) (2026-06-12)
 
 
