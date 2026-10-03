@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/openpen-platform/openpen/compare/module-api@1.3.0...module-api@1.4.0) (2026-10-03)
+
+
+### Features
+
+* **module-api:** upgrade zod to 4 ([c25ffab](https://github.com/openpen-platform/openpen/commit/c25ffab8ade237df24e60b5c22f4c61559935a1b))
+
 ## [1.3.0](https://github.com/openpen-platform/openpen/compare/module-api@1.2.0...module-api@1.3.0) (2026-06-11)
 
 
