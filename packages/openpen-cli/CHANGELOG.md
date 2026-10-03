@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/openpen-platform/openpen/compare/openpen-cli@1.2.0...openpen-cli@1.2.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* **cli:** point new plugin authors at the local install flow ([77bdf3d](https://github.com/openpen-platform/openpen/commit/77bdf3d35c0e980ef94bb9eda49f8003bd5562a5))
+
 ## [1.2.0](https://github.com/openpen-platform/openpen/compare/v1.1.0...openpen-cli@1.2.0) (2026-06-11)
 
 
