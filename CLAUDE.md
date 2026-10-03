@@ -196,7 +196,7 @@ npx playwright test          # Run all E2E tests (real Electron)
 npx playwright test <file>   # Run specific test file
 ```
 
-Specs launch Electron through the shared helper in `tests/e2e/launch.js`. The helper creates an ephemeral `userData` dir per spec and seeds `config.json` with `{"language":"en"}` so the UI boots in English regardless of the host OS locale — English aria-label / data-tip selectors depend on this.
+Specs launch Electron through the shared helper in `tests/e2e/launch.js`. The helper creates an ephemeral `userData` dir per spec, points `HOME`/`USERPROFILE` at a run-wide temp dir that globalSetup removes after the run (so the app never loads plugins from the developer's real `~/.openpen/plugins`), and seeds `config.json` with `{"language":"en"}` so the UI boots in English regardless of the host OS locale — English aria-label / data-tip selectors depend on this.
 ```javascript
 import { test } from '@playwright/test';
 import { launchElectronApp } from '../launch.js';

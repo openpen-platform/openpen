@@ -4,9 +4,10 @@
  * Access-Control-Allow-Origin, or every installed plugin silently fails to
  * import (no built-in coverage exercises this path — built-ins are bundled).
  *
- * The spec installs a dependency-free fixture plugin into the real plugins dir
- * (the manifest loader scans ~/.openpen/plugins regardless of userData), then
- * asserts the renderer imported it without a bootstrap import error.
+ * The spec installs a dependency-free fixture plugin into ~/.openpen/plugins
+ * (the manifest loader scans it regardless of userData; globalSetup points HOME
+ * at a per-run sandbox), then asserts the renderer imported it without a
+ * bootstrap import error.
  */
 import { test, expect } from '@playwright/test';
 import { launchElectronApp } from '../launch.js';

@@ -61,6 +61,11 @@ export function assertElectronBinary() {
  * to test persisted settings across restarts within a single spec).
  * When omitted, a fresh ephemeral dir is created per call.
  *
+ * HOME and USERPROFILE default to the run-wide sandbox created by
+ * globalSetup (OPENPEN_E2E_HOME), so the app never discovers plugins from the
+ * developer's real ~/.openpen/plugins. Pass them in `env` to use a different
+ * sandbox for a single spec.
+ *
  * Returns the ElectronApplication; callers own closing it.
  *
  * @param {Parameters<typeof electron.launch>[0] & { seedConfig?: Record<string, unknown> | false; userDataDir?: string }} [overrides]
@@ -92,6 +97,9 @@ export async function launchElectronApp(overrides = {}) {
       // (e.g. an IDE harness that ignores playwright.config.js) — in normal
       // `npx playwright test` invocations OPENPEN_E2E_VITE_URL is always set.
       VITE_DEV_SERVER_URL: process.env.OPENPEN_E2E_VITE_URL ?? 'http://localhost:5173',
+      ...(process.env.OPENPEN_E2E_HOME
+        ? { HOME: process.env.OPENPEN_E2E_HOME, USERPROFILE: process.env.OPENPEN_E2E_HOME }
+        : {}),
       ...(electronOverrides.env ?? {}),
     },
   });
