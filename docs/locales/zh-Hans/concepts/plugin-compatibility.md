@@ -194,7 +194,7 @@ Plugin id 必须遵循 npm 域范围格式 `@scope/name`（例如 `@acme/sticky-
 
 - **使用你控制的唯一域范围** — 你的 GitHub 组织、你的 npm 组织，
   或基于域名的前缀。通用域范围（`@plugins`、`@openpen`、`@util`）会与
-  其他所有使用相同快捷名称的人冲突。
+  其他所有走同一条捷径的人冲突。
 - **避免暗示官方身份的域范围名称**（`@openpen-official`、
   `@openpen-team` 等），除非你实际维护 OpenPen。
 - **将 plugin id 视为永久性的。** 重命名 id 会破坏用户安装并

@@ -150,5 +150,5 @@ L2 重設僅影響佈局 — 你的主題、語言與快捷鍵不受影響。
 
 ## 參閱
 
-- [Contribution Slot Catalog](../slots/ui#ui-control-bar) — `ui.control-bar` slot 與 `ControlBarContribution` 型別
+- [插槽目錄](../slots/ui#ui-control-bar) — `ui.control-bar` slot 與 `ControlBarContribution` 型別
 - [Module Architecture](../concepts/module-architecture.md) — 內建與 plugin module 如何宣告 contribution

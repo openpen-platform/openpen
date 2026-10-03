@@ -92,12 +92,12 @@ import '@openpen/module-api/uikit/tokens.css'
 | `--openpen-color-tooltip-text` | `#f1f5f9` | Tooltip 文字（永遠為淺色，與主題無關） |
 | `--openpen-color-tooltip-border` | `rgba(255,255,255,0.15)` | Tooltip 邊框（永遠為深底淺色，與主題無關） |
 
-### Color — Control bar chrome
+### Color — 控制列 chrome
 
 | Token | 預設值（深色） | 說明 |
 |---|---|---|
-| `--openpen-color-control-hover` | `rgba(255,255,255,0.08)` | Control bar 按鈕懸停背景 |
-| `--openpen-color-control-group` | `rgba(255,255,255,0.04)` | Control bar 群組容器背景 |
+| `--openpen-color-control-hover` | `rgba(255,255,255,0.08)` | 控制列按鈕懸停背景 |
+| `--openpen-color-control-group` | `rgba(255,255,255,0.04)` | 控制列群組容器背景 |
 
 ### Color — State（info / warning / success / error）
 

@@ -285,8 +285,8 @@ export default defineModule({
 注意事項：
 
 1. **Tool 合約** — `onPointerDown(canvasCtx, point, style)` 初始化狀態但返回 `void`。`onPointerMove(canvasCtx, point)` 在即時的 `canvasCtx` 上逐步繪製。`onPointerUp(canvasCtx, point)` 是唯一返回 `Stroke` 的處理器；返回的物件就是 host 儲存以供復原/重做的資料。
-2. **Stroke 是值物件** — 它包含 `id`（唯一值，慣例上使用 `crypto.randomUUID()`）+ `tool`（與 `ToolContribution.id` 匹配）+ 座標點 + 樣式 + 任何你希望在歷史回放中保留的工具特定額外資料。
-3. **`renderStroke` 是歷史回放 hook** — 當使用者復原／重做／調整大小時，畫布引擎會對每個 stroke 呼叫 `renderStroke(canvasCtx, stroke)` 進行回放。使用超出預設折線效果（alpha、自訂寬度、漸層處理）進行繪製的工具必須提供此函式；繪製普通折線的工具可省略。
+2. **`Stroke` 是值物件** — 它包含 `id`（唯一值，慣例上使用 `crypto.randomUUID()`）+ `tool`（與 `ToolContribution.id` 匹配）+ 座標點 + 樣式 + 任何你希望在歷史回放中保留的工具特定額外資料。
+3. **`renderStroke` 是歷史回放 hook** — 當使用者復原／重做／調整大小時，畫布引擎會對每個筆觸呼叫 `renderStroke(canvasCtx, stroke)` 進行回放。使用超出預設折線效果（alpha、自訂寬度、漸層處理）進行繪製的工具必須提供此函式；繪製普通折線的工具可省略。
 4. **`StrokeColor` 是聯合型別** — `string | { type: 'linear'; from: string; to: string }`。自訂渲染器必須處理兩種情況；上方程式碼片段使用來自 `@openpen/module-api` 的 `resolveStrokeColor(color)` 為 `ctx.strokeStyle` 挑選一個代表性的 CSS 顏色值（線性漸層時取 `color.from`）。
 5. **游標與工具的連結** — `CursorContribution.id === ToolContribution.id`。請確保 id 完全匹配，否則 host 會退回預設游標。
 

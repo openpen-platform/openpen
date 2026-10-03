@@ -102,24 +102,24 @@ interface PngCursorSpec {
 
 URL 形式（`http://`、`https://`、`data:`、`file://`、`openpen-plugin://`）、绝对路径和 `..` 路径遍历在注册时将被拒绝。
 
-### 使用当前描边颜色进行主题适配
+### 使用当前笔触颜色进行主题适配
 
-宿主将当前激活的描边颜色作为 CSS 自定义属性暴露在 `document.documentElement` 上：
+宿主将当前激活的笔触颜色作为 CSS 自定义属性暴露在 `document.documentElement` 上：
 
 ```
 --openpen-cursor-accent
 ```
 
-光标 SVG 可在填充 / 描边属性中引用该属性，以跟随用户的颜色选择：
+光标 SVG 可在 `fill` / `stroke` 属性中引用该属性，以跟随用户的颜色选择：
 
 ```html
 <circle fill="var(--openpen-cursor-accent, #818cf8)" ... />
 <line stroke="var(--openpen-cursor-accent, #818cf8)" ... />
 ```
 
-当用户选择渐变时，该变量解析为渐变的 `from` 端点颜色（光标只有一个强调色槽）。回退值（`var()` 的第二个参数）用于覆盖首次描边样式事件触发前的短暂窗口期——请选择一个与你的设计相匹配的合理默认值。
+当用户选择渐变时，该变量解析为渐变的 `from` 端点颜色（光标只有一个强调色槽）。回退值（`var()` 的第二个参数）用于覆盖首次笔触样式事件触发前的短暂窗口期——请选择一个与你的设计相匹配的合理默认值。
 
-此功能为可选接入：硬编码填充颜色的光标不受用户颜色选择影响。内置的 `freehand`、`line` 和 `shape` 光标遵循此约定；`eraser`（橡皮擦尘效果为中性灰）和 `stroke-eraser`（红色 + 靛蓝组合表示"删除整个描边"）则有意不使用此功能。
+此功能为可选接入：硬编码填充颜色的光标不受用户颜色选择影响。内置的 `freehand`、`line` 和 `shape` 光标遵循此约定；`eraser`（橡皮擦尘效果为中性灰）和 `stroke-eraser`（红色 + 靛蓝组合表示"删除整个笔触"）则有意不使用此功能。
 
 ### 安全契约（plugin 作者须知）
 

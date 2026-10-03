@@ -41,11 +41,11 @@ module は `contributes` にキャメルケースのキーを使用します (`h
 | [`ui.tray.menu`](./ui#ui-tray-menu) | UI | ⏳ | 組み込みの表示/非表示/終了と並ぶシステムトレイのメニュー項目 |
 | [`ui.context.menu`](./ui#ui-context-menu) | UI | ⏳ | キャンバス、ツールバー、トレイの右クリックコンテキストメニュー項目 |
 | [`ui.theme.tokens`](./ui#ui-theme-tokens) | UI | ⏳ | module が提供する CSS カスタムプロパティ (カラースウォッチ、トークン) |
-| [`system.shortcuts`](./system#system-shortcuts) | System | ✅ | グローバルおよび描画モードのキーボード shortcut |
+| [`system.shortcuts`](./system#system-shortcuts) | System | ✅ | グローバルおよび描画モードのキーボードショートカット |
 | [`system.window.behaviors`](./system#system-window-behaviors) | System | ⏳ | メインウィンドウの動作に関するモディファイアー (ピン留め、自動折り畳み) |
 | [`system.locales`](./system#system-locales) | System | ✅ | BCP-47タグごとのi18n辞書 contribution |
 | [`system.main.handlers`](./system#system-main-handlers) | System | ✅ | メインプロセス機能のためのNode側IPCハンドラー |
-| [`system.events`](./system#system-events) | System | ✅ | ドメインイベントのサブスクライブ (stroke-added、tool-changed など) |
+| [`system.events`](./system#system-events) | System | ✅ | ドメインイベントのサブスクライブ (`stroke-added`、`tool-changed` など) |
 | [`system.lifecycle`](./system#system-lifecycle) | System | ✅ | アプリの lifecycle フック (onReady、onSuspend、onQuit) |
 | [`system.storage`](./system#system-storage) | System | ⏳ | `~/.openpen/plugins/<id>/data/` の隔離されたデータディレクトリ |
 | [`system.file.drop`](./system#system-file-drop) | System | ⏳ | キャンバスにドロップされたファイルのハンドラー |

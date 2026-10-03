@@ -45,7 +45,7 @@ module 在 `contributes` 上使用便于阅读的驼峰命名键（`historyComma
 | [`system.window.behaviors`](./system#system-window-behaviors) | System | ⏳ | 主窗口行为修改器（固定、自动折叠） |
 | [`system.locales`](./system#system-locales) | System | ✅ | 按 BCP-47 标签贡献的 i18n 词典 |
 | [`system.main.handlers`](./system#system-main-handlers) | System | ✅ | 主进程能力的 Node 端 IPC 处理器 |
-| [`system.events`](./system#system-events) | System | ✅ | 订阅领域事件（stroke-added、tool-changed……） |
+| [`system.events`](./system#system-events) | System | ✅ | 订阅领域事件（`stroke-added`、`tool-changed`……） |
 | [`system.lifecycle`](./system#system-lifecycle) | System | ✅ | 应用 lifecycle 钩子（onReady、onSuspend、onQuit） |
 | [`system.storage`](./system#system-storage) | System | ⏳ | 位于 `~/.openpen/plugins/<id>/data/` 的隔离数据文件夹 |
 | [`system.file.drop`](./system#system-file-drop) | System | ⏳ | 拖放至画布的文件处理器 |

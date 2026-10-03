@@ -110,7 +110,7 @@ URL 形式 (`http://`、`https://`、`data:`、`file://`、`openpen-plugin://`)�
 --openpen-cursor-accent
 ```
 
-カーソルの SVG では、fill/stroke 属性でこれを参照することで、ユーザーの色選択に追従できます。
+カーソルの SVG では、`fill` / `stroke` 属性でこれを参照することで、ユーザーの色選択に追従できます。
 
 ```html
 <circle fill="var(--openpen-cursor-accent, #818cf8)" ... />

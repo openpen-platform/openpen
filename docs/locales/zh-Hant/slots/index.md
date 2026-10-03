@@ -26,12 +26,12 @@ Module 在 `contributes` 上使用易讀的 camelCase 鍵（`historyCommands`、
 |---|---|---|---|
 | [`canvas.tools`](./canvas#canvas-tools) | Canvas | ✅ | 由指標事件驅動的繪圖工具 |
 | [`canvas.shapes`](./canvas#canvas-shapes) | Canvas | ✅ | 形狀基元（圓形、矩形、多邊形、自訂） |
-| [`canvas.stroke.style`](./canvas#canvas-stroke-style) | Canvas | ✅ | 宣告筆畫樣式鍵的所有權，用於衝突偵測 |
+| [`canvas.stroke.style`](./canvas#canvas-stroke-style) | Canvas | ✅ | 宣告筆觸樣式鍵的所有權，用於衝突偵測 |
 | [`canvas.history.commands`](./canvas#canvas-history-commands) | Canvas | ⏳ | 超出內建項目的自訂復原/重做指令類型 |
-| [`canvas.layers.background`](./canvas#canvas-layers-background) | Canvas | ✅ | 在筆畫下方渲染（格線、浮水印、背景圖片） |
-| [`canvas.layers.overlay`](./canvas#canvas-layers-overlay) | Canvas | ✅ | 在筆畫上方渲染（尺規、對齊參考線、選取框） |
+| [`canvas.layers.background`](./canvas#canvas-layers-background) | Canvas | ✅ | 在筆觸下方渲染（格線、浮水印、背景圖片） |
+| [`canvas.layers.overlay`](./canvas#canvas-layers-overlay) | Canvas | ✅ | 在筆觸上方渲染（尺規、對齊參考線、選取框） |
 | [`canvas.html.overlay`](./canvas#canvas-html-overlay) | Canvas | ✅ | 在畫布上方掛載 HTML / Vue 元件 |
-| [`canvas.stroke.transformers`](./canvas#canvas-stroke-transformers) | Canvas | ⏳ | 在筆畫建立後進行後處理（平滑化、發光效果） |
+| [`canvas.stroke.transformers`](./canvas#canvas-stroke-transformers) | Canvas | ⏳ | 在筆觸建立後進行後處理（平滑化、發光效果） |
 | [`ui.control-bar`](./ui#ui-control-bar) | UI | ✅ | 控制列中的按鈕、滑桿、彈出觸發器 |
 | [`ui.settings.panels`](./ui#ui-settings-panels) | UI | ✅ | 設定視窗「功能」分頁中的區段 |
 | [`ui.settings.tabs`](./ui#ui-settings-tabs) | UI | ✅ | 設定視窗中的專屬頂層分頁 |
@@ -45,7 +45,7 @@ Module 在 `contributes` 上使用易讀的 camelCase 鍵（`historyCommands`、
 | [`system.window.behaviors`](./system#system-window-behaviors) | System | ⏳ | 主視窗行為的修飾器（釘選、自動收合） |
 | [`system.locales`](./system#system-locales) | System | ✅ | 依 BCP-47 標籤貢獻 i18n 詞典 |
 | [`system.main.handlers`](./system#system-main-handlers) | System | ✅ | 主程序能力的 Node 端 IPC 處理器 |
-| [`system.events`](./system#system-events) | System | ✅ | 訂閱領域事件（stroke-added、tool-changed、…） |
+| [`system.events`](./system#system-events) | System | ✅ | 訂閱領域事件（`stroke-added`、`tool-changed`、…） |
 | [`system.lifecycle`](./system#system-lifecycle) | System | ✅ | 應用程式 lifecycle 鉤子（onReady、onSuspend、onQuit） |
 | [`system.storage`](./system#system-storage) | System | ⏳ | 位於 `~/.openpen/plugins/<id>/data/` 的隔離資料夾 |
 | [`system.file.drop`](./system#system-file-drop) | System | ⏳ | 拖曳至畫布之檔案的處理器 |

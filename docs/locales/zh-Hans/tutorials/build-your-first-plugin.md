@@ -281,8 +281,8 @@ export default defineModule({
 需要注意的几点：
 
 1. **Tool 合约** — `onPointerDown(canvasCtx, point, style)` 初始化状态但返回 `void`。`onPointerMove(canvasCtx, point)` 在实时 `canvasCtx` 上进行增量绘制。`onPointerUp(canvasCtx, point)` 是唯一返回 `Stroke` 的处理器；该返回对象是宿主为撤销/重做所存储的内容。
-2. **Stroke 是值对象** — 它携带 `id`（唯一，`crypto.randomUUID()` 是惯例来源）+ `tool`（与 `ToolContribution.id` 匹配）+ 点集 + 样式 + 你希望为历史回放保留的任何工具特定附加数据。
-3. **`renderStroke` 是历史回放钩子** — 当用户撤销/重做/调整大小时，画布引擎会为每个 stroke 调用 `renderStroke(canvasCtx, stroke)` 来回放所有 stroke。使用超出默认折线效果（透明度、自定义宽度、渐变处理）进行绘制的工具**必须**提供它；绘制普通折线的工具可以省略。
+2. **`Stroke` 是值对象** — 它携带 `id`（唯一，`crypto.randomUUID()` 是惯例来源）+ `tool`（与 `ToolContribution.id` 匹配）+ 点集 + 样式 + 你希望为历史回放保留的任何工具特定附加数据。
+3. **`renderStroke` 是历史回放钩子** — 当用户撤销/重做/调整大小时，画布引擎会为每个笔触调用 `renderStroke(canvasCtx, stroke)` 来回放所有笔触。使用超出默认折线效果（透明度、自定义宽度、渐变处理）进行绘制的工具**必须**提供它；绘制普通折线的工具可以省略。
 4. **`StrokeColor` 是联合类型** — `string | { type: 'linear'; from: string; to: string }`。自定义渲染器必须处理两种情况；上面的代码片段使用 `@openpen/module-api` 中的 `resolveStrokeColor(color)` 为 `ctx.strokeStyle` 选取一个代表性的 CSS 颜色（线性渐变取 `color.from`）。
 5. **光标与工具的关联** — `CursorContribution.id === ToolContribution.id`。精确匹配 id，否则宿主会回退到默认光标。
 
@@ -334,7 +334,7 @@ export default defineModule({
 | 方法 | 说明 |
 |--------|-------------|
 | `ctx.t(key, params?)` | 解析此 module 的 locale 命名空间中的 i18n 键。 |
-| `ctx.notify(payload)` | 在覆盖层窗口中显示一个 toast。返回 `NotifyHandle`。 |
+| `ctx.notify(payload)` | 在叠加层窗口中显示一个 toast。返回 `NotifyHandle`。 |
 | `ctx.getSettings<T>()` | 返回此 module 的设置。 |
 | `ctx.callMain(action, payload?)` | 调用此 module 的某个主进程处理器。 |
 | `ctx.onDispose(fn)` | 注册清理回调——在 module 卸载时调用。 |

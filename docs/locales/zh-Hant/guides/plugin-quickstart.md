@@ -162,7 +162,7 @@ export default defineModule({
 - `tools` 用於註冊繪圖工具。完整的 `ToolContribution` 介面（id、label、icon、指標處理器、選填的 `renderStroke`）請參閱 [`canvas.tools`](../slots/canvas#canvas-tools)。
 - `cursors` 將自訂 DOM 游標綁定至工具 — `CursorContribution` 上的 `id` MUST 與對應 `ToolContribution` 上的 `id` 相符。游標外形選項（inline SVG / 相對路徑 / PNG）及 `--openpen-cursor-accent` 佈景主題慣例請參閱 [`ui.cursors`](../slots/ui#ui-cursors)。
 - `settingsPanels` 在**設定 → 功能**中新增一個區塊。只有需要完整專屬頁籤的 module 才使用 `settingsTabs`。
-- 設有 `label` 與 `userCustomizable: true` 的 shortcut 會出現在**設定 → Shortcuts** 你的 module 群組下，讓使用者自行重新綁定。若兩者皆省略，則以宣告的預設值靜默執行。
+- 設有 `label` 與 `userCustomizable: true` 的快捷鍵會出現在**設定 → 快捷鍵** 你的 module 群組下，讓使用者自行重新綁定。若兩者皆省略，則以宣告的預設值靜默執行。
 - 請選擇不會與常見作業系統綁定衝突的加速鍵預設值；若 `globalShortcut.register` 被拒絕，執行階段會在主控台記錄錯誤。
 
 完整的設定 API（`getSettings`、`updateSettings`、`onSettingsChange`），請參閱 [guides/module-settings.md](./module-settings.md)。

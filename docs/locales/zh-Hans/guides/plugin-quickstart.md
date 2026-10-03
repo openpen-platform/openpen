@@ -162,7 +162,7 @@ export default defineModule({
 - `tools` 注册一个绘图工具。完整的 `ToolContribution` 接口（id、label、icon、指针处理器、可选的 `renderStroke`）参见 [`canvas.tools`](../slots/canvas#canvas-tools)。
 - `cursors` 将自定义 DOM 光标绑定到工具——`CursorContribution` 上的 `id` MUST 与对应 `ToolContribution` 的 `id` 匹配。光标形状选项（内联 SVG / 相对路径 / PNG）及 `--openpen-cursor-accent` 主题约定参见 [`ui.cursors`](../slots/ui#ui-cursors)。
 - `settingsPanels` 在**设置 → 功能**中添加一个区块。仅当 module 需要专属完整标签页时才使用 `settingsTabs`。
-- 带有 `label` 和 `userCustomizable: true` 的 shortcut 会出现在**设置 → 快捷键**的 module 分组下，供用户重新绑定。两者都省略则以声明的默认值静默运行。
+- 带有 `label` 和 `userCustomizable: true` 的快捷键会出现在**设置 → 快捷键**的 module 分组下，供用户重新绑定。两者都省略则以声明的默认值静默运行。
 - 选择不与常见 OS 绑定冲突的加速键默认值；若 `globalShortcut.register` 被拒绝，运行时会在控制台输出错误日志。
 
 完整的设置 API（`getSettings`、`updateSettings`、`onSettingsChange`），参见 [guides/module-settings.md](./module-settings.md)。

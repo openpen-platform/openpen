@@ -113,7 +113,7 @@ host 會將目前作用中的筆觸顏色以 CSS 自訂屬性的形式公開於 
 --openpen-cursor-accent
 ```
 
-游標 SVG 可在 fill / stroke 屬性中引用此屬性，以跟隨使用者選取的顏色：
+游標 SVG 可在 `fill` / `stroke` 屬性中引用此屬性，以跟隨使用者選取的顏色：
 
 ```html
 <circle fill="var(--openpen-cursor-accent, #818cf8)" ... />

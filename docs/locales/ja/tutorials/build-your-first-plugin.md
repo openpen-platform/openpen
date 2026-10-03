@@ -279,7 +279,7 @@ export default defineModule({
 注目すべき点:
 
 1. **Tool コントラクト** — `onPointerDown(canvasCtx, point, style)` は状態を初期化しますが `void` を返します。`onPointerMove(canvasCtx, point)` はライブの `canvasCtx` 上にインクリメンタルに描画します。`onPointerUp(canvasCtx, point)` のみが `Stroke` を返すハンドラーで、返されたオブジェクトがホストによって undo/redo 用に保存されます。
-2. **Stroke は値オブジェクト** — `id` (一意、慣例として `crypto.randomUUID()` を使用) + `tool` (`ToolContribution.id` と一致) + ポイント + スタイル + 履歴の再現のために保持したいツール固有の追加データを持ちます。
+2. **`Stroke` は値オブジェクト** — `id` (一意、慣例として `crypto.randomUUID()` を使用) + `tool` (`ToolContribution.id` と一致) + ポイント + スタイル + 履歴の再現のために保持したいツール固有の追加データを持ちます。
 3. **`renderStroke` は履歴再現フック** — undo/redo やリサイズ時に、キャンバスエンジンはすべてのストロークに対して `renderStroke(canvasCtx, stroke)` を呼び出して再現します。デフォルトのポリラインを超えるエフェクト (アルファ、カスタム幅、グラデーション処理) で描画するツールは必ず提供してください。プレーンなポリラインで描画するツールは省略できます。
 4. **`StrokeColor` はユニオン型** — `string | { type: 'linear'; from: string; to: string }` です。カスタムレンダラーは両方を処理する必要があります。上記のスニペットは `@openpen/module-api` の `resolveStrokeColor(color)` を使用して、`ctx.strokeStyle` に使用する代表的な CSS カラー (線形グラデーションの場合は `color.from`) を取得しています。
 5. **カーソルとツールの紐付け** — `CursorContribution.id === ToolContribution.id` です。id を正確に一致させないと、ホストはデフォルトカーソルにフォールバックします。

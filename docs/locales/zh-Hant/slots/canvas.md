@@ -185,7 +185,7 @@ import { commitStroke, getAllStrokes, removeStrokeById, pushCommand } from '@ope
 
 ### `commitStroke(stroke)`
 
-以不可分割的方式提交已完成的筆觸：將其附加至 stroke store、記錄一筆 `ADD_STROKE` history 命令，並請求畫布重繪，全部在單一呼叫中完成。
+以不可分割的方式提交已完成的筆觸：將其附加至筆觸 store、記錄一筆 `ADD_STROKE` history 命令，並請求畫布重繪，全部在單一呼叫中完成。
 
 ```ts
 // Async-placement tool: stroke is finalised after a deferred interaction.

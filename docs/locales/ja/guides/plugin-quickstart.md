@@ -164,7 +164,7 @@ export default defineModule({
 - `tools` は描画ツールを登録します。`ToolContribution` インターフェース (id、ラベル、アイコン、ポインターハンドラー、オプションの `renderStroke`) については [`canvas.tools`](../slots/canvas#canvas-tools) を参照してください。
 - `cursors` はカスタム DOM カーソルをツールに関連付けます。`CursorContribution` の `id` は対応する `ToolContribution` の `id` と一致しなければなりません。カーソル形状オプション (インライン SVG / 相対パス / PNG) と `--openpen-cursor-accent` テーマ規則については [`ui.cursors`](../slots/ui#ui-cursors) を参照してください。
 - `settingsPanels` は**設定 → 機能**にセクションを追加します。専用タブ全体が必要な module の場合のみ `settingsTabs` を使用してください。
-- `label` と `userCustomizable: true` を持つ shortcut は**設定 → ショートカット**の module グループに表示され、ユーザーがキーバインドを変更できます。両方を省略すると、宣言したデフォルトでサイレントに動作します。
+- `label` と `userCustomizable: true` を持つショートカットは**設定 → ショートカット**の module グループに表示され、ユーザーがキーバインドを変更できます。両方を省略すると、宣言したデフォルトでサイレントに動作します。
 - OS の一般的なキーバインドと衝突しないアクセラレーターのデフォルトを選択してください。`globalShortcut.register` が拒否された場合、ランタイムはコンソールエラーを記録します。
 
 設定 API (`getSettings`、`updateSettings`、`onSettingsChange`) については [guides/module-settings.md](./module-settings.md) を参照してください。

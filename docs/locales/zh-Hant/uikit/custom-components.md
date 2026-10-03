@@ -35,7 +35,7 @@ UIKit 封裝元件涵蓋了控制列與設定面板最常見的需求。在建�
 
 ## token 優先原則
 
-所有可能因主題而改變的屬性——顏色、陰影、模糊、圓角——都 MUST 使用 `var(--openpen-*)` token。在 plugin CSS 中直接寫入十六進位或 `rgba()` 值是反模式：這會破壞深色/淺色切換，且若 token 日後更新，也會與主程式的色板產生差異。
+所有可能因主題而改變的屬性——顏色、陰影、模糊、圓角——都 MUST 使用 `var(--openpen-*)` token。在 plugin CSS 中直接寫入十六進位或 `rgba()` 值是反模式：這會破壞深色/淺色切換，且若 token 日後更新，也會與 host 的色板產生差異。
 
 ```css
 /* ✅ Theme-aware */
@@ -343,7 +343,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
 
 ## 深色 / 淺色主題：自動符合規範
 
-由於所有樣式值均來自 `var(--openpen-*)` token，主程式的 `data-theme` 屬性變更時，每個自訂屬性都會自動重新解析。你的 plugin 程式碼不需要任何 JavaScript、主題監聽器或 `prefers-color-scheme` 媒體查詢。
+由於所有樣式值均來自 `var(--openpen-*)` token，host 的 `data-theme` 屬性變更時，每個自訂屬性都會自動重新解析。你的 plugin 程式碼不需要任何 JavaScript、主題監聽器或 `prefers-color-scheme` 媒體查詢。
 
 以下 token 在淺色模式下會翻轉其值（確切的淺色模式值請參閱 [design-tokens.md](../reference/design-tokens.md)）：
 
@@ -382,7 +382,7 @@ import { ComboboxRoot } from 'reka-ui'
 import { ComboboxRoot } from '@openpen/module-api/uikit'
 ```
 
-### 匯入主程式內部元件
+### 匯入 host 內部元件
 
 ```ts
 // ❌ Not part of the public API — can break without notice

@@ -137,4 +137,4 @@ npx openpen-cli <command>
 
 - [建置你的第一個 plugin](../tutorials/build-your-first-plugin.md)
 - [Plugin 發佈指南](../guides/publishing.md)
-- [Contribution Slot 目錄](../slots/)
+- [插槽目錄](../slots/)
