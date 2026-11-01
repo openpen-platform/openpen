@@ -38,8 +38,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "vite": "^6.4.3",
-    "@vitejs/plugin-vue": "^6.0.9",
+    "vite": "^6.4.5",
+    "@vitejs/plugin-vue": "^6.0.10",
     "vite-plugin-css-injected-by-js": "~4.0.1",
     "archiver": "~7.0.1"
   },
