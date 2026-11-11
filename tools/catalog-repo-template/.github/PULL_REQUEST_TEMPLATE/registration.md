@@ -8,7 +8,7 @@
 - [ ] I have read [CONTRIBUTING.md](../CONTRIBUTING.md)
 - [ ] My GitHub login matches the `scope` in the plugin id
 - [ ] A GitHub Release exists with the attached zip at the URL in `manifest.json`
-- [ ] I ran `openpen publish` to generate this PR automatically (recommended)
+- [ ] I ran `npx openpen-cli publish` to generate this PR automatically (recommended)
 - [ ] `plugin.json` declares at least one contribution slot
 
 ### Checklist (bot — filled automatically)

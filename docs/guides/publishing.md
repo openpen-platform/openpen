@@ -33,19 +33,19 @@ bundle them.
 
 ## Local install (for testing)
 
+Run this in the plugin directory after `npm run build`. It copies `plugin.json`, `dist/`,
+and `locales/` into `~/.openpen/plugins/@scope/name/`:
+
 ```bash
-mkdir -p ~/.openpen/plugins/my-plugin
-cp -R plugin.json dist ~/.openpen/plugins/my-plugin/
+npx openpen-cli plugin add .
 # Then restart OpenPen
 ```
 
-Plugin loading requires the prod build (the importmap is only in `dist/index.html`).
-Build the host first if you have not already:
+`plugin add` asks you to confirm before it installs; pass `--yes` (or `-y`) in a
+non-interactive shell.
 
-```bash
-npm run build                              # host + runtime shims
-cd packages/my-plugin && npm run build    # plugin
-```
+Plugin loading requires a packaged (production) build of OpenPen. The host's dev
+server does not load plugins, so restart a packaged OpenPen to see your plugin.
 
 ---
 
@@ -70,14 +70,27 @@ for the full command reference.
 
 ## Distribution
 
-1. Build your plugin and publish a GitHub Release with the zipped `dist/`,
-   `plugin.json`, and `locales/` (the `openpen pack` command produces this zip).
-2. Users install it via `npx openpen-cli plugin add <github-url>` for a direct
-   install, or `npx openpen-cli plugin install @scope/name` once your plugin is
-   listed in the catalog.
+1. Build your plugin, run `npx openpen-cli pack` to produce the zip of `dist/`,
+   `plugin.json`, and `locales/`, and attach it to a GitHub Release tagged
+   `v<version>`.
+2. Users can install it straight from that release with
+   `npx openpen-cli plugin add <github-url>`.
 
-There is no central plugin registry yet. Community discoverability is via
-GitHub topics (`openpen-plugin`) and the OpenPen Discussions board.
+### The plugin catalog
+
+OpenPen keeps a central catalog, the
+[OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) repository.
+Plugins listed there can be installed by id with
+`npx openpen-cli plugin install @scope/name` and are shown in the app's Marketplace tab.
+
+To get your plugin listed, run `npx openpen-cli publish` after attaching the zip to
+your GitHub Release. It checks the release, confirms that your GitHub login matches
+the scope of the plugin id, and opens a pull request against the catalog: a
+Registration PR for a first submission, an Update PR for a new version. A first
+submission is reviewed by a maintainer before it is merged. See section 7 of
+[Build your first plugin](../tutorials/build-your-first-plugin.md)
+for the full walkthrough and [`reference/openpen-cli.md`](../reference/openpen-cli.md)
+for what each step does.
 
 ---
 
@@ -91,7 +104,8 @@ Your plugin runs in OpenPen's main renderer with full access to:
 - localStorage / sessionStorage (no per-plugin isolation)
 
 OpenPen takes a **user-installed trust model**. There is
-no permissions sandbox, no code signing, and no marketplace audit. Users who
+no permissions sandbox and no code signing, and catalog review is not a security
+audit of your code. Users who
 install your plugin are extending that trust to your code.
 
 As a plugin author, you **SHOULD**:

@@ -10,14 +10,14 @@ language: zh-Hans
 # 构建你的第一个 OpenPen Plugin
 
 在本教程中，你将搭建一个 plugin、构建它、将其安装到 OpenPen 中，
-并发布到社区目录——全程使用 `openpen` CLI。
+并发布到社区目录——全程使用 `openpen-cli` 软件包。
 
 ## 前提条件
 
 - Node.js 22.12+，npm 9+
 - 已安装并运行 OpenPen 1.0 或更高版本
 - 支持 TypeScript 的代码编辑器
-- 已安装并完成身份验证的 `gh` CLI（`gh auth login`）——`openpen publish` 所需
+- 已安装并完成身份验证的 `gh` CLI（`gh auth login`）——`npx openpen-cli publish` 所需
 
 ---
 
@@ -30,7 +30,7 @@ npm install
 ```
 
 将 `yourscope` 替换为你的 GitHub 用户名或组织名（小写）。
-`openpen create` 会复制 plugin-starter 模板，替换 id 占位符，并打印后续步骤。
+`npx openpen-cli create` 会复制 plugin-starter 模板，替换 id 占位符，并打印后续步骤。
 
 你将得到如下文件夹结构：
 
@@ -56,7 +56,7 @@ npm run build
 npx openpen-cli plugin add .
 ```
 
-`openpen plugin add <local-path>` 会将 `plugin.json`、`dist/` 和 `locales/`
+`npx openpen-cli plugin add <local-path>` 会将 `plugin.json`、`dist/` 和 `locales/`
 （如存在）复制到 `~/.openpen/plugins/@yourscope/my-highlighter/`。安装时不会在你的机器上执行构建步骤——你构建好的 `dist/` 会被直接使用。
 
 CLI 只写入文件；`plugin-meta.json` 由宿主负责管理，并在下次启动时重建。完整的 lifecycle 及验证安装是否生效的方法，请参见
@@ -430,7 +430,7 @@ gh release create v0.1.0 ./yourscope-my-highlighter-0.1.0.zip
 npx openpen-cli publish
 ```
 
-`openpen publish` 会读取 `plugin.json`，验证 GitHub Release 是否存在，
+`npx openpen-cli publish` 会读取 `plugin.json`，验证 GitHub Release 是否存在，
 检查你的已验证 GitHub 登录名是否与 plugin scope 匹配，计算 sha256，并在 `OpenPen-plugins` 目录仓库中提交一个 **Registration PR**。
 
 **后续流程：**

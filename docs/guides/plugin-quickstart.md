@@ -23,9 +23,9 @@ npm install
 ```
 
 Replace `yourscope` with your GitHub username or org name (lowercase).
-`openpen create` copies the plugin-starter template, substitutes the id, and prints next steps.
+`npx openpen-cli create` copies the plugin-starter template, substitutes the id, and prints next steps.
 
-> **Manual scaffold gotcha**: if you skip `openpen-cli create` and copy the
+> **Manual scaffold gotcha**: if you skip `npx openpen-cli create` and copy the
 > plugin-starter by hand, you MUST keep these three places in sync — they all
 > declare the plugin id and a mismatch causes `useModuleContext()` to throw at
 > runtime:
@@ -48,9 +48,13 @@ Use the CLI to copy the built plugin into the host's plugin directory:
 npx openpen-cli plugin add .
 ```
 
-`openpen plugin add <local-path>` copies `plugin.json`, `dist/`, and `locales/`
+`npx openpen-cli plugin add <local-path>` copies `plugin.json`, `dist/`, and `locales/`
 (when present) into `~/.openpen/plugins/@yourscope/my-plugin/`. The host scans
-this directory at startup; see the tutorial's [worked example](../tutorials/build-your-first-plugin.md#2-install-for-local-development) for more.
+this directory at startup; see the tutorial's [worked example](../tutorials/build-your-first-plugin.md) for more.
+
+`plugin add` asks you to confirm before it installs, because plugins run with full
+host access. In a non-interactive shell (CI, scripts) there is nobody to answer, so
+pass `--yes` (or `-y`): `npx openpen-cli plugin add . --yes`.
 
 > Files on disk are only half the picture — `plugin-meta.json` is rebuilt by
 > the host the next time OpenPen starts. See

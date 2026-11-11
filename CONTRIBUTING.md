@@ -58,7 +58,7 @@ src/                Renderer process (Vue 3)
 
 docs/               Documentation
 packages/           Standalone packages
-  openpen-cli/      npx openpen plugin manager
+  openpen-cli/      npx openpen-cli plugin manager
 scripts/            Build / dev helpers wired to `npm run *` (see scripts/README.md)
 tools/              Dev-only utilities and templates not part of the runtime (see tools/README.md)
 ```

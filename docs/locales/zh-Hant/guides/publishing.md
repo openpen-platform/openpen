@@ -33,19 +33,18 @@ npm run build    # outputs dist/renderer.js via @openpen/build (Rollup)
 
 ## 本機安裝（用於測試）
 
+在 plugin 目錄中執行 `npm run build` 之後，再執行以下指令。它會將 `plugin.json`、`dist/` 與 `locales/`
+複製到 `~/.openpen/plugins/@scope/name/`：
+
 ```bash
-mkdir -p ~/.openpen/plugins/my-plugin
-cp -R plugin.json dist ~/.openpen/plugins/my-plugin/
+npx openpen-cli plugin add .
 # Then restart OpenPen
 ```
 
-Plugin 載入需要正式建置版本（importmap 只存在於 `dist/index.html`）。
-若尚未建置 host，請先執行：
+`plugin add` 在安裝前會請你確認；在非互動式 shell 中請加上 `--yes`（或 `-y`）。
 
-```bash
-npm run build                              # host + runtime shims
-cd packages/my-plugin && npm run build    # plugin
-```
+Plugin 載入需要打包後（正式）的 OpenPen 建置版本。Host 的 dev server 不會載入 plugin，
+因此請重新啟動打包後的 OpenPen 來查看你的 plugin。
 
 ---
 
@@ -68,10 +67,24 @@ OpenPen plugin **不**透過 npm registry 發佈——請使用上述 GitHub 格
 
 ## 發佈
 
-1. 建置你的 plugin，並在 GitHub Release 中附上壓縮的 `dist/`、`plugin.json` 與 `locales/`（`openpen pack` 指令會產生此 zip）。
-2. 使用者可透過 `npx openpen-cli plugin add <github-url>` 直接安裝，或在你的 plugin 列入目錄後使用 `npx openpen-cli plugin install @scope/name` 安裝。
+1. 建置你的 plugin，執行 `npx openpen-cli pack` 產生包含 `dist/`、`plugin.json` 與 `locales/` 的 zip，
+   並將它附在標記為 `v<version>` 的 GitHub Release 上。
+2. 使用者可直接從該 release 安裝：
+   `npx openpen-cli plugin add <github-url>`。
 
-目前尚無中央 plugin registry。社群的可搜尋性來自 GitHub topics（`openpen-plugin`）以及 OpenPen Discussions 討論區。
+### Plugin 目錄
+
+OpenPen 維護一個中央目錄，即
+[OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) repository。
+列在其中的 plugin 可用 id 安裝：
+`npx openpen-cli plugin install @scope/name`，並會顯示在應用程式的 Marketplace 分頁中。
+
+若要將你的 plugin 列入目錄，請在把 zip 附到 GitHub Release 之後執行 `npx openpen-cli publish`。
+它會檢查該 release、確認你的 GitHub 登入帳號與 plugin id 的 scope 相符，
+並對目錄開啟一個 pull request：首次提交為 Registration PR，新版本則為 Update PR。
+首次提交在合併前會由維護者審閱。完整流程請見
+[建立你的第一個 plugin](../tutorials/build-your-first-plugin.md) 的第 7 節，
+各步驟的細節請見 [`reference/openpen-cli.md`](../reference/openpen-cli.md)。
 
 ---
 
@@ -84,7 +97,7 @@ OpenPen plugin **不**透過 npm registry 發佈——請使用上述 GitHub 格
 - DOM（應用程式中的任何 UI，不限於你自己的部分）
 - localStorage / sessionStorage（無每個 plugin 的隔離機制）
 
-OpenPen 採用**使用者自行安裝信任模型**。沒有權限沙盒、沒有程式碼簽署，也沒有市集審核。安裝你的 plugin 的使用者，即是將信任延伸至你的程式碼。
+OpenPen 採用**使用者自行安裝信任模型**。沒有權限沙盒也沒有程式碼簽署，而目錄審閱並非對你程式碼的安全稽核。安裝你的 plugin 的使用者，即是將信任延伸至你的程式碼。
 
 身為 plugin 作者，你 **SHOULD**：
 

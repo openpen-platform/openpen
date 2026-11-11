@@ -9,14 +9,14 @@ language: ja
 
 # はじめての OpenPen plugin を作る
 
-このチュートリアルでは、`openpen` CLI を使って plugin のスキャフォールディング、ビルド、OpenPen へのインストール、そしてコミュニティカタログへの公開までを一通り体験します。
+このチュートリアルでは、`openpen-cli` パッケージを使って plugin のスキャフォールディング、ビルド、OpenPen へのインストール、そしてコミュニティカタログへの公開までを一通り体験します。
 
 ## 前提条件
 
 - Node.js 22.12+、npm 9+
 - OpenPen 1.0 以降がインストールされ、起動していること
 - TypeScript をサポートするコードエディター
-- `gh` CLI がインストールされ、認証済みであること (`gh auth login`) — `openpen publish` に必要
+- `gh` CLI がインストールされ、認証済みであること (`gh auth login`) — `npx openpen-cli publish` に必要
 
 ---
 
@@ -29,7 +29,7 @@ npm install
 ```
 
 `yourscope` は GitHub のユーザー名または組織名 (小文字) に置き換えてください。
-`openpen create` は plugin-starter テンプレートをコピーし、id のプレースホルダーを置換して、次のステップを出力します。
+`npx openpen-cli create` は plugin-starter テンプレートをコピーし、id のプレースホルダーを置換して、次のステップを出力します。
 
 以下のようなフォルダー構成が生成されます。
 
@@ -55,7 +55,7 @@ npm run build
 npx openpen-cli plugin add .
 ```
 
-`openpen plugin add <local-path>` は `plugin.json`、`dist/`、および `locales/` (存在する場合) を `~/.openpen/plugins/@yourscope/my-highlighter/` にコピーします。インストール時にマシン上でビルドは実行されません — ビルド済みの `dist/` がそのまま使用されます。
+`npx openpen-cli plugin add <local-path>` は `plugin.json`、`dist/`、および `locales/` (存在する場合) を `~/.openpen/plugins/@yourscope/my-highlighter/` にコピーします。インストール時にマシン上でビルドは実行されません — ビルド済みの `dist/` がそのまま使用されます。
 
 CLI はファイルの書き込みのみを行います。`plugin-meta.json` はホストの責務であり、次回起動時に再構築されます。インストールが反映されたことを確認する方法を含む完全な lifecycle については、[`plugin-meta.json` の所有権](../concepts/plugin-compatibility.md#plugin-meta-json-ownership)を参照してください。
 
@@ -428,7 +428,7 @@ gh release create v0.1.0 ./yourscope-my-highlighter-0.1.0.zip
 npx openpen-cli publish
 ```
 
-`openpen publish` は `plugin.json` を読み込み、GitHub Release の存在を確認し、認証済み GitHub ログインが plugin のスコープと一致することを検証し、sha256 を計算して、`OpenPen-plugins` カタログリポジトリに**Registration PR** をオープンします。
+`npx openpen-cli publish` は `plugin.json` を読み込み、GitHub Release の存在を確認し、認証済み GitHub ログインが plugin のスコープと一致することを検証し、sha256 を計算して、`OpenPen-plugins` カタログリポジトリに**Registration PR** をオープンします。
 
 **その後の流れ:**
 

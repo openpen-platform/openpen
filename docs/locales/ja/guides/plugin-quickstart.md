@@ -27,9 +27,9 @@ npm install
 ```
 
 `yourscope` は GitHub のユーザー名または組織名 (小文字) に置き換えてください。
-`openpen create` は plugin-starter テンプレートをコピーし、id を置換して次のステップを表示します。
+`npx openpen-cli create` は plugin-starter テンプレートをコピーし、id を置換して次のステップを表示します。
 
-> **手動スキャフォールドの注意点**: `openpen-cli create` をスキップして
+> **手動スキャフォールドの注意点**: `npx openpen-cli create` をスキップして
 > plugin-starter を手動でコピーする場合、以下の3箇所を必ず同期させてください。
 > これらはすべて plugin の id を宣言しており、不一致があると `useModuleContext()` が
 > 実行時にエラーをスローします:
@@ -52,9 +52,11 @@ CLI を使用して、ビルド済み plugin をホストの plugin ディレク
 npx openpen-cli plugin add .
 ```
 
-`openpen plugin add <local-path>` は `plugin.json`、`dist/`、および `locales/` (存在する場合) を
+`npx openpen-cli plugin add <local-path>` は `plugin.json`、`dist/`、および `locales/` (存在する場合) を
 `~/.openpen/plugins/@yourscope/my-plugin/` にコピーします。ホストは起動時にこのディレクトリをスキャンします。詳細は
-チュートリアルの [実装例](../tutorials/build-your-first-plugin.md#2-install-for-local-development) を参照してください。
+チュートリアルの [実装例](../tutorials/build-your-first-plugin.md) を参照してください。
+
+`plugin add` は、plugin がホストへのフルアクセスで動作するため、インストール前に確認を求めます。非対話型シェル (CI、スクリプト) では応答する人がいないため、`--yes` (または `-y`) を付けてください: `npx openpen-cli plugin add . --yes`。
 
 > ディスク上のファイルは全体の半分に過ぎません。`plugin-meta.json` は次回 OpenPen が起動する際に
 > ホストによって再構築されます。`plugin add` が返った後の動作については

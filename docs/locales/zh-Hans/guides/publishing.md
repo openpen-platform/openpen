@@ -35,19 +35,17 @@ npm run build    # outputs dist/renderer.js via @openpen/build (Rollup)
 
 ## 本地安装（用于测试）
 
+在 plugin 目录中执行 `npm run build` 之后运行。它会将 `plugin.json`、`dist/` 和 `locales/`
+复制到 `~/.openpen/plugins/@scope/name/`：
+
 ```bash
-mkdir -p ~/.openpen/plugins/my-plugin
-cp -R plugin.json dist ~/.openpen/plugins/my-plugin/
+npx openpen-cli plugin add .
 # Then restart OpenPen
 ```
 
-Plugin 加载需要生产构建（importmap 仅在 `dist/index.html` 中）。
-如果尚未构建宿主，请先构建：
+`plugin add` 在安装前会要求你确认；在非交互式 shell 中请传入 `--yes`（或 `-y`）。
 
-```bash
-npm run build                              # host + runtime shims
-cd packages/my-plugin && npm run build    # plugin
-```
+Plugin 加载需要打包后的（生产）OpenPen 构建。宿主的开发服务器不会加载 plugin，因此请重启打包版 OpenPen 来查看你的 plugin。
 
 ---
 
@@ -70,10 +68,14 @@ OpenPen plugin **不通过** npm 注册表分发——请使用上述 GitHub 形
 
 ## 分发
 
-1. 构建你的 plugin，并将打包好的 `dist/`、`plugin.json` 和 `locales/` 作为 zip 文件发布到 GitHub Release（`openpen pack` 命令会生成此 zip）。
-2. 用户通过 `npx openpen-cli plugin add <github-url>` 直接安装，或在你的 plugin 列入目录后通过 `npx openpen-cli plugin install @scope/name` 安装。
+1. 构建你的 plugin，运行 `npx openpen-cli pack` 生成包含 `dist/`、`plugin.json` 和 `locales/` 的 zip，并将其附加到标记为 `v<version>` 的 GitHub Release。
+2. 用户可以直接从该 Release 安装：`npx openpen-cli plugin add <github-url>`。
 
-目前没有中央 plugin 注册表。社区发现渠道是 GitHub 话题标签（`openpen-plugin`）和 OpenPen Discussions 讨论区。
+### Plugin 目录
+
+OpenPen 维护一个中央目录，即 [OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) 仓库。列入其中的 plugin 可以通过 `npx openpen-cli plugin install @scope/name` 按 id 安装，并会显示在应用的 Marketplace 标签页中。
+
+要将你的 plugin 列入目录，请在把 zip 附加到 GitHub Release 之后运行 `npx openpen-cli publish`。它会检查该 Release，确认你的 GitHub 登录名与 plugin id 的 scope 一致，并向目录提交一个 pull request：首次提交为注册 PR（Registration PR），新版本为更新 PR（Update PR）。首次提交在合并前会由维护者审核。完整流程见[构建你的第一个 plugin](../tutorials/build-your-first-plugin.md) 的第 7 节，各步骤的具体作用见 [`reference/openpen-cli.md`](../reference/openpen-cli.md)。
 
 ---
 
@@ -86,7 +88,7 @@ OpenPen plugin **不通过** npm 注册表分发——请使用上述 GitHub 形
 - DOM（应用中的任何 UI，不仅限于你自己的部分）
 - localStorage / sessionStorage（无 per-plugin 隔离）
 
-OpenPen 采用**用户安装信任模型**。没有权限沙箱、代码签名或应用市场审核。安装你 plugin 的用户是在将这份信任延伸到你的代码。
+OpenPen 采用**用户安装信任模型**。没有权限沙箱和代码签名，目录审核也不是对你代码的安全审计。安装你 plugin 的用户是在将这份信任延伸到你的代码。
 
 作为 plugin 作者，你 **SHOULD**：
 

@@ -5,7 +5,7 @@
 ### Prerequisites
 
 - OpenPen v1.0+ installed on your development machine
-- `openpen-cli` available (`npm install -g openpen-cli` or `npx openpen`)
+- `npx openpen-cli` available (no installation needed)
 - A GitHub account whose login matches the `scope` in your plugin id
 - `gh` CLI installed and authenticated (`gh auth login`)
 
@@ -13,7 +13,7 @@
 
 1. **Scaffold** a new plugin:
    ```bash
-   npx openpen create @yourscope/your-plugin-name
+   npx openpen-cli create @yourscope/your-plugin-name
    cd your-plugin-name
    npm install
    ```
@@ -29,7 +29,7 @@
 
 4. **Pack** the distributable zip:
    ```bash
-   npx openpen pack
+   npx openpen-cli pack
    # Outputs: yourscope-your-plugin-name-1.0.0.zip
    # Prints: sha256: <hex>
    ```
@@ -41,7 +41,7 @@
 
 6. **Publish** to this catalog:
    ```bash
-   npx openpen publish
+   npx openpen-cli publish
    # Opens a Registration PR in this repo
    ```
 
@@ -95,7 +95,7 @@ The file you submit is `plugins/<scope>/<name>/manifest.json`:
 }
 ```
 
-`openpen publish` generates this automatically — you do not need to write it by hand.
+`npx openpen-cli publish` generates this automatically — you do not need to write it by hand.
 
 ---
 

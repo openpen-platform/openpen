@@ -46,14 +46,14 @@ For the full governance specification, see the
 ## For plugin authors
 
 See [build-your-first-plugin.md](https://github.com/openpen-platform/openpen/blob/main/docs/tutorials/build-your-first-plugin.md)
-for the full walkthrough, including how to use `openpen create`, `openpen pack`, and `openpen publish`.
+for the full walkthrough, including how to use `npx openpen-cli create`, `npx openpen-cli pack`, and `npx openpen-cli publish`.
 
 **TL;DR publish flow:**
-1. `npx openpen create @yourscope/your-plugin-name` — scaffold
+1. `npx openpen-cli create @yourscope/your-plugin-name` — scaffold
 2. Develop + `npm run build`
-3. `npx openpen pack` — create the release zip
+3. `npx openpen-cli pack` — create the release zip
 4. Create a GitHub Release and attach the zip
-5. `npx openpen publish` — open a Registration PR here
+5. `npx openpen-cli publish` — open a Registration PR here
 
 ## For maintainers — setup checklist
 

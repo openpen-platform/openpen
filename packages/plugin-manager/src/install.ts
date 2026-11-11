@@ -139,7 +139,7 @@ function isZipPath(p: string): boolean {
  *   plus a cleanup function the caller MUST invoke in `finally`.
  *
  * Some plugin zips wrap their contents in a single top-level folder
- * (matches `openpen pack` output: dist/ + plugin.json at the archive root,
+ * (matches `openpen-cli pack` output: dist/ + plugin.json at the archive root,
  * but third-party tooling may add a wrapper). If the extracted tempdir does
  * not contain plugin.json at its root but does contain exactly one subdir
  * that does, transparently descend into that subdir.
@@ -241,7 +241,7 @@ export async function inspectLocalSource(sourcePath: string): Promise<InspectedP
 
 /**
  * Install a plugin from a local source. Source may be a built plugin
- * directory, or a .zip file produced by `openpen pack`. Both paths converge
+ * directory, or a .zip file produced by `openpen-cli pack`. Both paths converge
  * on the same validate → copy flow.
  */
 export async function installFromLocal(
@@ -339,7 +339,7 @@ export async function installFromGitHubRepo(
     throw new Error(
       `No .zip asset found in the latest release of ${normalised}.\n` +
       '  Provide a direct release zip URL instead:\n' +
-      '  npx openpen plugin add https://github.com/.../releases/download/v1.0.0/scope-name-1.0.0.zip'
+      '  npx openpen-cli plugin add https://github.com/.../releases/download/v1.0.0/scope-name-1.0.0.zip'
     )
   }
   return installFromGitHubReleaseUrl(zipAsset.browser_download_url, opts)

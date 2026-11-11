@@ -33,18 +33,16 @@ npm run build    # outputs dist/renderer.js via @openpen/build (Rollup)
 
 ## ローカルインストール（テスト用）
 
+`npm run build` の後、plugin のディレクトリで次を実行します。`plugin.json`、`dist/`、`locales/` を `~/.openpen/plugins/@scope/name/` にコピーします。
+
 ```bash
-mkdir -p ~/.openpen/plugins/my-plugin
-cp -R plugin.json dist ~/.openpen/plugins/my-plugin/
+npx openpen-cli plugin add .
 # Then restart OpenPen
 ```
 
-Pluginの読み込みにはプロダクションビルドが必要です（インポートマップは `dist/index.html` にのみ存在します）。まだ行っていない場合は、先にホストをビルドしてください。
+`plugin add` はインストール前に確認を求めます。非対話型シェルでは `--yes` (または `-y`) を付けてください。
 
-```bash
-npm run build                              # host + runtime shims
-cd packages/my-plugin && npm run build    # plugin
-```
+Plugin の読み込みにはパッケージ化された (プロダクション) OpenPen のビルドが必要です。ホストの開発サーバーは plugin を読み込まないため、パッケージ化された OpenPen を再起動して plugin を確認してください。
 
 ---
 
@@ -67,10 +65,14 @@ OpenPen の plugin は npm レジストリ経由では配布されません — 
 
 ## 配布
 
-1. Pluginをビルドし、圧縮した `dist/`、`plugin.json`、`locales/` を含む GitHub Release を公開します（`openpen pack` コマンドでこの zip を生成できます）。
-2. ユーザーは `npx openpen-cli plugin add <github-url>` で直接インストールするか、plugin がカタログに登録されたら `npx openpen-cli plugin install @scope/name` でインストールできます。
+1. Pluginをビルドし、`npx openpen-cli pack` を実行して `dist/`、`plugin.json`、`locales/` の zip を生成し、`v<version>` タグの GitHub Release に添付します。
+2. ユーザーはその release から `npx openpen-cli plugin add <github-url>` で直接インストールできます。
 
-中央集権的な plugin レジストリはまだ存在しません。コミュニティでの発見可能性は GitHub トピック（`openpen-plugin`）と OpenPen Discussions ボードを通じて行われます。
+### plugin カタログ
+
+OpenPen は中央カタログとして [OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) リポジトリを管理しています。ここに登録された plugin は `npx openpen-cli plugin install @scope/name` で id を指定してインストールでき、アプリの Marketplace タブにも表示されます。
+
+plugin を登録するには、zip を GitHub Release に添付した後で `npx openpen-cli publish` を実行します。release を確認し、GitHub ログインが plugin id のスコープと一致することを検証したうえで、カタログに対して pull request を開きます。初回の提出は Registration PR、新バージョンは Update PR になります。初回の提出は、マージ前にメンテナーがレビューします。詳しい手順はチュートリアルのセクション 7 の [最初の plugin を作る](../tutorials/build-your-first-plugin.md)、各ステップの動作は [`reference/openpen-cli.md`](../reference/openpen-cli.md) を参照してください。
 
 ---
 
@@ -83,7 +85,7 @@ Pluginは OpenPen のメインレンダラー内で動作し、以下へのフ�
 - DOM（自分の UI だけでなく、アプリ内のあらゆる UI）
 - localStorage / sessionStorage（plugin ごとの分離なし）
 
-OpenPen は**ユーザーインストール型のトラストモデル**を採用しています。パーミッションサンドボックス、コード署名、マーケットプレイス審査はありません。Pluginをインストールしたユーザーは、そのコードへの信頼を拡張することになります。
+OpenPen は**ユーザーインストール型のトラストモデル**を採用しています。パーミッションサンドボックスとコード署名はなく、カタログのレビューは plugin コードのセキュリティ監査ではありません。Pluginをインストールしたユーザーは、そのコードへの信頼を拡張することになります。
 
 Plugin 作者として、以下を実施することが推奨されます。
 

@@ -6,13 +6,13 @@
  * @openpen/plugin-manager so it can be shared with the in-app marketplace.
  *
  * Usage:
- *   npx openpen create @scope/name
- *   npx openpen plugin add <source> [--yes]
- *   npx openpen plugin install @scope/name [--yes]
- *   npx openpen plugin list
- *   npx openpen plugin remove @scope/name
- *   npx openpen pack
- *   npx openpen publish
+ *   npx openpen-cli create @scope/name
+ *   npx openpen-cli plugin add <source> [--yes]
+ *   npx openpen-cli plugin install @scope/name [--yes]
+ *   npx openpen-cli plugin list
+ *   npx openpen-cli plugin remove @scope/name
+ *   npx openpen-cli pack
+ *   npx openpen-cli publish
  */
 
 import path from 'node:path'
@@ -67,7 +67,7 @@ if (topCommand === 'create') {
 async function ensureInstallConfirmed(pluginId, { yes }) {
   if (yes) return
   if (!process.stdin.isTTY) {
-    console.error('Error: `openpen plugin install/add` requires an interactive terminal to confirm.')
+    console.error('Error: `npx openpen-cli plugin install/add` requires an interactive terminal to confirm.')
     console.error('  Pass --yes (or -y) to bypass in CI / scripts after vetting the plugin source.')
     process.exit(1)
   }
@@ -86,7 +86,7 @@ async function ensureInstallConfirmed(pluginId, { yes }) {
 
 async function cmdCreate(pluginId) {
   if (!pluginId || !PLUGIN_ID_RE.test(pluginId)) {
-    console.error('Usage: npx openpen create @scope/name')
+    console.error('Usage: npx openpen-cli create @scope/name')
     console.error('  Both scope and name must be lowercase letters, digits, or hyphens.')
     process.exit(1)
   }
@@ -180,7 +180,7 @@ function checkGitHubAuthScope(expectedScope) {
     ?? result.stderr.match(/Logged in to github\.com account (\S+)/i)
   if (loginMatch && loginMatch[1].toLowerCase() !== expectedScope) {
     console.warn(`Warning: Your GitHub login is "${loginMatch[1]}" but the scope is "${expectedScope}".`)
-    console.warn('  These must match when you run `openpen publish`. You can proceed with scaffolding now.')
+    console.warn('  These must match when you run `npx openpen-cli publish`. You can proceed with scaffolding now.')
   }
 }
 
@@ -188,7 +188,7 @@ function checkGitHubAuthScope(expectedScope) {
 
 async function cmdPluginAdd(source, { yes } = {}) {
   if (!source) {
-    console.error('Usage: npx openpen plugin add <source> [--yes]')
+    console.error('Usage: npx openpen-cli plugin add <source> [--yes]')
     process.exit(1)
   }
   await ensureInstallConfirmed(source, { yes })
@@ -220,7 +220,7 @@ async function cmdPluginAdd(source, { yes } = {}) {
 
 async function cmdPluginInstall(pluginId, { yes } = {}) {
   if (!pluginId) {
-    console.error('Usage: npx openpen plugin install @scope/name [--yes]')
+    console.error('Usage: npx openpen-cli plugin install @scope/name [--yes]')
     process.exit(1)
   }
   await ensureInstallConfirmed(pluginId, { yes })
@@ -255,7 +255,7 @@ async function cmdPluginList() {
 
 async function cmdPluginRemove(pluginId) {
   if (!pluginId) {
-    console.error('Usage: npx openpen plugin remove @scope/name')
+    console.error('Usage: npx openpen-cli plugin remove @scope/name')
     process.exit(1)
   }
   try {
@@ -310,7 +310,7 @@ async function cmdPack() {
   console.log('\nNext steps:')
   console.log(`  1. Create a GitHub Release (tag: v${manifest.version})`)
   console.log(`  2. Attach ${zipName} to the release`)
-  console.log('  3. Run: npx openpen publish')
+  console.log('  3. Run: npx openpen-cli publish')
 }
 
 // ── publish ───────────────────────────────────────────────────────────────────
@@ -343,7 +343,7 @@ async function cmdPublish() {
   const zipName = `${scopePart}-${namePart}-${version}.zip`
   const zipPath = path.join(cwd, zipName)
   if (!fs.existsSync(zipPath)) {
-    console.error(`Error: ${zipName} not found. Run \`npx openpen pack\` first.`)
+    console.error(`Error: ${zipName} not found. Run \`npx openpen-cli pack\` first.`)
     process.exit(1)
   }
 
@@ -481,8 +481,8 @@ async function cmdPublish() {
     ? `plugin: register ${manifest.id}`
     : `plugin: update ${manifest.id} v${version}`
   const prBody = isRegistration
-    ? `Registration PR for \`${manifest.id}\` v${version}.\n\nSubmitted via \`openpen publish\`.`
-    : `Update \`${manifest.id}\` to v${version}.\n\nSubmitted via \`openpen publish\`.`
+    ? `Registration PR for \`${manifest.id}\` v${version}.\n\nSubmitted via \`npx openpen-cli publish\`.`
+    : `Update \`${manifest.id}\` to v${version}.\n\nSubmitted via \`npx openpen-cli publish\`.`
 
   const prResult = ghRun([
     'pr', 'create',
@@ -565,7 +565,7 @@ function printHelp() {
 openpen-cli — OpenPen Plugin CLI
 
 Usage:
-  npx openpen <command> [args]
+  npx openpen-cli <command> [args]
 
 Commands:
   create @scope/name              Scaffold a new plugin from the starter template
@@ -588,10 +588,10 @@ the plugin source.
 
 function printPluginHelp() {
   console.log(`
-openpen plugin — manage installed OpenPen plugins
+openpen-cli plugin — manage installed OpenPen plugins
 
 Usage:
-  npx openpen plugin <subcommand> [args]
+  npx openpen-cli plugin <subcommand> [args]
 
 Subcommands:
   add <source> [--yes]      Install a plugin

@@ -27,9 +27,9 @@ npm install
 ```
 
 將 `yourscope` 替換為你的 GitHub 使用者名稱或組織名稱（小寫）。
-`openpen create` 會複製 plugin-starter 範本、替換 id，並列印後續步驟。
+`npx openpen-cli create` 會複製 plugin-starter 範本、替換 id，並列印後續步驟。
 
-> **手動建立的注意事項**：若你跳過 `openpen-cli create`、改為手動複製
+> **手動建立的注意事項**：若你跳過 `npx openpen-cli create`、改為手動複製
 > plugin-starter，你 MUST 保持以下三處同步 — 它們都宣告了 plugin id，
 > 若不一致，`useModuleContext()` 在執行階段會拋出例外：
 > - `plugin.json` → `"id"`
@@ -51,9 +51,12 @@ npm run dev      # watch mode during development
 npx openpen-cli plugin add .
 ```
 
-`openpen plugin add <local-path>` 會將 `plugin.json`、`dist/` 及 `locales/`
+`npx openpen-cli plugin add <local-path>` 會將 `plugin.json`、`dist/` 及 `locales/`
 （若存在）複製到 `~/.openpen/plugins/@yourscope/my-plugin/`。Host 會在啟動時掃描
-此資料夾；詳見教學的[實作範例](../tutorials/build-your-first-plugin.md#2-install-for-local-development)。
+此資料夾；詳見教學的[實作範例](../tutorials/build-your-first-plugin.md)。
+
+`plugin add` 在安裝前會請你確認，因為 plugin 以完整的 host 權限執行。在非互動式 shell（CI、腳本）中沒有人可以回應，
+請加上 `--yes`（或 `-y`）：`npx openpen-cli plugin add . --yes`。
 
 > 磁碟上的檔案只是一半 — `plugin-meta.json` 會在 OpenPen 下次啟動時由 host 重新建立。
 > 關於 `plugin add` 返回後發生的事，請參閱

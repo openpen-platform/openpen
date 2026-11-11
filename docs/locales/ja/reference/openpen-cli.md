@@ -1,5 +1,5 @@
 ---
-title: openpen CLI
+title: openpen-cli
 description: plugin のスキャフォールド、インストール、パッケージング、カタログへの公開を行う openpen-cli コマンドラインツール。
 translationType: machine
 translatedFrom: 8e4d741
@@ -7,24 +7,22 @@ translatedAt: 2026-05-22T00:00:00Z
 language: ja
 ---
 
-# openpen CLI
+# openpen-cli
 
-`openpen` CLI（`openpen-cli` パッケージ）は、OpenPen の plugin インストール、パッケージング、公開を管理します。次のコマンドでインストールできます。
+`openpen-cli` パッケージは、OpenPen の plugin のスキャフォールド、インストール、パッケージング、公開を管理します。インストール不要で、`npx` で実行します。
 
 ```bash
-npm install -g openpen-cli
-# or use npx without installing:
 npx openpen-cli <command>
 ```
 
-> **⚠️ 必ず `openpen-cli` として呼び出してください。`openpen` ではありません。** npm 上の bare `openpen` パッケージは無関係なプロジェクトが使用しています — `npx openpen-cli ...` では誤ったツールが取得されます。
-> このドキュメント全体において、すべてのコマンドは `npx openpen-cli <verb>` として実行されます。
+> **⚠️ 必ず `npx openpen-cli` として呼び出してください。`npx openpen` は使わないでください。** npm 上の bare `openpen` パッケージは無関係なプロジェクトが使用しています — `npx openpen ...` では誤ったツールが取得されます。
+> このドキュメント全体、および CLI が出力するすべてのメッセージでは、コマンドは `npx openpen-cli <verb>` と表記されます。
 
 ---
 
 ## コマンド
 
-### `openpen create @scope/name`
+### `npx openpen-cli create @scope/name`
 
 公式スターターテンプレートから新しい plugin をスキャフォールドします。
 
@@ -32,13 +30,13 @@ npx openpen-cli <command>
 1. 入力が `@scope/name` 形式に一致するかを検証します。
 2. カレントディレクトリに `name` セグメントの名前（例: `todo-app/`）でサブディレクトリを作成します。
 3. plugin スターターテンプレートをコピーし、`plugin.json` に `@scope/name` を埋め込みます。
-4. 次のステップを出力します: `npm install` → 開発 → `npm run build` → `openpen pack`。
+4. 次のステップを出力します: `npm install` → 開発 → `npm run build` → `npx openpen-cli pack`。
 
-**認証:** 指定したスコープが認証済み GitHub ログインと一致するかを確認しますが、ブロックはしません。実際のスコープチェックは `openpen publish` 時に行われます。
+**認証:** 指定したスコープが認証済み GitHub ログインと一致するかを確認しますが、ブロックはしません。実際のスコープチェックは `npx openpen-cli publish` 時に行われます。
 
 ---
 
-### `openpen pack`
+### `npx openpen-cli pack`
 
 plugin を配布可能な zip ファイルにバンドルします。`plugin.json` が含まれるディレクトリで実行してください。
 
@@ -51,15 +49,15 @@ plugin を配布可能な zip ファイルにバンドルします。`plugin.jso
 4. `<scope>-<name>-<version>.zip` を書き出します — たとえば `@alice/todo-app` のバージョン `1.2.0` は `alice-todo-app-1.2.0.zip` になります。
 5. 出力パスと SHA-256 ハッシュを出力します。
 
-`openpen pack` はビルドを**実行しません** — 先にビルドツールを呼び出してください。
+`npx openpen-cli pack` はビルドを**実行しません** — 先にビルドツールを呼び出してください。
 
 ---
 
-### `openpen publish`
+### `npx openpen-cli publish`
 
 中央の [OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) カタログに、登録 PR またはバージョン更新プッシュを送信します。
 
-**前提条件:** `plugin.json` が存在すること、`openpen pack` で作成した zip が存在すること、および `v<version>` の GitHub Release が zip を添付した状態で公開済みであること。
+**前提条件:** `plugin.json` が存在すること、`npx openpen-cli pack` で作成した zip が存在すること、および `v<version>` の GitHub Release が zip を添付した状態で公開済みであること。
 
 **動作:**
 1. `plugin.json` と zip ファイルを検証します。
@@ -75,7 +73,7 @@ plugin を配布可能な zip ファイルにバンドルします。`plugin.jso
 
 ---
 
-### `openpen plugin install @scope/name`
+### `npx openpen-cli plugin install @scope/name`
 
 中央カタログから plugin をダウンロードしてインストールします。
 
@@ -91,7 +89,7 @@ plugin を配布可能な zip ファイルにバンドルします。`plugin.jso
 
 ---
 
-### `openpen plugin add <source>`
+### `npx openpen-cli plugin add <source>`
 
 ローカルディレクトリまたはリモートリリースアーティファクトから plugin をインストールします。
 
@@ -104,17 +102,19 @@ plugin を配布可能な zip ファイルにバンドルします。`plugin.jso
 | GitHub リポジトリ URL | `https://github.com/owner/repo` | 最新リリースを解決し、その zip アセットからインストールします。 |
 | GitHub ショートハンド | `github:owner/repo` | 上記のリポジトリ URL と同様です。 |
 
-**非対応:** npm パッケージ名。OpenPen の plugin は npm レジストリではなく GitHub Releases を通じて配布されます。カタログインストールには `openpen plugin install @scope/name` を、直接インストールには上記の GitHub 形式のいずれかを使用してください。
+**確認:** インストール前に、`plugin add` は (`plugin install` と同様に) 確認を求めます。plugin がホストへのフルアクセスで動作するためです。非対話型シェル (CI、スクリプト) では、plugin のソースを確認したうえで `--yes` (または `-y`) を渡すとプロンプトを省略できます。付けない場合、コマンドはエラーで終了します。
+
+**非対応:** npm パッケージ名。OpenPen の plugin は npm レジストリではなく GitHub Releases を通じて配布されます。カタログインストールには `npx openpen-cli plugin install @scope/name` を、直接インストールには上記の GitHub 形式のいずれかを使用してください。
 
 ---
 
-### `openpen plugin list`
+### `npx openpen-cli plugin list`
 
 `~/.openpen/plugins/` に現在インストールされているすべての plugin を一覧表示します。出力は `@scope/name` 形式を使用します。
 
 ---
 
-### `openpen plugin remove @scope/name`
+### `npx openpen-cli plugin remove @scope/name`
 
 `~/.openpen/plugins/@scope/name/` からディレクトリを削除して plugin をアンインストールします。
 

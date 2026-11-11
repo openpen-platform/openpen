@@ -1,28 +1,27 @@
 ---
-title: openpen CLI
+title: openpen-cli
 description: The openpen-cli command-line tool for plugin scaffolding, installation, packaging, and catalog publishing.
 ---
 
-# openpen CLI
+# openpen-cli
 
-The `openpen` CLI (`openpen-cli` package) manages plugin installation, packaging, and publishing
-for OpenPen. Install it with:
+The `openpen-cli` package manages plugin scaffolding, installation, packaging, and publishing
+for OpenPen. Run it with `npx`, no installation needed:
 
 ```bash
-npm install -g openpen-cli
-# or use npx without installing:
 npx openpen-cli <command>
 ```
 
-> **⚠️ Always invoke as `openpen-cli`, not `openpen`.** The bare `openpen` package on
-> npm is occupied by an unrelated project — `npx openpen-cli ...` will pull the wrong tool.
-> Throughout this documentation, every command runs as `npx openpen-cli <verb>`.
+> **⚠️ Always invoke it as `npx openpen-cli`, never `npx openpen`.** The bare `openpen`
+> package on npm is occupied by an unrelated project — `npx openpen ...` pulls the wrong tool.
+> Throughout this documentation, and in every message the CLI prints, commands are written
+> as `npx openpen-cli <verb>`.
 
 ---
 
 ## Commands
 
-### `openpen create @scope/name`
+### `npx openpen-cli create @scope/name`
 
 Scaffold a new plugin from the official starter template.
 
@@ -30,14 +29,14 @@ Scaffold a new plugin from the official starter template.
 1. Validates that the input matches the `@scope/name` format.
 2. Creates a subdirectory named after the `name` segment (e.g. `todo-app/`) in the current directory.
 3. Copies the plugin starter template and fills in `plugin.json` with your `@scope/name`.
-4. Prints next steps: `npm install` → develop → `npm run build` → `openpen pack`.
+4. Prints next steps: `npm install` → develop → `npm run build` → `npx openpen-cli pack`.
 
 **Authentication:** Checks (but does not block on) whether the provided scope matches your
-authenticated GitHub login. The real scope check happens during `openpen publish`.
+authenticated GitHub login. The real scope check happens during `npx openpen-cli publish`.
 
 ---
 
-### `openpen pack`
+### `npx openpen-cli pack`
 
 Bundle your plugin into a distributable zip file. Run this in the directory that contains
 `plugin.json`.
@@ -53,16 +52,16 @@ Bundle your plugin into a distributable zip file. Run this in the directory that
    becomes `alice-todo-app-1.2.0.zip`.
 5. Prints the output path and SHA-256 hash.
 
-`openpen pack` **never runs a build for you** — call your build tool first.
+`npx openpen-cli pack` **never runs a build for you** — call your build tool first.
 
 ---
 
-### `openpen publish`
+### `npx openpen-cli publish`
 
 Submit a Registration PR or version-update push to the central
 [OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) catalog.
 
-**Prerequisites:** `plugin.json` must exist, a zip from `openpen pack` must exist, and the
+**Prerequisites:** `plugin.json` must exist, a zip from `npx openpen-cli pack` must exist, and the
 GitHub Release for `v<version>` must be live with the zip attached.
 
 **Behaviour:**
@@ -81,7 +80,7 @@ GitHub Release for `v<version>` must be live with the zip attached.
 
 ---
 
-### `openpen plugin install @scope/name`
+### `npx openpen-cli plugin install @scope/name`
 
 Download and install a plugin from the central catalog.
 
@@ -98,7 +97,7 @@ Download and install a plugin from the central catalog.
 
 ---
 
-### `openpen plugin add <source>`
+### `npx openpen-cli plugin add <source>`
 
 Install a plugin from a local directory or a remote release artifact.
 
@@ -111,19 +110,24 @@ Install a plugin from a local directory or a remote release artifact.
 | GitHub repository URL | `https://github.com/owner/repo` | Resolves the latest release and installs from its zip asset. |
 | GitHub shorthand | `github:owner/repo` | Same as the repository URL above. |
 
+**Confirmation:** before installing, `plugin add` (like `plugin install`) asks you to confirm,
+because plugins run with full host access. In a non-interactive shell (CI, scripts) pass
+`--yes` (or `-y`) to skip the prompt after vetting the plugin source; without it the command
+exits with an error.
+
 **Not supported:** npm package names. OpenPen plugins are distributed through GitHub
-Releases, not the npm registry. Use `openpen plugin install @scope/name` for catalog
+Releases, not the npm registry. Use `npx openpen-cli plugin install @scope/name` for catalog
 installs, or one of the GitHub forms above for direct installs.
 
 ---
 
-### `openpen plugin list`
+### `npx openpen-cli plugin list`
 
 List all plugins currently installed in `~/.openpen/plugins/`. Output uses the `@scope/name` format.
 
 ---
 
-### `openpen plugin remove @scope/name`
+### `npx openpen-cli plugin remove @scope/name`
 
 Uninstall a plugin by deleting its directory from `~/.openpen/plugins/@scope/name/`.
 

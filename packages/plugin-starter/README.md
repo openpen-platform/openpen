@@ -13,7 +13,7 @@ npx openpen-cli plugin add .
 ```
 
 Replace `yourscope` with your GitHub username or org name (lowercase).
-`openpen create` copies this starter and substitutes the plugin id;
+`npx openpen-cli create` copies this starter and substitutes the plugin id;
 `plugin add` copies `plugin.json`, `dist/` and `locales/` into
 `~/.openpen/plugins/@yourscope/my-plugin/`.
 

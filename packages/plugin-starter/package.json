@@ -8,7 +8,7 @@
     "build": "openpen-build",
     "dev": "openpen-build --watch",
     "check": "openpen-build --check",
-    "pack": "openpen pack",
+    "pack": "npx openpen-cli pack",
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {

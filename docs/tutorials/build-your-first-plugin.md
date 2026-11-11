@@ -6,14 +6,14 @@ description: Scaffold, build, install, and publish a plugin from zero to running
 # Build Your First OpenPen Plugin
 
 In this tutorial you'll scaffold a plugin, build it, install it into OpenPen,
-and publish it to the community catalog — all using the `openpen` CLI.
+and publish it to the community catalog — all using the `openpen-cli` package.
 
 ## Prerequisites
 
 - Node.js 22.12+, npm 9+
 - OpenPen 1.0 or later installed and running
 - A code editor with TypeScript support
-- `gh` CLI installed and authenticated (`gh auth login`) — required for `openpen publish`
+- `gh` CLI installed and authenticated (`gh auth login`) — required for `npx openpen-cli publish`
 
 ---
 
@@ -26,7 +26,7 @@ npm install
 ```
 
 Replace `yourscope` with your GitHub username or org name (lowercase).
-`openpen create` copies the plugin-starter template, substitutes the id
+`npx openpen-cli create` copies the plugin-starter template, substitutes the id
 placeholders, and prints next steps.
 
 You'll get a folder like:
@@ -54,7 +54,7 @@ npm run build
 npx openpen-cli plugin add .
 ```
 
-`openpen plugin add <local-path>` copies `plugin.json`, `dist/`, and `locales/`
+`npx openpen-cli plugin add <local-path>` copies `plugin.json`, `dist/`, and `locales/`
 (when present) into `~/.openpen/plugins/@yourscope/my-highlighter/`. No build
 step runs on your machine during install — the `dist/` you built is used as-is.
 
@@ -455,7 +455,7 @@ gh release create v0.1.0 ./yourscope-my-highlighter-0.1.0.zip
 npx openpen-cli publish
 ```
 
-`openpen publish` reads `plugin.json`, verifies the GitHub Release exists,
+`npx openpen-cli publish` reads `plugin.json`, verifies the GitHub Release exists,
 checks that your authenticated GitHub login matches the plugin scope, computes
 the sha256, and opens a **Registration PR** in the `OpenPen-plugins` catalog repo.
 

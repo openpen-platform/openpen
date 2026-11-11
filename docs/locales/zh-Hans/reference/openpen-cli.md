@@ -1,5 +1,5 @@
 ---
-title: openpen CLI
+title: openpen-cli
 description: 用于 plugin 脚手架、安装、打包和目录发布的 openpen-cli 命令行工具。
 translationType: machine
 translatedFrom: 8e4d741
@@ -7,24 +7,22 @@ translatedAt: 2026-05-22T00:00:00Z
 language: zh-Hans
 ---
 
-# openpen CLI
+# openpen-cli
 
-`openpen` CLI（`openpen-cli` 软件包）用于管理 OpenPen 的 plugin 安装、打包和发布。安装方式如下：
+`openpen-cli` 软件包用于管理 OpenPen 的 plugin 脚手架、安装、打包和发布。通过 `npx` 运行即可，无需安装：
 
 ```bash
-npm install -g openpen-cli
-# or use npx without installing:
 npx openpen-cli <command>
 ```
 
-> **⚠️ 请始终使用 `openpen-cli` 调用，而非 `openpen`。** npm 上裸名的 `openpen` 软件包已被一个无关项目占用——`npx openpen-cli ...` 会拉取错误的工具。
-> 本文档中所有命令均以 `npx openpen-cli <verb>` 的形式运行。
+> **⚠️ 请始终以 `npx openpen-cli` 调用，切勿使用 `npx openpen`。** npm 上裸名的 `openpen` 软件包已被一个无关项目占用——`npx openpen ...` 会拉取错误的工具。
+> 本文档中以及 CLI 打印的每条消息里，命令均写作 `npx openpen-cli <verb>`。
 
 ---
 
 ## 命令
 
-### `openpen create @scope/name`
+### `npx openpen-cli create @scope/name`
 
 基于官方起始模板脚手架一个新 plugin。
 
@@ -32,13 +30,13 @@ npx openpen-cli <command>
 1. 验证输入是否符合 `@scope/name` 格式。
 2. 在当前文件夹下创建以 `name` 段命名的子文件夹（例如 `todo-app/`）。
 3. 复制 plugin 起始模板，并将你的 `@scope/name` 填入 `plugin.json`。
-4. 打印后续步骤：`npm install` → 开发 → `npm run build` → `openpen pack`。
+4. 打印后续步骤：`npm install` → 开发 → `npm run build` → `npx openpen-cli pack`。
 
-**身份验证：** 检查（但不阻塞）所提供的 scope 是否与你已验证的 GitHub 登录名匹配。真正的 scope 检查在 `openpen publish` 阶段进行。
+**身份验证：** 检查（但不阻塞）所提供的 scope 是否与你已验证的 GitHub 登录名匹配。真正的 scope 检查在 `npx openpen-cli publish` 阶段进行。
 
 ---
 
-### `openpen pack`
+### `npx openpen-cli pack`
 
 将你的 plugin 打包为可分发的 zip 文件。在包含 `plugin.json` 的文件夹中运行此命令。
 
@@ -51,15 +49,15 @@ npx openpen-cli <command>
 4. 输出 `<scope>-<name>-<version>.zip`——例如 `@alice/todo-app` 在 `1.2.0` 版本下生成 `alice-todo-app-1.2.0.zip`。
 5. 打印输出路径和 SHA-256 哈希值。
 
-`openpen pack` **不会为你执行构建**——请先调用你的构建工具。
+`npx openpen-cli pack` **不会为你执行构建**——请先调用你的构建工具。
 
 ---
 
-### `openpen publish`
+### `npx openpen-cli publish`
 
 向中央 [OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) 目录提交注册 PR 或版本更新推送。
 
-**前置条件：** `plugin.json` 必须存在，来自 `openpen pack` 的 zip 文件必须存在，且 `v<version>` 对应的 GitHub Release 必须已发布并附有该 zip。
+**前置条件：** `plugin.json` 必须存在，来自 `npx openpen-cli pack` 的 zip 文件必须存在，且 `v<version>` 对应的 GitHub Release 必须已发布并附有该 zip。
 
 **行为：**
 1. 验证 `plugin.json` 和 zip 文件。
@@ -75,7 +73,7 @@ npx openpen-cli <command>
 
 ---
 
-### `openpen plugin install @scope/name`
+### `npx openpen-cli plugin install @scope/name`
 
 从中央目录下载并安装一个 plugin。
 
@@ -91,7 +89,7 @@ npx openpen-cli <command>
 
 ---
 
-### `openpen plugin add <source>`
+### `npx openpen-cli plugin add <source>`
 
 从本地文件夹或远程 release 产物安装一个 plugin。
 
@@ -104,17 +102,19 @@ npx openpen-cli <command>
 | GitHub 仓库 URL | `https://github.com/owner/repo` | 解析最新 release 并从其 zip 资产安装。 |
 | GitHub 简写 | `github:owner/repo` | 与上方仓库 URL 方式相同。 |
 
-**不支持：** npm 软件包名称。OpenPen plugin 通过 GitHub Releases 分发，而非 npm 注册表。目录安装请使用 `openpen plugin install @scope/name`，直接安装请使用上方的 GitHub 形式之一。
+**确认：** 安装前，`plugin add`（与 `plugin install` 一样）会要求你确认，因为 plugin 拥有完整的宿主访问权限。在非交互式 shell（CI、脚本）中，请在审查 plugin 来源后传入 `--yes`（或 `-y`）以跳过提示；否则命令会报错退出。
+
+**不支持：** npm 软件包名称。OpenPen plugin 通过 GitHub Releases 分发，而非 npm 注册表。目录安装请使用 `npx openpen-cli plugin install @scope/name`，直接安装请使用上方的 GitHub 形式之一。
 
 ---
 
-### `openpen plugin list`
+### `npx openpen-cli plugin list`
 
 列出当前安装在 `~/.openpen/plugins/` 中的所有 plugin。输出使用 `@scope/name` 格式。
 
 ---
 
-### `openpen plugin remove @scope/name`
+### `npx openpen-cli plugin remove @scope/name`
 
 通过删除 `~/.openpen/plugins/@scope/name/` 目录来卸载一个 plugin。
 
