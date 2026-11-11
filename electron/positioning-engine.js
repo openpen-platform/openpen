@@ -11,6 +11,7 @@
 
 import { screen } from 'electron';
 import { POSITIONING } from './ipc-channels.js';
+import { log } from './logger.js';
 import {
   BALL_HALF,
   findDisplay,
@@ -409,7 +410,7 @@ function _handleDisplayChanged() {
  * @returns {Promise<PositioningOutput>}
  */
 function processIntent(intent) {
-  _queue = _queue.then(() => {
+  const result = _queue.then(() => {
     /** @type {PositioningOutput} */
     let output;
 
@@ -429,7 +430,12 @@ function processIntent(intent) {
     _broadcastState(output.state, output.animation);
     return output;
   });
-  return _queue;
+  // A failed intent rejects only its own caller; the queue itself stays
+  // resolved so later intents still run.
+  _queue = result.catch((err) => {
+    log.error(`[PositioningEngine] intent "${intent?.type}" failed:`, err);
+  });
+  return result;
 }
 
 /**
