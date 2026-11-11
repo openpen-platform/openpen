@@ -46,10 +46,17 @@ export interface AppSelectProps {
   placeholder: string
   /** Whether the select is disabled. */
   disabled?: boolean
+  /**
+   * Accessible name of the trigger button. Pass it whenever the select has no
+   * visible label of its own; otherwise a screen reader announces only the
+   * current value.
+   */
+  ariaLabel?: string
 }
 
 const props = withDefaults(defineProps<AppSelectProps>(), {
   disabled: false,
+  ariaLabel: undefined,
 })
 
 const emit = defineEmits<{
@@ -67,7 +74,7 @@ function onValueChange(v: string) {
     :disabled="disabled"
     @update:model-value="onValueChange"
   >
-    <SelectTrigger class="openpen-select-trigger">
+    <SelectTrigger class="openpen-select-trigger" :aria-label="ariaLabel">
       <SelectValue :placeholder="placeholder" />
       <SelectIcon class="openpen-select-icon" aria-hidden="true">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">

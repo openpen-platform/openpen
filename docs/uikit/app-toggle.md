@@ -14,6 +14,8 @@ Boolean on/off switch.
 | `model-value` | `boolean` | — (**required**) | Current state (use `v-model`) |
 | `aria-label` | `string` | `''` | Accessible label |
 
+The on/off state is exposed to assistive technology through `aria-checked` on the `role="switch"` button.
+
 ## Events
 
 | Event | Payload | Description |

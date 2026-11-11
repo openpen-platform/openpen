@@ -143,4 +143,13 @@ describe('AppSlider', () => {
     await wrapper.setProps({ inverted: true });
     expect(wrapper.find('[data-testid="app-slider-root"]').classes()).toContain('app-slider-root--inverted');
   });
+
+  it('puts ariaLabel on the focusable thumb, not on the wrapper', () => {
+    const wrapper = mount(AppSlider, {
+      props: { modelValue: 5, min: 1, max: 20, step: 1, ariaLabel: 'Radius' },
+    });
+    const thumb = wrapper.find('[role="slider"]');
+    expect(thumb.attributes('aria-label')).toBe('Radius');
+    expect(wrapper.find('[data-testid="app-slider-root"]').attributes('aria-label')).toBeUndefined();
+  });
 });

@@ -15,6 +15,7 @@ Single-select dropdown that matches OpenPen's popup styling.
 | `options` | `Array<{ value: string; label: string }>` | — (**required**) | Selectable options |
 | `placeholder` | `string` | — (**required**) | Shown when no option is selected |
 | `disabled` | `boolean` | `false` | Disable interaction |
+| `aria-label` | `string` | — | Accessible name of the trigger button; pass it when the select has no visible label, otherwise a screen reader announces only the current value |
 
 ## Events
 
@@ -37,6 +38,6 @@ const options = [
 </script>
 
 <template>
-  <AppSelect v-model="lang" :options="options" placeholder="Pick a language" />
+  <AppSelect v-model="lang" :options="options" placeholder="Pick a language" aria-label="Language" />
 </template>
 ```

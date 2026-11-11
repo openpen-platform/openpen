@@ -13,8 +13,9 @@
  * DOM notes:
  * - SwitchRoot renders a <button role="switch"> with class "app-toggle"
  * - "on" class is added when modelValue is true
- * - aria-pressed is added explicitly because Reka UI's SwitchRoot uses
- *   aria-checked; both attributes co-exist for maximum a11y surface.
+ * - The state is exposed only through aria-checked (set by Reka UI's
+ *   SwitchRoot). aria-pressed is not valid on role="switch" and must not be
+ *   added.
  */
 import {
   SwitchRoot,
@@ -44,7 +45,6 @@ function onCheckedChange(val: boolean) {
     :class="{ on: modelValue }"
     :model-value="modelValue"
     :aria-label="ariaLabel"
-    :aria-pressed="modelValue"
     :data-testid="testid"
     @update:model-value="onCheckedChange"
   >

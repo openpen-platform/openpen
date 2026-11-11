@@ -105,7 +105,7 @@ test.describe('Modules tab — disable/enable freehand', () => {
 
     // The toggle should currently be ON (checked).
     const toggle = freehandRow.getByTestId('module-row-toggle');
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
 
     // Click the toggle — expect confirmation dialog to open instead of immediate disable.
     await toggle.click();
@@ -149,7 +149,7 @@ test.describe('Modules tab — disable/enable freehand', () => {
     const toggle = freehandRow.getByTestId('module-row-toggle');
 
     // Should currently be OFF.
-    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
 
     // Enable it — no confirmation dialog expected for re-enable.
     await toggle.click();

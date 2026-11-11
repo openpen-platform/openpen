@@ -104,7 +104,7 @@ test.describe('Modules tab — disabled module shows metadata fallback', () => {
 
     // Disable stroke-width via the toggle → confirmation dialog.
     const toggle = strokeWidthRow.getByTestId('module-row-toggle');
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
     await toggle.click();
     await settingsWin.waitForTimeout(300);
 

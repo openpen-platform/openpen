@@ -17,6 +17,7 @@ vertical orientations.
 | `max` | `number` | `100` | Maximum value |
 | `step` | `number` | `1` | Step increment |
 | `width` | `string` | `'100%'` | Container width (or height in vertical mode) |
+| `aria-label` | `string` | — | Accessible name read by screen readers on the slider thumb; pass it when the slider has no visible label |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Slider orientation |
 | `track-height` | `string` | `'4px'` | Track thickness |
 | `track-radius` | `string` | `'2px'` | Track border-radius |
@@ -41,6 +42,6 @@ const size = ref(16)
 </script>
 
 <template>
-  <AppSlider v-model="size" :min="8" :max="64" width="120px" />
+  <AppSlider v-model="size" :min="8" :max="64" width="120px" aria-label="Font size" />
 </template>
 ```

@@ -50,11 +50,16 @@ describe('AppToggle', () => {
     expect(wrapper.find('button').attributes('aria-label')).toBe('Enable animations');
   });
 
-  it('sets aria-pressed to match modelValue', () => {
+  it('exposes its state only through aria-checked, never aria-pressed', async () => {
     const wrapper = mount(AppToggle, {
-      props: { modelValue: true },
+      props: { modelValue: true, ariaLabel: 'Bold' },
     });
-    expect(wrapper.find('button').attributes('aria-pressed')).toBe('true');
+    const btn = wrapper.find('button');
+    expect(btn.attributes('aria-checked')).toBe('true');
+    expect(btn.attributes('aria-pressed')).toBeUndefined();
+    await wrapper.setProps({ modelValue: false });
+    expect(btn.attributes('aria-checked')).toBe('false');
+    expect(btn.attributes('aria-pressed')).toBeUndefined();
   });
 
   it('has role="switch"', () => {

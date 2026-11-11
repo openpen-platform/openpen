@@ -27,6 +27,11 @@ const props = withDefaults(defineProps<{
   step?: number
   /** Container width (e.g. '100%', '72px'). In vertical mode this sets the height. */
   width?: string
+  /**
+   * Accessible name announced by screen readers when the thumb is focused.
+   * Pass it whenever the slider has no visible label of its own.
+   */
+  ariaLabel?: string
   orientation?: 'horizontal' | 'vertical'
   trackHeight?: string
   trackRadius?: string
@@ -48,6 +53,7 @@ const props = withDefaults(defineProps<{
   max: 100,
   step: 1,
   width: '100%',
+  ariaLabel: undefined,
   orientation: 'horizontal',
   trackHeight: '4px',
   trackRadius: '2px',
@@ -112,7 +118,11 @@ function onValueChange(val: number[] | undefined) {
     <SliderTrack class="app-slider-track" data-testid="app-slider-track">
       <SliderRange class="app-slider-range" data-testid="app-slider-range" />
     </SliderTrack>
-    <SliderThumb class="app-slider-thumb" data-testid="app-slider-thumb" />
+    <SliderThumb
+      class="app-slider-thumb"
+      data-testid="app-slider-thumb"
+      :aria-label="ariaLabel"
+    />
   </SliderRoot>
 </template>
 
