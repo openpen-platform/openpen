@@ -206,6 +206,9 @@ function renderStroke(ctx: CanvasRenderingContext2D, stroke: Stroke): void {
   const resolved = resolveColorStyle(ctx, stroke.style.color, p0, pN)
 
   ctx.save()
+  if (typeof stroke.opacity === 'number' && Number.isFinite(stroke.opacity)) {
+    ctx.globalAlpha = Math.min(1, Math.max(0, stroke.opacity))
+  }
   ctx.strokeStyle = resolved
   ctx.lineWidth = lineWidth
   ctx.lineCap = lineCap

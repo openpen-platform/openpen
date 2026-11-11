@@ -6,8 +6,9 @@
  *   - onPointerMove  : extends the stroke incrementally (one segment per event)
  *   - onPointerUp    : finalises and returns the Stroke to the canvas engine
  *   - needsPreviewRedraw : false (incremental render — no full-canvas clear needed)
- *   - extra Stroke state : stores `opacity` as a tool-specific extra key to show
- *     how custom data survives into renderStroke
+ *   - Stroke.opacity     : stores the whole-stroke opacity on the typed field and
+ *     applies it again in its own renderStroke (the host only applies it in the
+ *     default polyline renderer)
  *
  * Public reference for the Tool / Stroke / Point / StrokeStyle interfaces:
  *   docs/slots/index.md → `canvas.tools` section.
@@ -56,7 +57,7 @@ export function createDemoTool(): Tool {
       if (!style) return null
       points.push(point)
 
-      // Store `opacity` as a tool-specific extra key on the Stroke.
+      // Record the opacity on the Stroke so renderStroke can replay it.
       // The host passes this Stroke back to `renderStroke` below, where
       // we read it back without any host involvement.
       const stroke: Stroke = {
@@ -64,7 +65,7 @@ export function createDemoTool(): Tool {
         tool: 'openpen-plugin-starter.demo',
         points: [...points],
         style: { ...style },
-        opacity: DEMO_OPACITY, // tool-specific extra state (Stroke index signature)
+        opacity: DEMO_OPACITY,
       }
 
       points = []
@@ -78,8 +79,9 @@ export function createDemoTool(): Tool {
 /**
  * Custom stroke renderer — called by the canvas engine when replaying history.
  *
- * Reads back `opacity` from the Stroke's extra-state index signature.
- * Type-cast is intentional: TypeScript cannot infer plugin-specific keys.
+ * Reads back `Stroke.opacity`. A custom `renderStroke` owns the drawing, so it
+ * applies the opacity itself. The cast keeps this file compiling against module-api
+ * releases that predate the typed field (where the key is `unknown`).
  */
 export function renderDemoStroke(
   canvasCtx: CanvasRenderingContext2D,

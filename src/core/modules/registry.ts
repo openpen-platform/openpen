@@ -17,6 +17,7 @@ import type { OpenPenModule } from '@openpen/module-api'
 import freehand from './freehand'
 import line from './line'
 import shape from './shape'
+import highlighter from './highlighter'
 import eraser from './eraser'
 import strokeEraser from './stroke-eraser'
 import strokeWidth from './stroke-width'
@@ -27,6 +28,7 @@ export const BUILT_IN_MODULES: readonly OpenPenModule[] = [
   freehand,
   line,
   shape,
+  highlighter,
   eraser,
   strokeEraser,
   strokeWidth,

@@ -99,6 +99,15 @@ interface Stroke {
   points: Point[]
   style: StrokeStyle
   /**
+   * Whole-stroke opacity in 0..1; omitted means fully opaque. The host's
+   * default polyline renderer applies it as `globalAlpha` and clamps values
+   * outside 0..1 back into range (non-finite values are ignored); a tool with
+   * its own `renderStroke` reads and applies it itself. A tool without
+   * `renderStroke` that stores an `opacity` key gets it applied by the default
+   * renderer, so the value must be a number.
+   */
+  opacity?: number
+  /**
    * Tool-specific state. Tools MAY store arbitrary keys during the
    * pointer handlers; those keys survive into `renderStroke`.
    * TypeScript cannot infer the shape — cast at the read site.

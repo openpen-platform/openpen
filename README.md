@@ -22,7 +22,7 @@
 OpenPen is a free, open-source screen annotation overlay for macOS, Windows and Linux.
 Draw over any app — even full-screen ones — then fold it back into a floating ball so your presentation never skips a beat.
 
-- **Draw on top of anything** — a transparent canvas above every app, with freehand, line, rectangle and ellipse tools, adjustable stroke and color, and a gradient highlight mode.
+- **Draw on top of anything** — a transparent canvas above every app, with freehand, line, rectangle, ellipse and semi-transparent highlighter tools, adjustable stroke and color, and a gradient highlight mode.
 - **Out of the way until you need it** — collapses to a floating ball that snaps to the screen edge.
 - **Every tool is a plugin** — even the built-in ones, so you can swap, add or build your own.
 - **Speaks your language** — English, 繁體中文, 简体中文 and 日本語, picked from your system language.

@@ -49,6 +49,7 @@ Where an icon exists in both sets with the same geometry, both are named.
 | Success circle | Feather `check-circle` / Lucide `check-circle` | Exact | `packages/module-api/src/uikit/components/AppBanner.vue` |
 | Danger circle | Feather `x-circle` / Lucide `circle-x` | Exact | `packages/module-api/src/uikit/components/AppBanner.vue` |
 | Brush eraser | Lucide `eraser` | Exact | `src/core/modules/eraser/EraserToolButton.vue` |
+| Highlighter | Lucide `highlighter` | Exact | `src/core/modules/highlighter/HighlighterToolButton.vue` |
 | Menu lines | Lucide `align-justify` / Feather `menu` | Same geometry | `src/core/modules/stroke-width/StrokeWidthSlider.vue` |
 | Pen | Lucide `pen` | Exact | `src/views/OverlayView.vue` |
 | Pause | Feather `pause` / Lucide `pause` | Exact | `src/views/OverlayView.vue` |

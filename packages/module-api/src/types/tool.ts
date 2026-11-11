@@ -43,6 +43,18 @@ export interface Stroke {
   points: Point[]
   style: StrokeStyle
   /**
+   * Whole-stroke opacity in `0..1`; omitted means fully opaque.
+   *
+   * The host's default polyline renderer applies it as `globalAlpha` and clamps
+   * values outside `0..1` back into range (non-finite values are ignored). A
+   * tool that ships its own `renderStroke` owns the drawing and reads this field
+   * itself — the host does not wrap custom renderers, so a plugin that already
+   * stores and applies its own `opacity` key keeps rendering exactly as before.
+   * A tool WITHOUT `renderStroke` that stores an `opacity` key now has it applied
+   * by the default renderer; such a tool must store a number in `0..1`.
+   */
+  opacity?: number
+  /**
    * Tool-specific extra state. Tools MAY store arbitrary keys here during
    * `onPointerDown` / `onPointerMove` / `onPointerUp`; those keys survive
    * into `renderStroke(stroke, canvasCtx)` calls so the renderer can read
@@ -53,11 +65,10 @@ export interface Stroke {
    *
    * @example
    * // Store during onPointerUp:
-   * const stroke: Stroke = { id, tool: 'my-tool', points, style, opacity: 0.5 }
+   * const stroke: Stroke = { id, tool: 'my-tool', points, style, taper: 0.5 }
    *
    * // Read back in renderStroke:
-   * const opacity = (stroke.opacity as number) ?? 1
-   * canvasCtx.globalAlpha = opacity
+   * const taper = (stroke.taper as number) ?? 1
    */
   [key: string]: unknown
 }

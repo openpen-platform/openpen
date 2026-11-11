@@ -211,7 +211,7 @@ test('eraser button and caret are visible in vertical mode (design: 1 main + 1 c
   await expect(win.getByTestId('controlbar-eraser-caret')).toBeVisible();
 });
 
-test('tools group renders [freehand, line, shape] inside .cb-group--inset; bar height stays 50px', async () => {
+test('tools group renders [freehand, line, shape, highlighter] inside .cb-group--inset; bar height stays 50px', async () => {
   const win = await getMainWindow();
   await ensureBallMode(win);
 
@@ -235,7 +235,7 @@ test('tools group renders [freehand, line, shape] inside .cb-group--inset; bar h
       c.getAttribute('aria-label') || c.querySelector('[aria-label]')?.getAttribute('aria-label') || c.tagName
     );
   });
-  expect(labels).toEqual(['Freehand', 'Line', 'Shape']);
+  expect(labels).toEqual(['Freehand', 'Line', 'Shape', 'Highlighter']);
 
   const eraserInInset = await win.evaluate(() =>
     !!document.querySelector('[data-testid="cb-group-inset"] [data-testid="controlbar-eraser-btn"]')
