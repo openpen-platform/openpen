@@ -43,6 +43,12 @@
       "owner": "openpen-platform",
       "repo": "openpen"
     },
+    "extraResources": [
+      {
+        "from": "THIRD_PARTY_NOTICES.md",
+        "to": "THIRD_PARTY_NOTICES.md"
+      }
+    ],
     "files": [
       "dist/**/*",
       "electron/**/*",
