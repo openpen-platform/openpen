@@ -1,194 +1,77 @@
-# OpenPen
+<p align="center">
+  <img src="assets/logo.png" alt="OpenPen" width="96" />
+</p>
 
-Make your point — without losing your place.
+<h1 align="center">OpenPen</h1>
 
-An extensible overlay where every tool — built-in or third-party — is just a plugin.
-We're building OpenPen as a community-shaped product: the canvas ships with a useful default
-set, and the ecosystem grows by anyone with an idea.
+<p align="center"><b>Your screen is the canvas. The tools are up to you.</b></p>
 
-[![Website](https://img.shields.io/badge/website-openpen.pages.dev-blue.svg)](https://openpen.pages.dev/)
-![Version](https://img.shields.io/npm/v/@openpen/module-api?label=version)
-![CI](https://img.shields.io/github/actions/workflow/status/openpen-platform/openpen/ci.yml?branch=main&label=CI)
-![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
-![License](https://img.shields.io/badge/license-GPL--3.0--or--later-green.svg)
+<p align="center">
+  <a href="https://github.com/openpen-platform/openpen/releases/latest">Download</a> ·
+  <a href="https://openpen.pages.dev/">Website</a> ·
+  <a href="docs/README.md">Docs</a> ·
+  <a href="https://github.com/openpen-platform/OpenPen-plugins">Plugins</a>
+</p>
 
-![OpenPen — Make your point without losing your place](assets/readme-hero.png)
+<p align="center">
+  <a href="https://github.com/openpen-platform/openpen/releases/latest"><img src="https://img.shields.io/github/v/release/openpen-platform/openpen" alt="Latest release" /></a>
+  <a href="https://github.com/openpen-platform/openpen/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/openpen-platform/openpen/ci.yml?branch=main&label=CI" alt="CI" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-green.svg" alt="License" /></a>
+</p>
 
-## Who it's for
+OpenPen is a free, open-source screen annotation overlay for macOS, Windows and Linux.
+Draw over any app — even full-screen ones — then fold it back into a floating ball so your presentation never skips a beat.
 
-OpenPen is built for anyone who shares their screen and needs to point things out clearly —
-without alt-tabbing to a separate annotation tool or leaving the app they're presenting.
+- **Draw on top of anything** — a transparent canvas above every app, with freehand, line, rectangle and ellipse tools, adjustable stroke and color, and a gradient highlight mode.
+- **Out of the way until you need it** — collapses to a floating ball that snaps to the screen edge.
+- **Every tool is a plugin** — even the built-in ones, so you can swap, add or build your own.
+- **Speaks your language** — English, 繁體中文, 简体中文 and 日本語, picked from your system language.
 
-- **Presenters & educators** — highlight UI elements during live demos, workshops, or online classes
-- **Streamers & content creators** — add visual emphasis to walkthroughs and tutorials in real time
-- **Developers & designers** — annotate during code reviews, design critiques, and pair-programming
-- **Remote teams** — make screen-share meetings more interactive and easier to follow
-
-It stays out of the way as a floating ball until you need it, and disappears the moment you don't.
-
-## Features
-
-- Overlays a transparent drawing canvas above any app, including full-screen windows
-- Switches between freehand, line, and shape tools (rectangle / ellipse)
-- Adjusts stroke width and color, with a gradient highlight mode
-- Collapses to a floating ball that snaps to the screen edge when dragged
-- Plugin-first architecture — third-party plugins use the same contract, slots, and runtime APIs as the built-in modules; the built-in drawing tools are themselves plugins, not a privileged core
-
-![OpenPen — floating ball, drawing toolbar, and plugin ecosystem overview](assets/readme-feature.png)  
+> [!WARNING]
+> The installers are not code-signed yet, so your system may block the first launch.
+>
+> - **macOS:** open System Settings → Privacy & Security and click **Open Anyway**, or run `xattr -cr /Applications/OpenPen.app`.
+> - **Windows:** in the SmartScreen prompt, click **More info** → **Run anyway**.
 
 ## Install
 
-Download the installer for your platform from the [latest release](https://github.com/openpen-platform/openpen/releases/latest). File names carry the release version, shown below as `<version>`:
+Download the installer for your platform from [GitHub Releases](https://github.com/openpen-platform/openpen/releases/latest):
 
-| Platform | Download |
-| -------- | -------- |
-| macOS (Apple Silicon) | `OpenPen-<version>-arm64.dmg` |
-| macOS (Intel) | `OpenPen-<version>-x64.dmg` |
-| Windows (installer) | `OpenPen.Setup.<version>.exe` |
-| Linux (x86_64) | `OpenPen-<version>.AppImage` |
-| Linux (arm64) | `OpenPen-<version>-arm64.AppImage` |
+- **macOS** — `.dmg` (Apple Silicon and Intel)
+- **Windows** — `.exe` installer, or a portable `.exe`
+- **Linux** — `.AppImage` (x86_64 and arm64). Full experience on X11; reduced on native Wayland, see [Linux & Wayland support](docs/troubleshooting/linux-wayland.md)
 
-Linux support is conditional; see [Platform support](#platform-support).
+Building from source? See [CONTRIBUTING.md](CONTRIBUTING.md#development-setup).
 
-Or build from source — see [Building](#building) below.
+## Every tool is a plugin — even ours
 
-## Documentation
+Built-in tools and third-party plugins use the same contract, slots and runtime APIs. Official plugins you can add today:
 
-Full guides and API reference live in [`docs/README.md`](./docs/README.md).
+| Plugin | What it does |
+| --- | --- |
+| [arrow](https://github.com/openpen-platform/openpen-arrow) | Straight arrows with solid, open or hollow heads |
+| [text](https://github.com/openpen-platform/openpen-text) | Click-to-type text annotations with IME-safe editing |
+| [spotlight](https://github.com/openpen-platform/openpen-spotlight) | Dim the screen with a follow-cursor spotlight |
+| [cursor-highlight](https://github.com/openpen-platform/openpen-cursor-highlight) | Cursor glow halo with click ripples |
+| [whiteboard](https://github.com/openpen-platform/openpen-whiteboard) | One-tap whiteboard or blackboard backdrop |
+| [step-marker](https://github.com/openpen-platform/openpen-step-marker) | Numbered markers for sequential annotations |
 
-## Plugins
-
-OpenPen uses a four-layer plugin-host architecture (core / host chrome / UIKit / modules).
-Built-in tools and third-party plugins share the same `OpenPenModule` contract and contribute
-to the same slots (`controlBar`, `settingsTabs`, `shortcuts`, and more).
-
-**Build your first plugin in 5 minutes** →
-[Tutorial](docs/tutorials/build-your-first-plugin.md) ·
-[Module Architecture](docs/concepts/module-architecture.md) ·
-[Slot Reference](docs/slots/index.md)
+Build your own in about five minutes:
 
 ```bash
 npx openpen-cli create @yourscope/my-plugin
 ```
 
-**SDK packages on npm:**
+[Tutorial](docs/tutorials/build-your-first-plugin.md) · [Slot reference](docs/slots/index.md) · [Architecture](docs/concepts/module-architecture.md)
 
-- [`@openpen/module-api`](https://www.npmjs.com/package/@openpen/module-api) — plugin API surface (types, slots, UIKit components)
-- [`@openpen/build`](https://www.npmjs.com/package/@openpen/build) — plugin build CLI
-- [`openpen-cli`](https://www.npmjs.com/package/openpen-cli) — plugin install CLI for end users
+Plugins run with full host access, so install only ones you trust — see the [trust model](docs/concepts/trust-model.md) and [SECURITY.md](SECURITY.md).
 
-**Security**: OpenPen uses a user-installed trust model — plugins run with full host access.
-**Before installing any plugin, evaluate the source yourself.** See
-[Trust Model](docs/concepts/trust-model.md) and [`SECURITY.md`](SECURITY.md) for baseline
-protections and the audit log.
+## Contributing
 
-## Platform support
-
-| Platform | Status |
-| -------- | ------ |
-| macOS    | Supported |
-| Windows  | Supported |
-| Linux    | Conditional — full on X11/Xorg; reduced on native Wayland. See [Linux & Wayland support](docs/troubleshooting/linux-wayland.md) |
-
-## Localization
-
-OpenPen ships with a built-in language switcher. The UI is fully translated for the
-following locales:
-
-| Language | Locale | Status |
-| -------- | ------ | ------ |
-| English | `en` | ✅ Complete |
-| 繁體中文 (Traditional Chinese) | `zh-Hant` | ✅ Complete |
-| 简体中文 (Simplified Chinese) | `zh-Hans` | ✅ Complete |
-| 日本語 (Japanese) | `ja` | ✅ Complete |
-
-The app auto-detects your system language on first launch and falls back to English if the
-locale is not yet supported. You can change the language at any time from **Settings → General**.
-
-**Want to see your language here?** Speakers of any language are warmly welcome:
-
-- **Request** — open an [issue](https://github.com/openpen-platform/openpen/issues) to let us know which language you'd like
-- **Contribute** — copy [`src/i18n/en.ts`](./src/i18n/en.ts), name the file after its [BCP 47](https://www.iana.org/assignments/language-subtag-registry) tag (e.g. `fr.ts`), register it in `src/i18n/index.ts`, and open a pull request
-
-## Development
-
-```bash
-npm install
-npm run dev          # Vite + Electron
-npm run test:unit    # unit tests (Vitest)
-npx playwright test  # e2e tests (Playwright + Electron)
-npm run build        # production Vite build
-```
-
-DevTools open by default in dev mode. Runtime config lives in [`app.config.js`](./app.config.js).
-
-## Building
-
-```bash
-npm run dist:mac     # macOS .dmg  (arm64 + x64)
-npm run dist:win     # Windows .exe installer  (x64 + arm64)
-npm run dist:linux   # Linux .AppImage  (x64 + arm64)
-```
-
-Output lands in `release/`. For artifact naming, code signing, entitlements,
-and CI setup, see [`CONTRIBUTING.md`](./CONTRIBUTING.md#packaging--distribution).
-
-## Contributing & feedback
-
-OpenPen is in its early days and very much shaped by the people who use it.
-Whether you've got a feature idea, ran into a bug, want to build a plugin,
-or just have thoughts on how things could work better — issues, discussions,
-and pull requests are all genuinely welcome. No suggestion is too small.
-
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for development setup and coding conventions.
+Bug reports, ideas, translations and pull requests are all welcome — open an [issue](https://github.com/openpen-platform/openpen/issues) or start a discussion. Development setup, build steps and how to add a language are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-OpenPen uses a **layered license model** to balance copyleft protection
-of the host with plugin ecosystem freedom:
-
-| Component | License | Notes |
-|-----------|---------|-------|
-| OpenPen host application | [GPL-3.0-or-later](LICENSE) **+ Linking Exception** | Modifications to OpenPen itself remain GPL-3.0-or-later. Plugins linked through the official `@openpen/module-api` SDK may use any license. |
-| [`@openpen/module-api`](https://www.npmjs.com/package/@openpen/module-api) | [MIT](packages/module-api/LICENSE) | Plugin SDK — depend on it under any license, including proprietary. |
-| [`@openpen/build`](https://www.npmjs.com/package/@openpen/build) | [MIT](packages/build-cli/LICENSE) | Plugin build CLI. |
-| [`openpen-cli`](https://www.npmjs.com/package/openpen-cli) | [MIT](packages/openpen-cli/LICENSE) | Plugin install CLI. |
-
-**What this means:**
-- ✅ You can write closed-source / commercial plugins for OpenPen.
-- ✅ You can sell plugins under any license you choose.
-- ❌ You cannot fork OpenPen, rename it, and sell the modified host as
-  a closed-source product. Modifications to OpenPen itself remain GPL-3.0-or-later.
-
-See [`LICENSE`](LICENSE) for the full GPL-3.0-or-later text and the Linking
-Exception clause.
-
-**Clarifications:**
-
-- **Dynamic vs static linking** — plugins built through the official
-  `@openpen/build` CLI are dynamically linked against OpenPen at runtime
-  via the importmap mechanism. Whether a plugin is bundled, transpiled,
-  minified, or distributed as separate files does not affect the Linking
-  Exception — what matters is that the plugin uses the public
-  `@openpen/module-api` SDK surface.
-
-- **Copying source code from the OpenPen host** — the host application
-  itself (`src/`, `electron/`) is GPL-3.0-or-later. If a plugin **copies** code
-  from these directories (rather than importing through the SDK), the
-  plugin includes GPL-3.0-or-later code and must itself be GPL-3.0-or-later as a derivative
-  work. This is GPL's standard derivative-work clause, not an OpenPen-
-  specific rule.
-
-- **UIKit components are MIT** — the `@openpen/module-api/uikit`
-  wrappers (`AppPopover`, `AppDialog`, `AppSlider`, etc.) are part
-  of the MIT-licensed SDK package. You may copy, modify, and redistribute
-  them in your plugin under any license you choose.
-
-- **Redistributing OpenPen host** — if you redistribute the OpenPen
-  application itself (modified or unmodified, e.g. shipping an Electron
-  build to end users), you must comply with GPL obligations: provide
-  source code, preserve license notices, and include the `LICENSE` file.
-  The MIT-licensed SDK packages do not exempt redistributors of the
-  host from these GPL obligations.
+The host app is [GPL-3.0-or-later](LICENSE) with a Linking Exception. The SDK packages (`@openpen/module-api`, `@openpen/build`, `openpen-cli`) are MIT, so plugins can use any license, including closed-source and commercial. Details and FAQ: [docs/licensing.md](docs/licensing.md).
 
 © 2025-2026 OpenPen

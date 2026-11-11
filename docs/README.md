@@ -21,3 +21,4 @@ Where to start, depending on what you want to do.
 
 ## Contributing to OpenPen core
 - [CONTRIBUTING.md](../CONTRIBUTING.md)
+- [licensing.md](./licensing.md) — host and SDK licenses, what plugin authors may do

@@ -109,7 +109,7 @@ OpenPen はレイヤードライセンスモデルを採用しています。ホ
 - plugin を独自の条件で販売できます。
 - GPL への準拠が必要なのは、OpenPen ホスト自体を変更する場合のみであり、plugin を作成する場合は不要です。
 
-Plugin Linking Exception の正確な文言についてはルートの [`LICENSE`](../../LICENSE) ファイルを、レイヤードライセンスの概要については [`README.md`](../../README.md#license) を参照してください。
+Plugin Linking Exception の正確な文言についてはルートの [`LICENSE`](../../LICENSE) ファイルを、レイヤードライセンスの概要については [`licensing.md`](../../../licensing.md) を参照してください。
 
 ---
 

@@ -33,6 +33,8 @@ npm run test:unit
 npx playwright test
 ```
 
+DevTools stay closed in dev mode unless `devtools.enabled` is turned on in [`app.config.js`](./app.config.js), which holds the runtime config. Packaged builds land in `release/` (see [Packaging & Distribution](#packaging--distribution)).
+
 ---
 
 ## Architecture Overview
@@ -101,6 +103,22 @@ For **plugin tools** (without modifying the core codebase), see [Module Architec
 
 ---
 
+## Adding a Language
+
+OpenPen ships with English, Traditional Chinese (`zh-Hant`), Simplified Chinese (`zh-Hans`) and Japanese (`ja`). The app picks the system language on first launch, falls back to English, and lets users switch under **Settings → Appearance**. To add another one, name it after its [BCP 47](https://www.iana.org/assignments/language-subtag-registry) tag (for example `fr`) and:
+
+1. Copy `src/i18n/en.ts` to `src/i18n/<tag>.ts` and translate the values. Keep the keys.
+2. Register it in `src/i18n/index.ts`: import the file, add it to `messages` and `SUPPORTED_LOCALES`, and extend the `SupportedLocale` type.
+3. Copy `electron/i18n/en.js` (tray menu labels) to `electron/i18n/<tag>.js`, translate it, and load it in `electron/i18n/index.js`.
+4. Add the tag to `SUPPORTED_LANGUAGES` in `electron/settings-store.js` and to the `language` type in `shared/settings-defaults.js` and `shared/settings-defaults.d.ts`. If system locales with a region (such as `fr-CA`) should map to it, add a branch for it in `resolveSystemLanguage` in the same file.
+5. Add the language, labelled in its own script, to the list in `src/components/settings/AppearanceTab.vue`.
+6. Optional: each bundled module has a `locales/` folder (`src/core/modules/*/locales/`); add `<tag>.json` there and register it in that module's `index.ts` to translate tool names, otherwise they stay in English. Add the tag to `POLICY_LOCALE_PREFIX` in `electron/marketplace-links.js` only if a localized policy page exists.
+7. Add the new bundle to the import list in `tests/unit/i18n.test.js` so key parity is checked, run `npm run test:unit`, then start the app with `npm run dev` and switch to the new language under **Settings → Appearance**.
+
+Not ready to open a PR? Open an [issue](https://github.com/openpen-platform/openpen/issues) to request a language and we will help you get started.
+
+---
+
 ## Testing
 
 ```bash
@@ -151,8 +169,9 @@ Output files land in `release/`. If the prod-smoke stage fails,
 on x64 and route Apple Silicon users to the Intel build by accident.
 
 **First launch (ad-hoc signed build)** — macOS Gatekeeper blocks the app on
-first run. Right-click the `.app` → **Open**, then confirm. Or clear quarantine
-from Terminal:
+first run. Open System Settings → Privacy & Security and click **Open Anyway**
+(on older macOS, right-click the `.app` → **Open** and confirm). Or clear
+quarantine from Terminal:
 
 ```bash
 xattr -cr /Applications/OpenPen.app

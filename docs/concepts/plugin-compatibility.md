@@ -149,7 +149,7 @@ This means:
   itself, not when you write a plugin.
 
 See the root [`LICENSE`](../../LICENSE) file for the exact wording of
-the Plugin Linking Exception, and [`README.md`](../../README.md#license)
+the Plugin Linking Exception, and [Licensing](../licensing.md)
 for the layered license overview.
 
 ---

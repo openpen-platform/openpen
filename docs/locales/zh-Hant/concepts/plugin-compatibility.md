@@ -132,7 +132,7 @@ SDK 套件（`@openpen/module-api`、`@openpen/build`、`openpen-cli`）則採 M
 - 只有在你修改 OpenPen host 本身時才需要遵守 GPL，編寫 plugin 時則不需要。
 
 Plugin Linking Exception 的確切措辭請見根目錄的 [`LICENSE`](../../LICENSE) 檔案，
-分層授權概覽請見 [`README.md`](../../README.md#license)。
+分層授權概覽請見 [`licensing.md`](../../../licensing.md)。
 
 ---
 

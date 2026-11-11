@@ -137,7 +137,7 @@ Linking Exception，SDK 软件包（`@openpen/module-api`、
   编写 plugin 时无需遵守。
 
 Plugin Linking Exception 的确切措辞请参阅根目录 [`LICENSE`](../../LICENSE) 文件，
-分层许可证概述请参阅 [`README.md`](../../README.md#license)。
+分层许可证概述请参阅 [`licensing.md`](../../../licensing.md)。
 
 ---
 
