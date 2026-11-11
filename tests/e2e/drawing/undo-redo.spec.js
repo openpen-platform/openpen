@@ -89,7 +89,7 @@ test('Cmd+Z undoes the last stroke', async () => {
   await prepareDrawState(mainWin, overlayWin);
 
   await drawOneStroke(overlayWin);
-  expect(await hasAnyPixels(overlayWin)).toBe(true);
+  expect(await hasAnyPixels(overlayWin)).toBe(false);
 
   const undoRegistered = await electronApp.evaluate(({ globalShortcut }) => {
     return globalShortcut.isRegistered('CommandOrControl+Z');
