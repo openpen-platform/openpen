@@ -38,11 +38,17 @@ It stays out of the way as a floating ball until you need it, and disappears the
 
 ## Install
 
-Download the latest installer from [GitHub Releases](https://github.com/openpen-platform/openpen/releases/latest):
+Download the installer for your platform from the [latest release](https://github.com/openpen-platform/openpen/releases/latest). File names carry the release version, shown below as `<version>`:
 
-- **macOS**: `OpenPen-1.0.0-arm64.dmg` (Apple Silicon) / `OpenPen-1.0.0-x64.dmg` (Intel)
-- **Windows**: `OpenPen.Setup.1.0.0.exe`
-- **Linux**: `.AppImage` (x86_64 + arm64) — conditional support; see [Platform support](#platform-support)
+| Platform | Download |
+| -------- | -------- |
+| macOS (Apple Silicon) | `OpenPen-<version>-arm64.dmg` |
+| macOS (Intel) | `OpenPen-<version>-x64.dmg` |
+| Windows (installer) | `OpenPen.Setup.<version>.exe` |
+| Linux (x86_64) | `OpenPen-<version>.AppImage` |
+| Linux (arm64) | `OpenPen-<version>-arm64.AppImage` |
+
+Linux support is conditional; see [Platform support](#platform-support).
 
 Or build from source — see [Building](#building) below.
 
