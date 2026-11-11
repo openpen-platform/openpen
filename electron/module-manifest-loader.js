@@ -15,6 +15,8 @@ import { ipcMain, app } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
 import { MODULE } from './ipc-channels.js'
+import { handleValidated } from './ipc-validation.js'
+import { moduleCallSchema } from './ipc-payload-schemas.js'
 import { ensurePluginInstalledAt, getPluginInstalledAt } from './plugin-meta-manager.js'
 import { MODULE_ID_RE } from './plugin-id-validator.js'
 
@@ -262,7 +264,7 @@ export function sendModuleManifests(webContents) {
 }
 
 function registerIpcHandlers() {
-  ipcMain.handle(MODULE.CALL_HANDLER, async (_, { moduleId, action, payload }) => {
+  handleValidated(ipcMain, MODULE.CALL_HANDLER, moduleCallSchema, async (_, { moduleId, action, payload }) => {
     const handlers = handlerMap.get(moduleId)
     if (!handlers) {
       throw new Error(`[ModuleManifestLoader] No main handlers for module: ${moduleId}`)

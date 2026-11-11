@@ -10,6 +10,12 @@
  */
 
 import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
+import { handleValidated } from './ipc-validation.js'
+import {
+  pluginIdPayloadSchema,
+  pluginRepoUrlSchema,
+  pluginSourcePathSchema,
+} from './ipc-payload-schemas.js'
 import https from 'node:https'
 import http from 'node:http'
 import { PLUGIN } from './ipc-channels.js'
@@ -69,6 +75,9 @@ function fetchCatalogJson(url) {
   })
 }
 
+/** Failure value returned to the renderer when a marketplace payload is invalid. */
+const INVALID_RESULT = { onInvalid: () => ({ ok: false, error: 'Invalid payload' }) }
+
 export function initPluginManagerBridge() {
   // ── Fetch catalog ─────────────────────────────────────────────────────────
   ipcMain.handle(PLUGIN.FETCH_CATALOG, async () => {
@@ -84,7 +93,7 @@ export function initPluginManagerBridge() {
   })
 
   // ── Install from catalog ──────────────────────────────────────────────────
-  ipcMain.handle(PLUGIN.INSTALL, async (event, { id }) => {
+  handleValidated(ipcMain, PLUGIN.INSTALL, pluginIdPayloadSchema, async (event, { id }) => {
     try {
       const entry = await installFromCatalog(id, {
         onProgress: (p) => {
@@ -99,10 +108,10 @@ export function initPluginManagerBridge() {
       log.error(`[PluginBridge] install "${id}" failed:`, err?.message)
       return { ok: false, error: err?.message ?? `Failed to install ${id}` }
     }
-  })
+  }, INVALID_RESULT)
 
   // ── Remove plugin ─────────────────────────────────────────────────────────
-  ipcMain.handle(PLUGIN.REMOVE, async (_event, { id }) => {
+  handleValidated(ipcMain, PLUGIN.REMOVE, pluginIdPayloadSchema, async (_event, { id }) => {
     try {
       await removePlugin(id)
       await rescanPlugins()
@@ -111,10 +120,10 @@ export function initPluginManagerBridge() {
       log.error(`[PluginBridge] remove "${id}" failed:`, err?.message)
       return { ok: false, error: err?.message ?? `Failed to remove ${id}` }
     }
-  })
+  }, INVALID_RESULT)
 
   // ── Install from local folder ─────────────────────────────────────────────
-  ipcMain.handle(PLUGIN.ADD_FROM_LOCAL, async (event, { sourcePath }) => {
+  handleValidated(ipcMain, PLUGIN.ADD_FROM_LOCAL, pluginSourcePathSchema, async (event, { sourcePath }) => {
     try {
       const entry = await installFromLocal(sourcePath, {
         onProgress: (p) => {
@@ -129,10 +138,10 @@ export function initPluginManagerBridge() {
       log.error(`[PluginBridge] add-from-local "${sourcePath}" failed:`, err?.message)
       return { ok: false, error: err?.message ?? `Failed to install from ${sourcePath}` }
     }
-  })
+  }, INVALID_RESULT)
 
   // ── Install from GitHub repo URL ──────────────────────────────────────────
-  ipcMain.handle(PLUGIN.ADD_FROM_GITHUB_REPO, async (event, { repoUrl }) => {
+  handleValidated(ipcMain, PLUGIN.ADD_FROM_GITHUB_REPO, pluginRepoUrlSchema, async (event, { repoUrl }) => {
     try {
       const entry = await installFromGitHubRepo(repoUrl, {
         onProgress: (p) => {
@@ -147,10 +156,10 @@ export function initPluginManagerBridge() {
       log.error(`[PluginBridge] add-from-github-repo "${repoUrl}" failed:`, err?.message)
       return { ok: false, error: err?.message ?? `Failed to install from ${repoUrl}` }
     }
-  })
+  }, INVALID_RESULT)
 
   // ── Inspect local plugin source (read-only, no file copy) ────────────────
-  ipcMain.handle(PLUGIN.INSPECT_LOCAL, async (_event, { sourcePath }) => {
+  handleValidated(ipcMain, PLUGIN.INSPECT_LOCAL, pluginSourcePathSchema, async (_event, { sourcePath }) => {
     try {
       const info = await inspectLocalSource(sourcePath)
       return { ok: true, info }
@@ -158,7 +167,7 @@ export function initPluginManagerBridge() {
       log.error(`[PluginBridge] inspect-local "${sourcePath}" failed:`, err?.message)
       return { ok: false, error: err?.message ?? `Failed to inspect ${sourcePath}` }
     }
-  })
+  }, INVALID_RESULT)
 
   // ── System folder picker ──────────────────────────────────────────────────
   ipcMain.handle(PLUGIN.PICK_FOLDER, async (event) => {

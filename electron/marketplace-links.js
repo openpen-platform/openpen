@@ -8,6 +8,8 @@
  */
 
 import { t } from './i18n/index.js'
+import { onValidated } from './ipc-validation.js'
+import { pluginReportSchema, policyLocaleSchema } from './ipc-payload-schemas.js'
 
 /** Issue tracker of the plugin catalog — the channel for reporting a listed plugin. */
 export const CATALOG_ISSUES_URL = 'https://github.com/openpen-platform/OpenPen-plugins/issues'
@@ -76,11 +78,11 @@ export function buildReportUrl(pluginId, version) {
 export function registerMarketplaceLinkHandlers({ ipcMain, openExternal, channels }) {
   ipcMain.removeAllListeners(channels.OPEN_REPORT)
   ipcMain.removeAllListeners(channels.OPEN_POLICY)
-  ipcMain.on(channels.OPEN_REPORT, (_event, payload) => {
-    const url = buildReportUrl(payload?.id, payload?.version)
+  onValidated(ipcMain, channels.OPEN_REPORT, pluginReportSchema, (_event, payload) => {
+    const url = buildReportUrl(payload.id, payload.version)
     if (url) openExternal(url)
   })
-  ipcMain.on(channels.OPEN_POLICY, (_event, payload) => {
-    openExternal(buildPolicyUrl(payload?.locale))
+  onValidated(ipcMain, channels.OPEN_POLICY, policyLocaleSchema, (_event, payload) => {
+    openExternal(buildPolicyUrl(payload.locale))
   })
 }

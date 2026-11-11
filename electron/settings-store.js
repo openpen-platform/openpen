@@ -13,6 +13,15 @@ import { fsyncDir } from './fs-utils.js';
 import { DEFAULT_SETTINGS, DEFAULT_SHORTCUTS } from '../shared/settings-defaults.js';
 import { setLocale as setMainLocale } from './i18n/index.js';
 import { refreshTrayLocale } from './tray-manager.js';
+import { handleValidated, logRejected, onValidated } from './ipc-validation.js';
+import {
+  knownIdsSchema,
+  layoutSchema,
+  moduleIdSchema,
+  moduleSettingsSetSchema,
+  pluginConflictResolutionsSchema,
+  settingsPatchSchema,
+} from './ipc-payload-schemas.js';
 
 export { DEFAULT_SETTINGS, DEFAULT_SHORTCUTS };
 
@@ -765,35 +774,39 @@ function broadcastSettings() {
   BrowserWindow.getAllWindows().forEach((win) => safeSend(win, SETTINGS.UPDATED, payload));
 }
 
-function registerIpcHandlers() {
-  ipcMain.handle(MODULE.SETTINGS_GET, (_, moduleId) => {
-    if (typeof moduleId !== 'string') return { data: {}, schemaVersion: 1 };
-    return getModuleSettings(moduleId);
-  });
+/**
+ * @param {string} channel
+ * @param {string[]} droppedKeys
+ */
+function logDroppedSettingsKeys(channel, droppedKeys) {
+  if (droppedKeys.length) logRejected(channel, `invalid value for ${droppedKeys.join(', ')}`);
+}
 
-  ipcMain.handle(MODULE.SETTINGS_SET, (_, { moduleId, settings, schemaVersion }) => {
-    if (typeof moduleId !== 'string') return;
-    const data = settings && typeof settings === 'object' && !Array.isArray(settings)
-      ? /** @type {Record<string, unknown>} */ (settings)
-      : {};
-    const version = typeof schemaVersion === 'number' ? schemaVersion : 1;
-    return setModuleSettings(moduleId, data, version);
-  });
+function registerIpcHandlers() {
+  handleValidated(ipcMain, MODULE.SETTINGS_GET, moduleIdSchema, (_, moduleId) => {
+    return getModuleSettings(moduleId);
+  }, { onInvalid: () => ({ data: {}, schemaVersion: 1 }) });
+
+  handleValidated(ipcMain, MODULE.SETTINGS_SET, moduleSettingsSetSchema, (_, { moduleId, settings, schemaVersion }) => {
+    return setModuleSettings(moduleId, settings, schemaVersion ?? 1);
+  }, { onInvalid: () => undefined });
 
   ipcMain.handle(LAYOUT.GET, () => getLayout());
 
-  ipcMain.handle(LAYOUT.SET, (_, newLayout) => {
+  handleValidated(ipcMain, LAYOUT.SET, layoutSchema, (_, newLayout) => {
     const valid = validateLayout(newLayout);
-    if (!valid) return { ok: false, error: 'Invalid layout' };
+    if (!valid) {
+      logRejected(LAYOUT.SET, 'layout failed structural validation');
+      return { ok: false, error: 'Invalid layout' };
+    }
     const { layout: l3a } = repairLayoutL3a(valid);
     setLayout(l3a);
     return { ok: true };
-  });
+  }, { onInvalid: () => ({ ok: false, error: 'Invalid layout' }) });
 
-  ipcMain.handle(LAYOUT.REPAIR, (_, knownIds) => {
-    if (!Array.isArray(knownIds)) return;
+  handleValidated(ipcMain, LAYOUT.REPAIR, knownIdsSchema, (_, knownIds) => {
     repairLayoutWithKnownIds(knownIds);
-  });
+  }, { onInvalid: () => undefined });
 
   ipcMain.handle(SETTINGS.GET, () => {
     return getSettings();
@@ -803,40 +816,26 @@ function registerIpcHandlers() {
     return cache.language;
   });
 
-  ipcMain.handle(SETTINGS.SET, (_, patch) => {
-    if (!patch || typeof patch !== 'object') return getSettings();
-    const safePatch = {};
-    for (const key of Object.keys(DEFAULT_SETTINGS)) {
-      if (key in patch) safePatch[key] = patch[key];
-    }
-    // Coerce disabledModules from renderer: must be a string array.
-    if ('disabledModules' in safePatch) {
-      if (!Array.isArray(safePatch.disabledModules)) {
-        safePatch.disabledModules = [];
-      } else {
-        safePatch.disabledModules = safePatch.disabledModules.filter((v) => typeof v === 'string');
-      }
-    }
-    updateSettings(safePatch);
+  // The schema checks each known key's type and range on its own: invalid
+  // values are dropped (and logged) without touching the stored value, valid
+  // ones apply. A payload that is not an object changes nothing.
+  handleValidated(ipcMain, SETTINGS.SET, settingsPatchSchema, (_, { patch, droppedKeys }) => {
+    logDroppedSettingsKeys(SETTINGS.SET, droppedKeys);
+    updateSettings(patch);
     return getSettings();
-  });
+  }, { onInvalid: () => getSettings() });
 
   ipcMain.handle(MODULE.GET_INITIAL_DISABLED, () => getInitialDisabledModules());
 
-  ipcMain.handle(MODULE.SET_PLUGIN_CONFLICT_RESOLUTIONS, (_, resolutions) => {
-    if (!resolutions || typeof resolutions !== 'object' || Array.isArray(resolutions)) return;
-    const coerced = {};
-    for (const [k, v] of Object.entries(resolutions)) {
-      if (typeof k === 'string' && typeof v === 'string') coerced[k] = v;
-    }
-    updateSettings({ pluginIdConflictResolutions: coerced });
+  handleValidated(ipcMain, MODULE.SET_PLUGIN_CONFLICT_RESOLUTIONS, pluginConflictResolutionsSchema, (_, resolutions) => {
+    updateSettings({ pluginIdConflictResolutions: resolutions });
     // Relaunch so the new resolutions take effect in the next boot cycle.
     app.relaunch();
     app.exit(0);
-  });
+  }, { onInvalid: () => undefined });
 
-  ipcMain.on(SETTINGS.PREVIEW, (_, patch) => {
-    if (!patch || typeof patch !== 'object') return;
+  onValidated(ipcMain, SETTINGS.PREVIEW, settingsPatchSchema, (_, { patch, droppedKeys }) => {
+    logDroppedSettingsKeys(SETTINGS.PREVIEW, droppedKeys);
     previewSettings(patch);
   });
 

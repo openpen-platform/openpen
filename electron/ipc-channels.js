@@ -72,13 +72,6 @@ export const SETTINGS = {
   LOCALE_CHANGED: 'settings:locale-changed',
 }
 
-/** System tray. */
-export const TRAY = {
-  SHOW_MAIN: 'tray:show-main',
-  HIDE_MAIN: 'tray:hide-main',
-  OPEN_SETTINGS: 'tray:open-settings',
-}
-
 /** Developer-side global app config. */
 export const APP_CONFIG = {
   GET: 'app-config:get',

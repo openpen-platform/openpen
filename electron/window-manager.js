@@ -20,6 +20,15 @@ import { deriveLinuxWindowState } from './linux-window-state.js';
 import { IS_WAYLAND_SESSION as IS_WAYLAND } from './is-wayland-session.js';
 import { initCursorOs, hideOsCursor, showOsCursor } from './cursor-os.js';
 import log from 'electron-log/main.js';
+import { onValidated } from './ipc-validation.js';
+import {
+  booleanSchema,
+  drawingSnapshotSchema,
+  historyStateSchema,
+  strokeStyleSchema,
+  toolConfigSchema,
+  windowPositionSchema,
+} from './ipc-payload-schemas.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1183,7 +1192,7 @@ function registerIpcHandlers() {
     closeSettingsWindow();
   });
 
-  ipcMain.on(WINDOW.SET_POSITION, (_, pos) => {
+  onValidated(ipcMain, WINDOW.SET_POSITION, windowPositionSchema, (_, pos) => {
     setMainWindowPosition(pos);
   });
 
@@ -1202,7 +1211,7 @@ function registerIpcHandlers() {
     return screen.getCursorScreenPoint();
   });
 
-  ipcMain.on(WINDOW.SET_IGNORE_MOUSE_EVENTS, (event, ignore) => {
+  onValidated(ipcMain, WINDOW.SET_IGNORE_MOUSE_EVENTS, booleanSchema, (event, ignore) => {
     // Set passthrough on the window that sent this message (identified by webContentsId).
     const sendingWin = BrowserWindow.fromWebContents(event.sender);
     if (!sendingWin || sendingWin.isDestroyed()) return;
@@ -1248,20 +1257,20 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.on(OVERLAY.SET_DRAWING_MODE, (_, enabled) => {
+  onValidated(ipcMain, OVERLAY.SET_DRAWING_MODE, booleanSchema, (_, enabled) => {
     setDrawingModeState(enabled);
   });
 
   // Wayland: track whether a stroke is in progress so setDrawingModeState can
   // refuse to tear the on-demand overlay down mid-stroke (see _strokeActive).
-  ipcMain.on(OVERLAY.STROKE_ACTIVE, (_, active) => {
+  onValidated(ipcMain, OVERLAY.STROKE_ACTIVE, booleanSchema, (_, active) => {
     if (!IS_WAYLAND) return;
-    _strokeActive = !!active;
+    _strokeActive = active;
   });
 
   // Wayland: store the overlay's drawing snapshot (keyed by its display) so it
   // can be replayed when that display's overlay is recreated next session.
-  ipcMain.on(OVERLAY.PERSIST_STATE, (event, snapshot) => {
+  onValidated(ipcMain, OVERLAY.PERSIST_STATE, drawingSnapshotSchema, (event, snapshot) => {
     if (!IS_WAYLAND) return;
     for (const [displayId, overlay] of overlayWindowsByDisplayId) {
       if (!overlay.isDestroyed() && overlay.webContents === event.sender) {
@@ -1274,7 +1283,7 @@ function registerIpcHandlers() {
   // Cross-window relay: ControlBar (main window) → overlay window.
   // The renderer-side event-bus is per-window, so cross-window
   // synchronisation goes through these IPC channels.
-  ipcMain.on(CONTROL_BAR.TOOL_CHANGED, (_, config) => {
+  onValidated(ipcMain, CONTROL_BAR.TOOL_CHANGED, toolConfigSchema, (_, config) => {
     lastToolConfig = config;
     // Broadcast to all overlay windows — all displays need the active tool.
     for (const win of overlayWindowsByDisplayId.values()) {
@@ -1284,7 +1293,7 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.on(CONTROL_BAR.STROKE_STYLE, (_, style) => {
+  onValidated(ipcMain, CONTROL_BAR.STROKE_STYLE, strokeStyleSchema, (_, style) => {
     lastStrokeStyle = style;
     for (const win of overlayWindowsByDisplayId.values()) {
       if (!win.isDestroyed()) {
@@ -1315,7 +1324,7 @@ function registerIpcHandlers() {
   });
 
   // Overlay → main → control bar (canUndo / canRedo state sync).
-  ipcMain.on(HISTORY.STATE_CHANGED, (_, state) => {
+  onValidated(ipcMain, HISTORY.STATE_CHANGED, historyStateSchema, (_, state) => {
     const activeMain = mainWindowsByDisplayId.get(activeDisplayId);
     if (activeMain && !activeMain.isDestroyed()) {
       activeMain.webContents.send(HISTORY.STATE_CHANGED, state);

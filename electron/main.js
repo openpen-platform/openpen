@@ -21,6 +21,8 @@ import { APP, AUDIT, HISTORY, LOG, MODULE, POSITIONING, SYSTEM, WINDOW } from '.
 import { initPluginManagerBridge } from './plugin-manager-bridge.js';
 import { createAuditLog } from './audit-log.js';
 import { initLogger, log } from './logger.js';
+import { handleValidated, onValidated } from './ipc-validation.js';
+import { auditQuerySchema, positioningIntentSchema, rendererErrorSchema } from './ipc-payload-schemas.js';
 import { initPositioningEngine, processIntent, getState as getPositioningState } from './positioning-engine.js';
 import { probeTransparentRendering } from './transparent-render-probe.js';
 import { createRendererReadyWatchdog, resolveTimeoutMs } from './renderer-ready-watchdog.js';
@@ -230,7 +232,7 @@ app.on('child-process-gone', (_event, details) => {
 });
 
 // Renderer-side errors piped to the main-process log via IPC.
-ipcMain.on(LOG.RECORD_ERROR, (_event, payload) => {
+onValidated(ipcMain, LOG.RECORD_ERROR, rendererErrorSchema, (_event, payload) => {
   log.error('renderer:', payload);
 });
 
@@ -436,9 +438,9 @@ app.whenReady().then(async () => {
 
   // Wire positioning IPC — renderer sends intents, engine processes them and
   // broadcasts the resulting state back to the renderer via STATE_CHANGED.
-  ipcMain.handle(POSITIONING.INTENT, async (_event, intent) => {
+  handleValidated(ipcMain, POSITIONING.INTENT, positioningIntentSchema, async (_event, intent) => {
     return processIntent(intent);
-  });
+  }, { onInvalid: () => ({ state: getPositioningState(), windowCommands: [] }) });
 
   // Renderer pulls the current engine state snapshot on mount so it does not
   // depend on receiving the broadcast that fires during main-process init.
@@ -521,7 +523,9 @@ app.whenReady().then(async () => {
   });
 
   // Expose audit log over IPC.
-  ipcMain.handle(AUDIT.GET_ENTRIES, (_event, opts) => auditLog.getEntries(opts));
+  handleValidated(ipcMain, AUDIT.GET_ENTRIES, auditQuerySchema, (_event, opts) => auditLog.getEntries(opts), {
+    onInvalid: () => [],
+  });
   ipcMain.handle(AUDIT.CLEAR, () => { auditLog.clear(); });
 
   // Broadcast plugin module manifests to each window once its renderer loads.

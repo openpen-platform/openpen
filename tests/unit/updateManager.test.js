@@ -223,13 +223,15 @@ describe('auto-check toggle persistence (UPDATE.SET_AUTO_CHECK)', () => {
     expect(getUpdateState().autoCheckEnabled).toBe(false);
   });
 
-  it('coerces a truthy non-boolean to true when persisting', async () => {
+  it('rejects a non-boolean payload without persisting or changing state', async () => {
     const persistAutoCheck = vi.fn();
     const updater = makeFakeUpdater();
     initUpdateManager({ notifyOnly: false, updater, isPackaged: true, autoCheckEnabled: false, persistAutoCheck });
 
-    await ipcHandlers.get(UPDATE.SET_AUTO_CHECK)({}, 1);
-    expect(persistAutoCheck).toHaveBeenCalledWith(true);
+    const result = await ipcHandlers.get(UPDATE.SET_AUTO_CHECK)({}, 1);
+    expect(result).toMatchObject({ autoCheckEnabled: false });
+    expect(persistAutoCheck).not.toHaveBeenCalled();
+    expect(getUpdateState().autoCheckEnabled).toBe(false);
   });
 
   it('toggling does not itself trigger a fresh update check', async () => {

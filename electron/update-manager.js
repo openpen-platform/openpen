@@ -20,6 +20,8 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import electronUpdater from 'electron-updater';
 import { UPDATE } from './ipc-channels.js';
+import { handleValidated } from './ipc-validation.js';
+import { booleanSchema } from './ipc-payload-schemas.js';
 
 const { autoUpdater } = electronUpdater;
 
@@ -235,13 +237,13 @@ export function initUpdateManager(deps = {}) {
     return getUpdateState();
   });
 
-  ipcMain.handle(UPDATE.SET_AUTO_CHECK, (_event, enabled) => {
-    const next = !!enabled;
+  handleValidated(ipcMain, UPDATE.SET_AUTO_CHECK, booleanSchema, (_event, enabled) => {
+    const next = enabled;
     state = { ...state, autoCheckEnabled: next };
     if (typeof persistAutoCheck === 'function') persistAutoCheck(next);
     broadcastState();
     return getUpdateState();
-  });
+  }, { onInvalid: () => getUpdateState() });
 
   ipcMain.on(UPDATE.QUIT_AND_INSTALL, () => {
     if (state.status !== 'downloaded') return;

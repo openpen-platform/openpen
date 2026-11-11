@@ -16,6 +16,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { DIAGNOSTICS } from './ipc-channels.js';
+import { handleValidated } from './ipc-validation.js';
+import { backupPathSchema, diagnosticsEventIdSchema } from './ipc-payload-schemas.js';
 import { fsyncDir } from './fs-utils.js';
 
 // ── Types (JSDoc) ─────────────────────────────────────────────────────────────
@@ -116,15 +118,13 @@ export function initDiagnosticsManager() {
 
   ipcMain.handle(DIAGNOSTICS.GET_STATE, () => getDiagnosticsState());
 
-  ipcMain.handle(DIAGNOSTICS.ACKNOWLEDGE, (_, id) => {
+  handleValidated(ipcMain, DIAGNOSTICS.ACKNOWLEDGE, diagnosticsEventIdSchema, (_, id) => {
     acknowledgeDiagnosticsEvent(id);
-  });
+  }, { onInvalid: () => undefined });
 
-  ipcMain.handle(DIAGNOSTICS.OPEN_BACKUP_DIR, (_, backupPath) => {
-    if (typeof backupPath === 'string') {
-      shell.showItemInFolder(backupPath);
-    }
-  });
+  handleValidated(ipcMain, DIAGNOSTICS.OPEN_BACKUP_DIR, backupPathSchema, (_, backupPath) => {
+    shell.showItemInFolder(backupPath);
+  }, { onInvalid: () => undefined });
 }
 
 /**

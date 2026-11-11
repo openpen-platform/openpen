@@ -15,6 +15,13 @@
 
 import { BrowserWindow, globalShortcut, ipcMain } from 'electron';
 import { MODULE, SHORTCUTS } from './ipc-channels.js';
+import { handleValidated, onValidated } from './ipc-validation.js';
+import {
+  booleanSchema,
+  moduleShortcutRegisterSchema,
+  shortcutIdSchema,
+  shortcutSetSchema,
+} from './ipc-payload-schemas.js';
 import {
   getShortcuts,
   setShortcut as persistShortcut,
@@ -148,10 +155,7 @@ export function initShortcutManager({
 
   // Module IPC bridge: renderer-side modules register their accelerators
   // dynamically via system.shortcuts contributions.
-  ipcMain.on(MODULE.REGISTER_SHORTCUT, (_event, payload) => {
-    if (!payload || typeof payload !== 'object') return;
-    const { id, keys } = payload;
-    if (typeof id !== 'string' || typeof keys !== 'string') return;
+  onValidated(ipcMain, MODULE.REGISTER_SHORTCUT, moduleShortcutRegisterSchema, (_event, { id, keys }) => {
     if (idToAccelerator.has(id)) {
       console.warn(`[ShortcutManager] Shortcut id already registered: ${id}`);
       return;
@@ -176,10 +180,7 @@ export function initShortcutManager({
     }
   });
 
-  ipcMain.on(MODULE.UNREGISTER_SHORTCUT, (_event, payload) => {
-    if (!payload || typeof payload !== 'object') return;
-    const { id } = payload;
-    if (typeof id !== 'string') return;
+  onValidated(ipcMain, MODULE.UNREGISTER_SHORTCUT, shortcutIdSchema, (_event, { id }) => {
     const accelerator = idToAccelerator.get(id);
     if (accelerator) {
       globalShortcut.unregister(accelerator);
@@ -199,7 +200,7 @@ export function initShortcutManager({
  * the IPC surface lives next to the bookkeeping it mutates.
  */
 function _registerIpcHandlers() {
-  ipcMain.on(SHORTCUTS.SET_SUSPENDED, (_event, suspended) => {
+  onValidated(ipcMain, SHORTCUTS.SET_SUSPENDED, booleanSchema, (_event, suspended) => {
     if (suspended) {
       _suspendShortcuts();
     } else {
@@ -213,10 +214,7 @@ function _registerIpcHandlers() {
 
   ipcMain.handle(SHORTCUTS.GET_CONFLICTS, () => [...idConflicts]);
 
-  ipcMain.handle(SHORTCUTS.SET, (_event, payload) => {
-    if (!payload || typeof payload.id !== 'string' || typeof payload.accelerator !== 'string') {
-      return { ok: false, error: 'Invalid payload' };
-    }
+  handleValidated(ipcMain, SHORTCUTS.SET, shortcutSetSchema, (_event, payload) => {
     // Route to module shortcut path if the id belongs to a registered module shortcut.
     if (idDefaultKeys.has(payload.id)) {
       const result = _updateModuleShortcut(payload.id, payload.accelerator);
@@ -226,12 +224,9 @@ function _registerIpcHandlers() {
     const result = _updateBuiltinShortcut(payload.id, payload.accelerator);
     if (result.ok) persistShortcut(payload.id, payload.accelerator);
     return result;
-  });
+  }, { onInvalid: () => ({ ok: false, error: 'Invalid payload' }) });
 
-  ipcMain.handle(SHORTCUTS.RESET, (_event, payload) => {
-    if (!payload || typeof payload.id !== 'string') {
-      return { ok: false, error: 'Invalid payload' };
-    }
+  handleValidated(ipcMain, SHORTCUTS.RESET, shortcutIdSchema, (_event, payload) => {
     // Route to module shortcut path if the id belongs to a registered module shortcut.
     if (idDefaultKeys.has(payload.id)) {
       const defaultAccel = idDefaultKeys.get(payload.id);
@@ -244,7 +239,7 @@ function _registerIpcHandlers() {
     const result = _updateBuiltinShortcut(payload.id, defaultAccel);
     if (result.ok) persistResetShortcut(payload.id);
     return result;
-  });
+  }, { onInvalid: () => ({ ok: false, error: 'Invalid payload' }) });
 }
 
 /**
