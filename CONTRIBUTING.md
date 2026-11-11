@@ -33,6 +33,14 @@ npm run test:unit
 npx playwright test
 ```
 
+`npm install` does not download the Electron binary. Run this once after installing dependencies and before the commands above (CI does the same):
+
+```bash
+npx install-electron
+```
+
+**Windows:** the Electron download step unzips with a native module that needs the [Microsoft Visual C++ Redistributable (x64; ARM64 on ARM devices)](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist). A clean Windows install may not have it, in which case the Electron download (`npx install-electron`) fails with `Cannot find native binding` and a misleading `intentionally not published` message. Install the redistributable, then re-run the command.
+
 DevTools stay closed in dev mode unless `devtools.enabled` is turned on in [`app.config.js`](./app.config.js), which holds the runtime config. Packaged builds land in `release/` (see [Packaging & Distribution](#packaging--distribution)).
 
 ---
