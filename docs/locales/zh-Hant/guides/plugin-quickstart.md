@@ -43,6 +43,27 @@ npm run build    # outputs dist/renderer.js
 npm run dev      # watch mode during development
 ```
 
+## 檢查程式碼
+
+```bash
+npm run check    # 檢查 .ts 檔與 Vue 模板的型別
+```
+
+無論 `tsconfig.json` 如何設定，`npm run check` 都會以嚴格模板檢查執行 `vue-tsc`。元件屬性拼錯或傳入不存在的屬性會使檢查失敗，並指出該屬性：
+
+```
+src/HelloButton.vue(39,14): error TS2561: Object literal may only specify known properties, but 'toolTipp' does not exist in type '...'. Did you mean to write 'tooltip'?
+```
+
+沒有問題時結束碼為 0，否則為非 0。`npm run build` 不做型別檢查，請在建置前先執行檢查。
+
+**升級既有的插件專案。** 早期範本執行的是一般的 `tsc`，不會檢查模板。
+
+1. 安裝 `vue-tsc`：`npm install -D vue-tsc@~3.3.0`。未安裝時檢查會中止並印出這條指令。
+2. 修正嚴格模板檢查現在回報的錯誤。舊版入門範本會遇到兩個：
+   - 在 `NumberFieldRoot` 等 Reka UI 元件上出現 `'aria-label' does not exist in type ...`（TS2353）：改用 `v-bind="{ 'aria-label': '...' }"` 傳入。
+   - 數字欄位的 `v-model` 出現 `Type 'number | undefined' is not assignable to type 'number'`（TS2322）：將 ref 宣告為 `ref<number | undefined>(16)`。
+
 ## 第 3 步 — 在本機安裝以進行測試
 
 使用 CLI 將已建置的 plugin 複製到 host 的 plugin 資料夾：
@@ -89,8 +110,8 @@ cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
 ```
 my-plugin/
 ├── plugin.json             ← Manifest the host scans (id, version, etc.)
-├── package.json            ← devDeps: @openpen/build, @openpen/module-api
-├── tsconfig.json           ← Optional, used by `npm run check`
+├── package.json            ← devDeps: @openpen/build, @openpen/module-api, vue-tsc
+├── tsconfig.json           ← Used by `npm run check` (vue-tsc, strict templates)
 └── src/
     ├── module-id.ts        ← Single source of truth for the plugin's id
     ├── index.ts            ← Default-exports an OpenPenModule

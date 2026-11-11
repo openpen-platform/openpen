@@ -14,7 +14,7 @@ npm install --save-dev @openpen/build @openpen/module-api
 ```bash
 npx openpen-build           # one-shot build → dist/renderer.js
 npx openpen-build --watch   # dev mode, rebuild on change
-npx openpen-build --check   # type-check only (requires tsconfig.json)
+npx openpen-build --check   # type-check .ts and Vue templates, strict (requires tsconfig.json and vue-tsc)
 ```
 
 The CLI expects, in the plugin's project root:

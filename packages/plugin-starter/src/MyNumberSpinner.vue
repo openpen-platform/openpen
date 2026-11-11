@@ -18,10 +18,12 @@ import {
 } from '@openpen/module-api/uikit'
 import { ref } from 'vue'
 
-const size = ref(16)
+// The field emits `undefined` when cleared, so the model type must allow it.
+const size = ref<number | undefined>(16)
 </script>
 
 <template>
+  <!-- aria-* attributes are not declared props of the Reka components, so they are passed via v-bind to satisfy strict template checking -->
   <!-- Popover-style wrapper so this control appears as a button in the bar -->
   <NumberFieldRoot
     v-model="size"
@@ -29,16 +31,16 @@ const size = ref(16)
     :max="64"
     :step="2"
     class="spinner-root"
-    aria-label="Custom size"
+    v-bind="{ 'aria-label': 'Custom size' }"
   >
     <div class="spinner-control">
-      <NumberFieldDecrement class="spinner-btn" aria-label="Decrease size">
+      <NumberFieldDecrement class="spinner-btn" v-bind="{ 'aria-label': 'Decrease size' }">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
           <path d="M2 5h6"/>
         </svg>
       </NumberFieldDecrement>
       <NumberFieldInput class="spinner-input" />
-      <NumberFieldIncrement class="spinner-btn" aria-label="Increase size">
+      <NumberFieldIncrement class="spinner-btn" v-bind="{ 'aria-label': 'Increase size' }">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
           <path d="M5 2v6M2 5h6"/>
         </svg>

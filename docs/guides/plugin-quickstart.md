@@ -40,6 +40,27 @@ npm run build    # outputs dist/renderer.js
 npm run dev      # watch mode during development
 ```
 
+## Check your code
+
+```bash
+npm run check    # type-checks .ts files and Vue templates
+```
+
+`npm run check` runs `vue-tsc` with strict template checking, whatever your `tsconfig.json` says. A misspelled or unknown component prop fails the check and names the prop:
+
+```
+src/HelloButton.vue(39,14): error TS2561: Object literal may only specify known properties, but 'toolTipp' does not exist in type '...'. Did you mean to write 'tooltip'?
+```
+
+The command exits with 0 when nothing is wrong and with a non-zero code otherwise. `npm run build` does not type-check, so run the check before you build.
+
+**Upgrading an existing plugin project.** Earlier templates ran plain `tsc`, which skips templates.
+
+1. Install `vue-tsc`: `npm install -D vue-tsc@~3.3.0`. Without it the check stops and prints this command.
+2. Fix the errors strict templates now report. Two come from the old starter:
+   - `'aria-label' does not exist in type ...` (TS2353) on Reka UI parts such as `NumberFieldRoot`: pass it as `v-bind="{ 'aria-label': '...' }"`.
+   - `Type 'number | undefined' is not assignable to type 'number'` (TS2322) on `v-model` of a number field: declare the ref as `ref<number | undefined>(16)`.
+
 ## Step 3 — Install locally for testing
 
 Use the CLI to copy the built plugin into the host's plugin directory:
@@ -88,8 +109,8 @@ Restart OpenPen and look for your contribution in the control bar.
 ```
 my-plugin/
 ├── plugin.json             ← Manifest the host scans (id, version, etc.)
-├── package.json            ← devDeps: @openpen/build, @openpen/module-api
-├── tsconfig.json           ← Optional, used by `npm run check`
+├── package.json            ← devDeps: @openpen/build, @openpen/module-api, vue-tsc
+├── tsconfig.json           ← Used by `npm run check` (vue-tsc, strict templates)
 └── src/
     ├── module-id.ts        ← Single source of truth for the plugin's id
     ├── index.ts            ← Default-exports an OpenPenModule

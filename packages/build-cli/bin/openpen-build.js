@@ -4,7 +4,7 @@
  *
  *   npx @openpen/build           # one-shot build → dist/renderer.js
  *   npx @openpen/build --watch   # rebuild on change
- *   npx @openpen/build --check   # type-check only (tsc --noEmit) if tsconfig present
+ *   npx @openpen/build --check   # type-check .ts and Vue templates, strict (vue-tsc --noEmit)
  *   npx @openpen/build pack      # bundle dist/ + plugin.json into a distributable zip
  *
  * The plugin author's repo only needs a `plugin.json` + `src/index.ts`.
@@ -16,6 +16,7 @@ import { build } from 'vite'
 import path from 'node:path'
 import fs from 'node:fs'
 import { createWriteStream } from 'node:fs'
+import { createRequire } from 'node:module'
 import { spawnSync } from 'node:child_process'
 import { buildPluginConfig } from '../src/vite-preset.js'
 
@@ -106,9 +107,32 @@ if (check) {
   if (!fs.existsSync(tsconfigPath)) {
     fail('--check requires a tsconfig.json in the plugin root.', 1)
   }
-  const result = spawnSync('npx', ['tsc', '--noEmit', '-p', tsconfigPath], {
+  // vue-tsc type-checks <template> blocks (tsc alone skips them), so a
+  // misspelled or unknown component prop is reported here instead of at load time.
+  let vueTscBin
+  try {
+    const req = createRequire(path.join(cwd, 'package.json'))
+    const pkgPath = req.resolve('vue-tsc/package.json')
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
+    vueTscBin = path.join(path.dirname(pkgPath), typeof pkg.bin === 'string' ? pkg.bin : pkg.bin['vue-tsc'])
+  } catch {
+    fail('--check requires vue-tsc. Install it with: npm install -D vue-tsc@~3.3.0', 1)
+  }
+  // Always check templates strictly, whatever the project's own tsconfig says:
+  // a generated config extends it and only switches strictTemplates on, so
+  // projects created before this check existed need no tsconfig edit.
+  const checkDir = path.join(cwd, 'node_modules', '.cache', 'openpen-build')
+  const checkConfigPath = path.join(checkDir, 'tsconfig.check.json')
+  fs.mkdirSync(checkDir, { recursive: true })
+  fs.writeFileSync(
+    checkConfigPath,
+    JSON.stringify({
+      extends: tsconfigPath.split(path.sep).join('/'),
+      vueCompilerOptions: { strictTemplates: true },
+    }),
+  )
+  const result = spawnSync(process.execPath, [vueTscBin, '--noEmit', '-p', checkConfigPath], {
     stdio: 'inherit',
-    shell: false,
   })
   process.exit(result.status ?? 0)
 }

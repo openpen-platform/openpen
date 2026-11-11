@@ -44,6 +44,27 @@ npm run build    # outputs dist/renderer.js
 npm run dev      # watch mode during development
 ```
 
+## コードをチェックする
+
+```bash
+npm run check    # .ts ファイルと Vue テンプレートの型チェック
+```
+
+`npm run check` は、`tsconfig.json` の内容にかかわらず、厳格なテンプレートチェックを有効にして `vue-tsc` を実行します。コンポーネントのプロパティの綴り間違いや存在しないプロパティはチェックに失敗し、そのプロパティ名が表示されます。
+
+```
+src/HelloButton.vue(39,14): error TS2561: Object literal may only specify known properties, but 'toolTipp' does not exist in type '...'. Did you mean to write 'tooltip'?
+```
+
+問題がなければ終了コード 0、問題があれば 0 以外で終了します。`npm run build` は型チェックを行わないため、ビルドの前にチェックを実行してください。
+
+**既存のプラグインプロジェクトをアップグレードする場合。** 以前のテンプレートは通常の `tsc` を実行しており、テンプレートはチェックされていませんでした。
+
+1. `vue-tsc` をインストールします: `npm install -D vue-tsc@~3.3.0`。未インストールの場合、チェックは停止してこのコマンドを表示します。
+2. 厳格なテンプレートチェックで新たに報告されるエラーを修正します。古いスターターでは次の 2 つが該当します。
+   - `NumberFieldRoot` などの Reka UI パーツでの `'aria-label' does not exist in type ...`（TS2353）: `v-bind="{ 'aria-label': '...' }"` で渡します。
+   - 数値フィールドの `v-model` での `Type 'number | undefined' is not assignable to type 'number'`（TS2322）: ref を `ref<number | undefined>(16)` と宣言します。
+
 ## ステップ 3 — テスト用にローカルインストール
 
 CLI を使用して、ビルド済み plugin をホストの plugin ディレクトリにコピーします:
@@ -89,8 +110,8 @@ OpenPen を再起動し、コントロールバーに contribution が表示さ�
 ```
 my-plugin/
 ├── plugin.json             ← Manifest the host scans (id, version, etc.)
-├── package.json            ← devDeps: @openpen/build, @openpen/module-api
-├── tsconfig.json           ← Optional, used by `npm run check`
+├── package.json            ← devDeps: @openpen/build, @openpen/module-api, vue-tsc
+├── tsconfig.json           ← Used by `npm run check` (vue-tsc, strict templates)
 └── src/
     ├── module-id.ts        ← Single source of truth for the plugin's id
     ├── index.ts            ← Default-exports an OpenPenModule
