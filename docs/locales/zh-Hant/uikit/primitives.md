@@ -121,15 +121,17 @@ rollupOptions.external: ['vue', '@openpen/module-api', '@openpen/module-api/uiki
 
 ### 在本機測試 plugin
 
-載入 plugin 需要正式建置（importmap 僅存在於 `dist/index.html`）。請執行：
+載入 plugin 需要 OpenPen 的正式建置（importmap 僅存在於 `dist/index.html`），請用已打包的 OpenPen 發行版測試。在用 `npx openpen-cli create` 建立的 plugin 專案裡執行：
 
 ```bash
-npm run build                  # Build host + runtime shims
-cd packages/my-plugin && npm run build  # Build plugin
-# Then install to ~/.openpen/plugins/ and launch with NODE_ENV=production
+npm run build                  # Build the plugin (outputs dist/renderer.js)
+npx openpen-cli plugin add .   # Copy it into ~/.openpen/plugins/
+# Then restart OpenPen
 ```
 
-Vite 開發伺服器（`npm run dev`）**不會**載入 plugin——開發中介軟體雖然服務 runtime shim URL，但在開發模式下不會掃描安裝於 `~/.openpen/plugins/` 的 plugin。
+`plugin add` 會複製哪些檔案與確認提示，見 [plugin 快速上手](../guides/plugin-quickstart.md)的第 3 步。
+
+Vite 開發伺服器（OpenPen 主程式 repo 的 `npm run dev`）**不會**載入 plugin——開發中介軟體雖然服務 runtime shim URL，但在開發模式下不會掃描安裝於 `~/.openpen/plugins/` 的 plugin。
 
 ---
 

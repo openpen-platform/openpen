@@ -121,16 +121,17 @@ rollupOptions.external: ['vue', '@openpen/module-api', '@openpen/module-api/uiki
 
 ### 本地测试 plugin
 
-加载 plugin 需要生产构建（importmap 仅存在于 `dist/index.html` 中）。
-运行：
+加载 plugin 需要 OpenPen 的生产构建（importmap 仅存在于 `dist/index.html` 中），请用已打包的 OpenPen 发行版测试。在用 `npx openpen-cli create` 创建的 plugin 项目里运行：
 
 ```bash
-npm run build                  # Build host + runtime shims
-cd packages/my-plugin && npm run build  # Build plugin
-# Then install to ~/.openpen/plugins/ and launch with NODE_ENV=production
+npm run build                  # Build the plugin (outputs dist/renderer.js)
+npx openpen-cli plugin add .   # Copy it into ~/.openpen/plugins/
+# Then restart OpenPen
 ```
 
-Vite 开发服务器（`npm run dev`）不加载 plugin——开发中间件会提供运行时 shim 的 URL，但 `~/.openpen/plugins/` 中安装的 plugin 在开发模式下不会被扫描。
+`plugin add` 会复制哪些文件以及确认提示，见 [plugin 快速上手](../guides/plugin-quickstart.md)的第 3 步。
+
+Vite 开发服务器（OpenPen 主程序仓库的 `npm run dev`）不加载 plugin——开发中间件会提供运行时 shim 的 URL，但 `~/.openpen/plugins/` 中安装的 plugin 在开发模式下不会被扫描。
 
 ---
 

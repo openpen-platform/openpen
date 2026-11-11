@@ -136,16 +136,17 @@ correctly.
 
 ### Testing plugins locally
 
-Plugin loading requires the prod build (importmap is only in `dist/index.html`).
-Run:
+Plugin loading requires the production build of OpenPen (importmap is only in `dist/index.html`), so test against a packaged OpenPen release. Run these from your plugin project, the one `npx openpen-cli create` made:
 
 ```bash
-npm run build                  # Build host + runtime shims
-cd packages/my-plugin && npm run build  # Build plugin
-# Then install to ~/.openpen/plugins/ and launch with NODE_ENV=production
+npm run build                  # Build the plugin (outputs dist/renderer.js)
+npx openpen-cli plugin add .   # Copy it into ~/.openpen/plugins/
+# Then restart OpenPen
 ```
 
-Vite dev server (`npm run dev`) does NOT load plugins — the dev middleware
+See Step 3 of the [plugin quickstart](../guides/plugin-quickstart.md) for what `plugin add` copies and the confirmation prompt.
+
+The Vite dev server (`npm run dev` in the OpenPen host repo) does NOT load plugins — the dev middleware
 serves the runtime shim URLs but plugins installed in `~/.openpen/plugins/` are
 not scanned in dev mode.
 

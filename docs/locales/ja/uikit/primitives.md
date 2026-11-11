@@ -121,16 +121,17 @@ rollupOptions.external: ['vue', '@openpen/module-api', '@openpen/module-api/uiki
 
 ### plugin のローカルテスト
 
-plugin の読み込みにはプロダクションビルドが必要です (importmap は `dist/index.html` にのみ存在します)。
-以下を実行してください。
+plugin の読み込みには OpenPen のプロダクションビルドが必要です (importmap は `dist/index.html` にのみ存在します)。そのため、パッケージ化された OpenPen リリースでテストしてください。`npx openpen-cli create` で作成した plugin プロジェクトで次を実行します。
 
 ```bash
-npm run build                  # Build host + runtime shims
-cd packages/my-plugin && npm run build  # Build plugin
-# Then install to ~/.openpen/plugins/ and launch with NODE_ENV=production
+npm run build                  # Build the plugin (outputs dist/renderer.js)
+npx openpen-cli plugin add .   # Copy it into ~/.openpen/plugins/
+# Then restart OpenPen
 ```
 
-Vite dev サーバー (`npm run dev`) は plugin を読み込みません。dev ミドルウェアはランタイムシム URL を提供しますが、`~/.openpen/plugins/` にインストールされた plugin は dev モードでスキャンされません。
+`plugin add` がコピーする内容と確認プロンプトについては、[plugin クイックスタート](../guides/plugin-quickstart.md)のステップ 3 を参照してください。
+
+Vite dev サーバー (OpenPen ホストリポジトリの `npm run dev`) は plugin を読み込みません。dev ミドルウェアはランタイムシム URL を提供しますが、`~/.openpen/plugins/` にインストールされた plugin は dev モードでスキャンされません。
 
 ---
 
