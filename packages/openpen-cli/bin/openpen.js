@@ -140,7 +140,10 @@ function copyStarterTo(starterDir, destDir, pluginId, scope, name) {
     for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
       if (skip.has(entry.name)) continue
       const srcPath = path.join(src, entry.name)
-      const destPath = path.join(dest, entry.name)
+      // npm strips `.gitignore` from published tarballs, so the starter ships it
+      // as `gitignore` and the dot is restored here.
+      const destName = !entry.isDirectory() && entry.name === 'gitignore' ? '.gitignore' : entry.name
+      const destPath = path.join(dest, destName)
       if (entry.isDirectory()) {
         copyDir(srcPath, destPath)
       } else {
@@ -152,6 +155,7 @@ function copyStarterTo(starterDir, destDir, pluginId, scope, name) {
           .replace(/your-plugin-name/g, name)
           .replace(/Your Plugin Name/g, toTitleCase(name))
           .replace(/your-github-username/g, scope)
+          .replace(/\{\{year\}\}/g, String(new Date().getFullYear()))
           .replace(/"openpen-plugin-starter"/g, JSON.stringify(pluginId))
         fs.writeFileSync(destPath, content)
       }

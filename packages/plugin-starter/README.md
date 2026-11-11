@@ -32,13 +32,13 @@ buttons landed on the control bar.
 ## Next steps
 
 - **New to OpenPen plugins?** → Read the
-  [Build Your First Plugin](../../docs/tutorials/build-your-first-plugin.md) tutorial.
+  [Build Your First Plugin](https://github.com/openpen-platform/openpen/blob/main/docs/tutorials/build-your-first-plugin.md) tutorial.
 - **Want to publish?** → Follow the
-  [Publishing Guide](../../docs/guides/publishing.md).
+  [Publishing Guide](https://github.com/openpen-platform/openpen/blob/main/docs/guides/publishing.md).
 - **Need to understand the architecture?** → See
-  [Module Architecture](../../docs/concepts/module-architecture.md).
+  [Module Architecture](https://github.com/openpen-platform/openpen/blob/main/docs/concepts/module-architecture.md).
 - **Looking for API reference?** → Browse
-  [docs/reference/](../../docs/reference/).
+  [docs/reference/](https://github.com/openpen-platform/openpen/tree/main/docs/reference).
 
 ## License
 
