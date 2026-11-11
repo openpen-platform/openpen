@@ -49,9 +49,8 @@ jobs:
   # Prod-smoke is the same gate that release.yml runs before signing the
   # build — it catches dev/prod parity regressions (build-runtime SFC styles,
   # importmap resolution, asar quirks) that the dev server can't reproduce.
-  # The full Playwright + Electron suite (~4 min, 111 specs) is intentionally
-  # NOT gated here yet; it would multiply CI minutes per PR. Promote it to a
-  # gate after a soak window if smoke proves stable.
+  # This job keeps its name because branch protection requires "E2E prod smoke";
+  # the Windows and Linux legs run in e2e-smoke-cross below.
   e2e-smoke:
     name: E2E prod smoke
     if: ${{ github.server_url == 'https://github.com' }}
@@ -66,3 +65,50 @@ jobs:
       - run: npx install-electron
       - run: npm run build
       - run: npm run test:prod-smoke
+
+  # Same prod-smoke on the other two release platforms, so an Electron upgrade
+  # or window-logic change that only breaks Windows or Linux fails the PR
+  # instead of the release build. fail-fast is off so one platform's failure
+  # still reports the other's result.
+  e2e-smoke-cross:
+    name: E2E prod smoke (${{ matrix.os }})
+    if: ${{ github.server_url == 'https://github.com' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx install-electron
+      - run: npm run build
+      - name: Prod smoke test
+        if: ${{ runner.os != 'Linux' }}
+        run: npm run test:prod-smoke
+      # Linux runners are headless; launchElectronAppProd forces the X11 path,
+      # so the smoke runs for real under Xvfb.
+      - name: Prod smoke test (Xvfb)
+        if: ${{ runner.os == 'Linux' }}
+        run: xvfb-run --auto-servernum npm run test:prod-smoke
+
+  # Functional specs that were repeat-run green under Xvfb on Linux X11 (the
+  # list lives in tests/e2e/spec-sets.js). Specs that depend on a window
+  # manager, multiple displays or real input timing stay out of this gate.
+  e2e-linux-x11:
+    name: E2E stable subset (Linux X11)
+    if: ${{ github.server_url == 'https://github.com' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx install-electron
+      - run: xvfb-run --auto-servernum npm run test:e2e:ci

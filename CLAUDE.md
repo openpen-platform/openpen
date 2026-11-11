@@ -267,6 +267,7 @@ npx playwright test      # E2E tests (Playwright + Electron)
 npm run build            # Vite build → dist/ (runs type-check + build:runtime)
 npm run build:runtime    # Bundle vue / module-api / module-api-uikit for plugin importmap
 npm run test:prod-smoke  # Smoke test against the production bundle
+npm run test:e2e:ci      # Linux X11 stable subset gated on every PR (list in tests/e2e/spec-sets.js); run under xvfb-run on a headless box
 npm run dist:mac         # Build .dmg for macOS (arm64 + x64, see docs/guides/building.md)
 npm run dist:win         # Build NSIS installer for Windows
 npm run dist:linux       # Build .AppImage for Linux

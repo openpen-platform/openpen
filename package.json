@@ -17,6 +17,7 @@
     "test:e2e": "npm run test:e2e:standard && npm run test:e2e:wayland",
     "test:e2e:standard": "XDG_SESSION_TYPE=x11 ELECTRON_OZONE_PLATFORM_HINT=x11 npx playwright test --project=functional",
     "test:e2e:wayland": "XDG_SESSION_TYPE=wayland ELECTRON_OZONE_PLATFORM_HINT=wayland npx playwright test --project=functional",
+    "test:e2e:ci": "OPENPEN_E2E_SUBSET=ci-stable XDG_SESSION_TYPE=x11 ELECTRON_OZONE_PLATFORM_HINT=x11 npx playwright test --project=functional",
     "dist": "npm run build && npm run test:prod-smoke && electron-builder",
     "dist:mac": "npm run build && npm run test:prod-smoke && electron-builder --mac",
     "dist:win": "npm run build && npm run test:prod-smoke && electron-builder --win",
