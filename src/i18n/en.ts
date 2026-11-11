@@ -235,6 +235,9 @@ export default {
   pluginRestart: 'Now',
   pluginDismiss: 'Dismiss',
   pluginRetry: 'Retry',
+  pluginReport: 'Report',
+  pluginReportHint: 'Report this plugin to the marketplace maintainers',
+  pluginMarketplacePolicy: 'Marketplace policy',
   // Add custom source dialog
   pluginAddCustomTitle: 'Add Custom Plugin',
   pluginTabLocal: 'Local folder or zip',

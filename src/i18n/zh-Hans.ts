@@ -236,6 +236,9 @@ export default {
   pluginRestart: '立即',
   pluginDismiss: '关闭',
   pluginRetry: '重试',
+  pluginReport: '反馈',
+  pluginReportHint: '向市集维护者反馈这个插件的问题',
+  pluginMarketplacePolicy: '市集政策',
   // Add custom source dialog
   pluginAddCustomTitle: '添加自定义插件',
   pluginTabLocal: '本地文件夹或 zip',

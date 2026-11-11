@@ -238,6 +238,10 @@ export const PLUGIN = {
   ENTER_LOCAL_INSTALL: 'plugin:enter-local-install',
   /** renderer → main (send): the Add Custom dialog closed; main restores the original always-on-top level. */
   EXIT_LOCAL_INSTALL: 'plugin:exit-local-install',
+  /** renderer → main (send): open the catalog issue form to report a plugin ({ id, version }). */
+  OPEN_REPORT: 'plugin:open-report',
+  /** renderer → main (send): open the marketplace policy page in the given UI locale ({ locale }). */
+  OPEN_POLICY: 'plugin:open-policy',
 }
 
 /** Module / plugin system. */

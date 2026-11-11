@@ -6,4 +6,6 @@ export default {
   'tray.exitDrawingMode': 'Exit Drawing Mode',
   'tray.preferences': 'Preferences…',
   'tray.quit': 'Quit OpenPen',
+  'marketplace.report.securityNotice': 'Security issue? Please do not report it here in public. Follow the private reporting process in the OpenPen security policy:',
+  'marketplace.report.prompt': 'What is wrong with this plugin?',
 };

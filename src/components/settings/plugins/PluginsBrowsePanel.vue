@@ -6,7 +6,7 @@ import PluginCard from './PluginCard.vue'
 import PluginDetailDialog from './PluginDetailDialog.vue'
 import PluginInstallProgressDialog from './PluginInstallProgressDialog.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const marketplace = usePluginMarketplace()
 
 const props = withDefaults(defineProps<{ searchQuery?: string }>(), { searchQuery: '' })
@@ -55,6 +55,10 @@ function dismissProgress() {
 function restartFromProgress() {
   dismissProgress()
   window.openPenApi?.relaunchApp()
+}
+
+function openPolicy() {
+  window.openPenApi?.openMarketplacePolicy(locale.value)
 }
 
 async function refresh() {
@@ -163,6 +167,17 @@ onMounted(async () => {
       @retry="() => startInstall(installTargetId, installTargetVersion)"
       @restart="restartFromProgress"
     />
+
+    <div class="browse-footer">
+      <button
+        type="button"
+        class="browse-policy-link"
+        data-testid="plugin-browse-policy-link"
+        @click="openPolicy"
+      >
+        {{ t('pluginMarketplacePolicy') }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -183,6 +198,13 @@ onMounted(async () => {
   background: transparent; border: none; cursor: pointer; padding: 0 4px;
 }
 .browse-retry-btn:hover { text-decoration: underline; }
+
+.browse-footer { display: flex; justify-content: flex-end; }
+.browse-policy-link {
+  font-size: 11.5px; color: var(--text-muted); background: transparent;
+  border: none; padding: 0 2px; cursor: pointer;
+}
+.browse-policy-link:hover { color: var(--accent); text-decoration: underline; }
 
 .browse-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .mp-filter-chip {

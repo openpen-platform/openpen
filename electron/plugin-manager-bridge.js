@@ -9,7 +9,7 @@
  * needs to catch — errors are always surfaced as { ok: false, error: string }.
  */
 
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
 import https from 'node:https'
 import http from 'node:http'
 import { PLUGIN } from './ipc-channels.js'
@@ -22,6 +22,7 @@ import {
 } from '@openpen/plugin-manager'
 import { rescanPlugins } from './module-manifest-loader.js'
 import { log } from './logger.js'
+import { registerMarketplaceLinkHandlers } from './marketplace-links.js'
 
 /**
  * @typedef {{ ok: true, plugins: import('@openpen/plugin-manager').CatalogEntry[] }} CatalogOk
@@ -197,6 +198,13 @@ export function initPluginManagerBridge() {
   })
   ipcMain.on(PLUGIN.EXIT_LOCAL_INSTALL, (event) => {
     resumeAlwaysOnTop(BrowserWindow.fromWebContents(event.sender))
+  })
+
+  // ── Report / policy links ─────────────────────────────────────────────────
+  registerMarketplaceLinkHandlers({
+    ipcMain,
+    openExternal: (url) => shell.openExternal(url),
+    channels: PLUGIN,
   })
 }
 

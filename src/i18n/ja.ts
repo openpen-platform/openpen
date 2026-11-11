@@ -236,6 +236,9 @@ export default {
   pluginRestart: '今すぐ',
   pluginDismiss: '閉じる',
   pluginRetry: '再試行',
+  pluginReport: '報告',
+  pluginReportHint: 'このプラグインをマーケットの管理者に報告',
+  pluginMarketplacePolicy: 'マーケットポリシー',
   // Add custom source dialog
   pluginAddCustomTitle: 'カスタムプラグインを追加',
   pluginTabLocal: 'ローカルフォルダまたは zip',

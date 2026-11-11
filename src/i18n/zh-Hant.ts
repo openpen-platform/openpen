@@ -235,6 +235,9 @@ export default {
   pluginRestart: '立即',
   pluginDismiss: '關閉',
   pluginRetry: '重試',
+  pluginReport: '回報',
+  pluginReportHint: '向市集維護者回報這個插件',
+  pluginMarketplacePolicy: '市集政策',
   // Add custom source dialog
   pluginAddCustomTitle: '新增自訂插件',
   pluginTabLocal: '本地資料夾或 zip',

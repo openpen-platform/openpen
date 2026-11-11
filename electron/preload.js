@@ -264,6 +264,10 @@ contextBridge.exposeInMainWorld('openPenApi', {
   addPluginFromLocal: (sourcePath) => ipcRenderer.invoke('plugin:add-from-local', { sourcePath }),
   /** Install a plugin from a GitHub repo URL. */
   addPluginFromGitHubRepo: (repoUrl) => ipcRenderer.invoke('plugin:add-from-github-repo', { repoUrl }),
+  /** Open the catalog issue form, pre-filled to report the given plugin. */
+  openPluginReport: (id, version) => ipcRenderer.send('plugin:open-report', { id, version }),
+  /** Open the marketplace policy page in the given UI locale. */
+  openMarketplacePolicy: (locale) => ipcRenderer.send('plugin:open-policy', { locale }),
   /**
    * Subscribe to install-progress events from the main process.
    * @param {(payload: { stage: string, percent?: number }) => void} callback

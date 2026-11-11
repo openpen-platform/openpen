@@ -23,6 +23,11 @@ const hasUpdate = computed(() =>
   props.entry?.latestVersion &&
   props.entry.latestVersion !== props.installedVersion
 )
+
+function openReport() {
+  if (!props.entry) return
+  window.openPenApi?.openPluginReport(props.entry.id, props.installedVersion ?? props.entry.latestVersion)
+}
 </script>
 
 <template>
@@ -75,6 +80,18 @@ const hasUpdate = computed(() =>
         <div class="pd-meta">
           <span class="pd-meta-chip">{{ t('pluginMinVersion', { version: entry.minAppVersion }) }}</span>
           <span v-if="entry.forkOf" class="pd-meta-chip">Fork of {{ entry.forkOf }}</span>
+          <button
+            type="button"
+            class="pd-report-btn"
+            data-testid="plugin-detail-report-btn"
+            :title="t('pluginReportHint')"
+            @click="openReport"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M4 22V4h12l-1.5 4L16 12H4"/>
+            </svg>
+            {{ t('pluginReport') }}
+          </button>
         </div>
 
         <!-- Actions -->
@@ -156,7 +173,14 @@ const hasUpdate = computed(() =>
   font-size: 11px; color: var(--text-muted);
 }
 
-.pd-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+.pd-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pd-report-btn {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--text-muted); background: transparent;
+  border: none; padding: 3px 4px; cursor: pointer;
+  transition: color var(--t-fast);
+}
+.pd-report-btn:hover { color: var(--danger); text-decoration: underline; }
 .pd-meta-chip {
   font-size: 11px; color: var(--text-muted); background: var(--row-bg);
   border: 1px solid var(--border); padding: 3px 9px; border-radius: 999px;
