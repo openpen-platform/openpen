@@ -1,0 +1,26 @@
+{
+  "theme": "light",
+  "language": "zh-TW",
+  "enableDragAutoSnap": false,
+  "barLayout": "auto",
+  "autoCollapseDelay": 4500,
+  "ballOpacity": 0.7,
+  "defaultColor": "#22AA66",
+  "animations": false,
+  "notifyOnDrawingMode": false,
+  "notificationPosition": "bottom-center",
+  "confirmBeforeClearCanvas": false,
+  "disabledModules": ["@acme/example"],
+  "pluginIdConflictResolutions": {},
+  "controlBarLayout": {
+    "version": 1,
+    "groups": [
+      { "id": "tools", "items": ["@openpen/freehand", "@openpen/eraser"], "separator": "auto" },
+      { "id": "default", "items": ["@openpen/color-picker"], "separator": "auto" }
+    ]
+  },
+  "userShortcuts": { "undo": "CommandOrControl+Alt+Z" },
+  "moduleShortcuts": { "@openpen/freehand:select": "CommandOrControl+Alt+F" },
+  "modules": { "@openpen/freehand": { "smoothing": 0.7 } },
+  "moduleMeta": { "@openpen/freehand": { "schemaVersion": 2 } }
+}

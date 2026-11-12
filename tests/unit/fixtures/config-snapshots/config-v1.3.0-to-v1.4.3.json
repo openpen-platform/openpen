@@ -1,0 +1,70 @@
+{
+  "theme": "dark",
+  "language": "ja",
+  "enableDragAutoSnap": true,
+  "barLayout": "horizontal",
+  "autoCollapseDelay": 5000,
+  "ballOpacity": 0.6,
+  "defaultColor": "#FF8800",
+  "reducedMotion": false,
+  "notifyOnDrawingMode": true,
+  "notificationPosition": "top-center",
+  "confirmBeforeClearCanvas": true,
+  "disabledModules": [
+    "@acme/example"
+  ],
+  "pluginIdConflictResolutions": {
+    "acme-x": "keep-installed"
+  },
+  "controlBarLayout": {
+    "version": 1,
+    "groups": [
+      {
+        "id": "tools",
+        "items": [
+          "@openpen/freehand",
+          "@openpen/line"
+        ],
+        "separator": "auto",
+        "inset": {
+          "enabled": true
+        }
+      },
+      {
+        "id": "eraser",
+        "items": [
+          "@openpen/eraser"
+        ],
+        "separator": "always"
+      },
+      {
+        "id": "default",
+        "items": [
+          "@openpen/color-picker",
+          "@openpen/stroke-width"
+        ],
+        "separator": "auto"
+      }
+    ]
+  },
+  "userShortcuts": {
+    "toggleDrawingMode": "CommandOrControl+Shift+A",
+    "toggleBar": "CommandOrControl+Alt+B",
+    "undo": "CommandOrControl+Z",
+    "redo": "CommandOrControl+Shift+Z",
+    "quitApp": "CommandOrControl+Alt+Shift+X"
+  },
+  "moduleShortcuts": {
+    "@openpen/freehand:select": "CommandOrControl+Alt+F"
+  },
+  "modules": {
+    "@openpen/freehand": {
+      "smoothing": 0.7
+    }
+  },
+  "moduleMeta": {
+    "@openpen/freehand": {
+      "schemaVersion": 2
+    }
+  }
+}

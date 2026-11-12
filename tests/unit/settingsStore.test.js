@@ -53,6 +53,12 @@ vi.mock('../../electron/i18n/index.js', () => ({
   setLocale: vi.fn(),
 }));
 
+// Mock electron-log, the project logger that feeds main.log.
+const { logWarn } = vi.hoisted(() => ({ logWarn: vi.fn() }));
+vi.mock('electron-log/main.js', () => ({
+  default: { warn: logWarn, info: vi.fn(), error: vi.fn() },
+}));
+
 // ── mock tray-manager.js ──
 vi.mock('../../electron/tray-manager.js', () => ({
   refreshTrayLocale: vi.fn(),
@@ -89,6 +95,10 @@ vi.mock('../../electron/ipc-channels.js', () => ({
 }));
 
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const fsActual = (await vi.importActual('node:fs')).default;
 import {
   DEFAULT_SETTINGS,
   getConfigPath,
@@ -103,7 +113,12 @@ import {
   revertSettings,
   setModuleShortcut,
   setModuleSettings,
+  getModuleSettings,
+  getModuleShortcuts,
+  getShortcuts,
+  getLayout,
 } from '../../electron/settings-store.js';
+import { CURRENT_CONFIG_VERSION } from '../../electron/settings-migrations.js';
 
 describe('DEFAULT_SETTINGS', () => {
   it('contains every required field', () => {
@@ -380,5 +395,122 @@ describe('resolveSystemLanguage', () => {
     expect(resolveSystemLanguage('ko-KR')).toBe('en');
     expect(resolveSystemLanguage('')).toBe('en');
     expect(resolveSystemLanguage(undefined)).toBe('en');
+  });
+});
+
+describe('config versioning', () => {
+  const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures', 'config-snapshots');
+  const realFs = fsActual;
+  const fixture = (name) => realFs.readFileSync(path.join(FIXTURES, name), 'utf-8');
+
+  let writtenJson = null;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    writtenJson = null;
+    fs.existsSync.mockReturnValue(false);
+    fs.writeSync.mockImplementation((_fd, data) => { writtenJson = data; });
+    fs.readdirSync = vi.fn(() => { throw new Error('ENOENT'); });
+  });
+
+  it.each([
+    'config-v1.0.0-to-v1.2.0.json',
+    'config-v1.3.0-to-v1.4.3.json',
+    'config-v1.5.0.json',
+    'config-legacy-values.json',
+  ])('loads %s with the user values intact', (name) => {
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(fixture(name));
+    initSettingsStore();
+    const s = getSettings();
+    expect(s).toMatchObject({ ballOpacity: expect.any(Number), disabledModules: ['@acme/example'] });
+    expect(getModuleSettings('@openpen/freehand')).toEqual({ data: { smoothing: 0.7 }, schemaVersion: 2 });
+    expect(getModuleShortcuts()).toEqual({ '@openpen/freehand:select': 'CommandOrControl+Alt+F' });
+    expect(getShortcuts()).toMatchObject(JSON.parse(fixture(name)).userShortcuts);
+    expect(getLayout().groups.map((g) => g.id)).toContain('default');
+  });
+
+  it('applies the legacy-value migrations to the loaded settings', () => {
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(fixture('config-legacy-values.json'));
+    initSettingsStore();
+    expect(getSettings()).toMatchObject({ language: 'zh-Hant', barLayout: 'horizontal', reducedMotion: true, theme: 'light' });
+  });
+
+  it('skips the backup when the newest backup already holds the same bytes', () => {
+    const raw = fixture('config-legacy-values.json');
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(raw);
+    fs.readdirSync = vi.fn(() => ['config.json.2026-01-01T00-00-00.000Z.bak']);
+    initSettingsStore();
+    expect(fs.writeFileSync).not.toHaveBeenCalledWith(expect.stringContaining('.bak.tmp'), raw, 'utf-8');
+  });
+
+  it('migrating a legacy file backs up the original bytes, a current-form file does not', () => {
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(fixture('config-v1.5.0.json'));
+    initSettingsStore();
+    expect(fs.renameSync).not.toHaveBeenCalled();
+
+    fs.readFileSync.mockReturnValue(fixture('config-legacy-values.json'));
+    initSettingsStore();
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('.bak.tmp'), fixture('config-legacy-values.json'), 'utf-8');
+    // The config file itself is not rewritten on load.
+    expect(fs.openSync).not.toHaveBeenCalledWith(expect.stringContaining('config.json.tmp'), 'w');
+  });
+
+  it('writes configVersion as the first top-level key when saving', async () => {
+    initSettingsStore();
+    updateSettings({ theme: 'dark' });
+    await flushWrites();
+    const onDisk = JSON.parse(writtenJson);
+    expect(Object.keys(onDisk)[0]).toBe('configVersion');
+    expect(onDisk.configVersion).toBe(CURRENT_CONFIG_VERSION);
+  });
+
+  it('leaves a config from a newer app untouched and logs it', async () => {
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(JSON.stringify({ configVersion: CURRENT_CONFIG_VERSION + 1, theme: 'light' }));
+    initSettingsStore();
+    expect(getSettings().theme).toBe('light');
+    // The project logger writes main.log; console output alone never reaches it.
+    expect(logWarn).toHaveBeenCalledWith(expect.stringContaining('newer'));
+
+    updateSettings({ theme: 'dark' });
+    await setModuleSettings('my-mod', { a: 1 }, 1);
+    await flushWrites();
+    expect(logWarn).toHaveBeenCalledWith(expect.stringContaining('Skipped writing config.json'));
+    expect(logWarn).toHaveBeenCalledWith(expect.stringContaining('Skipped writing module settings'));
+    expect(fs.openSync).not.toHaveBeenCalled();
+    expect(fs.renameSync).not.toHaveBeenCalled();
+    expect(getSettings().theme).toBe('dark'); // in-memory edits still apply
+  });
+});
+
+describe('corruption recovery', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fs.existsSync.mockReturnValue(true);
+    fs.readdirSync = vi.fn(() => { throw new Error('ENOENT'); });
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  it('unparseable JSON resets everything to defaults and backs up the raw bytes', () => {
+    fs.readFileSync.mockReturnValue('{"theme": "light", BROKEN');
+    initSettingsStore();
+    expect(getSettings().theme).toBe('system');
+    expect(getLayout().groups).toHaveLength(1);
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining('.bak.tmp'), '{"theme": "light", BROKEN', 'utf-8');
+  });
+
+  it('an invalid controlBarLayout resets only the layout and backs up the file', () => {
+    const raw = JSON.stringify({ theme: 'light', controlBarLayout: { version: 1, groups: 'nope' } });
+    fs.readFileSync.mockReturnValue(raw);
+    initSettingsStore();
+    expect(getSettings().theme).toBe('light');
+    expect(getLayout().groups).toEqual([{ id: 'default', items: [], separator: 'auto' }]);
+    expect(fs.writeFileSync).toHaveBeenCalledWith(expect.stringContaining('.bak.tmp'), raw, 'utf-8');
   });
 });

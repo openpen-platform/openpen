@@ -9,11 +9,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { SETTINGS, LAYOUT, SHORTCUTS, MODULE } from './ipc-channels.js';
 import { recordDiagnosticsEvent } from './diagnostics-manager.js';
+import log from 'electron-log/main.js';
 import { fsyncDir } from './fs-utils.js';
 import { DEFAULT_SETTINGS, DEFAULT_SHORTCUTS } from '../shared/settings-defaults.js';
 import { setLocale as setMainLocale } from './i18n/index.js';
 import { refreshTrayLocale } from './tray-manager.js';
 import { handleValidated, logRejected, onValidated } from './ipc-validation.js';
+import { CURRENT_CONFIG_VERSION, migrateConfig, getConfigVersion } from './settings-migrations.js';
 import {
   knownIdsSchema,
   layoutSchema,
@@ -62,6 +64,17 @@ let modulesCache = {};
 
 /** @type {Record<string, { schemaVersion: number }>} Schema version sentinels keyed by moduleId. */
 let moduleMetaCache = {};
+
+/**
+ * True while the config.json on disk was written by a newer app than this one
+ * (its configVersion is above CURRENT_CONFIG_VERSION). The known fields are
+ * still loaded so the app works, but nothing is written back, so the newer
+ * file stays intact.
+ */
+let configReadOnly = false;
+
+/** Original bytes whose pre-migration backup failed; the next save retries it first. */
+let pendingMigrationBackup = null;
 
 /**
  * Validate that a parsed value conforms to ControlBarLayout v1.
@@ -246,6 +259,40 @@ export function writeBackup(rawBytes) {
 }
 
 /**
+ * Back up the pre-migration bytes unless the newest backup already holds the
+ * identical content, so a config that is migrated on every launch (because no
+ * save has happened yet) does not pile up duplicate backups.
+ * @param {string} rawBytes
+ * @returns {boolean} true when the bytes are safely in backups/
+ */
+function backupBeforeMigration(rawBytes) {
+  try {
+    const backupsDir = path.join(app.getPath('userData'), 'backups');
+    const newest = fs.readdirSync(backupsDir)
+      .filter((name) => name.startsWith('config.json.') && name.endsWith('.bak'))
+      .sort()
+      .pop();
+    if (newest && fs.readFileSync(path.join(backupsDir, newest), 'utf-8') === rawBytes) return true;
+  } catch (_) { /* no backups yet, write one */ }
+  // writeBackup swallows its own errors, so check that the file landed.
+  return fs.existsSync(writeBackup(rawBytes));
+}
+
+/**
+ * Called before every save: a migration backup that failed on load is retried
+ * once; if it still fails the save goes ahead (settings must stay writable) and
+ * the missing backup is logged.
+ */
+function settlePendingMigrationBackup() {
+  if (pendingMigrationBackup === null) return;
+  const rawBytes = pendingMigrationBackup;
+  pendingMigrationBackup = null;
+  if (!backupBeforeMigration(rawBytes)) {
+    log.warn('[SettingsStore] Saving without a pre-migration backup: the backup could not be written.');
+  }
+}
+
+/**
  * Resolve the currently effective theme, taking 'system' mode into account.
  * @returns {'light' | 'dark'}
  */
@@ -284,9 +331,6 @@ export function initSettingsStore() {
 
 /** @type {readonly ('en' | 'zh-Hans' | 'zh-Hant' | 'ja')[]} */
 const SUPPORTED_LANGUAGES = ['en', 'zh-Hant', 'zh-Hans', 'ja'];
-
-/** Map old region-tag locale values persisted before BCP47 migration to new script tags. */
-const LEGACY_LOCALE_MAP = { 'zh-TW': 'zh-Hant', 'zh-CN': 'zh-Hans' };
 
 /**
  * Resolve an OS BCP-47 locale tag to one of the supported app languages.
@@ -331,31 +375,35 @@ function readConfig() {
   shortcutsCache = { ...DEFAULT_SHORTCUTS };
   modulesCache = {};
   moduleMetaCache = {};
+  configReadOnly = false;
+  pendingMigrationBackup = null;
   try {
     if (fs.existsSync(configPath)) {
       const raw = fs.readFileSync(configPath, 'utf-8');
       // L1: JSON parse failure → reset all (defaults already applied above).
-      const parsed = JSON.parse(raw);
+      const rawParsed = JSON.parse(raw);
+      let parsed = rawParsed;
+      if (rawParsed && typeof rawParsed === 'object' && !Array.isArray(rawParsed)) {
+        const fileVersion = getConfigVersion(rawParsed);
+        if (fileVersion > CURRENT_CONFIG_VERSION) {
+          configReadOnly = true;
+          log.warn(
+            `[SettingsStore] config.json has configVersion ${fileVersion}, newer than the ${CURRENT_CONFIG_VERSION} this app supports; loading known fields and leaving the file unchanged.`,
+          );
+        } else {
+          const migrated = migrateConfig(rawParsed);
+          parsed = migrated.config;
+          // A migration that changed values keeps the original bytes in backups/
+          // first; the file itself is only rewritten by the next normal save.
+          if (migrated.changed && !backupBeforeMigration(raw)) pendingMigrationBackup = raw;
+        }
+      }
       // Only merge known keys — drop any unknown fields from older/newer versions.
       const merged = { ...DEFAULT_SETTINGS };
       for (const key of Object.keys(DEFAULT_SETTINGS)) {
         if (key in parsed && parsed[key] !== undefined) {
           merged[key] = parsed[key];
         }
-      }
-      // Silently migrate legacy locale values ('zh-TW' → 'zh-Hant', 'zh-CN' → 'zh-Hans').
-      if (merged.language in LEGACY_LOCALE_MAP) {
-        merged.language = LEGACY_LOCALE_MAP[merged.language];
-      }
-      // Silently migrate deprecated barLayout value: 'auto' → 'horizontal'.
-      if (merged.barLayout === 'auto') {
-        merged.barLayout = 'horizontal';
-      }
-      // Silently migrate the renamed `animations` setting (true=on) into the
-      // semantically inverted `reducedMotion` (true=reduce motion). The new
-      // name aligns with the OS-level prefers-reduced-motion media query.
-      if ('animations' in parsed && typeof parsed['animations'] === 'boolean' && !('reducedMotion' in parsed)) {
-        merged.reducedMotion = !parsed['animations'];
       }
       // Coerce disabledModules: must be a string array; fall back to [] otherwise.
       if (!Array.isArray(merged.disabledModules)) {
@@ -625,6 +673,7 @@ function broadcastModuleShortcuts() {
  */
 function _serializeConfig() {
   return JSON.stringify({
+    configVersion: CURRENT_CONFIG_VERSION,
     ...cache,
     controlBarLayout: structuredClone(layoutCache),
     userShortcuts: { ...shortcutsCache },
@@ -636,6 +685,11 @@ function _serializeConfig() {
 
 /** Atomic config.json write: .tmp first + fsync, then rename. Runs inside writeQueue. */
 function writeConfig() {
+  if (configReadOnly) {
+    log.warn('[SettingsStore] Skipped writing config.json: it was written by a newer app version.');
+    return;
+  }
+  settlePendingMigrationBackup();
   const snapshot = _serializeConfig();
   enqueueWrite(() => {
     const configPath = getConfigPath();
@@ -725,6 +779,12 @@ export function getModuleSettings(moduleId) {
 export function setModuleSettings(moduleId, data, schemaVersion) {
   modulesCache[moduleId] = data;
   moduleMetaCache[moduleId] = { schemaVersion };
+  if (configReadOnly) {
+    log.warn('[SettingsStore] Skipped writing module settings: config.json was written by a newer app version.');
+    broadcastModuleSettingsChanged(moduleId, data);
+    return Promise.resolve();
+  }
+  settlePendingMigrationBackup();
   const snapshot = _serializeConfig();
   // Enqueue write; broadcast after the write resolves so listeners
   // receive notification only once the data is durable on disk.
