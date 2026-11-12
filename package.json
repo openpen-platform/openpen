@@ -25,7 +25,7 @@
     "preview": "vite preview",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
-    "lint": "eslint src/ tests/ packages/",
+    "lint": "eslint src/ tests/ packages/ && node scripts/check-syntax.mjs",
     "catalog:serve": "node scripts/serve-catalog.mjs"
   },
   "build": {
