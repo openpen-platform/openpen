@@ -19,6 +19,7 @@ import { handleValidated } from './ipc-validation.js'
 import { moduleCallSchema } from './ipc-payload-schemas.js'
 import { ensurePluginInstalledAt, getPluginInstalledAt } from './plugin-meta-manager.js'
 import { MODULE_ID_RE } from './plugin-id-validator.js'
+import { getSettings } from './settings-store.js'
 
 /**
  * Plugin install directory.
@@ -59,6 +60,28 @@ let manifests = []
  */
 const handlerMap = new Map()
 
+/**
+ * Plugin id -> absolute path of its main-process entry, for plugins whose main
+ * handlers have not been loaded (disabled at scan time). They are loaded on the
+ * first handler call after the plugin is enabled again.
+ * @type {Map<string, string>}
+ */
+const pendingMainPaths = new Map()
+
+/** @param {string} pluginId */
+function isPluginDisabled(pluginId) {
+  return (getSettings().disabledModules ?? []).includes(pluginId)
+}
+
+/**
+ * Ids of every plugin discovered on disk (the third-party / installed plugins;
+ * built-in modules never appear here).
+ * @returns {string[]}
+ */
+export function getInstalledPluginIds() {
+  return manifests.map((m) => m.id)
+}
+
 /** Initialise: scan disk and register IPC handlers. */
 export async function initModuleManifestLoader() {
   await scanPlugins()
@@ -73,6 +96,7 @@ export async function initModuleManifestLoader() {
 export async function rescanPlugins() {
   manifests.length = 0
   handlerMap.clear()
+  pendingMainPaths.clear()
   await scanPlugins()
   const { BrowserWindow } = await import('electron')
   BrowserWindow.getAllWindows().forEach((win) => {
@@ -149,7 +173,12 @@ async function scanPlugins() {
       if (manifest.main) {
         const mainPath = path.join(manifest.dir, manifest.main)
         if (fs.existsSync(mainPath)) {
-          await loadMainHandler(manifest.id, mainPath)
+          // A disabled plugin must not run any of its code, main side included.
+          if (isPluginDisabled(manifest.id)) {
+            pendingMainPaths.set(manifest.id, mainPath)
+          } else {
+            await loadMainHandler(manifest.id, mainPath)
+          }
         }
       }
     } catch (err) {
@@ -265,6 +294,11 @@ export function sendModuleManifests(webContents) {
 
 function registerIpcHandlers() {
   handleValidated(ipcMain, MODULE.CALL_HANDLER, moduleCallSchema, async (_, { moduleId, action, payload }) => {
+    const pendingPath = pendingMainPaths.get(moduleId)
+    if (pendingPath && !isPluginDisabled(moduleId)) {
+      pendingMainPaths.delete(moduleId)
+      await loadMainHandler(moduleId, pendingPath)
+    }
     const handlers = handlerMap.get(moduleId)
     if (!handlers) {
       throw new Error(`[ModuleManifestLoader] No main handlers for module: ${moduleId}`)

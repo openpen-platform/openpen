@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { WINDOW, OVERLAY, CONTROL_BAR, HISTORY, CURSOR } from './ipc-channels.js';
 import { getAppConfig } from './config-loader.js';
 import { sendModuleManifests } from './module-manifest-loader.js';
+import { attachWindowRecovery } from './window-recovery-host.js';
 import { suspendShortcuts, resumeShortcuts } from './shortcut-manager.js';
 import { createOverlayPlatform } from './platform/overlay-platform.js';
 import { deriveLinuxWindowState } from './linux-window-state.js';
@@ -403,6 +404,20 @@ function loadRenderer(win, query = '') {
 }
 
 /**
+ * Replay the main-held state a freshly reloaded renderer has not seen (drawing
+ * mode, selected tool, stroke style). A recovered window boots with defaults;
+ * main is the source of truth for the rest.
+ * @param {BrowserWindow} win
+ */
+function resyncRecoveredWindow(win) {
+  if (win.isDestroyed()) return;
+  const wc = win.webContents;
+  if (lastToolConfig) wc.send(CONTROL_BAR.TOOL_CONFIG_CHANGED, lastToolConfig);
+  if (lastStrokeStyle) wc.send(CONTROL_BAR.STROKE_STYLE_CHANGED, lastStrokeStyle);
+  wc.send(OVERLAY.DRAWING_MODE_CHANGED, drawingMode);
+}
+
+/**
  * Decide whether to auto-open DevTools for a given window.
  * Open only in unpacked dev runs and gated by app.config.js flags.
  * @param {'main'|'overlay'|'settings'} windowType
@@ -500,6 +515,7 @@ export function createMainWindowForDisplay(display) {
     }
   });
 
+  attachWindowRecovery(win, 'main', { onRecovered: resyncRecoveredWindow });
   loadRenderer(win, `?displayId=${display.id}`);
 
   if (shouldOpenDevTools('main')) {
@@ -570,6 +586,7 @@ function createLinuxControlWindowsForDisplay(display) {
     if (!bar.isDestroyed()) reconcileLinuxWindows();
   });
 
+  attachWindowRecovery(bar, 'control-bar', { onRecovered: resyncRecoveredWindow });
   loadRenderer(bar, `?displayId=${display.id}&role=panel`);
   if (shouldOpenDevTools('main')) bar.webContents.openDevTools({ mode: 'detach' });
 
@@ -737,6 +754,9 @@ export function createOverlayWindowForDisplay(display) {
   const overlayQuery = IS_WAYLAND
     ? `?window=overlay&displayId=${display.id}&role=overlay-bar`
     : `?window=overlay&displayId=${display.id}`;
+  // Wayland overlays replay their state in the did-finish-load handler below, so
+  // only the persistent (non-Wayland) overlay needs the extra resync.
+  attachWindowRecovery(win, 'overlay', IS_WAYLAND ? undefined : { onRecovered: resyncRecoveredWindow });
   loadRenderer(win, overlayQuery);
 
   if (shouldOpenDevTools('overlay')) {
@@ -965,6 +985,7 @@ export function createSettingsWindow() {
     sendModuleManifests(settingsWindow.webContents);
   });
 
+  attachWindowRecovery(settingsWindow, 'settings');
   loadRenderer(settingsWindow, '?window=settings');
 
   // Suspend global shortcuts while the settings window is open: keys like the
