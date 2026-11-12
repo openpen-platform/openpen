@@ -10,6 +10,7 @@
  */
 
 import { screen } from 'electron';
+import log from 'electron-log/main.js';
 import { POSITIONING } from './ipc-channels.js';
 import { log } from './logger.js';
 import {
@@ -93,9 +94,31 @@ let _queue = Promise.resolve();
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
-/** @returns {DisplayInfo[]} */
-function _getAllDisplays() {
-  return screen.getAllDisplays().map(({ id, bounds, workArea, scaleFactor }) => ({
+/** Whether the last display query came back empty (log only on the transition). */
+let _displaysUnavailable = false;
+
+/**
+ * Returns the current displays. When the OS reports none (e.g. a Wayland
+ * session whose outputs are not ready yet), falls back to the primary display
+ * so callers always have a workArea to clamp against. Callers that handle the
+ * empty case themselves pass `fallbackToPrimary: false`.
+ *
+ * @param {{ fallbackToPrimary?: boolean }} [opts]
+ * @returns {DisplayInfo[]}
+ */
+function _getAllDisplays({ fallbackToPrimary = true } = {}) {
+  const all = screen.getAllDisplays();
+  if (all.length === 0) {
+    if (!fallbackToPrimary) return [];
+    if (!_displaysUnavailable) {
+      _displaysUnavailable = true;
+      log.warn('[positioning] screen.getAllDisplays() returned no displays; using the primary display workArea');
+    }
+    const { id, bounds, workArea, scaleFactor } = screen.getPrimaryDisplay();
+    return [{ id, bounds, workArea, scaleFactor }];
+  }
+  _displaysUnavailable = false;
+  return all.map(({ id, bounds, workArea, scaleFactor }) => ({
     id, bounds, workArea, scaleFactor,
   }));
 }
@@ -342,7 +365,7 @@ function _handleBarCollapse() {
  * @returns {PositioningOutput}
  */
 function _handleDisplayChanged() {
-  const displays = _getAllDisplays();
+  const displays = _getAllDisplays({ fallbackToPrimary: false });
   if (displays.length === 0) return { state: { ..._state }, windowCommands: [] };
 
   const prevX = _state.ballScreenPos.x;

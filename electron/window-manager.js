@@ -1100,10 +1100,15 @@ export function setActiveDisplayId(displayId) {
 // ─── Getters ──────────────────────────────────────────────────────────────────
 
 /**
+ * Falls back to the primary display when the OS reports none, so the renderer's
+ * drag-end clamping still has a workArea to work with.
+ *
  * @returns {{ id: number, bounds: Electron.Rectangle, workArea: Electron.Rectangle, scaleFactor: number }[]}
  */
 export function getDisplayInfo() {
-  return screen.getAllDisplays().map(({ id, bounds, workArea, scaleFactor }) => ({
+  const all = screen.getAllDisplays();
+  const displays = all.length > 0 ? all : [screen.getPrimaryDisplay()];
+  return displays.map(({ id, bounds, workArea, scaleFactor }) => ({
     id,
     bounds,
     workArea,
