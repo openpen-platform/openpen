@@ -20,42 +20,64 @@
  * specs that count control-bar buttons would fail on any machine with a
  * plugin installed. Workers inherit the overridden env, so specs that seed
  * fixture plugins under os.homedir() write into the sandbox too. The resolved
- * path is exposed as OPENPEN_E2E_HOME and the directory is removed on teardown.
+ * path is exposed as OPENPEN_E2E_HOME and the directory is removed on teardown
+ * together with the run temp root.
+ *
+ * The temp dir itself is also redirected to one run-scoped root (see
+ * run-tmp.js), so the per-launch userData dirs and any other directory a spec
+ * creates through os.tmpdir() are removed with it, even when the run fails or
+ * is interrupted.
  */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createServer } from 'vite';
 import { assertElectronBinary } from './launch.js';
+import { enterRunTmpRoot } from './run-tmp.js';
 
 export default async function globalSetup() {
   // Before booting Vite, so a missing binary fails the whole run in seconds.
   assertElectronBinary();
 
-  const vite = await createServer({
-    // Silence the dev server's startup banner so playwright's reporter stays clean.
-    logLevel: 'warn',
-  });
-  await vite.listen();
+  const runTmp = enterRunTmpRoot();
+  console.log(`[e2e:globalSetup] Run temp root at ${runTmp.root}`);
 
-  const url = vite.resolvedUrls?.local?.[0];
-  if (!url) {
-    await vite.close();
-    throw new Error('[e2e:globalSetup] Vite started but resolvedUrls.local is empty');
+  try {
+    const vite = await createServer({
+      // Silence the dev server's startup banner so playwright's reporter stays clean.
+      logLevel: 'warn',
+    });
+    await vite.listen();
+
+    const url = vite.resolvedUrls?.local?.[0];
+    if (!url) {
+      await vite.close();
+      throw new Error('[e2e:globalSetup] Vite started but resolvedUrls.local is empty');
+    }
+
+    const normalized = url.replace(/\/$/, '');
+    process.env.OPENPEN_E2E_VITE_URL = normalized;
+    console.log(`[e2e:globalSetup] Vite listening at ${normalized}`);
+
+    const sandboxHome = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-e2e-home-'));
+    process.env.HOME = sandboxHome;
+    process.env.USERPROFILE = sandboxHome;
+    process.env.OPENPEN_E2E_HOME = sandboxHome;
+    console.log(`[e2e:globalSetup] Sandbox HOME at ${sandboxHome}`);
+
+    // sandboxHome lives inside the run temp root, so disposing the root removes it too.
+    // Teardown never throws: a cleanup problem is a warning, not a failed run.
+    return async () => {
+      try {
+        await vite.close();
+      } catch (error) {
+        console.warn(`[e2e:globalTeardown] Could not close Vite: ${error?.message ?? error}`);
+      } finally {
+        runTmp.dispose();
+      }
+    };
+  } catch (error) {
+    runTmp.dispose();
+    throw error;
   }
-
-  const normalized = url.replace(/\/$/, '');
-  process.env.OPENPEN_E2E_VITE_URL = normalized;
-  console.log(`[e2e:globalSetup] Vite listening at ${normalized}`);
-
-  const sandboxHome = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-e2e-home-'));
-  process.env.HOME = sandboxHome;
-  process.env.USERPROFILE = sandboxHome;
-  process.env.OPENPEN_E2E_HOME = sandboxHome;
-  console.log(`[e2e:globalSetup] Sandbox HOME at ${sandboxHome}`);
-
-  return async () => {
-    await vite.close();
-    fs.rmSync(sandboxHome, { recursive: true, force: true });
-  };
 }
