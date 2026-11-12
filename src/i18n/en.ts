@@ -106,6 +106,13 @@ export default {
   notificationPosition: 'Notification position',
   notificationPositionSub: 'Where notifications appear on screen',
 
+  // Stroke fade-out
+  strokeFade: 'Fade strokes automatically',
+  strokeFadeSub: 'Newly drawn strokes disappear after the time below',
+  strokeFadeSeconds: 'Fade-out time',
+  strokeFadeSecondsSub: 'Seconds a stroke stays before it fades away',
+  strokeFadeSecondsUnit: 's',
+
   // Clear canvas confirmation
   confirmBeforeClearCanvas: 'Ask before clearing canvas',
   confirmBeforeClearCanvasSub: 'Show a confirmation dialog when the clear button is pressed',

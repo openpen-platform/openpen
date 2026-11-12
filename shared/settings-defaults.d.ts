@@ -31,6 +31,10 @@ export interface AppSettings {
   notifyOnDrawingMode: boolean
   notificationPosition: NotificationPosition
   confirmBeforeClearCanvas: boolean
+  /** Whether newly drawn strokes fade out and disappear on their own. */
+  strokeFadeEnabled: boolean
+  /** Seconds a stroke stays fully visible before it fades out (1 to 30). */
+  strokeFadeSeconds: number
   /** Whether to check GitHub Releases for a newer version on launch. */
   autoCheckUpdate: boolean
   disabledModules: string[]

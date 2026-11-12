@@ -84,6 +84,8 @@ const settingsValueSchemas = {
   notifyOnDrawingMode: z.boolean(),
   notificationPosition,
   confirmBeforeClearCanvas: z.boolean(),
+  strokeFadeEnabled: z.boolean(),
+  strokeFadeSeconds: z.number().int().min(1).max(30),
   autoCheckUpdate: z.boolean(),
   disabledModules: z.array(id),
   pluginIdConflictResolutions: z.record(id, z.string().max(MAX_PATH_LENGTH)),

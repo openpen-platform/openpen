@@ -1,5 +1,6 @@
 import type { Tool, StrokeStyle, Stroke, PointerModifiers } from '../types/tool-types'
-import { addStroke, getAllStrokes, clearAll, pushCommand, undo as storeUndo, redo as storeRedo } from './stroke-store'
+import { addStroke, getAllStrokes, clearAll, pushCommand, purgeStroke, undo as storeUndo, redo as storeRedo } from './stroke-store'
+import { StrokeFader } from './stroke-fade'
 import { resolveColorStyle } from './color-utils'
 import { getSlotEntries } from '../core/runtime/contribution-store'
 import type { CanvasLayerContribution, ToolContribution } from '@openpen/module-api'
@@ -62,6 +63,14 @@ export class CanvasEngine {
   private resizeObserver: ResizeObserver
   private dprMediaQuery: MediaQueryList | null = null
   private onDprChange: () => void
+  private fader = new StrokeFader()
+  /** Hold time for strokes drawn from now on; null while fading is off. */
+  private fadeHoldMs: number | null = null
+  private fadeSettingKnown = false
+  private fadeTimer: ReturnType<typeof setTimeout> | null = null
+  private fadeScratch: HTMLCanvasElement | null = null
+  private onFadeRemoved: (() => void) | null = null
+  private now: () => number = () => performance.now()
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -97,6 +106,93 @@ export class CanvasEngine {
     this.redrawAllInternal()
   }
 
+  /**
+   * Turn stroke fading on (hold time in seconds) or off (null). Applies to
+   * strokes drawn afterwards; turning it off also stops countdowns already
+   * running, so those strokes stay until cleared.
+   */
+  setFadeSeconds(seconds: number | null): void {
+    this.fadeSettingKnown = true
+    this.fadeHoldMs = seconds !== null && seconds > 0 ? seconds * 1000 : null
+    if (this.fadeHoldMs === null) {
+      this.fader.forgetAll()
+      this.clearFadeTimer()
+      this.redrawAllInternal()
+    }
+  }
+
+  /** Hold times of strokes that fade, to be saved with the drawing snapshot. */
+  getFadeHolds(): Record<string, number> {
+    return this.fader.holds()
+  }
+
+  /**
+   * Re-arm fading for strokes brought back from a saved snapshot (the overlay
+   * window is rebuilt on some platforms). Each hold time starts over from now.
+   * Ignored when the setting is known to be off.
+   */
+  restoreFades(holds: Record<string, number> | null | undefined): void {
+    if (!holds || (this.fadeSettingKnown && this.fadeHoldMs === null)) return
+    this.fader.restore(holds)
+    this.syncFades()
+  }
+
+  /** Called after faded-out strokes were removed, so history buttons can refresh. */
+  setFadeRemovedListener(listener: (() => void) | null): void {
+    this.onFadeRemoved = listener
+  }
+
+  /** Test hook: replace the clock used for fade timing. */
+  setClock(now: () => number): void {
+    this.now = now
+  }
+
+  private clearFadeTimer(): void {
+    if (this.fadeTimer !== null) {
+      clearTimeout(this.fadeTimer)
+      this.fadeTimer = null
+    }
+  }
+
+  private syncFades(): void {
+    this.fader.reconcile(new Set(getAllStrokes().map((s) => s.id)), this.now())
+    this.scheduleFadeTick()
+  }
+
+  private scheduleFadeTick(): void {
+    this.clearFadeTimer()
+    const wait = this.fader.nextChangeIn(this.now())
+    if (wait === null) return
+    this.fadeTimer = setTimeout(() => this.tickFades(), Math.max(wait, 16))
+  }
+
+  /** Remove strokes whose fade finished, redraw the rest, and re-arm the timer. */
+  tickFades(): void {
+    this.fadeTimer = null
+    const now = this.now()
+    const expired = this.fader.expired(now)
+    for (const id of expired) {
+      purgeStroke(id)
+      this.fader.forget(id)
+    }
+    if (expired.length > 0 || this.fader.isFading(now)) this.redrawDuringFade()
+    if (expired.length > 0) this.onFadeRemoved?.()
+    this.scheduleFadeTick()
+  }
+
+  /**
+   * Redraw for a fade step without wiping a stroke that is being drawn: tools
+   * that paint straight onto the canvas keep their partial stroke only until
+   * the next full redraw, so that redraw waits for pointer-up; preview tools
+   * get their preview painted back on top.
+   */
+  private redrawDuringFade(): void {
+    const tool = this.activeTool
+    if (this.drawing && tool && !tool.needsPreviewRedraw) return
+    this.redrawAllInternal()
+    if (this.drawing && tool?.renderPreview) tool.renderPreview(this.ctx)
+  }
+
   setActiveTool(tool: Tool): void {
     // Abort in-flight stroke when the tool changes mid-draw.
     this.drawing = false
@@ -123,7 +219,10 @@ export class CanvasEngine {
       return
     }
     // Stroke-eraser removes strokes during move; a full redraw is required immediately.
-    if (changed === true) this.redrawAllInternal()
+    if (changed === true) {
+      this.syncFades()
+      this.redrawAllInternal()
+    }
   }
 
   handlePointerUp(point: { x: number; y: number }, modifiers: PointerModifiers = {}): void {
@@ -133,6 +232,11 @@ export class CanvasEngine {
     if (stroke) {
       addStroke(stroke)
       pushCommand({ type: 'ADD_STROKE', stroke })
+      // Eraser strokes cut earlier strokes away; fading one would undo the erase.
+      if (this.fadeHoldMs !== null && stroke.tool !== 'eraser') {
+        this.fader.track(stroke.id, this.fadeHoldMs, this.now())
+        this.scheduleFadeTick()
+      }
       this.redrawAllInternal()
     }
   }
@@ -143,13 +247,45 @@ export class CanvasEngine {
     // Layer order: background → strokes → overlay. Modules wire grids,
     // watermarks, rulers, snap guides into the relevant slot.
     renderLayers(ctx, 'canvas.layers.background')
+    const now = this.now()
     for (const stroke of getAllStrokes()) {
-      renderStroke(ctx, stroke)
+      const alpha = this.fader.alpha(stroke.id, now)
+      if (alpha < 1) this.renderFaded(stroke, alpha)
+      else renderStroke(ctx, stroke)
     }
     renderLayers(ctx, 'canvas.layers.overlay')
   }
 
+  /**
+   * Draw a fading stroke through a scratch canvas so the fade multiplies
+   * whatever opacity the stroke's own renderer applies.
+   */
+  private renderFaded(stroke: Stroke, alpha: number): void {
+    const { canvas, ctx, dpr } = this
+    const scratch = this.fadeScratch ?? (this.fadeScratch = document.createElement('canvas'))
+    const sctx = scratch.getContext('2d')
+    if (!sctx) {
+      ctx.save()
+      ctx.globalAlpha = alpha
+      renderStroke(ctx, stroke)
+      ctx.restore()
+      return
+    }
+    if (scratch.width !== canvas.width) scratch.width = canvas.width
+    if (scratch.height !== canvas.height) scratch.height = canvas.height
+    sctx.setTransform(1, 0, 0, 1, 0, 0)
+    sctx.clearRect(0, 0, scratch.width, scratch.height)
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    renderStroke(sctx, stroke)
+    ctx.save()
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.globalAlpha = alpha
+    ctx.drawImage(scratch, 0, 0)
+    ctx.restore()
+  }
+
   destroy(): void {
+    this.clearFadeTimer()
     this.resizeObserver.disconnect()
     this.dprMediaQuery?.removeEventListener('change', this.onDprChange)
     this.dprMediaQuery = null
@@ -161,6 +297,7 @@ export class CanvasEngine {
       pushCommand({ type: 'CLEAR_ALL', strokes: [...strokes] })
     }
     clearAll()
+    this.syncFades()
     this.redrawAllInternal()
     // On Windows, transparent overlay BrowserWindows defer paint when no input
     // is in flight — the cleared canvas stays visually stale until the next
@@ -173,14 +310,22 @@ export class CanvasEngine {
   }
 
   undo(): void {
-    if (storeUndo()) this.redrawAllInternal()
+    if (storeUndo()) {
+      this.syncFades()
+      this.redrawAllInternal()
+    }
   }
 
   redo(): void {
-    if (storeRedo()) this.redrawAllInternal()
+    if (storeRedo()) {
+      this.syncFades()
+      this.redrawAllInternal()
+    }
   }
 
   redrawAll(): void {
+    // Callers such as the stroke eraser change the stroke list outside the engine.
+    this.syncFades()
     this.redrawAllInternal()
   }
 }

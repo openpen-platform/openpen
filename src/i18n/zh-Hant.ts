@@ -106,6 +106,13 @@ export default {
   notificationPosition: '通知出現位置',
   notificationPositionSub: '畫面上通知顯示的位置',
 
+  // Stroke fade-out
+  strokeFade: '筆跡自動淡出',
+  strokeFadeSub: '新畫的筆跡在下方設定的時間後自動消失',
+  strokeFadeSeconds: '淡出時間',
+  strokeFadeSecondsSub: '筆跡停留多少秒後開始淡出',
+  strokeFadeSecondsUnit: '秒',
+
   // Clear canvas confirmation
   confirmBeforeClearCanvas: '清除畫布前詢問',
   confirmBeforeClearCanvasSub: '按下清除按鈕時顯示確認對話框',

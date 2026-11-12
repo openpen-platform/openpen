@@ -106,6 +106,13 @@ export default {
   notificationPosition: '通知の表示位置',
   notificationPositionSub: '通知を画面上のどこに表示するか',
 
+  // Stroke fade-out
+  strokeFade: '筆跡を自動でフェードアウト',
+  strokeFadeSub: '新しく描いた筆跡は、下で設定した時間が経つと消えます',
+  strokeFadeSeconds: 'フェードアウトまでの時間',
+  strokeFadeSecondsSub: '筆跡が表示されたままの秒数',
+  strokeFadeSecondsUnit: '秒',
+
   // Clear canvas confirmation
   confirmBeforeClearCanvas: 'キャンバスをクリアする前に確認',
   confirmBeforeClearCanvasSub: 'クリアボタンを押したときに確認ダイアログを表示します',

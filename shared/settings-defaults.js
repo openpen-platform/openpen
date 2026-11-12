@@ -28,6 +28,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   notifyOnDrawingMode: true,
   notificationPosition: /** @type {import('./settings-defaults').NotificationPosition} */ ('top-center'),
   confirmBeforeClearCanvas: true,
+  strokeFadeEnabled: false,
+  strokeFadeSeconds: 5,       // 1 ~ 30
   autoCheckUpdate: true,
   disabledModules: /** @type {string[]} */ ([]),
   pluginIdConflictResolutions: /** @type {Record<string, string>} */ ({}),

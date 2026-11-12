@@ -90,7 +90,7 @@ export function useCanvas() {
   const isLinux = window.openPenApi?.platform === 'linux'
   function persistDrawing(): void {
     if (!isLinux) return
-    window.openPenApi?.persistDrawingState?.(serializeState())
+    window.openPenApi?.persistDrawingState?.({ ...serializeState(), fade: engine?.getFadeHolds() ?? {} })
   }
 
   // Linux/Wayland: the on-demand overlay is destroyed on drawing-exit. Tell main
@@ -190,6 +190,7 @@ export function useCanvas() {
     const canvas = canvasRef.value
     if (!canvas) return
     engine = new CanvasEngine(canvas)
+    engine.setFadeRemovedListener(reportHistoryState)
 
     canvas.addEventListener('pointerdown', onPointerDown)
     canvas.addEventListener('pointermove', onPointerMove)
@@ -239,10 +240,20 @@ export function useCanvas() {
       const onRestore = window.openPenApi.onRestoreDrawingState((snapshot) => {
         if (!snapshot) return
         hydrateState(snapshot as Parameters<typeof hydrateState>[0])
+        engine?.restoreFades((snapshot as { fade?: Record<string, number> }).fade)
         engine?.redrawAll()
         window.openPenApi?.reportHistoryState({ canUndo: canUndo(), canRedo: canRedo() })
       })
       ipcUnsubs.push(onRestore)
+
+      // Stroke fade-out follows the user setting: read it once at start, then
+      // on every settings change. Only strokes drawn afterwards are affected.
+      const applyFadeSetting = (s: { strokeFadeEnabled?: boolean; strokeFadeSeconds?: number } | null | undefined) => {
+        if (!s) return
+        engine?.setFadeSeconds(s.strokeFadeEnabled === true ? (s.strokeFadeSeconds ?? 5) : null)
+      }
+      void window.openPenApi.getSettings?.().then(applyFadeSetting)
+      ipcUnsubs.push(window.openPenApi.onSettingsUpdated(applyFadeSetting))
     }
     unsubs.push(...ipcUnsubs)
 

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import type { ComputedRef } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { AppToggle, AppSegmented } from '@openpen/module-api/uikit';
+import { AppToggle, AppSegmented, AppSlider } from '@openpen/module-api/uikit';
 import type { AppSettings } from '../../types/settings';
 import PositionPicker from './PositionPicker.vue';
 
@@ -103,6 +103,42 @@ const barLayoutOptions = computed(() => [
         @update:model-value="draft.confirmBeforeClearCanvas = $event"
       />
     </div>
+
+    <div class="cw-row">
+      <div>
+        <div class="cw-row-label">{{ t('strokeFade') }}</div>
+        <div class="cw-row-sub">{{ t('strokeFadeSub') }}</div>
+      </div>
+      <AppToggle
+        :model-value="draft.strokeFadeEnabled"
+        :aria-label="t('strokeFade')"
+        data-testid="settings-stroke-fade-toggle"
+        @update:model-value="draft.strokeFadeEnabled = $event"
+      />
+    </div>
+
+    <div class="cw-row" :class="{ 'cw-row--disabled': !draft.strokeFadeEnabled }">
+      <div>
+        <div class="cw-row-label">{{ t('strokeFadeSeconds') }}</div>
+        <div class="cw-row-sub">{{ t('strokeFadeSecondsSub') }}</div>
+      </div>
+      <div class="opacity-row" data-testid="settings-stroke-fade-seconds-row">
+        <AppSlider
+          v-model="draft.strokeFadeSeconds"
+          :min="1"
+          :max="30"
+          :step="1"
+          :aria-label="t('strokeFadeSeconds')"
+          width="80px"
+          track-height="8px"
+          track-radius="4px"
+          thumb-width="24px"
+          thumb-height="16px"
+          thumb-radius="8px"
+        />
+        <span class="opacity-val">{{ draft.strokeFadeSeconds }} {{ t('strokeFadeSecondsUnit') }}</span>
+      </div>
+    </div>
   </div>
 
   <div class="cw-section">
@@ -179,6 +215,19 @@ const barLayoutOptions = computed(() => [
    the row's 0.5 opacity is the sole fade applied (no compounding). */
 .cw-row--disabled { opacity: 0.5; pointer-events: none; }
 .cw-row--disabled :deep(.app-seg) { opacity: 1; }
+
+.opacity-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.opacity-val {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 32px;
+  text-align: right;
+}
 
 .cw-select {
   background: var(--input-bg);

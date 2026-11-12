@@ -30,6 +30,25 @@ export function removeStrokeById(id: string): boolean {
   return true
 }
 
+/**
+ * Remove a stroke for good: from the drawing and from every history entry that
+ * would bring it back, so neither undo nor redo can make it reappear.
+ * A clear-all entry keeps its other strokes and is dropped once it holds none.
+ */
+export function purgeStroke(id: string): boolean {
+  const removed = removeStrokeById(id)
+  const keep = (command: Command): boolean => {
+    if (command.type === 'CLEAR_ALL') {
+      command.strokes = command.strokes.filter((s) => s.id !== id)
+      return command.strokes.length > 0
+    }
+    return command.stroke.id !== id
+  }
+  undoStack = undoStack.filter(keep)
+  redoStack = redoStack.filter(keep)
+  return removed
+}
+
 // ── Undo / Redo History ───────────────────────────────────────────────────────
 
 /** Record an undoable command and clear the redo stack. Drops the oldest entry once HISTORY_LIMIT is exceeded. */
