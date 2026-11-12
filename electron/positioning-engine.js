@@ -10,7 +10,6 @@
  */
 
 import { screen } from 'electron';
-import log from 'electron-log/main.js';
 import { POSITIONING } from './ipc-channels.js';
 import { log } from './logger.js';
 import {
