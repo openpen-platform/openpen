@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -28,6 +28,28 @@ function openReport() {
   if (!props.entry) return
   window.openPenApi?.openPluginReport(props.entry.id, props.installedVersion ?? props.entry.latestVersion)
 }
+
+function openRepo() {
+  if (!props.entry) return
+  window.openPenApi?.openPluginRepo(props.entry.id)
+}
+
+// Bubble phase on purpose: a hotkey recorder captures keys first and swallows
+// Escape, which must only stop the recording, not close this dialog.
+function onKeyDown(e: KeyboardEvent) {
+  if (e.key !== 'Escape' || e.defaultPrevented) return
+  emit('update:open', false)
+}
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) document.addEventListener('keydown', onKeyDown)
+    else document.removeEventListener('keydown', onKeyDown)
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => document.removeEventListener('keydown', onKeyDown))
 </script>
 
 <template>
@@ -42,7 +64,7 @@ function openReport() {
             <div class="pd-author">
               by {{ entry.ownerLogin }}
               <template v-if="entry.repo">
-                · <a :href="entry.repo" target="_blank" rel="noopener noreferrer" class="pd-link">
+                · <a :href="entry.repo" class="pd-link" data-testid="plugin-detail-repo-link" @click.prevent="openRepo" @auxclick.prevent>
                   {{ entry.repo.replace('https://github.com/', 'github.com/') }}
                 </a>
               </template>

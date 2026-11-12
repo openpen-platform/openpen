@@ -40,6 +40,7 @@ function makeEntry(): CatalogEntry {
 
 let listeners: Map<string, (event: unknown, payload: unknown) => void>
 let openExternal: ReturnType<typeof vi.fn>
+let catalog: CatalogEntry[]
 
 function makeI18n(locale: string) {
   return createI18n({
@@ -54,7 +55,9 @@ beforeEach(async () => {
   await initI18n('en')
   listeners = new Map()
   openExternal = vi.fn()
+  catalog = [makeEntry()]
   registerMarketplaceLinkHandlers({
+    getCatalog: async () => catalog,
     ipcMain: {
       on: (channel: string, fn: (event: unknown, payload: unknown) => void) => { listeners.set(channel, fn) },
       removeAllListeners: (channel: string) => { listeners.delete(channel) },
@@ -66,6 +69,7 @@ beforeEach(async () => {
   window.openPenApi = {
     openPluginReport: (id: string, version: string) => send(PLUGIN.OPEN_REPORT)({ id, version }),
     openMarketplacePolicy: (locale: string) => send(PLUGIN.OPEN_POLICY)({ locale }),
+    openPluginRepo: (id: string) => send(PLUGIN.OPEN_REPO)({ id }),
     fetchPluginCatalog: vi.fn().mockResolvedValue({ ok: true, plugins: [makeEntry()] }),
     getModuleManifests: vi.fn().mockResolvedValue([]),
     onPluginInstallProgress: vi.fn().mockReturnValue(() => {}),
@@ -101,6 +105,68 @@ describe('Report entry in the plugin detail dialog', () => {
     window.openPenApi!.openPluginReport('javascript:alert(1)', '1.0.0')
     window.openPenApi!.openPluginReport('@alice/todo/../../x', '1.0.0')
     expect(openExternal).not.toHaveBeenCalled()
+  })
+})
+
+describe('Repo link in the plugin detail dialog', () => {
+  it('opens the catalog repo page in the system browser instead of an app window', async () => {
+    mount(PluginDetailDialog, {
+      props: { open: true, entry: makeEntry(), installedVersion: null },
+      global: { plugins: [makeI18n('en')] },
+      attachTo: document.body,
+    })
+    const link = document.querySelector<HTMLAnchorElement>('[data-testid="plugin-detail-repo-link"]')!
+    expect(link.target).not.toBe('_blank')
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true })
+    link.dispatchEvent(click)
+    await flushPromises()
+
+    expect(click.defaultPrevented).toBe(true)
+    expect(openExternal).toHaveBeenCalledWith('https://github.com/alice/todo')
+  })
+
+  it('only opens a repo that is a GitHub repository page of a listed plugin', async () => {
+    catalog = [{ ...makeEntry(), repo: 'https://evil.example/alice/todo' }, { ...makeEntry(), id: '@bob/x', repo: 'javascript:alert(1)' },
+      { ...makeEntry(), id: '@carol/y', repo: 'https://github.com@evil.example/carol/y' },
+      { ...makeEntry(), id: '@dave/z', repo: 'https://github.com/dave/..' }]
+    window.openPenApi!.openPluginRepo('@carol/y')
+    window.openPenApi!.openPluginRepo('@dave/z')
+    window.openPenApi!.openPluginRepo('@alice/todo')
+    window.openPenApi!.openPluginRepo('@bob/x')
+    window.openPenApi!.openPluginRepo('@nobody/missing')
+    window.openPenApi!.openPluginRepo('not-an-id')
+    await flushPromises()
+    expect(openExternal).not.toHaveBeenCalled()
+  })
+})
+
+describe('Escape in the plugin detail dialog', () => {
+  function mountOpen() {
+    return mount(PluginDetailDialog, {
+      props: { open: true, entry: makeEntry(), installedVersion: null },
+      global: { plugins: [makeI18n('en')] },
+      attachTo: document.body,
+    })
+  }
+
+  it('closes the dialog on Escape and stops listening once it is closed', async () => {
+    const wrapper = mountOpen()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    expect(wrapper.emitted('update:open')).toEqual([[false]])
+
+    await wrapper.setProps({ open: false })
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    expect(wrapper.emitted('update:open')).toHaveLength(1)
+  })
+
+  it('leaves Escape to a hotkey recorder that is capturing keys', () => {
+    const wrapper = mountOpen()
+    // HotkeyInput records in the capture phase and swallows the key.
+    const recorder = (e: Event) => { e.preventDefault(); e.stopPropagation() }
+    document.addEventListener('keydown', recorder, true)
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+    document.removeEventListener('keydown', recorder, true)
+    expect(wrapper.emitted('update:open')).toBeUndefined()
   })
 })
 

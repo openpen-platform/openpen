@@ -9,7 +9,7 @@
 
 import { t } from './i18n/index.js'
 import { onValidated } from './ipc-validation.js'
-import { pluginReportSchema, policyLocaleSchema } from './ipc-payload-schemas.js'
+import { pluginReportSchema, pluginRepoOpenSchema, policyLocaleSchema } from './ipc-payload-schemas.js'
 
 /** Issue tracker of the plugin catalog — the channel for reporting a listed plugin. */
 export const CATALOG_ISSUES_URL = 'https://github.com/openpen-platform/OpenPen-plugins/issues'
@@ -67,22 +67,50 @@ export function buildReportUrl(pluginId, version) {
   return `${CATALOG_ISSUES_URL}/new?${params.toString()}`
 }
 
+// A repository page: https://github.com/<owner>/<repo>, nothing else.
+const GITHUB_REPO_RE = /^https:\/\/github\.com\/[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/(?!\.{1,2}\/?$)[A-Za-z0-9._-]{1,100}\/?$/
+
+/**
+ * Repository page of a catalog entry, or null when the id is not a valid
+ * `@scope/name`, the entry is not listed, or its repo is not a GitHub repo page.
+ *
+ * @param {unknown} pluginId
+ * @param {unknown} catalog
+ * @returns {string | null}
+ */
+export function buildRepoUrl(pluginId, catalog) {
+  if (typeof pluginId !== 'string' || !PLUGIN_ID_RE.test(pluginId)) return null
+  if (!Array.isArray(catalog)) return null
+  const repo = catalog.find((e) => e?.id === pluginId)?.repo
+  return typeof repo === 'string' && GITHUB_REPO_RE.test(repo) ? repo : null
+}
+
 /**
  * Wire the marketplace link IPC listeners.
  *
  * @param {object} deps
  * @param {Pick<import('electron').IpcMain, 'on' | 'removeAllListeners'>} deps.ipcMain
  * @param {(url: string) => unknown} deps.openExternal
- * @param {{ OPEN_REPORT: string, OPEN_POLICY: string }} deps.channels
+ * @param {() => Promise<unknown[]>} deps.getCatalog
+ * @param {{ OPEN_REPORT: string, OPEN_POLICY: string, OPEN_REPO: string }} deps.channels
  */
-export function registerMarketplaceLinkHandlers({ ipcMain, openExternal, channels }) {
+export function registerMarketplaceLinkHandlers({ ipcMain, openExternal, getCatalog, channels }) {
   ipcMain.removeAllListeners(channels.OPEN_REPORT)
   ipcMain.removeAllListeners(channels.OPEN_POLICY)
+  ipcMain.removeAllListeners(channels.OPEN_REPO)
   onValidated(ipcMain, channels.OPEN_REPORT, pluginReportSchema, (_event, payload) => {
     const url = buildReportUrl(payload.id, payload.version)
     if (url) openExternal(url)
   })
   onValidated(ipcMain, channels.OPEN_POLICY, policyLocaleSchema, (_event, payload) => {
     openExternal(buildPolicyUrl(payload.locale))
+  })
+  onValidated(ipcMain, channels.OPEN_REPO, pluginRepoOpenSchema, async (_event, payload) => {
+    try {
+      const url = buildRepoUrl(payload.id, await getCatalog())
+      if (url) openExternal(url)
+    } catch {
+      // Catalog unreachable: nothing to open.
+    }
   })
 }

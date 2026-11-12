@@ -266,6 +266,8 @@ contextBridge.exposeInMainWorld('openPenApi', {
   addPluginFromGitHubRepo: (repoUrl) => ipcRenderer.invoke('plugin:add-from-github-repo', { repoUrl }),
   /** Open the catalog issue form, pre-filled to report the given plugin. */
   openPluginReport: (id, version) => ipcRenderer.send('plugin:open-report', { id, version }),
+  /** Open a catalog plugin's repository page in the system browser. */
+  openPluginRepo: (id) => ipcRenderer.send('plugin:open-repo', { id }),
   /** Open the marketplace policy page in the given UI locale. */
   openMarketplacePolicy: (locale) => ipcRenderer.send('plugin:open-policy', { locale }),
   /**

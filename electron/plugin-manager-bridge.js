@@ -213,6 +213,10 @@ export function initPluginManagerBridge() {
   registerMarketplaceLinkHandlers({
     ipcMain,
     openExternal: (url) => shell.openExternal(url),
+    getCatalog: async () => {
+      const { CATALOG_URL_DEFAULT } = await import('@openpen/plugin-manager')
+      return fetchCatalogJson(process.env.OPENPEN_CATALOG_URL ?? CATALOG_URL_DEFAULT)
+    },
     channels: PLUGIN,
   })
 }

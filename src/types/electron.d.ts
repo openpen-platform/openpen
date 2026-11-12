@@ -273,6 +273,7 @@ interface OpenPenApi {
   addPluginFromLocal(sourcePath: string): Promise<{ ok: true; entry: PluginEntry } | { ok: false; error: string }>
   addPluginFromGitHubRepo(repoUrl: string): Promise<{ ok: true; entry: PluginEntry } | { ok: false; error: string }>
   openPluginReport(id: string, version: string): void
+  openPluginRepo(id: string): void
   openMarketplacePolicy(locale: string): void
   inspectPluginSource(sourcePath: string): Promise<
     | { ok: true; info: { id: string; scope: string; name: string; version: string; displayName: string; description?: string; changelog?: string[] } }

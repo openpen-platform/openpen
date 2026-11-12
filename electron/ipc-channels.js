@@ -235,6 +235,8 @@ export const PLUGIN = {
   OPEN_REPORT: 'plugin:open-report',
   /** renderer → main (send): open the marketplace policy page in the given UI locale ({ locale }). */
   OPEN_POLICY: 'plugin:open-policy',
+  /** renderer to main (send): open a catalog plugin's repository page in the system browser ({ id }). */
+  OPEN_REPO: 'plugin:open-repo',
 }
 
 /** Module / plugin system. */

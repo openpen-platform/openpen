@@ -176,6 +176,8 @@ export const pluginReportSchema = z.object({
   version: z.string().max(MAX_ID_LENGTH).nullish(),
 });
 
+export const pluginRepoOpenSchema = z.object({ id });
+
 export const policyLocaleSchema = z.object({
   locale: z.string().max(32).nullish(),
 });
