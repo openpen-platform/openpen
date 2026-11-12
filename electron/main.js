@@ -21,6 +21,8 @@ import { APP, AUDIT, HISTORY, LOG, MODULE, POSITIONING, SYSTEM, WINDOW } from '.
 import { initPluginManagerBridge } from './plugin-manager-bridge.js';
 import { createAuditLog } from './audit-log.js';
 import { initLogger, log } from './logger.js';
+import { handleUncaughtException } from './fatal-error-handler.js';
+import { showOsCursor } from './cursor-os.js';
 import { handleValidated, onValidated } from './ipc-validation.js';
 import { auditQuerySchema, positioningIntentSchema, rendererErrorSchema } from './ipc-payload-schemas.js';
 import { initPositioningEngine, processIntent, getState as getPositioningState } from './positioning-engine.js';
@@ -203,7 +205,7 @@ const isDev = !app.isPackaged && process.env.NODE_ENV !== 'production';
 initLogger({ isDev });
 
 process.on('uncaughtException', (err) => {
-  log.error('uncaughtException:', err);
+  handleUncaughtException(err, { log, showOsCursor, exit: (code) => process.exit(code) });
 });
 
 process.on('unhandledRejection', (reason) => {

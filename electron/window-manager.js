@@ -219,14 +219,6 @@ export function initWindowManager(entry) {
 function registerCursorCrashSafety() {
   app.on('before-quit', () => showOsCursor());
   process.on('exit', () => showOsCursor());
-  // Restore the cursor on a fatal error, then exit non-zero: swallowing an
-  // uncaught exception leaves a zombie process whose crash is undetectable by
-  // any supervisor or the user.
-  process.on('uncaughtException', (err) => {
-    showOsCursor();
-    log.error('[window-manager] uncaught exception, exiting:', err);
-    process.exit(1);
-  });
 }
 
 /**
