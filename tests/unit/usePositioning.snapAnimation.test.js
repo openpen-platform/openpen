@@ -13,6 +13,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { defineComponent, h } from 'vue';
 import { mount } from '@vue/test-utils';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 // ─── RAF / time stubs ─────────────────────────────────────────────────────────
 
@@ -298,12 +300,7 @@ describe('usePositioning — vbar snap animation', () => {
     wrapper.unmount();
   });
 
-  it('left snap uses easeOutCubic (no invisible overshoot past viewport wall)', async () => {
-    // easeOutBack overshoots past the snap target. For left snap the target
-    // sits at x=26px (flush against the viewport left boundary), so any
-    // overshoot would push x < 26 and clip invisibly. applyState must
-    // override the easing to easeOutCubic, which decelerates smoothly into
-    // the wall without clipping.
+  it('left snap keeps the engine easing (easeOutBack) and still lands exactly on the target', async () => {
     const dragState = makeState({
       ballScreenPos: { x: 80, y: 400 },
       barLayoutClass: 'horizontal',
@@ -326,7 +323,6 @@ describe('usePositioning — vbar snap animation', () => {
       barLayoutClass: 'vbar-left',
       snapEdge: 'left',
     });
-    // Engine sends easeOutBack — renderer must override to easeOutCubic for side snaps.
     broadcastState(snapState, { durationMs: 250, easing: 'easeOutBack', purpose: 'snap' });
 
     const xValues = [];
@@ -335,21 +331,70 @@ describe('usePositioning — vbar snap animation', () => {
       xValues.push(ballViewportPos.value?.x ?? null);
     }
 
-    // easeOutCubic never overshoots: x must stay >= 26 (snap target) throughout.
-    // Any x < 26 would indicate easeOutBack leaked through, meaning the ball
-    // would clip into the viewport wall and the bounce would be invisible.
-    const hasOvershootBeyondTarget = xValues.some((x) => x !== null && x < 26);
-    expect(hasOvershootBeyondTarget).toBe(false);
-
-    // The ball must still reach the snap target.
+    // easeOutBack is passed through unchanged for side snaps: the position
+    // dips below the target mid-flight (the wall clips it) and then settles.
+    expect(xValues.some((x) => x !== null && x < 26)).toBe(true);
     expect(xValues[xValues.length - 1]).toBeCloseTo(26, 1);
 
     wrapper.unmount();
   });
 
-  it('top snap still uses easeOutBack (overshoot along Y is handled differently)', async () => {
-    // The easing override is scoped to left/right edge snaps only. Top/bottom
-    // snaps keep easeOutBack so the overshoot behaviour is preserved.
+  it('left snap from a short distance (<= 38px) interpolates over several frames and keeps the engine easing', async () => {
+    const dragState = makeState({
+      ballScreenPos: { x: 60, y: 400 },
+      barLayoutClass: 'horizontal',
+      snapEdge: null,
+    });
+    installApiMock(dragState);
+
+    vi.resetModules();
+    const { usePositioning } = await import('../../src/composables/usePositioning');
+
+    const { result, wrapper } = withSetup(() => usePositioning());
+    const { ballViewportPos } = result;
+    await Promise.resolve();
+    await Promise.resolve();
+
+    broadcastState(dragState);
+    const snapState = makeState({
+      ballScreenPos: { x: 26, y: 400 },
+      barLayoutClass: 'vbar-left',
+      snapEdge: 'left',
+    });
+    broadcastState(snapState, { durationMs: 250, easing: 'easeOutBack', purpose: 'snap' });
+
+    const xValues = [];
+    for (let ms = 0; ms <= 250; ms += 16) {
+      flushRafs(16);
+      xValues.push(ballViewportPos.value?.x ?? 0);
+    }
+    expect(new Set(xValues.map((x) => Math.round(x * 10))).size).toBeGreaterThan(4);
+    // The engine's back-out easing overshoots even a short snap (target x=26),
+    // which a cubic ease-out would not.
+    expect(xValues.some((x) => x < 26)).toBe(true);
+    expect(xValues[xValues.length - 1]).toBeCloseTo(26, 1);
+
+    wrapper.unmount();
+  });
+
+  it('side-edge ball styling reuses the existing ball transition and hover scale, ahead of :hover/:active', () => {
+    const css = readFileSync(resolve(__dirname, '../../src/components/ControlBar.css'), 'utf8');
+    const edgeRule = css.match(/\.float-ball\.edge-left,\s*\.float-ball\.edge-right\s*\{([^}]*)\}/);
+    expect(edgeRule).not.toBeNull();
+    expect(edgeRule[1]).toContain('transform: translate(-50%, -50%) scale(1.08)');
+    // Declared before :hover and :active so pointer states still win.
+    const edgeIdx = css.indexOf(edgeRule[0]);
+    expect(edgeIdx).toBeLessThan(css.indexOf('.float-ball:hover {'));
+    expect(edgeIdx).toBeLessThan(css.indexOf('.float-ball:active {'));
+    // Enter/leave scale must outrank the edge rule (same specificity, later in the file).
+    const leaveRule = css.match(/\.float-ball\.ball-enter-from,\s*\.float-ball\.ball-leave-to\s*\{[^}]*scale\(0\.7\)/);
+    expect(leaveRule).not.toBeNull();
+    expect(css.indexOf(leaveRule[0])).toBeGreaterThan(edgeIdx);
+    // The transform transition it relies on is the back-out curve.
+    expect(css).toMatch(/transform 250ms cubic-bezier\(0\.34, 1\.56, 0\.64, 1\)/);
+  });
+
+  it('top snap still uses easeOutBack (overshoot along Y)', async () => {
     const dragState = makeState({
       ballScreenPos: { x: 400, y: 200 },
       barLayoutClass: 'horizontal',

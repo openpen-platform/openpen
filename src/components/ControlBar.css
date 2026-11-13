@@ -53,6 +53,14 @@
     border-radius 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Snapped to a side edge: the ball settles at the hover scale, reusing the
+   transform transition above (250ms back-out curve) so the landing reads as a
+   visible pop. Declared before :hover/:active so those keep priority. */
+.float-ball.edge-left,
+.float-ball.edge-right {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
 .float-ball:hover {
   transform: translate(-50%, -50%) scale(1.08);
   box-shadow:
@@ -273,8 +281,9 @@
     opacity 350ms cubic-bezier(0.34, 1.56, 0.64, 1),
     transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.ball-enter-from,
-.ball-leave-to {
+/* Two classes so the enter/leave scale outranks the edge-snapped rule above. */
+.float-ball.ball-enter-from,
+.float-ball.ball-leave-to {
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.7);
 }

@@ -164,24 +164,16 @@ function applyState(state: PositioningState, animation: AnimationHint | null): v
   if (animation && prev) {
     const fromVP = animatedBallViewportPos.value ?? toViewport(prev.ballScreenPos, prev.activeDisplayId)
 
-    // Override easing for left/right edge snaps: easeOutBack overshoots past
-    // the target, but the target sits flush against the viewport boundary so
-    // any overshoot clips invisibly. easeOutCubic decelerates smoothly into
-    // the edge without a clipped bounce.
-    const effectiveHint: AnimationHint =
-      animation.purpose === 'snap' &&
-      (state.snapEdge === 'left' || state.snapEdge === 'right') &&
-      animation.easing === 'easeOutBack'
-        ? { ...animation, easing: 'easeOutCubic' }
-        : animation
-
-    startAnimation(fromVP, newVP, effectiveHint)
+    startAnimation(fromVP, newVP, animation)
     return
   }
 
   // A non-animated state update aimed at the same target as a running
-  // animation (e.g. bar-expand intent re-broadcast mid-snap) must leave the
-  // animation alone so it can complete smoothly.
+  // animation must leave the animation alone so it can complete smoothly.
+  // While the control bar is expanded, every animated frame moves the ball,
+  // which makes useBarBoundsCache send a bar-expand intent; the engine answers
+  // with a state carrying no animation hint. Without this guard that reply
+  // would cancel a snap in flight and jump the ball to its target.
   const sameTargetMidAnimation =
     animRafId !== null &&
     animTo !== null &&
