@@ -140,6 +140,8 @@ const hasChanges = computed(() => {
           :model-value="shortcuts[row.id]"
           :default-value="DEFAULT_SHORTCUTS[row.id]"
           :shortcut-id="row.id"
+          :has-conflict="shortcutConflicts.has(row.id)"
+          conflict-message-key="shortcutConflict"
           @update:model-value="updateShortcut(row.id, $event)"
           @shortcut-error="shortcutError = $event"
         />

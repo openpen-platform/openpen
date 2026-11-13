@@ -115,6 +115,8 @@ vi.mock('../../electron/renderer-ready-watchdog.js', () => ({
 
 const DEFAULT_SHORTCUTS_FIXTURE = {
   toggleDrawingMode: 'CommandOrControl+Shift+A',
+  toggleBar: 'CommandOrControl+Shift+H',
+  quitApp: 'CommandOrControl+Q',
   undo: 'CommandOrControl+Z',
   redo: 'CommandOrControl+Shift+Z',
 };
@@ -201,6 +203,26 @@ describe('registerShortcut', () => {
     const onShortcutConflict = vi.fn();
     expect(() => initShortcutManager({ onShortcutConflict })).not.toThrow();
     expect(onShortcutConflict).toHaveBeenCalled();
+  });
+
+  it('flags a built-in that failed to register in shortcuts:get-conflicts', async () => {
+    mockGlobalShortcut.register.mockImplementation((accel) => accel !== 'CommandOrControl+Z');
+    initShortcutManager();
+    const get = ipcInvokeHandlers.get('shortcuts:get-conflicts');
+    expect(await get()).toEqual(['undo']);
+  });
+
+  it('lets the user rebind a built-in whose default key failed to register, and clears its flag', async () => {
+    mockGlobalShortcut.register.mockImplementation((accel) => accel !== 'CommandOrControl+Z');
+    initShortcutManager();
+    const store = await import('../../electron/settings-store.js');
+    const set = ipcInvokeHandlers.get('shortcuts:set');
+
+    const result = await set({}, { id: 'undo', accelerator: 'CommandOrControl+Alt+U' });
+
+    expect(result).toEqual({ ok: true });
+    expect(store.setShortcut).toHaveBeenCalledWith('undo', 'CommandOrControl+Alt+U');
+    expect(await ipcInvokeHandlers.get('shortcuts:get-conflicts')()).toEqual([]);
   });
 
   it('rejects double-registration (does not call globalShortcut.register twice)', () => {

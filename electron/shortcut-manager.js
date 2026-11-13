@@ -116,7 +116,7 @@ const _watchedSenders = new Set();
 /** Registrant key for events that carry no sender (direct calls). */
 const ANONYMOUS_SENDER = 'anonymous';
 
-/** @type {Set<string>} namespacedIds of module shortcuts that failed to register due to key conflicts. */
+/** @type {Set<string>} ids (module namespacedIds or built-in ids) whose shortcut failed to register due to key conflicts. */
 const idConflicts = new Set();
 
 /**
@@ -150,54 +150,29 @@ export function initShortcutManager({
   _resolveShortcutTarget = resolveShortcutTarget ?? null;
   const shortcuts = getShortcuts();
 
-  // Built-in: drawing-mode toggle.
-  const drawingHandler = () => { if (!_suspended) onToggleDrawingMode?.(); };
-  const drawingAccel = shortcuts.toggleDrawingMode;
-  if (registerShortcut(drawingAccel, drawingHandler)) {
-    _builtinHandlers.set('toggleDrawingMode', drawingHandler);
-    _builtinAccelerators.set('toggleDrawingMode', drawingAccel);
-  } else {
-    onShortcutConflict?.(drawingAccel);
-  }
+  // Built-ins. The handler is remembered even when registration fails, so the
+  // user can still pick another key from settings; a failed one is flagged in
+  // idConflicts so the settings page can mark it.
+  const registerBuiltin = (id, accelerator, handler) => {
+    _builtinHandlers.set(id, handler);
+    if (registerShortcut(accelerator, handler)) {
+      _builtinAccelerators.set(id, accelerator);
+    } else {
+      idConflicts.add(id);
+      onShortcutConflict?.(accelerator);
+    }
+  };
 
-  // Built-in: hide/show the control bar.
-  const barHandler = () => { if (!_suspended) onToggleBar?.(); };
-  const barAccel = shortcuts.toggleBar;
-  if (registerShortcut(barAccel, barHandler)) {
-    _builtinHandlers.set('toggleBar', barHandler);
-    _builtinAccelerators.set('toggleBar', barAccel);
-  } else {
-    onShortcutConflict?.(barAccel);
-  }
-
-  // Built-in: undo / redo.
-  const undoHandler = () => { if (!_suspended) onUndo?.(); };
-  const undoAccel = shortcuts.undo;
-  if (registerShortcut(undoAccel, undoHandler)) {
-    _builtinHandlers.set('undo', undoHandler);
-    _builtinAccelerators.set('undo', undoAccel);
-  } else {
-    onShortcutConflict?.(undoAccel);
-  }
-
-  const redoHandler = () => { if (!_suspended) onRedo?.(); };
-  const redoAccel = shortcuts.redo;
-  if (registerShortcut(redoAccel, redoHandler)) {
-    _builtinHandlers.set('redo', redoHandler);
-    _builtinAccelerators.set('redo', redoAccel);
-  } else {
-    onShortcutConflict?.(redoAccel);
-  }
-
-  // Built-in: quit app. Not suspended by shortcut-capture UX — quit must always work.
-  const quitHandler = () => onQuitApp?.();
-  const quitAccel = shortcuts.quitApp;
-  if (registerShortcut(quitAccel, quitHandler)) {
-    _builtinHandlers.set('quitApp', quitHandler);
-    _builtinAccelerators.set('quitApp', quitAccel);
-  } else {
-    onShortcutConflict?.(quitAccel);
-  }
+  registerBuiltin('toggleDrawingMode', shortcuts.toggleDrawingMode,
+    () => { if (!_suspended) onToggleDrawingMode?.(); });
+  registerBuiltin('toggleBar', shortcuts.toggleBar,
+    () => { if (!_suspended) onToggleBar?.(); });
+  registerBuiltin('undo', shortcuts.undo,
+    () => { if (!_suspended) onUndo?.(); });
+  registerBuiltin('redo', shortcuts.redo,
+    () => { if (!_suspended) onRedo?.(); });
+  // Quit is not suspended by shortcut-capture UX; quit must always work.
+  registerBuiltin('quitApp', shortcuts.quitApp, () => onQuitApp?.());
 
   // Module IPC bridge: renderer-side modules register their accelerators
   // dynamically via system.shortcuts contributions.
@@ -445,6 +420,7 @@ function _updateBuiltinShortcut(id, newAccelerator) {
     acceleratorToHandler.delete(oldAccelerator);
   }
   _builtinAccelerators.set(id, newAccelerator);
+  if (idConflicts.delete(id)) _broadcastConflicts();
   return { ok: true };
 }
 

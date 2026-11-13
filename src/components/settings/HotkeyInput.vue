@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AppTooltip } from '@openpen/module-api/uikit'
 import { formatAccelerator as fmtAccel, type Platform } from '../../utils/format-accelerator'
@@ -9,6 +9,7 @@ const props = defineProps<{
   defaultValue: string
   shortcutId: string
   hasConflict?: boolean
+  conflictMessageKey?: string
 }>()
 
 const emit = defineEmits<{
@@ -17,6 +18,8 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+const conflictText = computed(() => t(props.conflictMessageKey ?? 'shortcutConflictPlugin'))
 
 const isCapturing = ref(false)
 const isConflict = ref(false)
@@ -126,13 +129,13 @@ onUnmounted(() => {
     <div class="hki-capture-row">
       <AppTooltip
         v-if="!isCapturing"
-        :content="hasConflict ? t('shortcutConflictPlugin') : t('shortcutClickToChange')"
+        :content="hasConflict ? conflictText : t('shortcutClickToChange')"
         side="top"
       >
         <button
           class="hki-badge"
           :class="{ 'hki-badge--conflict': isConflict, 'hki-badge--plugin-conflict': hasConflict }"
-          :aria-label="hasConflict ? t('shortcutConflictPlugin') : t('shortcutClickToChange')"
+          :aria-label="hasConflict ? conflictText : t('shortcutClickToChange')"
           @click="startCapture"
         >
           <svg v-if="hasConflict" class="hki-warn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
