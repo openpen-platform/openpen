@@ -15,6 +15,11 @@ interface DiagnosticsState {
   events: readonly DiagnosticsEvent[]
 }
 
+/** Outcome of a screen-capture request. */
+type CaptureResult =
+  | { ok: true; target: 'save' | 'copy'; path?: string }
+  | { ok: false; error: 'permission-denied' | 'unsupported' | 'busy' | 'failed' }
+
 /** Snapshot of the in-app auto-update state (authoritative copy lives in main). */
 interface UpdateState {
   status: 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error'
@@ -257,6 +262,9 @@ interface OpenPenApi {
   // Audit log (read-only)
   getAuditLogEntries(opts?: { limit?: number; since?: number; pluginId?: string | null }): Promise<AuditLogEntry[]>
   clearAuditLog(): Promise<void>
+  captureScreen(target: 'save' | 'copy'): Promise<CaptureResult>
+  openCapturePermissionSettings(): Promise<void>
+  onCaptureResult(cb: (payload: { target: 'save' | 'copy'; result: CaptureResult }) => void): () => void
 
   // Module settings
   getModuleSettings(moduleId: string): Promise<{ data: Record<string, unknown>; schemaVersion: number }>

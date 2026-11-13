@@ -1,0 +1,22 @@
+{
+  "name": "擷取畫面",
+  "description": "把含標註的螢幕存成 PNG 圖檔，或複製到剪貼簿。",
+  "tool": "擷取畫面",
+  "toolAria": "擷取畫面並存檔",
+  "menu": "擷取選項",
+  "menuSave": "存成圖檔",
+  "menuSaveSub": "PNG 存到「圖片」資料夾",
+  "menuCopy": "複製到剪貼簿",
+  "menuCopySub": "可貼進其他 app",
+  "saved": "已存下截圖",
+  "copied": "已複製截圖",
+  "copiedSub": "可貼進其他 app",
+  "permissionTitle": "需要螢幕錄製權限",
+  "permissionBody": "要先在「系統設定」允許 OpenPen 使用螢幕錄製，才能擷取畫面。允許後請結束並重開 OpenPen，再試一次。",
+  "permissionOpen": "前往系統設定",
+  "permissionCancel": "稍後再說",
+  "unsupported": "這裡無法擷取畫面",
+  "unsupportedSub": "Wayland 不允許 app 讀取螢幕，請改用桌面環境內建的截圖工具。",
+  "failed": "擷取畫面失敗",
+  "failedSub": "請稍後再試。"
+}

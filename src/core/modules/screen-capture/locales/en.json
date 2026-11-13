@@ -1,0 +1,22 @@
+{
+  "name": "Screen Capture",
+  "description": "Save the screen with your annotations as a PNG, or copy it to the clipboard.",
+  "tool": "Capture screen",
+  "toolAria": "Capture screen to a file",
+  "menu": "Capture options",
+  "menuSave": "Save as image",
+  "menuSaveSub": "PNG in your Pictures folder",
+  "menuCopy": "Copy to clipboard",
+  "menuCopySub": "Paste it into any app",
+  "saved": "Screenshot saved",
+  "copied": "Screenshot copied",
+  "copiedSub": "Paste it into any app",
+  "permissionTitle": "Screen recording permission needed",
+  "permissionBody": "OpenPen can only capture the screen after you allow Screen Recording in System Settings. Allow OpenPen there, then quit and reopen OpenPen and try again.",
+  "permissionOpen": "Open System Settings",
+  "permissionCancel": "Not now",
+  "unsupported": "Screen capture isn't available here",
+  "unsupportedSub": "Wayland doesn't let apps read the screen. Use your desktop's own screenshot tool.",
+  "failed": "Couldn't capture the screen",
+  "failedSub": "Try again in a moment."
+}

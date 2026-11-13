@@ -121,7 +121,7 @@ onUnmounted(() => {
     <!-- Wayland: the bar lives inside the overlay during drawing. pointer-events
          pass through the host to the canvas underneath; only the bar wrapper
          captures, so clicks outside the bar draw and clicks on it interact. -->
-    <div v-if="overlayHostsBar && isActiveDisplay" class="overlay-bar-host">
+    <div v-if="overlayHostsBar && isActiveDisplay" class="overlay-bar-host" data-capture-exclude>
       <ControlBar />
     </div>
   </template>

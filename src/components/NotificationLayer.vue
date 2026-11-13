@@ -172,6 +172,11 @@ function variantIconColor(variant: string): string {
   color: #64748B;
   margin-top: 2px;
   line-height: 1.4;
+  /* The toast is nowrap so titles stay on one line; a description such as a
+     long file path must wrap instead of being cut off at the toast's max-width.
+     `anywhere` also breaks inside path segments that have no spaces. */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* TransitionGroup animation */

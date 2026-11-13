@@ -26,6 +26,7 @@ export const STANDARD_ONLY = [
   '**/control-bar/ball-screen-pos.spec.js',
   '**/control-bar/bar-bounds-stale.spec.js',
   '**/control-bar/clear-canvas-confirm.spec.js',
+  '**/screen-capture/capture-button.spec.js',
   '**/control-bar/collapse.spec.js',
   '**/control-bar/dialog-pauses-collapse.spec.js',
   '**/control-bar/drag-auto-snap-toggle.spec.js',

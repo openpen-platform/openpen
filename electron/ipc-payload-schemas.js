@@ -244,3 +244,8 @@ export const rendererErrorSchema = z.object({
   line: z.number().int().min(0).nullish(),
   column: z.number().int().min(0).nullish(),
 });
+
+// ── Screen capture ───────────────────────────────────────────────────────────
+
+/** Where a capture goes: a PNG file in the pictures folder or the clipboard. */
+export const captureTargetSchema = z.enum(['save', 'copy']);

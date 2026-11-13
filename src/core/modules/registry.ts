@@ -23,6 +23,7 @@ import strokeEraser from './stroke-eraser'
 import strokeWidth from './stroke-width'
 import color from './color'
 import summonToCursor from './summon-to-cursor'
+import screenCapture from './screen-capture'
 
 export const BUILT_IN_MODULES: readonly OpenPenModule[] = [
   freehand,
@@ -34,4 +35,5 @@ export const BUILT_IN_MODULES: readonly OpenPenModule[] = [
   strokeWidth,
   color,
   summonToCursor,
+  screenCapture,
 ]

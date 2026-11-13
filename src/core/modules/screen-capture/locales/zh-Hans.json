@@ -1,0 +1,22 @@
+{
+  "name": "截取屏幕",
+  "description": "把含标注的屏幕存成 PNG 图片，或复制到剪贴板。",
+  "tool": "截取屏幕",
+  "toolAria": "截取屏幕并保存",
+  "menu": "截取选项",
+  "menuSave": "保存为图片",
+  "menuSaveSub": "PNG 保存到“图片”文件夹",
+  "menuCopy": "复制到剪贴板",
+  "menuCopySub": "可粘贴到其他应用",
+  "saved": "已保存截图",
+  "copied": "已复制截图",
+  "copiedSub": "可粘贴到其他应用",
+  "permissionTitle": "需要屏幕录制权限",
+  "permissionBody": "需要先在“系统设置”允许 OpenPen 使用屏幕录制，才能截取屏幕。允许后请退出并重新打开 OpenPen，再试一次。",
+  "permissionOpen": "前往系统设置",
+  "permissionCancel": "稍后再说",
+  "unsupported": "此处无法截取屏幕",
+  "unsupportedSub": "Wayland 不允许应用读取屏幕，请改用桌面环境自带的截图工具。",
+  "failed": "截取屏幕失败",
+  "failedSub": "请稍后再试。"
+}

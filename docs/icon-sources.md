@@ -41,6 +41,9 @@ Where an icon exists in both sets with the same geometry, both are named.
 | Search | Feather `search` / Lucide `search` | Same geometry | `src/components/settings/ModulesTab.vue` |
 | Plus | Feather `plus` / Lucide `plus` | Same geometry | `src/components/settings/ModulesTab.vue` |
 | Close (x) | Feather `x` / Lucide `x` | Same geometry | `src/components/settings/plugins/PluginAddCustomDialog.vue`, `PluginDetailDialog.vue`, `PluginUpgradeConfirmDialog.vue`, `src/views/SettingsView.vue` |
+| Camera | Lucide `camera` (0.104.0 path data) | Exact | `src/core/modules/screen-capture/CaptureButton.vue` |
+| Download | Lucide `download` (0.104.0 path data) | Exact | `src/core/modules/screen-capture/CaptureButton.vue` |
+| Copy | Lucide `copy` (0.104.0 path data) | Exact | `src/core/modules/screen-capture/CaptureButton.vue` |
 | Upload | Feather `upload` / Lucide `upload` | Same geometry | `src/components/settings/plugins/PluginAddCustomDialog.vue` |
 | Update (rotate) | Lucide `rotate-cw` | Adapted (arrow head identical, arc simplified) | `src/components/settings/plugins/PluginCard.vue`, `PluginDetailDialog.vue`, `PluginUpgradeConfirmDialog.vue` |
 | Check | Feather `check` / Lucide `check` | Exact | `src/components/settings/plugins/PluginInstallProgressDialog.vue` |

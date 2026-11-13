@@ -382,6 +382,22 @@ contextBridge.exposeInMainWorld('openPenApi', {
     return () => ipcRenderer.removeListener('update:downloaded', handler);
   },
 
+  // ── Screen capture ──────────────────────────────────────────────────
+  /**
+   * Capture the display under the cursor, annotations included.
+   * @param {'save' | 'copy'} target
+   * @returns {Promise<{ ok: true, target: 'save' | 'copy', path?: string } | { ok: false, error: 'permission-denied' | 'unsupported' | 'busy' | 'failed' }>}
+   */
+  captureScreen: (target) => ipcRenderer.invoke('capture:request', target),
+  /** Open the OS screen-recording permission pane (macOS only; no-op elsewhere). */
+  openCapturePermissionSettings: () => ipcRenderer.invoke('capture:open-permission-settings'),
+  /** Outcome of a capture started from the control bar; delivered to overlay windows only. */
+  onCaptureResult: (callback) => {
+    const handler = (_, payload) => callback(payload);
+    ipcRenderer.on('capture:result', handler);
+    return () => ipcRenderer.removeListener('capture:result', handler);
+  },
+
   // ── Audit log (read-only) ────────────────────────────────────────────
   /**
    * Fetch structured audit-log entries from the main-process ring buffer.

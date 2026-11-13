@@ -59,6 +59,16 @@ export const HISTORY = {
   STATE_CHANGED: 'history:state-changed',
 }
 
+/** Screen capture (annotated screenshot to file or clipboard). */
+export const CAPTURE = {
+  /** renderer → main (invoke): capture the cursor's display. Payload: 'save' | 'copy'. */
+  REQUEST: 'capture:request',
+  /** renderer → main (invoke): open the OS screen-recording permission pane. */
+  OPEN_PERMISSION_SETTINGS: 'capture:open-permission-settings',
+  /** main → overlay (send): outcome of a capture that a non-overlay window (the control bar) asked for, so the overlay that owns the toast layer can show it. */
+  RESULT: 'capture:result',
+}
+
 /** User preferences. */
 export const SETTINGS = {
   GET: 'settings:get',

@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, applyLinuxWindowPositioning, destroyAllWindowsForUpdate } from './window-manager.js';
 import { initTrayManager, setTrayWarning, setTrayDrawingMode, setTrayBarHidden } from './tray-manager.js';
+import { initScreenCaptureManager } from './screen-capture-manager.js';
 import { initShortcutManager, unregisterAllShortcuts, onShortcutsSuspendChange, triggerModuleShortcut } from './shortcut-manager.js';
 import { initSettingsStore, getSetting, updateSettings, flushWrites } from './settings-store.js';
 import { initDiagnosticsManager } from './diagnostics-manager.js';
@@ -298,6 +299,7 @@ app.whenReady().then(async () => {
   await initI18n(getSetting('language'));
   await initModuleManifestLoader();
   initWindowManager(rendererEntry);
+  initScreenCaptureManager({ getAllOverlayWindows, supported: !IS_WAYLAND_SESSION });
   initTrayManager({
     onShowMain: () => showMainWindow(),
     onHideMain: () => hideMainWindow(),

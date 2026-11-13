@@ -70,6 +70,8 @@ const VALID = [
   ['positioningIntentSchema', { type: 'bar-expand', barBounds: { leftFromBall: 1, rightFromBall: 2, topFromBall: 3, bottomFromBall: 4 }, barLayoutClass: 'vbar-free' }],
   ['positioningIntentSchema', { type: 'bar-collapse' }],
   ['positioningIntentSchema', { type: 'summon-to-cursor' }],
+  ['captureTargetSchema', 'save'],
+  ['captureTargetSchema', 'copy'],
   ['diagnosticsEventIdSchema', 'a1b2c3'],
   ['backupPathSchema', '/Users/me/Library/Application Support/openpen/config.json.bak'],
   ['auditQuerySchema', undefined],

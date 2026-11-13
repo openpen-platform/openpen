@@ -90,8 +90,8 @@ onUnmounted(() => {
     aria-hidden="true"
   />
   <HtmlOverlayLayer />
-  <NotificationLayer />
-  <CustomCursor />
+  <NotificationLayer data-capture-exclude />
+  <CustomCursor data-capture-exclude />
 </template>
 
 <style scoped>
