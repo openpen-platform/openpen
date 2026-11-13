@@ -54,9 +54,11 @@ vi.mock('../../electron/i18n/index.js', () => ({
 }));
 
 // Mock electron-log, the project logger that feeds main.log.
-const { logWarn } = vi.hoisted(() => ({ logWarn: vi.fn() }));
+const { logWarn, logInfo, logError } = vi.hoisted(() => ({
+  logWarn: vi.fn(), logInfo: vi.fn(), logError: vi.fn(),
+}));
 vi.mock('electron-log/main.js', () => ({
-  default: { warn: logWarn, info: vi.fn(), error: vi.fn() },
+  default: { warn: logWarn, info: logInfo, error: logError },
 }));
 
 // ── mock tray-manager.js ──
@@ -117,7 +119,10 @@ import {
   getModuleShortcuts,
   getShortcuts,
   getLayout,
+  writeBackup,
+  repairLayoutWithKnownIds,
 } from '../../electron/settings-store.js';
+import { app } from 'electron';
 import { CURRENT_CONFIG_VERSION } from '../../electron/settings-migrations.js';
 
 describe('DEFAULT_SETTINGS', () => {
@@ -512,5 +517,78 @@ describe('corruption recovery', () => {
     expect(getSettings().theme).toBe('light');
     expect(getLayout().groups).toEqual([{ id: 'default', items: [], separator: 'auto' }]);
     expect(fs.writeFileSync).toHaveBeenCalledWith(expect.stringContaining('.bak.tmp'), raw, 'utf-8');
+  });
+});
+
+describe('settings access failures reach the file logger', () => {
+  const layoutWithoutToolsInset = { version: 1, groups: [{ id: 'default', items: [] }, { id: 'tools', items: [] }] };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fs.existsSync.mockReturnValue(false);
+    fs.readdirSync = vi.fn(() => { throw new Error('ENOENT'); });
+  });
+
+  it('logs a write queue error', async () => {
+    initSettingsStore();
+    await flushWrites(); // drain the first-launch write so the injected failure hits the write under test
+    updateSettings({ theme: 'dark' });
+    app.getPath.mockImplementationOnce(() => { throw new Error('userData unavailable'); });
+    await flushWrites();
+    expect(logError).toHaveBeenCalledWith(expect.stringContaining('Write queue error'), 'userData unavailable');
+  });
+
+  it('logs a failed backup write', () => {
+    fs.mkdirSync.mockImplementationOnce(() => { throw new Error('EACCES'); });
+    writeBackup('{}');
+    expect(logError).toHaveBeenCalledWith(expect.stringContaining('Failed to write backup'), 'EACCES');
+  });
+
+  it('logs a layout that fails validation', () => {
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(JSON.stringify({ controlBarLayout: { version: 1, groups: 'nope' } }));
+    initSettingsStore();
+    expect(logWarn).toHaveBeenCalledWith(expect.stringContaining('failed validation (L2)'));
+  });
+
+  it('logs L3a layout repairs on load', () => {
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(JSON.stringify({ controlBarLayout: layoutWithoutToolsInset }));
+    initSettingsStore();
+    expect(logInfo).toHaveBeenCalledWith(expect.stringContaining('L3a'));
+  });
+
+  it('logs a config.json read failure', () => {
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue('{ BROKEN');
+    initSettingsStore();
+    expect(logWarn).toHaveBeenCalledWith(expect.stringContaining('Failed to read config.json (L1)'), expect.any(String));
+  });
+
+  it('logs a config.json write failure', async () => {
+    initSettingsStore();
+    await flushWrites(); // drain the first-launch write so the injected failure hits the write under test
+    fs.openSync.mockImplementationOnce(() => { throw new Error('ENOSPC'); });
+    updateSettings({ theme: 'dark' });
+    await flushWrites();
+    expect(logError).toHaveBeenCalledWith(expect.stringContaining('Failed to write config.json'), 'ENOSPC');
+  });
+
+  it('logs L3b layout repairs', () => {
+    const items = Array.from({ length: 20 }, (_, i) => `ghost-${i}`);
+    fs.existsSync.mockReturnValue(true);
+    fs.readFileSync.mockReturnValue(JSON.stringify({ controlBarLayout: { version: 1, groups: [{ id: 'default', items, separator: 'auto' }] } }));
+    initSettingsStore();
+    logInfo.mockClear();
+    repairLayoutWithKnownIds([]);
+    expect(logInfo).toHaveBeenCalledWith(expect.stringContaining('L3b'));
+  });
+
+  it('logs a module settings write failure', async () => {
+    initSettingsStore();
+    await flushWrites(); // drain the first-launch write so the injected failure hits the write under test
+    fs.openSync.mockImplementationOnce(() => { throw new Error('EIO'); });
+    await expect(setModuleSettings('my-mod', { a: 1 }, 1)).rejects.toThrow('EIO');
+    expect(logError).toHaveBeenCalledWith(expect.stringContaining('Failed to write module settings'), 'EIO');
   });
 });

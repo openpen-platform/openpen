@@ -216,7 +216,7 @@ let writeQueue = Promise.resolve();
  */
 function enqueueWrite(writeFn) {
   writeQueue = writeQueue.then(() => writeFn()).catch((e) => {
-    console.error('[SettingsStore] Write queue error:', e.message);
+    log.error('[SettingsStore] Write queue error:', e.message);
   });
 }
 
@@ -252,7 +252,7 @@ export function writeBackup(rawBytes) {
     fs.renameSync(tmpPath, backupPath);
     fsyncDir(backupsDir);
   } catch (e) {
-    console.error('[SettingsStore] Failed to write backup:', e.message);
+    log.error('[SettingsStore] Failed to write backup:', e.message);
     try { fs.unlinkSync(tmpPath); } catch (_) { /* ignore */ }
   }
   return backupPath;
@@ -433,7 +433,7 @@ function readConfig() {
         // L2: schema validation failure → reset layout to default.
         const valid = validateLayout(rawLayout);
         if (valid === null) {
-          console.warn('[SettingsStore] controlBarLayout failed validation (L2), resetting to default.');
+          log.warn('[SettingsStore] controlBarLayout failed validation (L2), resetting to default.');
           try {
             const backupPath = writeBackup(raw);
             recordDiagnosticsEvent('L2', backupPath);
@@ -442,7 +442,7 @@ function readConfig() {
         } else {
           // L3a: non-destructive repairs.
           const { layout: l3a, repaired: repairedA } = repairLayoutL3a(valid);
-          if (repairedA) console.info('[SettingsStore] Applied L3a layout repairs.');
+          if (repairedA) log.info('[SettingsStore] Applied L3a layout repairs.');
           layoutCache = l3a;
         }
       }
@@ -492,7 +492,7 @@ function readConfig() {
       }
     }
   } catch (e) {
-    console.warn('[SettingsStore] Failed to read config.json (L1):', e.message);
+    log.warn('[SettingsStore] Failed to read config.json (L1):', e.message);
     // Capture the corrupt bytes (already read above before parse failure) and
     // emit a diagnostics event so the user can inspect/report the issue.
     try {
@@ -706,7 +706,7 @@ function writeConfig() {
       fs.renameSync(tmpPath, configPath);
       fsyncDir(path.dirname(configPath));
     } catch (e) {
-      console.error('[SettingsStore] Failed to write config.json:', e.message);
+      log.error('[SettingsStore] Failed to write config.json:', e.message);
       try { fs.unlinkSync(tmpPath); } catch (_) { /* ignore */ }
     }
   });
@@ -737,7 +737,7 @@ export function setLayout(newLayout) {
 export function repairLayoutWithKnownIds(knownIds) {
   const { layout, repaired } = repairLayoutL3b(layoutCache, new Set(knownIds));
   if (repaired) {
-    console.info('[SettingsStore] Applied L3b layout repairs.');
+    log.info('[SettingsStore] Applied L3b layout repairs.');
     // Capture pre-repair bytes before overwriting; emit diagnostics event.
     try {
       const configPath = getConfigPath();
@@ -807,7 +807,7 @@ export function setModuleSettings(moduleId, data, schemaVersion) {
           broadcastModuleSettingsChanged(moduleId, data);
           resolve();
         } catch (e) {
-          console.error('[SettingsStore] Failed to write module settings:', e.message);
+          log.error('[SettingsStore] Failed to write module settings:', e.message);
           try { fs.unlinkSync(tmpPath); } catch (_) { /* ignore */ }
           reject(e);
         }
