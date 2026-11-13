@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, applyLinuxWindowPositioning, destroyAllWindowsForUpdate } from './window-manager.js';
 import { initTrayManager, setTrayWarning, setTrayDrawingMode, setTrayBarHidden } from './tray-manager.js';
-import { initShortcutManager, unregisterAllShortcuts, onShortcutsSuspendChange } from './shortcut-manager.js';
+import { initShortcutManager, unregisterAllShortcuts, onShortcutsSuspendChange, triggerModuleShortcut } from './shortcut-manager.js';
 import { initSettingsStore, getSetting, updateSettings, flushWrites } from './settings-store.js';
 import { initDiagnosticsManager } from './diagnostics-manager.js';
 import { initUpdateManager } from './update-manager.js';
@@ -28,7 +28,7 @@ import { auditQuerySchema, positioningIntentSchema, rendererErrorSchema } from '
 import { initPositioningEngine, processIntent, getState as getPositioningState } from './positioning-engine.js';
 import { probeTransparentRendering } from './transparent-render-probe.js';
 import { createRendererReadyWatchdog, resolveTimeoutMs } from './renderer-ready-watchdog.js';
-import { isGnome, registerDesktopShortcut, unregisterDesktopShortcut, suspendDesktopShortcut, resumeDesktopShortcut, electronToGtkAccelerator, buildCliCommand, DRAWING_MODE_BINDING_ID, TOGGLE_DRAWING_MODE_FLAG, BAR_BINDING_ID, TOGGLE_BAR_FLAG, SUMMON_BINDING_ID } from './linux-shortcut.js';
+import { isShortcutRegistered, registerDesktopShortcut, unregisterDesktopShortcut, suspendDesktopShortcut, resumeDesktopShortcut, electronToGtkAccelerator, buildCliCommand, detectWaylandShortcutBackend, shouldRegisterBuiltinDesktopShortcuts, clearPluginDesktopShortcuts, PLUGIN_SHORTCUT_FLAG, DESKTOP_ENTRY_NAME, DRAWING_MODE_BINDING_ID, TOGGLE_DRAWING_MODE_FLAG, BAR_BINDING_ID, TOGGLE_BAR_FLAG, SUMMON_BINDING_ID } from './linux-shortcut.js';
 import { IS_WAYLAND_SESSION } from './is-wayland-session.js';
 
 ipcMain.handle(APP.GET_VERSION, () => app.getVersion());
@@ -150,8 +150,16 @@ if (process.platform === 'linux') {
   if (_isVirtioGpu()) {
     app.disableHardwareAcceleration();
   }
-  app.commandLine.appendSwitch('enable-features', 'UseOzonePlatform');
+  // One switch carries every feature: a second appendSwitch('enable-features')
+  // would overwrite the first. GlobalShortcutsPortal lets globalShortcut use the
+  // XDG GlobalShortcuts portal on Wayland desktops that provide it.
+  const enabledFeatures = ['UseOzonePlatform'];
+  if (IS_WAYLAND_SESSION) enabledFeatures.push('GlobalShortcutsPortal');
+  app.commandLine.appendSwitch('enable-features', enabledFeatures.join(','));
   app.commandLine.appendSwitch('ozone-platform', IS_WAYLAND_SESSION ? 'wayland' : 'x11');
+  // The portal identifies the app by this desktop entry; it must be set before
+  // the first globalShortcut.register.
+  app.setDesktopName?.(DESKTOP_ENTRY_NAME);
 }
 
 // Linux single-instance lock. The GNOME desktop keybinding (see
@@ -177,7 +185,10 @@ if (IS_WAYLAND_SESSION) {
     setTimeout(() => process.exit(0), 400);
   } else {
     app.on('second-instance', (_event, argv) => {
-      if (argv.includes(TOGGLE_DRAWING_MODE_FLAG)) {
+      const pluginFlag = argv.find((arg) => arg.startsWith(`${PLUGIN_SHORTCUT_FLAG}=`));
+      if (pluginFlag) {
+        triggerModuleShortcut(pluginFlag.slice(PLUGIN_SHORTCUT_FLAG.length + 1));
+      } else if (argv.includes(TOGGLE_DRAWING_MODE_FLAG)) {
         toggleDrawingMode();
       } else if (argv.includes(TOGGLE_BAR_FLAG)) {
         toggleControlsHidden();
@@ -295,7 +306,26 @@ app.whenReady().then(async () => {
   });
   setDrawingModeChangedListener((isDrawing) => setTrayDrawingMode(isDrawing));
   setBarHiddenChangedListener((hidden) => setTrayBarHidden(hidden));
+  // Wayland has no global key grab: decide how shortcuts reach the app (portal,
+  // GNOME desktop keybindings, or not at all) before any shortcut is registered.
+  const isolatedInstance = Boolean(process.env.OPENPEN_USER_DATA_DIR);
+  const shortcutBackend = IS_WAYLAND_SESSION ? await detectWaylandShortcutBackend() : null;
+  const ownsDesktopShortcut = shouldRegisterBuiltinDesktopShortcuts({ backend: shortcutBackend, isolated: isolatedInstance });
+  if (shortcutBackend === 'gnome-desktop' && !isolatedInstance) {
+    // Plugin keybindings from a previous run are rebuilt from the live modules.
+    void clearPluginDesktopShortcuts();
+  }
   initShortcutManager({
+    pluginShortcutBackend: shortcutBackend,
+    desktopBindingsAllowed: !isolatedInstance,
+    // A live overlay takes the trigger; with none (Wayland builds it only while
+    // drawing) the main window runs the handler.
+    resolveShortcutTarget: () => {
+      const overlay = getOverlayWindow();
+      if (overlay && !overlay.isDestroyed()) return overlay;
+      const main = getMainWindow();
+      return main && !main.isDestroyed() ? main : null;
+    },
     onToggleDrawingMode: toggleDrawingMode,
     onToggleBar: toggleControlsHidden,
     onUndo: () => {
@@ -326,14 +356,22 @@ app.whenReady().then(async () => {
   // relaunches us with --toggle-drawing-mode (forwarded to this instance via
   // the single-instance lock). Idempotent; fire-and-forget so a gsettings
   // hiccup never blocks startup. The tray menu is the always-available fallback.
-  // Wayland GNOME only: globalShortcut can't grab keys, so route through a
-  // gsettings desktop keybinding. On an X11 session globalShortcut works
-  // natively, so this is skipped to avoid a double-fire.
+  // Only the 'gnome-desktop' backend (Wayland GNOME without the GlobalShortcuts
+  // portal) routes through a gsettings desktop keybinding. X11 and portal
+  // sessions use globalShortcut, so this is skipped to avoid a double-fire.
   // The gsettings custom keybinding is GLOBAL per-user state. Only the real
   // install instance (default userData) may write it; instances with an isolated
   // userData dir (e2e/behavioural tests) must NOT, or they clobber the user's
   // binding with a command pointing at their own ephemeral context.
-  const ownsDesktopShortcut = isGnome() && IS_WAYLAND_SESSION && !process.env.OPENPEN_USER_DATA_DIR;
+  if (shortcutBackend === 'portal' && !isolatedInstance) {
+    // globalShortcut serves the built-in chords now; a desktop keybinding left by
+    // an earlier run would fire them a second time.
+    void (async () => {
+      for (const id of [DRAWING_MODE_BINDING_ID, BAR_BINDING_ID]) {
+        if (await isShortcutRegistered(id)) await unregisterDesktopShortcut(id);
+      }
+    })();
+  }
   if (ownsDesktopShortcut) {
     void (async () => {
       const register = async (id, name, electronAccel, flag) => {

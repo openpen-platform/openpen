@@ -68,7 +68,8 @@ export interface ToolContribution extends Tool {
   id: string
   label?: string | LocaleMap
   /**
-   * SVG markup string for this tool's icon in the control-bar button.
+   * SVG markup string for this tool's icon, read by host components that
+   * render tool pickers (for example the shape tool's variant list).
    *
    * The host renders tool icons via `v-html`, so only raw SVG strings are
    * accepted (not Vue components or CSS class names). Recommended size is
@@ -78,9 +79,10 @@ export interface ToolContribution extends Tool {
    * @example
    * icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-3 6-6 9-3s6 0 9-3"/></svg>'
    *
-   * Note: built-in tools (freehand, line, eraser) use their own Vue button
-   * components rather than this field — `icon` is the lightweight path for
-   * plugin-contributed tools that do not need a custom button component.
+   * Note: declaring `icon` does not add a control-bar button by itself. To
+   * show a button for a plugin tool, contribute one through `controlBar`
+   * (the `ui.control-bar` slot); see the `activateTool` example in the
+   * canvas slot docs.
    */
   icon?: string
   /**

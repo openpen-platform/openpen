@@ -146,6 +146,7 @@ export default {
   sectionSystem: 'System',
   sectionShortcuts: 'Keyboard Shortcuts',
   shortcutNote: 'Changes take effect immediately and are not affected by Save/Cancel.',
+  pluginShortcutsUnsupported: 'Plugin shortcuts are not supported on this desktop environment.',
   shortcutToggleDrawingMode: 'Toggle Drawing Mode',
   shortcutToggleDrawingModeSub: 'Start or stop drawing on screen',
   shortcutToggleBar: 'Hide / Show Control Bar',

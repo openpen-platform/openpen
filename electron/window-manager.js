@@ -1298,14 +1298,17 @@ function registerIpcHandlers() {
     }
   });
 
-  // Cross-window relay: ControlBar (main window) → overlay window.
-  // The renderer-side event-bus is per-window, so cross-window
-  // synchronisation goes through these IPC channels.
-  onValidated(ipcMain, CONTROL_BAR.TOOL_CHANGED, toolConfigSchema, (_, config) => {
+  // Cross-window relay for tool changes. The renderer-side event-bus is
+  // per-window, so a switch made in any window (control bar click, plugin
+  // shortcut handled in an overlay) reaches every overlay (canvas) and every
+  // control bar (button highlight) through this channel. The sender is
+  // skipped: it already applied the change locally.
+  onValidated(ipcMain, CONTROL_BAR.TOOL_CHANGED, toolConfigSchema, (event, config) => {
     lastToolConfig = config;
-    // Broadcast to all overlay windows — all displays need the active tool.
-    for (const win of overlayWindowsByDisplayId.values()) {
-      if (!win.isDestroyed()) {
+    const sender = event?.sender;
+    for (const windows of [overlayWindowsByDisplayId, mainWindowsByDisplayId]) {
+      for (const win of windows.values()) {
+        if (win.isDestroyed() || win.webContents === sender) continue;
         win.webContents.send(CONTROL_BAR.TOOL_CONFIG_CHANGED, config);
       }
     }

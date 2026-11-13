@@ -31,6 +31,15 @@ import {
   setModuleShortcut as persistModuleShortcut,
   resetModuleShortcut as persistResetModuleShortcut,
 } from './settings-store.js';
+import {
+  electronToGtkAccelerator,
+  registerDesktopShortcut,
+  unregisterDesktopShortcut,
+  suspendDesktopShortcut,
+  resumeDesktopShortcut,
+  pluginBindingId,
+  buildPluginShortcutCommand,
+} from './linux-shortcut.js';
 
 /**
  * Suspension uses a nest counter so multiple independent suspenders compose
@@ -79,6 +88,34 @@ const _builtinHandlers = new Map();
 /** @type {Map<string, string>} builtinId → current accelerator */
 const _builtinAccelerators = new Map();
 
+/**
+ * How plugin shortcuts are delivered on this session: 'portal' and 'none' are
+ * Wayland-only values, 'gnome-desktop' routes them through desktop keybindings,
+ * null means the platform's own globalShortcut path.
+ * @type {'portal' | 'gnome-desktop' | 'none' | null}
+ */
+let _pluginBackend = null;
+
+/** False for an isolated instance, which must never write desktop keybindings. */
+let _desktopBindingsAllowed = true;
+
+/** @type {(() => import('electron').BrowserWindow | null) | null} */
+let _resolveShortcutTarget = null;
+
+/**
+ * Every renderer that loads modules registers the same shortcut ids, so each id
+ * is owned by the set of webContents ids that registered it. The OS binding is
+ * created by the first registrant and released only when the set empties.
+ * @type {Map<string, Set<number | string>>}
+ */
+const _registrants = new Map();
+
+/** @type {Set<number | string>} webContents ids already watched for destruction */
+const _watchedSenders = new Set();
+
+/** Registrant key for events that carry no sender (direct calls). */
+const ANONYMOUS_SENDER = 'anonymous';
+
 /** @type {Set<string>} namespacedIds of module shortcuts that failed to register due to key conflicts. */
 const idConflicts = new Set();
 
@@ -92,6 +129,9 @@ const idConflicts = new Set();
  *   onRedo?: () => void,
  *   onQuitApp?: () => void,
  *   onShortcutConflict?: (accelerator: string) => void,
+ *   pluginShortcutBackend?: 'portal' | 'gnome-desktop' | 'none' | null,
+ *   desktopBindingsAllowed?: boolean,
+ *   resolveShortcutTarget?: () => import('electron').BrowserWindow | null,
  * }} [callbacks]
  */
 export function initShortcutManager({
@@ -101,7 +141,13 @@ export function initShortcutManager({
   onRedo,
   onQuitApp,
   onShortcutConflict,
+  pluginShortcutBackend = null,
+  desktopBindingsAllowed = true,
+  resolveShortcutTarget,
 } = {}) {
+  _pluginBackend = pluginShortcutBackend;
+  _desktopBindingsAllowed = desktopBindingsAllowed;
+  _resolveShortcutTarget = resolveShortcutTarget ?? null;
   const shortcuts = getShortcuts();
 
   // Built-in: drawing-mode toggle.
@@ -155,22 +201,34 @@ export function initShortcutManager({
 
   // Module IPC bridge: renderer-side modules register their accelerators
   // dynamically via system.shortcuts contributions.
-  onValidated(ipcMain, MODULE.REGISTER_SHORTCUT, moduleShortcutRegisterSchema, (_event, { id, keys }) => {
-    if (idToAccelerator.has(id)) {
-      console.warn(`[ShortcutManager] Shortcut id already registered: ${id}`);
-      return;
-    }
+  onValidated(ipcMain, MODULE.REGISTER_SHORTCUT, moduleShortcutRegisterSchema, (event, { id, keys }) => {
+    // No delivery path on this desktop: the shortcut cannot work, so nothing is registered.
+    if (_pluginBackend === 'none') return;
+    if (_pluginBackend === 'gnome-desktop' && !_desktopBindingsAllowed) return;
+
+    _trackRegistrant(id, event?.sender);
+    if (idToAccelerator.has(id) || moduleShortcutHandlers.has(id)) return;
+
     // Apply any persisted custom key; fall back to the module's declared default.
     const customKeys = getModuleShortcuts();
     const effectiveKeys = customKeys[id] ?? keys;
-    const handler = () => {
-      if (_suspended) return;
-      for (const win of BrowserWindow.getAllWindows()) {
-        if (!win.isDestroyed()) win.webContents.send(MODULE.SHORTCUT_TRIGGERED, { id });
-      }
-    };
+    const handler = () => triggerModuleShortcut(id);
     idDefaultKeys.set(id, keys);
     moduleShortcutHandlers.set(id, handler);
+
+    if (_pluginBackend === 'gnome-desktop') {
+      void _installPluginDesktopBinding(id, effectiveKeys).then((ok) => {
+        if (!_registrants.has(id)) return;
+        if (ok) {
+          idToAccelerator.set(id, effectiveKeys);
+        } else {
+          idConflicts.add(id);
+          _broadcastConflicts();
+        }
+      });
+      return;
+    }
+
     const ok = registerShortcut(effectiveKeys, handler);
     if (ok) {
       idToAccelerator.set(id, effectiveKeys);
@@ -180,20 +238,100 @@ export function initShortcutManager({
     }
   });
 
-  onValidated(ipcMain, MODULE.UNREGISTER_SHORTCUT, shortcutIdSchema, (_event, { id }) => {
-    const accelerator = idToAccelerator.get(id);
-    if (accelerator) {
-      globalShortcut.unregister(accelerator);
-      acceleratorToHandler.delete(accelerator);
-      idToAccelerator.delete(id);
+  onValidated(ipcMain, MODULE.UNREGISTER_SHORTCUT, shortcutIdSchema, (event, { id }) => {
+    const registrants = _registrants.get(id);
+    if (registrants) {
+      registrants.delete(event?.sender?.id ?? ANONYMOUS_SENDER);
+      if (registrants.size > 0) return;
     }
-    idDefaultKeys.delete(id);
-    moduleShortcutHandlers.delete(id);
-    if (idConflicts.delete(id)) _broadcastConflicts();
+    _releaseModuleShortcut(id);
   });
 
   _registerIpcHandlers();
 }
+
+/**
+ * Record `sender` as an owner of shortcut `id` and watch it for destruction so a
+ * closed window never leaves a stale ownership behind.
+ *
+ * @param {string} id
+ * @param {{ id?: number, once?: Function } | undefined} sender
+ * @returns {number | string} the registrant key
+ */
+function _trackRegistrant(id, sender) {
+  const key = sender?.id ?? ANONYMOUS_SENDER;
+  if (!_registrants.has(id)) _registrants.set(id, new Set());
+  _registrants.get(id).add(key);
+  if (sender && typeof sender.once === 'function' && !_watchedSenders.has(key)) {
+    _watchedSenders.add(key);
+    sender.once('destroyed', () => {
+      _watchedSenders.delete(key);
+      for (const [shortcutId, owners] of [..._registrants]) {
+        if (owners.delete(key) && owners.size === 0) _releaseModuleShortcut(shortcutId);
+      }
+    });
+  }
+  return key;
+}
+
+/** Drop every trace of a module shortcut and release its OS / desktop binding. */
+function _releaseModuleShortcut(id) {
+  _registrants.delete(id);
+  const accelerator = idToAccelerator.get(id);
+  if (_pluginBackend === 'gnome-desktop') {
+    if (moduleShortcutHandlers.has(id)) void unregisterDesktopShortcut(pluginBindingId(id));
+  } else if (accelerator) {
+    globalShortcut.unregister(accelerator);
+    acceleratorToHandler.delete(accelerator);
+  }
+  idToAccelerator.delete(id);
+  idDefaultKeys.delete(id);
+  moduleShortcutHandlers.delete(id);
+  if (idConflicts.delete(id)) _broadcastConflicts();
+}
+
+/**
+ * Install (or re-key) the desktop keybinding of a plugin shortcut.
+ *
+ * @param {string} id namespaced shortcut id
+ * @param {string} accelerator Electron accelerator
+ * @returns {Promise<boolean>}
+ */
+async function _installPluginDesktopBinding(id, accelerator) {
+  const gtkAccel = electronToGtkAccelerator(accelerator);
+  if (!gtkAccel) return false;
+  const result = await registerDesktopShortcut({
+    id: pluginBindingId(id),
+    name: `OpenPen: ${id}`,
+    accelerator: gtkAccel,
+    command: buildPluginShortcutCommand(id),
+  });
+  // A suspend that began while the write was in flight found nothing to take
+  // down; apply it now so the binding does not stay live during suspension.
+  if (result.ok && _suspended) await suspendDesktopShortcut(pluginBindingId(id));
+  return result.ok;
+}
+
+/**
+ * Deliver a module shortcut to the renderer. Sends to exactly one window — the
+ * one `resolveShortcutTarget` names — so the handler runs once. Used by the
+ * globalShortcut path and by the desktop-keybinding relaunch flag alike.
+ *
+ * @param {string} id namespaced shortcut id
+ */
+export function triggerModuleShortcut(id) {
+  if (_suspended) return;
+  if (!moduleShortcutHandlers.has(id)) return;
+  if (_resolveShortcutTarget) {
+    const target = _resolveShortcutTarget();
+    if (target && !target.isDestroyed()) target.webContents.send(MODULE.SHORTCUT_TRIGGERED, { id });
+    return;
+  }
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send(MODULE.SHORTCUT_TRIGGERED, { id });
+  }
+}
+
 
 /**
  * IPC handlers for user-configurable shortcuts. Kept inside the manager so
@@ -214,10 +352,12 @@ function _registerIpcHandlers() {
 
   ipcMain.handle(SHORTCUTS.GET_CONFLICTS, () => [...idConflicts]);
 
-  handleValidated(ipcMain, SHORTCUTS.SET, shortcutSetSchema, (_event, payload) => {
+  ipcMain.handle(SHORTCUTS.GET_PLUGIN_BACKEND, () => _pluginBackend);
+
+  handleValidated(ipcMain, SHORTCUTS.SET, shortcutSetSchema, async (_event, payload) => {
     // Route to module shortcut path if the id belongs to a registered module shortcut.
     if (idDefaultKeys.has(payload.id)) {
-      const result = _updateModuleShortcut(payload.id, payload.accelerator);
+      const result = await _updateModuleShortcut(payload.id, payload.accelerator);
       if (result.ok) persistModuleShortcut(payload.id, payload.accelerator);
       return result;
     }
@@ -226,11 +366,11 @@ function _registerIpcHandlers() {
     return result;
   }, { onInvalid: () => ({ ok: false, error: 'Invalid payload' }) });
 
-  handleValidated(ipcMain, SHORTCUTS.RESET, shortcutIdSchema, (_event, payload) => {
+  handleValidated(ipcMain, SHORTCUTS.RESET, shortcutIdSchema, async (_event, payload) => {
     // Route to module shortcut path if the id belongs to a registered module shortcut.
     if (idDefaultKeys.has(payload.id)) {
       const defaultAccel = idDefaultKeys.get(payload.id);
-      const result = _updateModuleShortcut(payload.id, defaultAccel);
+      const result = await _updateModuleShortcut(payload.id, defaultAccel);
       if (result.ok) persistResetModuleShortcut(payload.id);
       return result;
     }
@@ -314,7 +454,7 @@ function _updateBuiltinShortcut(id, newAccelerator) {
  *
  * @param {string} namespacedId
  * @param {string} newAccelerator
- * @returns {{ ok: boolean; error?: string }}
+ * @returns {{ ok: boolean; error?: string } | Promise<{ ok: boolean; error?: string }>}
  */
 function _updateModuleShortcut(namespacedId, newAccelerator) {
   const handler = moduleShortcutHandlers.get(namespacedId);
@@ -322,6 +462,21 @@ function _updateModuleShortcut(namespacedId, newAccelerator) {
 
   const oldAccelerator = idToAccelerator.get(namespacedId);
   if (oldAccelerator === newAccelerator) return { ok: true };
+
+  if (_pluginBackend === 'gnome-desktop') {
+    // The binding id is stable, so registering again re-keys it in place.
+    if (!electronToGtkAccelerator(newAccelerator)) {
+      return { ok: false, error: `Unsupported accelerator "${newAccelerator}"` };
+    }
+    return _installPluginDesktopBinding(namespacedId, newAccelerator).then((ok) => {
+      if (!ok) {
+        return { ok: false, error: `Failed to register "${newAccelerator}" as a desktop keybinding` };
+      }
+      idToAccelerator.set(namespacedId, newAccelerator);
+      if (idConflicts.delete(namespacedId)) _broadcastConflicts();
+      return { ok: true };
+    });
+  }
 
   if (!registerShortcut(newAccelerator, handler)) {
     return {
@@ -349,6 +504,9 @@ function _suspendShortcuts() {
   if (_suspended) return;
   _suspended = true;
   globalShortcut.unregisterAll();
+  if (_pluginBackend === 'gnome-desktop') {
+    for (const id of moduleShortcutHandlers.keys()) void suspendDesktopShortcut(pluginBindingId(id));
+  }
   for (const hook of _suspendChangeHooks) hook(true);
 }
 
@@ -363,6 +521,9 @@ function _resumeShortcuts() {
   _suspended = false;
   for (const [accel, handler] of acceleratorToHandler) {
     globalShortcut.register(accel, handler);
+  }
+  if (_pluginBackend === 'gnome-desktop') {
+    for (const id of moduleShortcutHandlers.keys()) void resumeDesktopShortcut(pluginBindingId(id));
   }
   for (const hook of _suspendChangeHooks) hook(false);
 }
@@ -393,4 +554,6 @@ export function unregisterAllShortcuts() {
   _builtinHandlers.clear();
   _builtinAccelerators.clear();
   idConflicts.clear();
+  _registrants.clear();
+  _watchedSenders.clear();
 }

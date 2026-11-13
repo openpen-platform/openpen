@@ -32,6 +32,7 @@ interface ShortcutContribution {
 
 - `userCustomizable: true` 且带有 `label` 的快捷键会显示在**设置 → 快捷键**中该 module 的分组下，用户可在此重新绑定按键。用户自定义的按键存储在 `config.json → moduleShortcuts["<moduleId>/<shortcutId>"]` 中。
 - 无论 `userCustomizable` 取何值，`label` 均会显示；省略则该快捷键完全不在快捷键标签页中出现。
+- 若要在快捷键 handler 中切换工具，请调用 `@openpen/module-api` 的 [`activateTool`](canvas.md#activate-tool)，控制栏按钮才会同步亮起。
 
 ## `system.window.behaviors` — ⏳ 预留 {#system-window-behaviors}
 

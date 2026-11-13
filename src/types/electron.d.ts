@@ -189,6 +189,7 @@ interface OpenPenApi {
   getModuleShortcuts(): Promise<Record<string, string>>
   onModuleShortcutsUpdated(cb: (overrides: Record<string, string>) => void): () => void
   getShortcutConflicts(): Promise<string[]>
+  getPluginShortcutBackend(): Promise<'portal' | 'gnome-desktop' | 'none' | null>
   onShortcutConflictsUpdated(cb: (conflicts: string[]) => void): () => void
 
   // App config (developer-side, read-only)

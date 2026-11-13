@@ -14,6 +14,9 @@ export { isValidModuleId, MODULE_ID_RE } from './validation'
 export { resolveLabel, sanitizeIdForI18n } from './locale'
 export type { LocaleMap } from './locale'
 
+// Public host command: switch the active tool
+export { activateTool } from './host/tools'
+
 // Slot catalogue
 export {
   ALL_SLOTS,

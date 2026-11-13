@@ -76,6 +76,13 @@ export interface HostCommandsAPI {
     toggleDrawingMode: () => void
     setDrawingMode: (enabled: boolean) => void
   }
+  tools: {
+    /**
+     * Make `toolId` the active tool in every window. Unknown ids are ignored
+     * with a console warning.
+     */
+    activate: (toolId: string) => void
+  }
 }
 
 // ── Stroke style composable ──────────────────────────────────────────────────

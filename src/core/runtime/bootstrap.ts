@@ -112,7 +112,10 @@ export async function initModuleRuntime(opts: {
   /** Window kind — gates which renderer owns shortcut dispatch. */
   windowType: WindowType
 }): Promise<void> {
-  if (opts.windowType === 'overlay') {
+  // Both the overlay and the main window run the dispatcher: the main process
+  // sends a shortcut trigger to a single window (the overlay while it exists,
+  // otherwise the main window), so either one must be able to run the handler.
+  if (opts.windowType === 'overlay' || opts.windowType === 'main') {
     initShortcutDispatcher()
   }
 

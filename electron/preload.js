@@ -85,6 +85,7 @@ contextBridge.exposeInMainWorld('openPenApi', {
     return () => ipcRenderer.removeListener('shortcuts:module-updated', handler);
   },
   getShortcutConflicts: () => ipcRenderer.invoke('shortcuts:get-conflicts'),
+  getPluginShortcutBackend: () => ipcRenderer.invoke('shortcuts:get-plugin-backend'),
   onShortcutConflictsUpdated: (callback) => {
     const handler = (_, conflicts) => callback(conflicts);
     ipcRenderer.on('shortcuts:conflict-updated', handler);

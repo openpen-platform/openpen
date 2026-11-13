@@ -305,6 +305,7 @@ const isLockedByDialog = computed(() => dialogOpenCount.value > 0);
 const activeToolId = ref<string>('freehand');
 provide(ACTIVE_TOOL_KEY, readonly(activeToolId));
 let unsubToolChanged: (() => void) | null = null;
+let unsubToolRelay: (() => void) | null = null;
 
 /** Ball shape during edge-snap interactions — avoids visual glitches mid-drag. */
 const ballEdgeClass = computed(() => {
@@ -606,6 +607,16 @@ onMounted(async () => {
     if (p?.tool) activeToolId.value = p.tool;
   });
 
+  // A tool switched in another window (e.g. a plugin shortcut handled in the
+  // overlay) arrives over IPC; republish it locally so every button, including
+  // plugin tool buttons, re-evaluates its active state. An overlay-hosted bar
+  // shares its window with useCanvas, which already publishes the event.
+  if (!isOverlayBar) {
+    unsubToolRelay = window.openPenApi?.onToolConfigChanged?.((config) => {
+      if (config?.tool) eventBusEmit('tool-changed', config);
+    }) ?? null;
+  }
+
   const initialSettings = await window.openPenApi?.getSettings();
   barLayout.value = initialSettings?.barLayout ?? 'horizontal';
   enableDragAutoSnap.value = initialSettings?.enableDragAutoSnap ?? true;
@@ -700,6 +711,8 @@ onUnmounted(() => {
   dragHandleObserver = null;
   unsubToolChanged?.();
   unsubToolChanged = null;
+  unsubToolRelay?.();
+  unsubToolRelay = null;
   unsubDrawingMode?.();
   unsubDrawingMode = null;
   unsubRequestQuit?.();

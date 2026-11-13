@@ -121,6 +121,8 @@ export const SHORTCUTS = {
   GET_CONFLICTS: 'shortcuts:get-conflicts',
   /** main → renderer (broadcast): conflict list changed. */
   CONFLICT_UPDATED: 'shortcuts:conflict-updated',
+  /** renderer → main (invoke): how plugin shortcuts reach the app on this session ('portal' | 'gnome-desktop' | 'none' | null). */
+  GET_PLUGIN_BACKEND: 'shortcuts:get-plugin-backend',
 }
 
 /** Plugin network audit log (read-only). */

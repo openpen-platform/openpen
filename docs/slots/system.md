@@ -30,6 +30,7 @@ interface ShortcutContribution {
 
 - Shortcuts with `userCustomizable: true` and a `label` appear under the module's group in **Settings → Shortcuts**, where users can rebind them. User-chosen keys are stored under `config.json → moduleShortcuts["<moduleId>/<shortcutId>"]`.
 - `label` is shown regardless of `userCustomizable`; omitting it hides the shortcut from the Shortcuts tab entirely.
+- To switch the active tool from a shortcut handler, call [`activateTool`](canvas.md#activate-tool) from `@openpen/module-api` so the control bar button follows.
 
 ## `system.window.behaviors` — ⏳ reserved {#system-window-behaviors}
 

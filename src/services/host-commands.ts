@@ -8,6 +8,8 @@
  */
 
 import { useCollapseMode } from '../composables/useCollapseMode'
+import { getSlotEntries } from '../core/runtime/contribution-store'
+import { emit as eventBusEmit } from '../core/runtime/event-bus'
 
 /** Toggle the control bar pin state (renderer-only; no IPC). */
 function togglePin(): void {
@@ -43,9 +45,28 @@ function setDrawingMode(enabled: boolean): void {
   window.openPenApi?.setDrawingMode(enabled)
 }
 
+/**
+ * Make `toolId` the active tool everywhere. The local event updates this
+ * window's tool buttons immediately; the IPC call lets the main process relay
+ * the change to every other overlay and control bar (it never echoes back to
+ * this window). Ids no module contributes to `canvas.tools` are rejected so a
+ * typo cannot leave the canvas without a usable tool.
+ */
+function activateTool(toolId: string): void {
+  const known = getSlotEntries<{ id: string }>('canvas.tools').value
+    .some((entry) => entry.contribution.id === toolId)
+  if (!known) {
+    console.warn(`[host-commands] activateTool: unknown tool id "${toolId}"`)
+    return
+  }
+  eventBusEmit('tool-changed', { tool: toolId })
+  window.openPenApi?.setActiveTool({ tool: toolId })
+}
+
 export const hostCommands = {
   controlBar: { togglePin },
   canvas: { clear: clearCanvas },
   history: { undo, redo },
   app: { toggleDrawingMode, setDrawingMode },
+  tools: { activate: activateTool },
 } as const

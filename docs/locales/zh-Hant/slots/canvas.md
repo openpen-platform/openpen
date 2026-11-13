@@ -225,6 +225,96 @@ async function placeText(point: Point, style: StrokeStyle) {
 
 對於整個畫布的操作（全部清除、復原、重做），請使用 host 命令，而非直接修改 store——這些輔助函式不屬於此服務。
 
+## 切換工具 {#activate-tool}
+
+module 若要自行切換工具（通常是在 `system.shortcuts` 的 handler 中），請呼叫 `activateTool`，不要直接操作 host IPC。它自主入口 `@openpen/module-api` 匯入（plugin 執行期的 import map 不提供 `/host`）：
+
+```ts
+import { activateTool } from '@openpen/module-api'
+
+function activateTool(toolId: string): void
+```
+
+- **效果**：`toolId` 成為目前使用的工具。所有顯示器上對應的控制列按鈕亮起、先前工具的按鈕熄滅，所有畫布也切換為該工具。
+- **未知 id**：`toolId` 必須是某個 `canvas.tools` contribution 的 `id`（內建或任一已載入 module 提供皆可）。其他 id 會被忽略：不改變任何狀態，並在 console 輸出一則警告。
+- **呼叫位置**：module 程式碼中任何地方皆可，包含快捷鍵的 `handler`。範例：
+
+控制列只會渲染 `ui.control-bar`（`contributes.controlBar`）的項目；工具的 `icon` 不會自動產生按鈕。因此範例附上一個按鈕元件，透過 `ACTIVE_TOOL_KEY` 讀取目前工具，任何切換都會讓它亮起：
+
+```ts
+// index.ts
+import { defineModule, activateTool, resolveStrokeColor } from '@openpen/module-api'
+import type { Point, Stroke, StrokeStyle } from '@openpen/module-api'
+import ArrowButton from './ArrowButton.vue'
+
+let points: Point[] = []
+let style: StrokeStyle | null = null
+
+export default defineModule({
+  id: '@acme/arrow',
+  version: '1.0.0',
+  contributes: {
+    tools: [
+      {
+        id: 'arrow',
+        label: 'Arrow',
+        onPointerDown(_ctx, point, s) {
+          points = [point]
+          style = { ...s }
+        },
+        onPointerMove(ctx, point) {
+          const prev = points[points.length - 1]
+          if (!style || !prev) return
+          points.push(point)
+          ctx.strokeStyle = resolveStrokeColor(style.color)
+          ctx.lineWidth = style.lineWidth
+          ctx.beginPath()
+          ctx.moveTo(prev.x, prev.y)
+          ctx.lineTo(point.x, point.y)
+          ctx.stroke()
+        },
+        onPointerUp(_ctx, point): Stroke | null {
+          if (!style) return null
+          return { id: crypto.randomUUID(), tool: 'arrow', points: [...points, point], style }
+        },
+      },
+    ],
+    // The control bar renders only `controlBar` items, so the tool's button is declared here.
+    controlBar: [{ id: 'arrow', component: ArrowButton, defaultGroup: 'tools' }],
+    shortcuts: [
+      {
+        id: 'pick-arrow',
+        keys: 'CommandOrControl+Alt+A',
+        scope: 'global',
+        handler: () => activateTool('arrow'),
+      },
+    ],
+  },
+})
+```
+
+```vue
+<!-- ArrowButton.vue -->
+<script setup lang="ts">
+import { computed, inject, ref } from 'vue'
+import { ACTIVE_TOOL_KEY, activateTool } from '@openpen/module-api'
+import { AppButton } from '@openpen/module-api/uikit'
+
+// The control bar provides the current tool id; it follows every switch,
+// including those made by a shortcut or by `activateTool` in another window.
+const activeTool = inject(ACTIVE_TOOL_KEY, ref(''))
+const isActive = computed(() => activeTool.value === 'arrow')
+</script>
+
+<template>
+  <AppButton :active="isActive" tooltip="Arrow" aria-label="Arrow" @click="activateTool('arrow')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M5 19L19 5M9 5h10v10" />
+    </svg>
+  </AppButton>
+</template>
+```
+
 ## `canvas.stroke.transformers` — ⏳ 保留中 {#canvas-stroke-transformers}
 
 - **Contribution 鍵**：`strokeTransformers`

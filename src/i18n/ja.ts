@@ -147,6 +147,7 @@ export default {
   sectionSystem: 'システム',
   sectionShortcuts: 'キーボードショートカット',
   shortcutNote: '変更は即時に反映されます。保存/キャンセルの影響を受けません。',
+  pluginShortcutsUnsupported: 'このデスクトップ環境ではプラグインのショートカットを利用できません。',
   shortcutToggleDrawingMode: '描画モード切替',
   shortcutToggleDrawingModeSub: '画面への描画を開始または停止する',
   shortcutToggleBar: 'コントロールバーの表示／非表示',

@@ -32,6 +32,7 @@ interface ShortcutContribution {
 
 - `userCustomizable: true` かつ `label` を持つショートカットは、**設定 → ショートカット** の module グループ内に表示され、ユーザーがキーを再割り当てできます。ユーザーが選択したキーは `config.json → moduleShortcuts["<moduleId>/<shortcutId>"]` に保存されます。
 - `label` は `userCustomizable` の値にかかわらず表示されます。省略するとショートカットタブ全体から非表示になります。
+- ショートカットの handler でツールを切り替えるときは、`@openpen/module-api` の [`activateTool`](canvas.md#activate-tool) を呼び出してください。コントロールバーのボタンも連動して点灯します。
 
 ## `system.window.behaviors` — ⏳ 予約済み {#system-window-behaviors}
 

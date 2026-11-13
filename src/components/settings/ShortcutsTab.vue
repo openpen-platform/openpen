@@ -22,6 +22,7 @@ const shortcutConflicts = ref<Set<string>>(new Set())
 const shortcutsSnapshot = ref<UserShortcuts | null>(null)
 const moduleOverridesSnapshot = ref<Record<string, string> | null>(null)
 const shortcutError = ref('')
+const pluginShortcutBackend = ref<string | null>(null)
 
 let unsub: (() => void) | null = null
 let unsubModuleShortcuts: (() => void) | null = null
@@ -43,6 +44,8 @@ onMounted(async () => {
   unsubModuleShortcuts = window.openPenApi?.onModuleShortcutsUpdated((overrides) => {
     moduleShortcutsOverrides.value = overrides
   }) ?? null
+
+  pluginShortcutBackend.value = (await window.openPenApi?.getPluginShortcutBackend?.()) ?? null
 
   const conflicts = await window.openPenApi?.getShortcutConflicts()
   if (conflicts) shortcutConflicts.value = new Set(conflicts)
@@ -142,6 +145,13 @@ const hasChanges = computed(() => {
         />
       </div>
     </div>
+
+    <AppBanner
+      v-if="pluginShortcutBackend === 'none'"
+      variant="info"
+      inline
+      data-testid="shortcuts-plugin-unsupported"
+    >{{ t('pluginShortcutsUnsupported') }}</AppBanner>
 
     <!-- Module-contributed shortcuts -->
     <div v-for="group in moduleShortcutGroups" :key="group.moduleId" class="cw-section">

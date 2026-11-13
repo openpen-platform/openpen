@@ -11,13 +11,21 @@
  *
  * Scope: GNOME only (Mutter / GNOME Shell). KDE has an equivalent
  * `kwriteconfig5` + `kglobalaccel` path; add a second backend module if we ship there.
+ *
+ * Plugin shortcuts use the same store: when the session has no GlobalShortcuts
+ * portal but is GNOME, each plugin shortcut becomes an `openpen-plugin-*`
+ * custom keybinding that relaunches the app with `--plugin-shortcut=<id>`.
  */
 
 import { execFile } from 'node:child_process';
 import { app } from 'electron';
 import { promisify } from 'node:util';
+import { createHash } from 'node:crypto';
+import { log } from './logger.js';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import os from 'node:os';
+import fs from 'node:fs';
 
 const execFileAsync = promisify(execFile);
 
@@ -79,6 +87,25 @@ export function buildCliCommand(flag) {
   // `electron <app>` relaunch aborts before it can forward argv. Match the dev
   // launcher's --no-sandbox. Packaged builds ship a proper sandbox and omit it.
   return `'${process.execPath}' '${APP_ROOT}' --no-sandbox ${flag}`;
+}
+
+/**
+ * The custom-keybinding list is a read-modify-write array, so concurrent
+ * register / unregister calls would overwrite each other's edits. Every
+ * mutation runs through this chain one at a time.
+ * @type {Promise<unknown>}
+ */
+let _queue = Promise.resolve();
+
+/**
+ * @template T
+ * @param {() => Promise<T>} task
+ * @returns {Promise<T>}
+ */
+function _serialised(task) {
+  const run = _queue.then(task, task);
+  _queue = run.catch(() => {});
+  return run;
 }
 
 async function _gsettingsGet(schemaOrPath, key) {
@@ -172,7 +199,14 @@ export async function isShortcutRegistered(id) {
  * @param {{ id: string; name: string; accelerator: string; command: string }} opts
  * @returns {Promise<{ ok: boolean; error?: string }>}
  */
-export async function registerDesktopShortcut({ id, name, accelerator, command }) {
+export function registerDesktopShortcut(opts) {
+  // Claimed at call time, before the write is queued, so a cleanup that runs
+  // while this registration waits in the queue still sees the id as live.
+  _claimed.add(opts.id);
+  return _serialised(() => _registerDesktopShortcut(opts));
+}
+
+async function _registerDesktopShortcut({ id, name, accelerator, command }) {
   if (!isGnome()) {
     return { ok: false, error: 'Desktop-keybinding registration is only supported on GNOME.' };
   }
@@ -194,6 +228,12 @@ export async function registerDesktopShortcut({ id, name, accelerator, command }
     return { ok: false, error: /** @type {Error} */ (err).message };
   }
 }
+
+/**
+ * Ids registered, or queued for registration, during this run.
+ * @type {Set<string>}
+ */
+const _claimed = new Set();
 
 /**
  * Last successful register params per id, so a suspended binding can be
@@ -236,7 +276,12 @@ export async function resumeDesktopShortcut(id) {
  * @param {string} id
  * @returns {Promise<{ ok: boolean; error?: string }>}
  */
-export async function unregisterDesktopShortcut(id) {
+export function unregisterDesktopShortcut(id) {
+  _claimed.delete(id);
+  return _serialised(() => _unregisterDesktopShortcut(id));
+}
+
+async function _unregisterDesktopShortcut(id) {
   if (!isGnome()) {
     return { ok: false, error: 'Desktop-keybinding registration is only supported on GNOME.' };
   }
@@ -377,4 +422,139 @@ function _electronKeyToGtkKey(key) {
     SEMICOLON: 'semicolon',
   };
   return named[upper] ?? key;
+}
+
+/** Prefix of every plugin keybinding id. */
+const PLUGIN_BINDING_PREFIX = 'openpen-plugin-';
+
+/** CLI flag the desktop keybinding passes to forward a plugin shortcut to the running instance. */
+export const PLUGIN_SHORTCUT_FLAG = '--plugin-shortcut';
+
+/**
+ * Keybinding id for a plugin shortcut: the lower-cased namespaced id with every
+ * character outside `[a-z0-9-]` replaced by `-`, then the first 8 hex digits of
+ * the id's SHA-1. The digest keeps ids that sanitise to the same text apart.
+ *
+ * @param {string} namespacedId e.g. `@acme/arrow/pick`
+ * @returns {string}
+ */
+export function pluginBindingId(namespacedId) {
+  const sanitized = namespacedId.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  const digest = createHash('sha1').update(namespacedId).digest('hex').slice(0, 8);
+  return `${PLUGIN_BINDING_PREFIX}${sanitized}-${digest}`;
+}
+
+/**
+ * Shell command a plugin keybinding runs. The flag value is single-quoted so
+ * an unusual id cannot be reinterpreted by the shell that runs the command.
+ *
+ * @param {string} namespacedId
+ * @returns {string}
+ */
+export function buildPluginShortcutCommand(namespacedId) {
+  const arg = `${PLUGIN_SHORTCUT_FLAG}=${namespacedId}`.replace(/'/g, `'\\''`);
+  return buildCliCommand(`'${arg}'`);
+}
+
+/**
+ * Remove every `openpen-plugin-*` keybinding. Called once at startup so
+ * bindings left by a previous run (or an uninstalled plugin) never linger;
+ * live modules then register theirs again.
+ *
+ * @returns {Promise<void>}
+ */
+export async function clearPluginDesktopShortcuts() {
+  if (!isGnome()) return;
+  let raw;
+  try {
+    raw = await _gsettingsGet(KEYBINDINGS_SCHEMA, KEYBINDINGS_KEY);
+  } catch (err) {
+    log.warn('[linux-shortcut] Could not read the keybinding list to clear plugin bindings:', err?.message);
+    return;
+  }
+  // Only bindings this run has not registered are leftovers. Each removal runs
+  // in the shared queue and re-reads the live list, so a concurrent
+  // registration is never overwritten.
+  const marker = `${KEYBINDING_PATH_PREFIX}${PLUGIN_BINDING_PREFIX}`;
+  for (const p of _parseArray(raw)) {
+    if (!p.startsWith(marker)) continue;
+    const id = p.slice(KEYBINDING_PATH_PREFIX.length).replace(/\/$/, '');
+    // The claim is checked when the removal actually runs, not when it is
+    // scheduled: a registration queued ahead of it makes the id live.
+    await _serialised(async () => {
+      if (_claimed.has(id)) return;
+      await _unregisterDesktopShortcut(id);
+    });
+  }
+}
+
+/** Where plugin shortcuts can be delivered on a Wayland session. */
+/** @typedef {'portal' | 'gnome-desktop' | 'none'} WaylandShortcutBackend */
+
+/**
+ * Decide how plugin shortcuts reach the app on a Wayland session.
+ *   - 'portal'        the session bus exposes the XDG GlobalShortcuts portal
+ *   - 'gnome-desktop' no portal, but GNOME: gsettings custom keybindings
+ *   - 'none'          neither
+ *
+ * @param {(file: string, args: string[], opts?: object) => Promise<unknown>} [exec]
+ *   injectable command runner (defaults to execFile)
+ * @param {(file: string) => boolean} [fileExists] injectable file existence check (defaults to fs.existsSync)
+ * @returns {Promise<WaylandShortcutBackend>}
+ */
+export async function detectWaylandShortcutBackend(exec = execFileAsync, fileExists = fs.existsSync) {
+  // Chromium does not use the portal on GNOME, so GNOME always takes the
+  // desktop-keybinding route regardless of what the session bus offers.
+  if (isGnome()) return 'gnome-desktop';
+  try {
+    await exec(
+      'gdbus',
+      [
+        'call', '--session',
+        '--dest', 'org.freedesktop.portal.Desktop',
+        '--object-path', '/org/freedesktop/portal/desktop',
+        '--method', 'org.freedesktop.DBus.Properties.Get',
+        'org.freedesktop.portal.GlobalShortcuts', 'version',
+      ],
+      { timeout: 3000 },
+    );
+  } catch {
+    return 'none';
+  }
+  // The portal scopes shortcuts to an application id it resolves from an
+  // installed desktop entry; without one it rejects the session and the
+  // registration silently does nothing.
+  return hasDesktopEntry(fileExists) ? 'portal' : 'none';
+}
+
+/** Desktop entry name the app declares as its application id. */
+export const DESKTOP_ENTRY_NAME = 'com.openpen.app.desktop';
+
+/**
+ * @param {(file: string) => boolean} fileExists
+ * @returns {boolean} whether the app's desktop entry is installed in the user
+ *   or system application directories the portal searches.
+ */
+function hasDesktopEntry(fileExists) {
+  const dataHome = process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share');
+  const dataDirs = (process.env.XDG_DATA_DIRS || '/usr/local/share:/usr/share').split(':').filter(Boolean);
+  return [dataHome, ...dataDirs].some((dir) => {
+    try {
+      return fileExists(path.join(dir, 'applications', DESKTOP_ENTRY_NAME));
+    } catch {
+      return false;
+    }
+  });
+}
+
+/**
+ * Whether the built-in shortcuts (drawing-mode toggle, bar toggle) are installed
+ * as desktop keybindings. Only the GNOME fallback does; with a portal
+ * globalShortcut serves them, and an isolated instance never writes global state.
+ *
+ * @param {{ backend: WaylandShortcutBackend | null, isolated: boolean }} opts
+ * @returns {boolean}
+ */
+export function shouldRegisterBuiltinDesktopShortcuts({ backend, isolated }) {
+  return backend === 'gnome-desktop' && !isolated;
 }

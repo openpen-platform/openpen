@@ -33,6 +33,7 @@ function makeStubHost(overrides: Partial<ModuleHost> = {}): ModuleHost {
       canvas: { clear: noop },
       history: { undo: noop, redo: noop },
       app: { toggleDrawingMode: noop, setDrawingMode: noop },
+      tools: { activate: noop },
     },
     colorUtils: {
       resolveColorStyle: (_ctx, color) => (typeof color === 'string' ? color : color.from),

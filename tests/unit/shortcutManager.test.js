@@ -8,6 +8,7 @@
  *      that contribute additional shortcuts via system.shortcuts.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { EventEmitter } from 'node:events';
 
 const ipcHandlers = new Map();
 const ipcInvokeHandlers = new Map();
@@ -29,6 +30,87 @@ vi.mock('electron', () => ({
   BrowserWindow: {
     getAllWindows: vi.fn(() => []),
   },
+  // The members below are only used when a test loads electron/main.js.
+  app: {
+    isPackaged: false,
+    on: vi.fn(),
+    setPath: vi.fn(),
+    getVersion: vi.fn(() => '0.0.0'),
+    getLocale: vi.fn(() => 'en'),
+    quit: vi.fn(),
+    exit: vi.fn(),
+    requestSingleInstanceLock: vi.fn(() => true),
+    disableHardwareAcceleration: vi.fn(),
+    whenReady: vi.fn(() => Promise.resolve()),
+    commandLine: { appendSwitch: vi.fn() },
+  },
+  protocol: { registerSchemesAsPrivileged: vi.fn(), handle: vi.fn() },
+  net: { fetch: vi.fn() },
+  session: {
+    defaultSession: { webRequest: { onBeforeSendHeaders: vi.fn(), onCompleted: vi.fn() } },
+  },
+  screen: {
+    getAllDisplays: vi.fn(() => []),
+    getPrimaryDisplay: vi.fn(() => ({ id: 1 })),
+    on: vi.fn(),
+  },
+}));
+
+/** Windows the mocked window manager reports; tests reassign these. */
+const managedWindows = { overlay: null, main: null };
+
+vi.mock('../../electron/window-manager.js', () => ({
+  initWindowManager: vi.fn(),
+  createMainWindowForDisplay: vi.fn(),
+  createOverlayWindowForDisplay: vi.fn(),
+  showMainWindow: vi.fn(),
+  hideMainWindow: vi.fn(),
+  toggleControlsHidden: vi.fn(),
+  createSettingsWindow: vi.fn(),
+  toggleDrawingMode: vi.fn(),
+  getMainWindow: vi.fn(() => managedWindows.main),
+  getOverlayWindow: vi.fn(() => managedWindows.overlay),
+  getAllMainWindows: vi.fn(() => []),
+  getAllOverlayWindows: vi.fn(() => []),
+  setActiveDisplayId: vi.fn(),
+  setDrawingModeChangedListener: vi.fn(),
+  setBarHiddenChangedListener: vi.fn(),
+  applyLinuxWindowPositioning: vi.fn(),
+  destroyAllWindowsForUpdate: vi.fn(),
+}));
+vi.mock('../../electron/tray-manager.js', () => ({
+  initTrayManager: vi.fn(),
+  setTrayWarning: vi.fn(),
+  setTrayDrawingMode: vi.fn(),
+  setTrayBarHidden: vi.fn(),
+}));
+vi.mock('../../electron/diagnostics-manager.js', () => ({ initDiagnosticsManager: vi.fn() }));
+vi.mock('../../electron/update-manager.js', () => ({ initUpdateManager: vi.fn() }));
+vi.mock('../../electron/plugin-meta-manager.js', () => ({ initPluginMetaManager: vi.fn() }));
+vi.mock('../../electron/i18n/index.js', () => ({ initI18n: vi.fn() }));
+vi.mock('../../electron/config-loader.js', () => ({ initConfigLoader: vi.fn(), getAppConfig: vi.fn() }));
+vi.mock('../../electron/module-manifest-loader.js', () => ({
+  initModuleManifestLoader: vi.fn(),
+  sendModuleManifests: vi.fn(),
+  resolvePluginFilePath: vi.fn(),
+}));
+vi.mock('../../electron/plugin-manager-bridge.js', () => ({ initPluginManagerBridge: vi.fn() }));
+vi.mock('../../electron/audit-log.js', () => ({
+  createAuditLog: vi.fn(() => ({ append: vi.fn(), updateByRequestId: vi.fn() })),
+}));
+vi.mock('../../electron/logger.js', () => ({
+  initLogger: vi.fn(),
+  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+vi.mock('../../electron/positioning-engine.js', () => ({
+  initPositioningEngine: vi.fn(),
+  processIntent: vi.fn(),
+  getState: vi.fn(),
+}));
+vi.mock('../../electron/transparent-render-probe.js', () => ({ probeTransparentRendering: vi.fn() }));
+vi.mock('../../electron/renderer-ready-watchdog.js', () => ({
+  createRendererReadyWatchdog: vi.fn(),
+  resolveTimeoutMs: vi.fn(),
 }));
 
 const DEFAULT_SHORTCUTS_FIXTURE = {
@@ -45,6 +127,10 @@ vi.mock('../../electron/settings-store.js', () => ({
   getModuleShortcuts: vi.fn(() => ({})),
   setModuleShortcut: vi.fn(),
   resetModuleShortcut: vi.fn(),
+  initSettingsStore: vi.fn(),
+  getSetting: vi.fn(() => undefined),
+  updateSettings: vi.fn(),
+  flushWrites: vi.fn(),
 }));
 
 let registerShortcut;
@@ -379,5 +465,110 @@ describe('shortcuts:* IPC handlers', () => {
     const result = await reset({}, { id: 'doesNotExist' });
     expect(result.ok).toBe(false);
     expect(result.error).toContain('Unknown shortcut id');
+  });
+});
+
+describe('module shortcut trigger target and registrant counting', () => {
+  const PLUGIN_ID = '@acme/arrow/pick';
+  const PLUGIN_KEYS = 'CommandOrControl+Alt+T';
+
+  const makeWindow = () => ({
+    isDestroyed: vi.fn(() => false),
+    webContents: { send: vi.fn() },
+  });
+  const makeSender = (id) => Object.assign(new EventEmitter(), { id });
+
+  it('AC-11 a trigger is sent only to the resolved target window (overlay when present, else main)', async () => {
+    const overlay = makeWindow();
+    const main = makeWindow();
+    const { BrowserWindow } = await import('electron');
+    BrowserWindow.getAllWindows.mockReturnValue([overlay, main]);
+    let target = overlay;
+    initShortcutManager({ resolveShortcutTarget: () => target });
+
+    ipcHandlers.get('module:register-shortcut')(
+      { sender: makeSender(1) },
+      { id: PLUGIN_ID, keys: PLUGIN_KEYS },
+    );
+    const trigger = mockGlobalShortcut.register.mock.calls.find(([accel]) => accel === PLUGIN_KEYS)[1];
+
+    trigger();
+    expect(overlay.webContents.send).toHaveBeenCalledTimes(1);
+    expect(overlay.webContents.send).toHaveBeenCalledWith('module:shortcut-triggered', { id: PLUGIN_ID });
+    expect(main.webContents.send).not.toHaveBeenCalled();
+
+    target = main;
+    trigger();
+    expect(main.webContents.send).toHaveBeenCalledTimes(1);
+    expect(main.webContents.send).toHaveBeenCalledWith('module:shortcut-triggered', { id: PLUGIN_ID });
+    expect(overlay.webContents.send).toHaveBeenCalledTimes(1);
+
+    // Wiring: main.js passes a resolveShortcutTarget backed by the window manager —
+    // a live overlay wins; with no overlay or a destroyed one the main window is used.
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined);
+    const wm = await import('../../electron/window-manager.js');
+    const wiredOverlay = makeWindow();
+    const wiredMain = makeWindow();
+    managedWindows.overlay = wiredOverlay;
+    managedWindows.main = wiredMain;
+    await import('../../electron/main.js');
+    await vi.waitFor(() => expect(wm.setActiveDisplayId).toHaveBeenCalled());
+
+    const WIRED_ID = '@acme/arrow/other';
+    const WIRED_KEYS = 'CommandOrControl+Alt+U';
+    ipcHandlers.get('module:register-shortcut')({ sender: makeSender(3) }, { id: WIRED_ID, keys: WIRED_KEYS });
+    const wiredTrigger = mockGlobalShortcut.register.mock.calls.find(([accel]) => accel === WIRED_KEYS)[1];
+
+    wiredTrigger();
+    expect(wiredOverlay.webContents.send).toHaveBeenCalledTimes(1);
+    expect(wiredOverlay.webContents.send).toHaveBeenCalledWith('module:shortcut-triggered', { id: WIRED_ID });
+    expect(wiredMain.webContents.send).not.toHaveBeenCalled();
+
+    managedWindows.overlay = null;
+    wiredTrigger();
+    expect(wiredMain.webContents.send).toHaveBeenCalledTimes(1);
+    expect(wiredMain.webContents.send).toHaveBeenCalledWith('module:shortcut-triggered', { id: WIRED_ID });
+
+    managedWindows.overlay = { ...makeWindow(), isDestroyed: vi.fn(() => true) };
+    wiredTrigger();
+    expect(wiredMain.webContents.send).toHaveBeenCalledTimes(2);
+    expect(managedWindows.overlay.webContents.send).not.toHaveBeenCalled();
+    exitSpy.mockRestore();
+  });
+
+  it('AC-11 the global binding survives until the last registering renderer unregisters or is destroyed', () => {
+    initShortcutManager();
+    const register = ipcHandlers.get('module:register-shortcut');
+    const unregister = ipcHandlers.get('module:unregister-shortcut');
+    const first = makeSender(1);
+    const second = makeSender(2);
+    mockGlobalShortcut.register.mockClear();
+
+    register({ sender: first }, { id: PLUGIN_ID, keys: PLUGIN_KEYS });
+    register({ sender: second }, { id: PLUGIN_ID, keys: PLUGIN_KEYS });
+    expect(mockGlobalShortcut.register).toHaveBeenCalledTimes(1);
+
+    unregister({ sender: first }, { id: PLUGIN_ID });
+    expect(mockGlobalShortcut.unregister).not.toHaveBeenCalledWith(PLUGIN_KEYS);
+
+    second.emit('destroyed');
+    expect(mockGlobalShortcut.unregister).toHaveBeenCalledWith(PLUGIN_KEYS);
+  });
+
+  it('AC-11 regression: an unregister from a renderer that never registered the id does not release the binding', () => {
+    initShortcutManager();
+    const register = ipcHandlers.get('module:register-shortcut');
+    const unregister = ipcHandlers.get('module:unregister-shortcut');
+    const stranger = makeSender(9);
+    mockGlobalShortcut.unregister.mockClear();
+
+    // Registered by an event without a sender: no registrant record exists for the id.
+    register({}, { id: PLUGIN_ID, keys: PLUGIN_KEYS });
+    unregister({ sender: stranger }, { id: PLUGIN_ID });
+    expect(mockGlobalShortcut.unregister).not.toHaveBeenCalledWith(PLUGIN_KEYS);
+
+    // The same sender-less path that registered it can still release it.
+    unregister({}, { id: PLUGIN_ID });
+    expect(mockGlobalShortcut.unregister).toHaveBeenCalledWith(PLUGIN_KEYS);
   });
 });

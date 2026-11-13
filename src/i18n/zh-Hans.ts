@@ -147,6 +147,7 @@ export default {
   sectionSystem: '系统',
   sectionShortcuts: '键盘快捷键',
   shortcutNote: '更改立即生效，不受"保存"/"取消"影响。',
+  pluginShortcutsUnsupported: '此桌面环境不支持插件快捷键。',
   shortcutToggleDrawingMode: '切换绘图模式',
   shortcutToggleDrawingModeSub: '开始或停止在屏幕上绘图',
   shortcutToggleBar: '隐藏／显示控制栏',
