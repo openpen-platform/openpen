@@ -16,7 +16,7 @@ OpenPen UIKit 封装层自动处理 inject key、互斥逻辑、动画守卫以�
 ```ts
 import {
   AppButton, AppButtonDropdown,
-  AppPopover, AppDialog,
+  AppPopover, AppPopoverPanel, AppPopoverRow, AppDialog,
   AppSlider, AppToggle, AppSegmented,
   AppSelect, AppTooltip, AppTabs,
   AppBanner,
@@ -59,6 +59,7 @@ Plugin MUST NOT 在自己的 `package.json` 中安装 `reka-ui`，也不得直�
 | 组件 | 层级 | 使用场景 |
 |---|---|---|
 | [`AppPopover`](./app-popover) | 封装层 | 锚定到触发元素的浮动面板 |
+| [`AppPopoverPanel`](./app-popover-panel) | 封装层 | 弹出面板内部布局：间距、标题、表单行 |
 | [`AppDialog`](./app-dialog) | 封装层 | 带遮罩和焦点捕获的模态 dialog |
 | [`useDialog`](./use-dialog) | 封装层 | 基于 Promise 的命令式 dialog API |
 | [`AppSlider`](./app-slider) | 封装层 | 数值范围输入 |

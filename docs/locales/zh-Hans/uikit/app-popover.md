@@ -50,3 +50,7 @@ const value = ref(50)
   </AppPopover>
 </template>
 ```
+
+## 另请参阅
+
+[`AppPopoverPanel` / `AppPopoverRow`](./app-popover-panel) 负责面板内容的布局（间距、标题、表单行）。

@@ -17,20 +17,21 @@
   /* ── Color (semantic; theme module may override actual values) ─────────── */
 
   /* Accent — primary brand / interactive highlight color */
-  /* Source: src/style.css --accent: #818CF8 */
-  --openpen-color-accent: #818cf8;
+  /* Follows the host's --accent (set from the user's accent setting); the
+   * indigo value is the fallback for environments without host variables. */
+  --openpen-color-accent: var(--accent, #818cf8);
 
   /* Accent hover — slightly deeper accent for :hover state */
   /* Source: src/style.css --accent-glow used as reference; approximated from #6366f1 */
   --openpen-color-accent-hover: #6366f1;
 
   /* Accent background — subtle tinted background for active items */
-  /* Source: src/style.css --accent-bg: rgba(129, 140, 248, 0.18) */
-  --openpen-color-accent-bg: rgba(129, 140, 248, 0.18);
+  /* Follows the host's --accent-bg; indigo fallback as above. */
+  --openpen-color-accent-bg: var(--accent-bg, rgba(129, 140, 248, 0.18));
 
   /* Accent glow — used for box-shadow rings on active elements */
-  /* Source: src/style.css --accent-glow: rgba(129, 140, 248, 0.35) */
-  --openpen-color-accent-glow: rgba(129, 140, 248, 0.35);
+  /* Follows the host's --accent-glow; indigo fallback as above. */
+  --openpen-color-accent-glow: var(--accent-glow, rgba(129, 140, 248, 0.35));
 
   /* Surface (dark) — main background for floating panels, bars */
   /* Source: src/style.css --surface: rgba(18, 26, 48, 0.88) */

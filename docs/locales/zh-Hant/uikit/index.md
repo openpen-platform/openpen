@@ -16,7 +16,7 @@ Import 路徑：
 ```ts
 import {
   AppButton, AppButtonDropdown,
-  AppPopover, AppDialog,
+  AppPopover, AppPopoverPanel, AppPopoverRow, AppDialog,
   AppSlider, AppToggle, AppSegmented,
   AppSelect, AppTooltip, AppTabs,
   AppBanner,
@@ -59,6 +59,7 @@ Plugin **MUST NOT** 在自己的 `package.json` 中安裝 `reka-ui`，也不得�
 | 元件 | 層次 | 使用情境 |
 |---|---|---|
 | [`AppPopover`](./app-popover) | 封裝層 | 錨定到觸發元素的浮動面板 |
+| [`AppPopoverPanel`](./app-popover-panel) | 封裝層 | 彈出面板內部排版：間距、標題、表單列 |
 | [`AppDialog`](./app-dialog) | 封裝層 | 含遮罩與焦點捕捉的強制回應 dialog |
 | [`useDialog`](./use-dialog) | 封裝層 | 命令式 Promise 型 dialog API |
 | [`AppSlider`](./app-slider) | 封裝層 | 數值範圍輸入 |

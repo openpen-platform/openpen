@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AppPopover, AppSlider } from '@openpen/module-api/uikit'
+import { AppPopover, AppPopoverPanel, AppPopoverRow, AppSlider } from '@openpen/module-api/uikit'
 import { ref } from 'vue'
 
 const size = ref(16)
@@ -16,10 +16,11 @@ const size = ref(16)
       </button>
     </template>
     <template #content>
-      <div class="demo-panel">
-        <span class="demo-label">Size: {{ size }}px</span>
-        <AppSlider v-model="size" :min="8" :max="64" width="120px" />
-      </div>
+      <AppPopoverPanel title="Size">
+        <AppPopoverRow :label="`${size}px`">
+          <AppSlider v-model="size" :min="8" :max="64" width="120px" />
+        </AppPopoverRow>
+      </AppPopoverPanel>
     </template>
   </AppPopover>
 </template>
@@ -39,17 +40,5 @@ const size = ref(16)
 .hello-btn:hover,
 .hello-btn.active {
   background: var(--openpen-color-control-hover);
-}
-
-.demo-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 140px;
-}
-
-.demo-label {
-  font-size: 12px;
-  color: var(--openpen-color-text-dim);
 }
 </style>

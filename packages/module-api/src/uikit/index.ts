@@ -24,6 +24,8 @@
 
 export { default as AppPopover } from './components/AppPopover.vue'
 export type { AppPopoverProps, Placement } from './components/AppPopover.vue'
+export { default as AppPopoverPanel } from './components/AppPopoverPanel.vue'
+export { default as AppPopoverRow } from './components/AppPopoverRow.vue'
 
 export { default as AppSlider } from './components/AppSlider.vue'
 export { default as AppToggle } from './components/AppToggle.vue'

@@ -49,3 +49,7 @@ const value = ref(50)
   </AppPopover>
 </template>
 ```
+
+## See also
+
+[`AppPopoverPanel` / `AppPopoverRow`](./app-popover-panel) lay out the content of the panel (spacing, title, form rows).

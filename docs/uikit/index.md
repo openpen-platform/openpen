@@ -14,7 +14,7 @@ Import path:
 ```ts
 import {
   AppButton, AppButtonDropdown,
-  AppPopover, AppDialog,
+  AppPopover, AppPopoverPanel, AppPopoverRow, AppDialog,
   AppSlider, AppToggle, AppSegmented,
   AppSelect, AppTooltip, AppTabs,
   AppBanner,
@@ -75,6 +75,7 @@ headless library" below).
 | Component | Layer | Use case |
 |---|---|---|
 | [`AppPopover`](./app-popover) | Wrapper | Floating panels anchored to a trigger |
+| [`AppPopoverPanel`](./app-popover-panel) | Wrapper | Inner layout for popover content: spacing, title, form rows |
 | [`AppDialog`](./app-dialog) | Wrapper | Modal dialogs with backdrop and focus trap |
 | [`useDialog`](./use-dialog) | Wrapper | Imperative Promise-based dialog API |
 | [`AppSlider`](./app-slider) | Wrapper | Numeric range input |

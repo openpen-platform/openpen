@@ -179,3 +179,16 @@ describe('tokens.css — light theme overrides surface + border + text', () => {
     },
   )
 })
+
+describe('tokens.css - accent tokens follow the host accent', () => {
+  it('derives accent, accent-bg and accent-glow from the host --accent* variables with the indigo fallback', () => {
+    const expected = [
+      '--openpen-color-accent: var(--accent, #818cf8);',
+      '--openpen-color-accent-bg: var(--accent-bg, rgba(129, 140, 248, 0.18));',
+      '--openpen-color-accent-glow: var(--accent-glow, rgba(129, 140, 248, 0.35));',
+    ]
+    for (const decl of expected) {
+      expect(tokensCss, `missing declaration: ${decl}`).toContain(decl)
+    }
+  })
+})

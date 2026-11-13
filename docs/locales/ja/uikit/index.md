@@ -16,7 +16,7 @@ OpenPen UIKit のラッパーは、inject キー、相互排他、アニメー�
 ```ts
 import {
   AppButton, AppButtonDropdown,
-  AppPopover, AppDialog,
+  AppPopover, AppPopoverPanel, AppPopoverRow, AppDialog,
   AppSlider, AppToggle, AppSegmented,
   AppSelect, AppTooltip, AppTabs,
   AppBanner,
@@ -58,6 +58,7 @@ plugin は自身の `package.json` に `reka-ui` をインストールしたり�
 | コンポーネント | レイヤー | 用途 |
 |---|---|---|
 | [`AppPopover`](./app-popover) | ラッパー | トリガーに固定されたフローティングパネル |
+| [`AppPopoverPanel`](./app-popover-panel) | ラッパー | ポップオーバー内部のレイアウト：間隔、タイトル、フォーム行 |
 | [`AppDialog`](./app-dialog) | ラッパー | バックドロップとフォーカストラップを備えたモーダルダイアログ |
 | [`useDialog`](./use-dialog) | ラッパー | 命令型 Promise ベースのダイアログ API |
 | [`AppSlider`](./app-slider) | ラッパー | 数値範囲入力 |

@@ -52,3 +52,7 @@ const value = ref(50)
   </AppPopover>
 </template>
 ```
+
+## 関連
+
+[`AppPopoverPanel` / `AppPopoverRow`](./app-popover-panel) はパネル内容のレイアウト（間隔、タイトル、フォーム行）を担当します。

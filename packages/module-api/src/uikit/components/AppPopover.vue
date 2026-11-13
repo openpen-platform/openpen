@@ -239,6 +239,16 @@ usePassthroughGuard(contentEl)
   fill: var(--openpen-color-popover-frame);
 }
 
+/* A popover that holds an AppPopoverPanel takes the host popup-panel frame:
+   border-hi frame and the small shadow. Other popovers keep the default frame. */
+.openpen-popover-content:has(.openpen-popover-panel) {
+  border-color: var(--openpen-color-border-hi);
+  box-shadow: var(--openpen-shadow-sm);
+}
+.openpen-popover-content:has(.openpen-popover-panel) .openpen-popover-arrow {
+  fill: var(--openpen-color-border-hi);
+}
+
 /* ── Open / close animations ────────────────────────────────────────────────
    Reka UI's Presence keeps the element in the DOM until the running CSS
    animation ends, so animations targeting [data-state="closed"] DO play

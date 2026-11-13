@@ -35,6 +35,6 @@ const enabled = ref(false)
 </script>
 
 <template>
-  <AppToggle v-model="enabled" aria-label="Enable feature" />
+  <AppToggle v-model="enabled" ariaLabel="Enable feature" />
 </template>
 ```
