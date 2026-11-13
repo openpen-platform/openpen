@@ -115,6 +115,9 @@ async function resetToDefault() {
   if (result.ok) {
     emit('update:modelValue', props.defaultValue)
     emit('shortcutError', '')
+  } else {
+    emit('shortcutError', t('shortcutConflict'))
+    triggerConflictShake()
   }
 }
 

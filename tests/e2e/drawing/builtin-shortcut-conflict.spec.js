@@ -81,3 +81,31 @@ test('built-in undo/redo taken by another app are reported as conflicts and can 
   );
   expect(registered).toBe(true);
 });
+
+test('resetting a rebound built-in whose default is held by another app shows the notice, and clears it once the key is free', async () => {
+  const mainWin = await getMainWindow();
+  const winPromise = electronApp.waitForEvent('window', { timeout: 10000 });
+  await mainWin.evaluate(() => window.openPenApi.openSettingsWindow());
+  const settingsWin = await winPromise;
+  await settingsWin.waitForLoadState('domcontentloaded');
+  await settingsWin.getByTestId('tab-shortcuts').click();
+
+  // Undo was rebound above, so it is the only row that offers a reset.
+  const reset = settingsWin.getByLabel('Reset to default');
+  await expect(reset).toHaveCount(1);
+  const notice = settingsWin.getByText('This shortcut is already in use by another app', { exact: true });
+  await expect(notice).toHaveCount(0);
+
+  await reset.click();
+  await expect(notice).toBeVisible();
+  await expect(reset).toHaveCount(1);
+
+  // Free the default key, then reset again.
+  await holderApp.close();
+  holderApp = null;
+  await reset.click();
+  await expect(reset).toHaveCount(0);
+  await expect(notice).toHaveCount(0);
+
+  await mainWin.evaluate(() => window.openPenApi.closeSettingsWindow());
+});
