@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, watch, onBeforeUnmount } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useEscapeLayer } from '../../../composables/useEscapeLayer'
 
 const { t } = useI18n()
 
@@ -34,28 +35,13 @@ function openRepo() {
   window.openPenApi?.openPluginRepo(props.entry.id)
 }
 
-// Bubble phase on purpose: a hotkey recorder captures keys first and swallows
-// Escape, which must only stop the recording, not close this dialog.
-function onKeyDown(e: KeyboardEvent) {
-  if (e.key !== 'Escape' || e.defaultPrevented) return
-  emit('update:open', false)
-}
-
-watch(
-  () => props.open,
-  (isOpen) => {
-    if (isOpen) document.addEventListener('keydown', onKeyDown)
-    else document.removeEventListener('keydown', onKeyDown)
-  },
-  { immediate: true },
-)
-onBeforeUnmount(() => document.removeEventListener('keydown', onKeyDown))
+useEscapeLayer(() => props.open, () => emit('update:open', false))
 </script>
 
 <template>
   <Teleport to="body">
     <div v-if="open && entry" class="pd-overlay" @click.self="emit('update:open', false)">
-      <div class="pd-modal mp-detail-modal">
+      <div class="pd-modal mp-detail-modal" data-testid="plugin-detail-dialog">
         <!-- Header -->
         <div class="pd-header">
           <div>

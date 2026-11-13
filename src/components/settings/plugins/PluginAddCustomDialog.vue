@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useEscapeLayer } from '../../../composables/useEscapeLayer'
 import { AppBanner } from '@openpen/module-api/uikit'
 
 const { t } = useI18n()
@@ -21,6 +22,9 @@ const emit = defineEmits<{
   installLocal: [sourcePath: string]
   installGitHub: [repoUrl: string]
 }>()
+
+useEscapeLayer(() => props.open, () => emit('update:open', false))
+
 
 const activeTab = ref<CustomTab>('local')
 const selectedPath = ref<string | null>(null)

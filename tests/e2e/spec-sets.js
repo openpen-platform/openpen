@@ -54,6 +54,7 @@ export const STANDARD_ONLY = [
   '**/modules-tab/disable-module.spec.js',
   '**/notifications/drawing-mode-hud.spec.js',
   '**/notifications/i18n-hud.spec.js',
+  '**/plugins-tab/dialog-escape-layering.spec.js',
   '**/plugins-tab/marketplace.spec.js',
   '**/plugins-tab/plugin-id-conflict.spec.js',
   '**/ui/popup-anchor.spec.js',

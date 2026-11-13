@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { useEscapeLayer } from '../../../composables/useEscapeLayer'
 
 const { t } = useI18n()
 
-defineProps<{
+const props = defineProps<{
   open: boolean
   severity: 'neutral' | 'danger'
   title: string
@@ -15,6 +16,8 @@ const emit = defineEmits<{
   'update:open': [boolean]
   confirm: []
 }>()
+
+useEscapeLayer(() => props.open, () => emit('update:open', false))
 </script>
 
 <template>

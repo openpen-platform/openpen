@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useEscapeLayer } from '../../../composables/useEscapeLayer'
 import { AppBanner } from '@openpen/module-api/uikit'
 
 const { t } = useI18n()
@@ -25,6 +26,10 @@ const emit = defineEmits<{
   retry: []
   restart: []
 }>()
+
+// Not dismissible with Escape (no overlay-click close either), but it still
+// has to keep the dialogs underneath it open.
+useEscapeLayer(() => props.open, null)
 
 const progressPercent = computed(() => {
   if (props.stage === 'downloading') return props.percent

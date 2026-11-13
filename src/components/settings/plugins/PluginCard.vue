@@ -30,6 +30,7 @@ const hasUpdate = computed(() =>
 <template>
   <div
     class="mp-card"
+    data-testid="plugin-card"
     :class="{ 'mp-card-incompatible': incompatible }"
     :aria-disabled="incompatible"
     @click="emit('click', entry)"
