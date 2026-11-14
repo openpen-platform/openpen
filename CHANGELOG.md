@@ -1,5 +1,49 @@
 # Changelog
 
+## [1.6.0](https://github.com/openpen-platform/openpen/compare/v1.5.0...v1.6.0) (2026-11-14)
+
+
+### Features
+
+* **cli:** type-check Vue templates in the plugin check command ([#142](https://github.com/openpen-platform/openpen/issues/142)) ([cbb8f15](https://github.com/openpen-platform/openpen/commit/cbb8f158094172dba0686400d582a88ccb4070a1))
+* **control-bar:** fade through when the bar switches orientation ([aac5f17](https://github.com/openpen-platform/openpen/commit/aac5f17a7577705cf676e2826045a675922d74dc))
+* **drawing:** add optional automatic stroke fade-out ([#133](https://github.com/openpen-platform/openpen/issues/133)) ([a2a00f7](https://github.com/openpen-platform/openpen/commit/a2a00f79fc123dc0fdbee923587ee11d187c2a91))
+* **drawing:** add screen capture to file or clipboard ([759916d](https://github.com/openpen-platform/openpen/commit/759916da1c8596c0d4aa83cce226c8df3fc014f6))
+* **drawing:** add semi-transparent highlighter tool ([#123](https://github.com/openpen-platform/openpen/issues/123)) ([68b7e50](https://github.com/openpen-platform/openpen/commit/68b7e50e0d15df482f3d153610177efb49317728))
+* **drawing:** add single-key tool and color shortcuts in drawing mode ([7bf9470](https://github.com/openpen-platform/openpen/commit/7bf947021a8183616d8796a158bf9b25fc167b07))
+* **module-api:** add activateTool and Wayland plugin shortcuts ([#130](https://github.com/openpen-platform/openpen/issues/130)) ([90e3a98](https://github.com/openpen-platform/openpen/commit/90e3a980f704a1c08a5f6453ded3e3ebb25e451c))
+* **module-api:** upgrade zod to 4 ([c25ffab](https://github.com/openpen-platform/openpen/commit/c25ffab8ade237df24e60b5c22f4c61559935a1b))
+* **overlay:** recover windows whose renderer crashed, hung or failed to load ([#132](https://github.com/openpen-platform/openpen/issues/132)) ([f28d0e9](https://github.com/openpen-platform/openpen/commit/f28d0e945dae0d46692911564b2fa02bf7dff494))
+* **plugin:** add report entry and policy link to the marketplace ([#118](https://github.com/openpen-platform/openpen/issues/118)) ([224b3b8](https://github.com/openpen-platform/openpen/commit/224b3b8d2e5ce98d4112f311d742c139db6f7348))
+* **settings:** add top-level config version and stepwise migration ([#137](https://github.com/openpen-platform/openpen/issues/137)) ([296886f](https://github.com/openpen-platform/openpen/commit/296886f8975063dff3f473dd9ff6169d72e97682))
+* **uikit:** add AppPopoverPanel and AppPopoverRow for plugin popover content ([5879b2c](https://github.com/openpen-platform/openpen/commit/5879b2ccf993dd81ef527fdf4fa46b0768bd2f63))
+
+
+### Bug Fixes
+
+* **boot:** drop duplicate log import in positioning engine ([#147](https://github.com/openpen-platform/openpen/issues/147)) ([ac3263c](https://github.com/openpen-platform/openpen/commit/ac3263cc3aac1678a8eda0cf964beb419565e25d))
+* **boot:** handle uncaught exceptions in one place and cap log files ([#135](https://github.com/openpen-platform/openpen/issues/135)) ([f046cba](https://github.com/openpen-platform/openpen/commit/f046cba35146b282397ee18bee9d6364b109e4c2))
+* **cli:** point new plugin authors at the local install flow ([77bdf3d](https://github.com/openpen-platform/openpen/commit/77bdf3d35c0e980ef94bb9eda49f8003bd5562a5))
+* **cli:** ship license and gitignore with scaffolded plugin projects ([#128](https://github.com/openpen-platform/openpen/issues/128)) ([94f4f7d](https://github.com/openpen-platform/openpen/commit/94f4f7d8691d24d3aad6a43a968d06bbe05a126d))
+* **cli:** teach one command name and describe the plugin catalog ([c860428](https://github.com/openpen-platform/openpen/commit/c860428bc67ec45820140276bb8b273f1b6d910b))
+* **control-bar:** make the side-edge snap landing visible ([#146](https://github.com/openpen-platform/openpen/issues/146)) ([a84b709](https://github.com/openpen-platform/openpen/commit/a84b7094a0c62dcf8b7a8fff3c66fd24b4aaad09))
+* **notifications:** draw the drawing-mode toast above the control bar ([9b45433](https://github.com/openpen-platform/openpen/commit/9b45433778ca4ce6a3ccb6f51e5f21187a328306))
+* **plugin:** remove empty scope directory after uninstalling a plugin ([624e75b](https://github.com/openpen-platform/openpen/commit/624e75bb310a1a38f0dcfbfab5923f89dfdfb087))
+* **positioning:** fall back to the primary display when none are reported ([#136](https://github.com/openpen-platform/openpen/issues/136)) ([e682307](https://github.com/openpen-platform/openpen/commit/e682307362567599f4dd1a223ac269e9c4a7c91e))
+* **positioning:** keep intent queue alive after a failed intent ([#138](https://github.com/openpen-platform/openpen/issues/138)) ([772ab07](https://github.com/openpen-platform/openpen/commit/772ab075f8fb706ce4a9bcd39b25d8bcafe620c0))
+* **settings:** close only the topmost plugin dialog on Escape ([#150](https://github.com/openpen-platform/openpen/issues/150)) ([6124421](https://github.com/openpen-platform/openpen/commit/6124421336e3a3fcb8217e75bb34ea031b448e58))
+* **settings:** close plugin detail on Escape and open repo link externally ([#134](https://github.com/openpen-platform/openpen/issues/134)) ([1b1adc6](https://github.com/openpen-platform/openpen/commit/1b1adc6488a58a61ede137729daba30d3e2dc63f))
+* **settings:** flag and rebind built-in shortcuts that fail to register ([f4dcfa2](https://github.com/openpen-platform/openpen/commit/f4dcfa20081ea7393cb32357a61d983b12384ed6))
+* **settings:** route settings store errors and warnings to the file log ([#149](https://github.com/openpen-platform/openpen/issues/149)) ([115e52d](https://github.com/openpen-platform/openpen/commit/115e52deca7db916859215243994f1c33367c777))
+* **settings:** show a focus ring on the language select and accent chips ([c2ea03d](https://github.com/openpen-platform/openpen/commit/c2ea03dacb90467a268f0dae8c43be116e90dbb0))
+* **settings:** show the in-use notice when a shortcut reset fails ([70b4ef3](https://github.com/openpen-platform/openpen/commit/70b4ef375e6e8fe6bb063d41246ddba288e0b07b))
+* **settings:** trap and restore focus in plugin dialogs ([b570ccf](https://github.com/openpen-platform/openpen/commit/b570ccf77f3b2d9a47a54edaea5f017144d97739))
+* **tests:** isolate marketplace e2e installs in a sandbox HOME ([e9d14b4](https://github.com/openpen-platform/openpen/commit/e9d14b4e4746d72c21634c6c4721c2655f12e4ef))
+* **tests:** remove per-run temp directories after the e2e suite ([#127](https://github.com/openpen-platform/openpen/issues/127)) ([43564c2](https://github.com/openpen-platform/openpen/commit/43564c2a2a5e0647a22822ab83a929173e48b4da))
+* **tests:** sandbox HOME for every e2e launch ([0bcb5d1](https://github.com/openpen-platform/openpen/commit/0bcb5d177d1410d51184c17a2bd1ebde3e8128bc))
+* **uikit:** name slider thumb and select trigger, drop aria-pressed from toggle ([#126](https://github.com/openpen-platform/openpen/issues/126)) ([f08705e](https://github.com/openpen-platform/openpen/commit/f08705eb788ae3ac3f7d4320f6b2758ff247a766))
+* validate renderer IPC payloads in the main process ([#120](https://github.com/openpen-platform/openpen/issues/120)) ([79e768e](https://github.com/openpen-platform/openpen/commit/79e768e6c52301f8c9f5e59a0d833f0144b92a0e))
+
 ## [1.5.0](https://github.com/openpen-platform/openpen/compare/v1.4.3...v1.5.0) (2026-06-12)
 
 
