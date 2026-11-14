@@ -65,7 +65,7 @@ OpenPen の plugin は npm レジストリ経由では配布されません — 
 
 ## 配布
 
-1. Pluginをビルドし、`npx openpen-cli pack` を実行して `dist/`、`plugin.json`、`locales/` の zip を生成し、`v<version>` タグの GitHub Release に添付します。
+1. Pluginをビルドし、`npx openpen-cli pack` を実行して `dist/`、`plugin.json`、およびフォルダーがあれば `locales/` の zip を生成し、`v<version>` タグの GitHub Release に添付します。
 2. ユーザーはその release から `npx openpen-cli plugin add <github-url>` で直接インストールできます。
 
 ### 掲載の2つの方法
@@ -85,13 +85,14 @@ OpenPen には独立した2つのリストがあります。目的に合う方�
 
 スキャナーは `openpen-plugin` topic が付いた公開 GitHub リポジトリを読み取ります。掲載されるには：
 
-1. `plugin.json` に `id`、`name`、`version`、`description`、`minAppVersion` があることを確認します。`version` は semver、`id` のスコープは GitHub アカウントまたは organization 名（小文字）と一致する必要があります（`github.com/alice/todo-app` なら `@alice/todo-app`）。`@openpen` スコープと公式カタログに既にある id は拒否されます。
-2. リポジトリを公開のままにします。非公開、fork、アーカイブ済みのリポジトリはスキップされます。
-3. `npx openpen-cli pack` を実行し、zip を添付した `v<version>` の GitHub Release を作成します。release は公開済みで、ドラフトやプレリリースであってはいけません。スキャナーは最新 release の最初の `.zip` アセットを使い、zip のルートに `plugin.json` が必要です。
-4. リポジトリに `openpen-plugin` topic を追加します（リポジトリページの About 横の歯車、Topics）。
-5. 次回のスキャンを待ちます。スキャナーが zip をダウンロードし、`plugin.json` を読み、sha256 を自分で計算します。ハッシュや pull request を提出する必要はありません。
+1. plugin を作成します。`npx openpen-cli create @scope/name` でプロジェクトを生成し、`npm install` と `npm run build` で `dist/renderer.js` を作ります。プロジェクトにはサンプルの翻訳（`src/locales/`：`en`、`ja`、`zh-Hans`、`zh-Hant`）が含まれ、`renderer.js` にバンドルされます。残す、編集する、削除するのいずれでも構いません。開発の流れは[クイックスタート](./plugin-quickstart.md)を参照してください。
+2. `plugin.json` に `id`、`name`、`version`、`description`、`minAppVersion` があることを確認します。`version` は semver、`id` のスコープはリポジトリを所有する GitHub アカウントまたは organization の名前（小文字）と一致する必要があります（`github.com/alice/todo-app` なら `@alice/todo-app`）。スキャナーが比較するのはスコープとリポジトリの所有者だけで、現在ログインしているアカウントは確認しません。organization の場合は、リポジトリがその organization の下にあれば十分です。`create` はスコープを個人のログイン名と比較するため、organization のスコープでは警告が出ることがありますが、コミュニティリストには影響しません。`@openpen` スコープと公式カタログにすでにある id は拒否されます。
+3. リポジトリを公開のままにします。非公開、fork、アーカイブ済みのリポジトリはスキップされます。最初の push の前に、`.gitignore` が `node_modules/`、`dist/`、`*.zip` を除外していることを確認し、ビルド成果物と zip がリポジトリに入らないようにします。生成された README に `../../docs` で始まるリンクがある場合は、完全な URL に置き換えてください。そのリンクは OpenPen リポジトリの中でしか機能しません。プロジェクトの `package.json` にある `"private": true` は `npm publish` を止めるだけで、release やスキャンには影響しません。
+4. `create` で生成したプロジェクトで `npm run pack`（内部で `npx openpen-cli pack` を実行）を実行し、zip を添付した `v<version>` の GitHub Release を作成します。例：`gh release create v<version> ./<scope>-<name>-<version>.zip`。zip には `plugin.json`、`dist/`、およびフォルダーがあれば `locales/` が入ります。`pack` の最後に「Run: npx openpen-cli publish」と表示されますが、それは公式カタログの手順なので、コミュニティリストだけなら省略できます。release は公開済みで、ドラフトやプレリリースであってはいけません。スキャナーは最新 release の最初の `.zip` アセットを使い、zip のルートに `plugin.json` が必要です。
+5. リポジトリに `openpen-plugin` topic を追加します。リポジトリページの About 横の歯車、Topics から、または GitHub CLI で `gh repo edit --add-topic openpen-plugin` を実行します。
+6. 次回のスキャンを待ちます。スキャナーが zip をダウンロードし、`plugin.json` を読み、sha256 を自分で計算します。ハッシュや pull request を提出する必要はありません。スキャンは 30 分ごとに実行され、自分で起動することはできないため、最大で約 30 分を見込んでください。掲載を確認するには、カタログリポジトリの [`community/plugins.json`](https://raw.githubusercontent.com/openpen-platform/OpenPen-plugins/main/community/plugins.json) を開いて plugin id を探します。`latestVersion` フィールドに、取り込まれたバージョンが表示されます。
 
-更新を出すには `version` を上げて手順 3 を繰り返します。`plugin.json` の version が掲載中のものより高くない release は無視されます。topic を外す、リポジトリを非公開にする、アーカイブすると、後のスキャンでリストから外れます。
+更新を出すには `version` を上げて手順 4 を繰り返します。`plugin.json` の version が掲載中のものより高くない release は無視されます。topic を外す、リポジトリを非公開にする、アーカイブすると、後のスキャンでリストから外れます。
 
 plugin が表示されない場合、スキャナーはカタログリポジトリの `Update community index` workflow の実行ログに、各リポジトリをスキップした理由（`.zip` アセットがない、スコープが所有者と一致しない、ドラフト release など）を記録します。メンテナーは `community/blocklist.json` で特定の plugin、リポジトリ、所有者を除外できます。
 

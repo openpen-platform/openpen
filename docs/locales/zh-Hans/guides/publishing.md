@@ -68,7 +68,7 @@ OpenPen plugin **不通过** npm 注册表分发——请使用上述 GitHub 形
 
 ## 分发
 
-1. 构建你的 plugin，运行 `npx openpen-cli pack` 生成包含 `dist/`、`plugin.json` 和 `locales/` 的 zip，并将其附加到标记为 `v<version>` 的 GitHub Release。
+1. 构建你的 plugin，运行 `npx openpen-cli pack` 生成包含 `dist/`、`plugin.json`（以及存在时的 `locales/`）的 zip，并将其附加到标记为 `v<version>` 的 GitHub Release。
 2. 用户可以直接从该 Release 安装：`npx openpen-cli plugin add <github-url>`。
 
 ### 两种上架方式
@@ -88,13 +88,14 @@ OpenPen 有两份独立的清单，按需求择一，两者不是同一流程的
 
 扫描器会读取带有 `openpen-plugin` topic 的公开 GitHub 仓库。要被列入：
 
-1. 确认 `plugin.json` 有 `id`、`name`、`version`、`description`、`minAppVersion`。`version` 须为 semver，`id` 的 scope 须等于你的 GitHub 账号或组织名（小写），例如 `github.com/alice/todo-app` 对应 `@alice/todo-app`。`@openpen` scope 和官方目录已有的 id 会被拒绝。
-2. 仓库保持公开。私有、fork 和已归档的仓库会被跳过。
-3. 运行 `npx openpen-cli pack`，再创建 `v<version>` 的 GitHub Release 并附上 zip。release 必须已发布，不能是草稿或预发布。扫描器取最新 release 的第一个 `.zip` 附件，zip 根目录须有 `plugin.json`。
-4. 给仓库加上 `openpen-plugin` topic（仓库页面 About 旁的齿轮，Topics）。
-5. 等待下一次扫描。扫描器自行下载 zip、读取 `plugin.json` 并计算 sha256，你不需要提交哈希或 pull request。
+1. 创建 plugin。运行 `npx openpen-cli create @scope/name` 生成项目，再运行 `npm install` 和 `npm run build` 生成 `dist/renderer.js`。项目内附示例翻译（`src/locales/`：`en`、`ja`、`zh-Hans`、`zh-Hant`），它们会被打包进 `renderer.js`，可以保留、修改或删除。开发流程见[快速入门](./plugin-quickstart.md)。
+2. 确认 `plugin.json` 有 `id`、`name`、`version`、`description`、`minAppVersion`。`version` 须为 semver，`id` 的 scope 须等于拥有该仓库的 GitHub 账号或组织名（小写），例如 `github.com/alice/todo-app` 对应 `@alice/todo-app`。扫描器只比对 scope 与仓库所有者，不会检查你当前登录的是哪个账号；组织只要仓库在该组织名下即可。`create` 会拿 scope 与你个人的登录名比对，组织 scope 可能出现警告，这不会影响社区清单。`@openpen` scope 和官方目录已有的 id 会被拒绝。
+3. 仓库保持公开。私有、fork 和已归档的仓库会被跳过。第一次 push 之前，确认 `.gitignore` 排除 `node_modules/`、`dist/` 和 `*.zip`，让构建产物和打包的 zip 不进入仓库。如果生成的 README 含有以 `../../docs` 开头的链接，请改成完整网址，因为它们只在 OpenPen 仓库内有效。项目 `package.json` 中的 `"private": true` 只会阻止 `npm publish`，不影响 release 和扫描。
+4. 在由 `create` 生成的项目中运行 `npm run pack`（它会运行 `npx openpen-cli pack`），再创建 `v<version>` 的 GitHub Release 并附上 zip，例如 `gh release create v<version> ./<scope>-<name>-<version>.zip`。zip 内有 `plugin.json`、`dist/`，以及（若文件夹存在）`locales/`。`pack` 结尾会打印“Run: npx openpen-cli publish”，那一步属于官方目录，走社区清单可以跳过。release 必须已发布，不能是草稿或预发布。扫描器取最新 release 的第一个 `.zip` 附件，zip 根目录须有 `plugin.json`。
+5. 给仓库加上 `openpen-plugin` topic：仓库页面 About 旁的齿轮，Topics；或使用 GitHub CLI：`gh repo edit --add-topic openpen-plugin`。
+6. 等待下一次扫描。扫描器自行下载 zip、读取 `plugin.json` 并计算 sha256，你不需要提交哈希或 pull request。扫描每 30 分钟一次，你无法自行触发，请预留最多约 30 分钟。要确认是否已列入，请打开目录仓库的 [`community/plugins.json`](https://raw.githubusercontent.com/openpen-platform/OpenPen-plugins/main/community/plugins.json)，找你的 plugin id；`latestVersion` 字段显示已收录的版本。
 
-发布更新时，提高 `version` 后重复步骤 3。`plugin.json` 版本不高于已列出版本的 release 会被忽略。移除 topic、把仓库设为私有或归档，之后的扫描会把该 plugin 移出清单。
+发布更新时，提高 `version` 后重复步骤 4。`plugin.json` 版本不高于已列出版本的 release 会被忽略。移除 topic、把仓库设为私有或归档，之后的扫描会把该 plugin 移出清单。
 
 plugin 没有出现时，扫描器会在目录仓库的 `Update community index` workflow 中记录每个仓库被跳过的原因（例如缺少 `.zip` 附件、scope 与所有者不符、草稿 release）。维护者可通过 `community/blocklist.json` 排除特定 plugin、仓库或所有者。
 

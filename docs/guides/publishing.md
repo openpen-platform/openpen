@@ -71,7 +71,7 @@ for the full command reference.
 ## Distribution
 
 1. Build your plugin, run `npx openpen-cli pack` to produce the zip of `dist/`,
-   `plugin.json`, and `locales/`, and attach it to a GitHub Release tagged
+   `plugin.json`, and `locales/` (when that folder exists), and attach it to a GitHub Release tagged
    `v<version>`.
 2. Users can install it straight from that release with
    `npx openpen-cli plugin add <github-url>`.
@@ -98,22 +98,47 @@ either one is not a security audit of your code.
 A scanner reads public GitHub repositories that carry the `openpen-plugin` topic. To
 be listed:
 
-1. Make sure `plugin.json` has `id`, `name`, `version`, `description` and
-   `minAppVersion`. `version` must be semver, and the scope of `id` must be your
-   GitHub account or organization name in lowercase (`@alice/todo-app` for
-   `github.com/alice/todo-app`). The `@openpen` scope and ids already in the official
-   catalog are refused.
-2. Keep the repository public. Private, forked and archived repositories are skipped.
-3. Run `npx openpen-cli pack`, then create a GitHub Release for `v<version>` with the
-   zip attached. The release must be published, not a draft or a prerelease. The
-   scanner uses the latest release and its first `.zip` asset, which must have
-   `plugin.json` at the zip root.
-4. Add the `openpen-plugin` topic to the repository (repository page, the gear next to
-   About, Topics).
-5. Wait for the next scan. The scanner downloads the zip, reads `plugin.json` and
-   computes the sha256 itself; you do not submit a hash or a pull request.
+1. Create the plugin. `npx openpen-cli create @scope/name` scaffolds a project, then
+   `npm install` and `npm run build` produce `dist/renderer.js`. The scaffold ships
+   sample translations (`src/locales/`: `en`, `ja`, `zh-Hans`, `zh-Hant`) that are
+   bundled into `renderer.js`; keep, edit or delete them. See the
+   [quickstart](./plugin-quickstart.md) for the development loop.
+2. Make sure `plugin.json` has `id`, `name`, `version`, `description` and
+   `minAppVersion`. `version` must be semver, and the scope of `id` must be the name of
+   the GitHub account or organization that owns the repository, in lowercase
+   (`@alice/todo-app` for `github.com/alice/todo-app`). The scanner compares the scope
+   with the repository owner only; it does not check which account you are logged in
+   with, so for an organization it is enough that the repository lives under that
+   organization. `create` compares the scope with your personal login and may print a
+   warning for an organization scope; that does not block the community list. The
+   `@openpen` scope and ids already in the official catalog are refused.
+3. Keep the repository public. Private, forked and archived repositories are skipped.
+   Before the first push, check that `.gitignore` excludes `node_modules/`, `dist/` and
+   `*.zip`, so build output and the packed zip stay out of the repository. If the
+   generated README has links that start with `../../docs`, replace them with full
+   URLs, because they only work inside the OpenPen repository. The `"private": true`
+   line in the scaffolded `package.json` only stops `npm publish`; it does not affect
+   releases or the scan.
+4. Run `npm run pack` in a scaffolded project (it runs `npx openpen-cli pack`), then
+   create a GitHub Release for `v<version>` with the zip attached, for example
+   `gh release create v<version> ./<scope>-<name>-<version>.zip`. The zip holds
+   `plugin.json`, `dist/` and, if the folder exists, `locales/`. At the end `pack`
+   prints "Run: npx openpen-cli publish"; that step belongs to the official catalog
+   and you can skip it for the community list. The release must be published, not a
+   draft or a prerelease. The scanner uses the latest release and its first `.zip`
+   asset, which must have `plugin.json` at the zip root.
+5. Add the `openpen-plugin` topic to the repository: on the repository page, the gear
+   next to About, Topics; or with the GitHub CLI,
+   `gh repo edit --add-topic openpen-plugin`.
+6. Wait for the next scan. The scanner downloads the zip, reads `plugin.json` and
+   computes the sha256 itself; you do not submit a hash or a pull request. The scan
+   runs every 30 minutes and you cannot trigger it yourself, so allow up to about 30
+   minutes. To confirm the listing, open
+   [`community/plugins.json`](https://raw.githubusercontent.com/openpen-platform/OpenPen-plugins/main/community/plugins.json)
+   in the catalog repository and look for your plugin id; the `latestVersion` field
+   shows the version that was picked up.
 
-To ship an update, bump `version`, then repeat step 3. A release whose `plugin.json`
+To ship an update, bump `version`, then repeat step 4. A release whose `plugin.json`
 version is not higher than the listed one is ignored. Removing the topic, making the
 repository private or archiving it removes the plugin on a later scan.
 
