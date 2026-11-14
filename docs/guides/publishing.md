@@ -134,9 +134,9 @@ be listed:
    `gh release create v<version> ./<scope>-<name>-<version>.zip`. The zip holds
    `plugin.json`, `dist/` and, if the folder exists, `locales/`. At the end `pack`
    prints a hint to run `publish`; that step belongs to the official catalog and you can
-   skip it for the community list. Some older CLI versions print the hint as
-   `npx openpen publish`: the command name is always `npx openpen-cli`, because the
-   bare `openpen` package on npm is an unrelated tool. The release must be published,
+   skip it for the community list. Some older CLI versions print the hint with a shortened
+   command name: the command name is always `npx openpen-cli`, because the bare
+   `openpen` package on npm is an unrelated tool. The release must be published,
    not a draft or a prerelease. The scanner uses the latest release and its first
    `.zip` asset, which must have `plugin.json` at the zip root.
 5. Add the `openpen-plugin` topic to the repository: on the repository page, the gear
