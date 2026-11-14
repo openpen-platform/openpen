@@ -1,0 +1,20 @@
+{
+  "name": "绘图快捷键",
+  "description": "绘图时用单一按键切换工具与颜色。",
+  "hotkeys": {
+    "tool-freehand": "手绘",
+    "tool-line": "直线",
+    "tool-shape": "形状",
+    "tool-highlighter": "荧光笔",
+    "tool-eraser": "橡皮擦",
+    "tool-stroke-eraser": "笔画橡皮擦",
+    "color-red": "红色",
+    "color-orange": "橙色",
+    "color-yellow": "黄色",
+    "color-green": "绿色",
+    "color-blue": "蓝色",
+    "color-indigo": "靛色",
+    "color-pink": "粉红",
+    "color-white": "白色"
+  }
+}

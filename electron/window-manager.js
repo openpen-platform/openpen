@@ -1314,12 +1314,20 @@ function registerIpcHandlers() {
     }
   });
 
-  onValidated(ipcMain, CONTROL_BAR.STROKE_STYLE, strokeStyleSchema, (_, style) => {
+  onValidated(ipcMain, CONTROL_BAR.STROKE_STYLE, strokeStyleSchema, (event, style) => {
     lastStrokeStyle = style;
     for (const win of overlayWindowsByDisplayId.values()) {
       if (!win.isDestroyed()) {
         win.webContents.send(CONTROL_BAR.STROKE_STYLE_CHANGED, style);
       }
+    }
+    // A color picked by a shortcut is applied in the overlay; the control bars
+    // follow through this relay so every swatch shows the active color. The
+    // sender already applied the change locally.
+    const sender = event?.sender;
+    for (const win of mainWindowsByDisplayId.values()) {
+      if (win.isDestroyed() || win.webContents === sender) continue;
+      win.webContents.send(CONTROL_BAR.STROKE_STYLE_CHANGED, style);
     }
   });
 

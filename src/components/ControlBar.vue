@@ -306,6 +306,7 @@ const activeToolId = ref<string>('freehand');
 provide(ACTIVE_TOOL_KEY, readonly(activeToolId));
 let unsubToolChanged: (() => void) | null = null;
 let unsubToolRelay: (() => void) | null = null;
+let unsubStyleRelay: (() => void) | null = null;
 
 /** Ball shape during edge-snap interactions — avoids visual glitches mid-drag. */
 const ballEdgeClass = computed(() => {
@@ -615,6 +616,11 @@ onMounted(async () => {
     unsubToolRelay = window.openPenApi?.onToolConfigChanged?.((config) => {
       if (config?.tool) eventBusEmit('tool-changed', config);
     }) ?? null;
+    // Same for the stroke color: a color shortcut handled in the overlay reaches
+    // this bar over IPC and is republished so the swatch follows.
+    unsubStyleRelay = window.openPenApi?.onStrokeStyleChanged?.((style) => {
+      eventBusEmit('stroke-style-changed', style);
+    }) ?? null;
   }
 
   const initialSettings = await window.openPenApi?.getSettings();
@@ -713,6 +719,8 @@ onUnmounted(() => {
   unsubToolChanged = null;
   unsubToolRelay?.();
   unsubToolRelay = null;
+  unsubStyleRelay?.();
+  unsubStyleRelay = null;
   unsubDrawingMode?.();
   unsubDrawingMode = null;
   unsubRequestQuit?.();

@@ -46,6 +46,7 @@ export const STANDARD_ONLY = [
   '**/dev-only/repro-color-mode-save.spec.js',
   '**/drawing/canvas.spec.js',
   '**/drawing/cursor-dom.spec.js',
+  '**/drawing/drawing-hotkeys.spec.js',
   '**/drawing/drawing-mode-visual.spec.js',
   '**/drawing/overlay.spec.js',
   '**/drawing/persisted-defaults.spec.js',

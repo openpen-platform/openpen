@@ -169,6 +169,7 @@ const hasChanges = computed(() => {
           :default-value="sc.contribution.keys"
           :shortcut-id="sc.namespacedId"
           :has-conflict="shortcutConflicts.has(sc.namespacedId)"
+          :allow-bare="sc.contribution.scope === 'drawing'"
           @update:model-value="(v: string) => { moduleShortcutsOverrides[sc.namespacedId] = v }"
           @shortcut-error="shortcutError = $event"
         />

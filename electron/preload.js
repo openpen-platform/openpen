@@ -225,8 +225,8 @@ contextBridge.exposeInMainWorld('openPenApi', {
    * @param {string} id  - namespaced shortcut id
    * @param {string} keys - Electron accelerator string
    */
-  registerShortcut: (id, keys) =>
-    ipcRenderer.send('module:register-shortcut', { id, keys }),
+  registerShortcut: (id, keys, scope) =>
+    ipcRenderer.send('module:register-shortcut', { id, keys, scope }),
 
   /** Remove a previously-registered shortcut. */
   unregisterShortcut: (id) =>
