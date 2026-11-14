@@ -119,9 +119,9 @@ async function openSettingsViaUI(mainWin) {
   }
   await settingsWin.waitForLoadState('domcontentloaded');
   await settingsWin.waitForSelector('[data-testid="settings-window"]', { timeout: 10000 });
-  // Wait for the settings draft to be hydrated (aria-pressed="true" appears
+  // Wait for the settings draft to be hydrated (aria-checked="true" appears
   // after loadSettings() resolves and Vue binds the selected chip).
-  await settingsWin.waitForSelector('[data-testid^="settings-color-chip-"][aria-pressed="true"]', { timeout: 8000 });
+  await settingsWin.waitForSelector('[data-testid^="settings-color-chip-"][aria-checked="true"]', { timeout: 8000 });
   return settingsWin;
 }
 
@@ -295,7 +295,7 @@ test('Appearance tab: clicking an accent chip with the mouse does not draw a foc
 
   await settingsWin.locator(SETTINGS_TAB_SELECTOR).nth(0).click();
   // Click the chip that is already selected so the saved accent is unchanged.
-  await settingsWin.locator('[data-testid^="settings-color-chip-"][aria-pressed="true"]').click();
+  await settingsWin.locator('[data-testid^="settings-color-chip-"][aria-checked="true"]').click();
 
   const ring = await readFocusRing(settingsWin);
   expect(ring.testId).toMatch(/^settings-color-chip-/);

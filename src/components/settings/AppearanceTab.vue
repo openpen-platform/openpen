@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { AppSlider, AppSegmented } from '@openpen/module-api/uikit';
+import { AppSlider, AppSegmented, AppSwatchPicker } from '@openpen/module-api/uikit';
+import { ACCENT_PRESETS } from '../../core/modules/color/accent-presets';
 import type { AppSettings } from '../../types/settings';
 
 const { t } = useI18n();
@@ -18,22 +19,11 @@ const LANGUAGES = [
   { code: 'ja',    label: '日本語' },
 ];
 
-// Accent color presets.
-const ACCENT_COLORS = [
-  { id: 'indigo', label: 'Indigo', gradient: 'linear-gradient(135deg,#818CF8,#6366F1)', value: '#818CF8' },
-  { id: 'red',    label: 'Red',    gradient: 'linear-gradient(135deg,#F87171,#EF4444)', value: '#EF4444' },
-  { id: 'green',  label: 'Emerald', gradient: 'linear-gradient(135deg,#34D399,#10B981)', value: '#10B981' },
-  { id: 'blue',   label: 'Blue',   gradient: 'linear-gradient(135deg,#60A5FA,#3B82F6)', value: '#3B82F6' },
-  { id: 'amber',  label: 'Amber',  gradient: 'linear-gradient(135deg,#FBBF24,#F59E0B)', value: '#F59E0B' },
-];
+// Accent colour presets: the same five colours the colour module offers.
+const ACCENT_SWATCHES = ACCENT_PRESETS.map((p) => ({ value: p.value, label: p.label, testid: `settings-color-chip-${p.id}` }));
+const accentBackground = (c: { value: string }) =>
+  ACCENT_PRESETS.find((p) => p.value === c.value)?.gradient ?? c.value;
 
-/** Currently selected accent chip (matches draft.defaultColor against a preset). */
-const selectedAccentId = computed(() => {
-  const matchedAccent = ACCENT_COLORS.find(
-    (accent) => accent.value.toLowerCase() === (props.draft.defaultColor || '').toLowerCase(),
-  );
-  return matchedAccent ? matchedAccent.id : null;
-});
 
 /** Convert opacity between 0.0–1.0 (stored) and 0–100 (slider). */
 const opacityPercent = computed({
@@ -124,20 +114,10 @@ function setTheme(theme: string) {
         <div class="cw-row-label">{{ t('accentColor') }}</div>
         <div class="cw-row-sub">{{ t('accentColorSub') }}</div>
       </div>
-      <div class="color-chips" data-testid="settings-color-chips">
-        <button
-          v-for="chip in ACCENT_COLORS"
-          :key="chip.id"
-          class="color-chip"
-          :data-testid="`settings-color-chip-${chip.id}`"
-          :class="{ selected: selectedAccentId === chip.id }"
-          :aria-pressed="selectedAccentId === chip.id"
-          :style="{ background: chip.gradient }"
-          :title="chip.label"
-          :aria-label="chip.label"
-          @click="setAccent(chip.value)"
-        />
-      </div>
+      <AppSwatchPicker
+        :model-value="draft.defaultColor || ''" :colors="ACCENT_SWATCHES" shape="rounded" size="large"
+        :background="accentBackground" :ariaLabel="t('accentColor')"
+        testid="settings-color-chips" @update:model-value="setAccent" />
     </div>
 
     <!-- Floating ball opacity -->
@@ -201,24 +181,6 @@ function setTheme(theme: string) {
 .theme-seg :deep(.app-seg-btn) {
   padding: 6px 8px;
 }
-
-/* Accent color chips */
-.color-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.color-chip {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: transform 150ms, border-color 150ms;
-  outline: none;
-}
-.color-chip:hover { transform: scale(1.12); }
-.color-chip:focus-visible {
-  outline: 2px solid var(--accent, #818CF8);
-  outline-offset: 2px;
-}
-.color-chip.selected { border-color: rgba(255, 255, 255, 0.65); }
 
 /* Opacity slider */
 .opacity-row {

@@ -112,10 +112,10 @@ test('settings window receives exactly one CONTENT_READY signal', async () => {
   const settingsWin = await winPromise;
   await settingsWin.waitForLoadState('domcontentloaded');
   await settingsWin.waitForSelector('[data-testid="settings-window"]', { timeout: 10000 });
-  // Wait for hydration: aria-pressed="true" only appears after loadSettings()
-  // populates draft.defaultColor and Vue binds the aria-pressed attribute on
+  // Wait for hydration: aria-checked="true" only appears after loadSettings()
+  // populates draft.defaultColor and Vue binds the aria-checked attribute on
   // the selected color chip.
-  await settingsWin.waitForSelector('[data-testid^="settings-color-chip-"][aria-pressed="true"]', { timeout: 8000 });
+  await settingsWin.waitForSelector('[data-testid^="settings-color-chip-"][aria-checked="true"]', { timeout: 8000 });
 
   // Allow a generous window for any straggler signal from App.vue to land before
   // reading the counter. The assertion is on the count, not on this timeout.

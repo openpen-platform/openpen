@@ -2,16 +2,14 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useModuleContext } from '@openpen/module-api'
+import { AppSwatchPicker } from '@openpen/module-api/uikit'
+import { ACCENT_PRESETS } from './accent-presets'
 
 const { t } = useI18n()
 
-const PRESETS = [
-  { id: 'indigo', label: 'Indigo', value: '#818CF8' },
-  { id: 'red',    label: 'Red',    value: '#EF4444' },
-  { id: 'green',  label: 'Emerald', value: '#10B981' },
-  { id: 'blue',   label: 'Blue',   value: '#3B82F6' },
-  { id: 'amber',  label: 'Amber',  value: '#F59E0B' },
-]
+const PRESET_SWATCHES = ACCENT_PRESETS.map((p) => ({ value: p.value, label: p.label, testid: `cs-preset-${p.id}` }))
+const gradientFor = (c: { value: string }) =>
+  ACCENT_PRESETS.find((p) => p.value === c.value)?.gradient ?? c.value
 
 type ColorSettings = { defaultColor?: string }
 
@@ -43,18 +41,10 @@ async function setColor(color: string) {
         <div class="cw-row-label">{{ t('openpen.color.defaultColorLabel') }}</div>
         <div class="cw-row-sub">{{ t('openpen.color.defaultColorSub') }}</div>
       </div>
-      <div class="cs-presets">
-        <button
-          v-for="p in PRESETS"
-          :key="p.id"
-          class="cs-chip"
-          :class="{ selected: defaultColor.toLowerCase() === p.value.toLowerCase() }"
-          :style="{ background: p.value }"
-          :aria-label="p.label"
-          :aria-pressed="defaultColor.toLowerCase() === p.value.toLowerCase()"
-          @click="setColor(p.value)"
-        />
-      </div>
+      <AppSwatchPicker
+        :model-value="defaultColor" :colors="PRESET_SWATCHES" size="small" spacing="small"
+        :background="gradientFor" :ariaLabel="t('openpen.color.defaultColorLabel')"
+        testid="cs-presets" @update:model-value="setColor" />
     </div>
   </div>
 </template>
@@ -79,29 +69,4 @@ async function setColor(color: string) {
 .cw-row-label { font-size: 13.5px; font-weight: 500; }
 .cw-row-sub   { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
 
-.cs-presets {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.cs-chip {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: transform 120ms, box-shadow 120ms;
-  padding: 0;
-  flex-shrink: 0;
-}
-
-.cs-chip:hover {
-  transform: scale(1.15);
-}
-
-.cs-chip.selected {
-  box-shadow: 0 0 0 2px var(--surface-settings), 0 0 0 4px currentColor;
-  outline: none;
-}
 </style>
