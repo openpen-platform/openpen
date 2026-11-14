@@ -10,6 +10,18 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { notificationQueue, getNotificationPosition } from '../services/notification-service'
 import type { NotificationPosition } from '../services/notification-service'
 
+const props = defineProps<{
+  /**
+   * Render only host-sourced toasts. Set by the control-bar window, whose queue
+   * also receives module `ctx.notify` calls that other windows already show.
+   */
+  hostOnly?: boolean
+}>()
+
+const visibleItems = computed(() =>
+  props.hostOnly ? notificationQueue.value.filter((n) => n.source === 'host') : notificationQueue.value,
+)
+
 // Reactive position (updates when settings change).
 const position = ref<NotificationPosition>(getNotificationPosition())
 let unsubSettings: (() => void) | null = null
@@ -80,9 +92,10 @@ function variantIconColor(variant: string): string {
   <div class="notification-layer" data-testid="notification-layer" aria-live="polite" aria-atomic="false">
     <TransitionGroup name="notif" tag="div" class="notification-stack" data-testid="notification-stack" :style="positionStyle">
       <div
-        v-for="item in notificationQueue"
+        v-for="item in visibleItems"
         :key="item.id"
         class="notification-toast"
+        data-testid="notification-toast"
         :class="[`notif-${item.variant}`]"
         :style="{
           borderColor: variantBorderColor(item.variant),

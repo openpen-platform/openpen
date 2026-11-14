@@ -4,8 +4,12 @@
  * Scenarios:
  * 1. notifyOnDrawingMode=true (default): debug count increases after toggling drawing mode
  * 2. notifyOnDrawingMode=false: debug count does not increase after toggling
- * 3. NotificationLayer container is present in the overlay window
+ * 3. NotificationLayer container is present in the control-bar (main) window,
+ *    which hosts the drawing-mode toast so it stacks above the bar
  * 4. notificationPosition setting correctly affects the CSS position
+ *
+ * The drawing-mode toast is pushed by the main window's renderer, so the debug
+ * handle and the toast DOM are read from the main window.
  */
 import { test, expect } from '@playwright/test';
 import { attachElectronErrorDetection } from '../electron-errors.js';
@@ -29,49 +33,37 @@ async function getMainWindow() {
   return win;
 }
 
-async function getOverlayWindow() {
-  await new Promise(r => setTimeout(r, 800));
-  const wins = electronApp.windows();
-  for (const w of wins) {
-    if (w.url().includes('window=overlay')) return w;
-  }
-  const win = await electronApp.waitForEvent('window');
-  await win.waitForLoadState('domcontentloaded');
-  return win;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 
-test('NotificationLayer container is present in the overlay window', async () => {
-  const overlayWin = await getOverlayWindow();
+test('NotificationLayer container is present in the main window', async () => {
+  const mainWin = await getMainWindow();
   // Wait for Vue components to mount.
-  await overlayWin.waitForTimeout(500);
-  const layer = overlayWin.getByTestId('notification-layer');
+  await mainWin.waitForTimeout(500);
+  const layer = mainWin.getByTestId('notification-layer');
   await expect(layer).toBeAttached({ timeout: 3000 });
 });
 
 test('notifyOnDrawingMode=true (default): debug count increases after toggling drawing mode', async () => {
   const mainWin = await getMainWindow();
-  const overlayWin = await getOverlayWindow();
 
   // Wait for NotificationService to initialise.
-  await overlayWin.waitForTimeout(800);
+  await mainWin.waitForTimeout(800);
 
   // Verify debug handle is available.
-  const debugExists = await overlayWin.evaluate(() => {
+  const debugExists = await mainWin.evaluate(() => {
     return typeof window.__OPENPEN_DEBUG__?.notifications?.count === 'function';
   });
   expect(debugExists).toBe(true);
 
-  const before = await overlayWin.evaluate(() =>
+  const before = await mainWin.evaluate(() =>
     window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
   );
 
   // Toggle drawing mode ON.
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
-  await overlayWin.waitForTimeout(300);
+  await mainWin.waitForTimeout(300);
 
-  const after = await overlayWin.evaluate(() =>
+  const after = await mainWin.evaluate(() =>
     window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
   );
 
@@ -79,24 +71,23 @@ test('notifyOnDrawingMode=true (default): debug count increases after toggling d
 
   // Cleanup: toggle back OFF.
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));
-  await overlayWin.waitForTimeout(200);
+  await mainWin.waitForTimeout(200);
 });
 
 test('notifyOnDrawingMode=true: recent() records correct variant and source', async () => {
   const mainWin = await getMainWindow();
-  const overlayWin = await getOverlayWindow();
 
-  await overlayWin.waitForTimeout(800);
+  await mainWin.waitForTimeout(800);
 
   // Reset to OFF for a clean state.
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));
-  await overlayWin.waitForTimeout(200);
+  await mainWin.waitForTimeout(200);
 
   // Toggle ON.
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
-  await overlayWin.waitForTimeout(300);
+  await mainWin.waitForTimeout(300);
 
-  const recent = await overlayWin.evaluate(() =>
+  const recent = await mainWin.evaluate(() =>
     window.__OPENPEN_DEBUG__?.notifications?.recent() ?? []
   );
 
@@ -109,7 +100,7 @@ test('notifyOnDrawingMode=true: recent() records correct variant and source', as
 
   // Cleanup.
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));
-  await overlayWin.waitForTimeout(200);
+  await mainWin.waitForTimeout(200);
 });
 
 test('notifyOnDrawingMode=false: toggling drawing mode does not push a notification', async () => {
@@ -122,27 +113,16 @@ test('notifyOnDrawingMode=false: toggling drawing mode does not push a notificat
     const mainWin = await noNotifyApp.firstWindow();
     await mainWin.waitForLoadState('domcontentloaded');
 
-    await new Promise(r => setTimeout(r, 800));
-    const wins = noNotifyApp.windows();
-    let overlayWin = null;
-    for (const w of wins) {
-      if (w.url().includes('window=overlay')) { overlayWin = w; break; }
-    }
-    if (!overlayWin) {
-      overlayWin = await noNotifyApp.waitForEvent('window');
-      await overlayWin.waitForLoadState('domcontentloaded');
-    }
+    await mainWin.waitForTimeout(800);
 
-    await overlayWin.waitForTimeout(800);
-
-    const before = await overlayWin.evaluate(() =>
+    const before = await mainWin.evaluate(() =>
       window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
     );
 
     await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
-    await overlayWin.waitForTimeout(500);
+    await mainWin.waitForTimeout(500);
 
-    const after = await overlayWin.evaluate(() =>
+    const after = await mainWin.evaluate(() =>
       window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
     );
 
@@ -156,15 +136,14 @@ test('notifyOnDrawingMode=false: toggling drawing mode does not push a notificat
 });
 
 test('notificationPosition defaults to top-center — notification-stack has top:8% style', async () => {
-  const overlayWin = await getOverlayWindow();
-  await overlayWin.waitForTimeout(800);
+  const mainWin = await getMainWindow();
+  await mainWin.waitForTimeout(800);
 
   // Trigger a notification so the stack is visible.
-  const mainWin = await getMainWindow();
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
-  await overlayWin.waitForTimeout(400);
+  await mainWin.waitForTimeout(400);
 
-  const stackStyle = await overlayWin.evaluate(() => {
+  const stackStyle = await mainWin.evaluate(() => {
     const stack = document.querySelector('[data-testid="notification-stack"]');
     if (!stack) return null;
     const s = stack.style;
@@ -178,5 +157,5 @@ test('notificationPosition defaults to top-center — notification-stack has top
 
   // Cleanup.
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));
-  await overlayWin.waitForTimeout(200);
+  await mainWin.waitForTimeout(200);
 });
