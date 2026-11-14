@@ -1,0 +1,20 @@
+{
+  "name": "描画ショートカット",
+  "description": "描画中に1キーでツールと色を切り替えます。",
+  "hotkeys": {
+    "tool-freehand": "フリーハンド",
+    "tool-line": "直線",
+    "tool-shape": "図形",
+    "tool-highlighter": "蛍光ペン",
+    "tool-eraser": "消しゴム",
+    "tool-stroke-eraser": "ストローク消しゴム",
+    "color-red": "赤",
+    "color-orange": "オレンジ",
+    "color-yellow": "黄",
+    "color-green": "緑",
+    "color-blue": "青",
+    "color-indigo": "藍",
+    "color-pink": "ピンク",
+    "color-white": "白"
+  }
+}

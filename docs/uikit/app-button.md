@@ -33,7 +33,7 @@ standard 36×36 horizontal-mode button.
 | `active` | `boolean` | `false` | Highlights the button with the accent colour (use for active-tool state) |
 | `disabled` | `boolean` | `false` | Dims the button content; keeps pointer events alive so the tooltip still fires |
 | `tooltip` | `string` | — | Short label shown above the button on hover |
-| `aria-label` | `string` | — | Accessible name for screen readers |
+| `ariaLabel` | `string` | — | Accessible name for screen readers. In templates type-checked by `vue-tsc` with strict templates (what `openpen-build --check` uses), write it as `ariaLabel`. |
 
 ## Slots
 
@@ -61,7 +61,7 @@ const active = ref(false)
   <AppButton
     :active="active"
     tooltip="Toggle feature"
-    aria-label="Toggle feature"
+    ariaLabel="Toggle feature"
     @click="active = !active"
   >
     <!-- Inline SVG icon (stroke="currentColor" — colour tracks the token) -->

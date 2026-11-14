@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.4.0](https://github.com/openpen-platform/openpen/compare/module-api@1.3.0...module-api@1.4.0) (2026-11-14)
+
+
+### Features
+
+* **drawing:** add semi-transparent highlighter tool ([#123](https://github.com/openpen-platform/openpen/issues/123)) ([68b7e50](https://github.com/openpen-platform/openpen/commit/68b7e50e0d15df482f3d153610177efb49317728))
+* **module-api:** add activateTool and Wayland plugin shortcuts ([#130](https://github.com/openpen-platform/openpen/issues/130)) ([90e3a98](https://github.com/openpen-platform/openpen/commit/90e3a980f704a1c08a5f6453ded3e3ebb25e451c))
+* **module-api:** upgrade zod to 4 ([c25ffab](https://github.com/openpen-platform/openpen/commit/c25ffab8ade237df24e60b5c22f4c61559935a1b))
+* **uikit:** add AppPopoverPanel and AppPopoverRow for plugin popover content ([5879b2c](https://github.com/openpen-platform/openpen/commit/5879b2ccf993dd81ef527fdf4fa46b0768bd2f63))
+
+
+### Bug Fixes
+
+* **uikit:** name slider thumb and select trigger, drop aria-pressed from toggle ([#126](https://github.com/openpen-platform/openpen/issues/126)) ([f08705e](https://github.com/openpen-platform/openpen/commit/f08705eb788ae3ac3f7d4320f6b2758ff247a766))
+
 ## [1.3.0](https://github.com/openpen-platform/openpen/compare/module-api@1.2.0...module-api@1.3.0) (2026-06-11)
 
 

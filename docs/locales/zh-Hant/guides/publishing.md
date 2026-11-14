@@ -16,10 +16,10 @@ language: zh-Hant
 ## 建置
 
 ```bash
-npm run build    # outputs dist/renderer.js via @openpen/build (Rollup)
+npm run build    # outputs dist/renderer.js via @openpen/build (Vite)
 ```
 
-`@openpen/build` 預先設定 Rollup，將 `vue` 與 `@openpen/module-api` 列為外部依賴——這些會在執行期由 host 提供，請不要將它們打包進去。
+`@openpen/build` 預先設定 Vite，將 `vue` 與 `@openpen/module-api` 列為外部依賴——這些會在執行期由 host 提供，請不要將它們打包進去。
 
 ### Peer dependency 規則
 
@@ -67,24 +67,44 @@ OpenPen plugin **不**透過 npm registry 發佈——請使用上述 GitHub 格
 
 ## 發佈
 
-1. 建置你的 plugin，執行 `npx openpen-cli pack` 產生包含 `dist/`、`plugin.json` 與 `locales/` 的 zip，
+1. 建置你的 plugin，執行 `npx openpen-cli pack` 產生包含 `dist/`、`plugin.json`（以及存在時的 `locales/`）的 zip，
    並將它附在標記為 `v<version>` 的 GitHub Release 上。
 2. 使用者可直接從該 release 安裝：
    `npx openpen-cli plugin add <github-url>`。
 
-### Plugin 目錄
+### 兩種上架方式
 
-OpenPen 維護一個中央目錄，即
-[OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) repository。
-列在其中的 plugin 可用 id 安裝：
-`npx openpen-cli plugin install @scope/name`，並會顯示在應用程式的 Marketplace 分頁中。
+OpenPen 有兩份獨立的清單，依需求擇一，兩者不是同一流程的前後步驟。
 
-若要將你的 plugin 列入目錄，請在把 zip 附到 GitHub Release 之後執行 `npx openpen-cli publish`。
-它會檢查該 release、確認你的 GitHub 登入帳號與 plugin id 的 scope 相符，
-並對目錄開啟一個 pull request：首次提交為 Registration PR，新版本則為 Update PR。
-首次提交在合併前會由維護者審閱。完整流程請見
-[建立你的第一個 plugin](../tutorials/build-your-first-plugin.md) 的第 7 節，
-各步驟的細節請見 [`reference/openpen-cli.md`](../reference/openpen-cli.md)。
+| | 社群清單 | 官方目錄 |
+| --- | --- | --- |
+| 如何進入 | 發布 release，並在 repository 加上 `openpen-plugin` topic | 執行 `npx openpen-cli publish`，開啟 pull request |
+| 審核 | 無人工審核，由掃描器自動檢查套件 | 首次提交由維護者審閱；更新由目錄機器人檢查 |
+| 出現時間 | 下一次掃描（每 30 分鐘） | pull request 合併後 |
+| 記錄位置 | 目錄 repository 的 `community/plugins.json` | 目錄 repository 的 `plugins.json` |
+
+兩份清單都在 [OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) repository。社群條目不會併入官方 `plugins.json`，列入任何一份清單都不代表對你的程式碼做過安全稽核。
+
+### 社群清單
+
+掃描器會讀取帶有 `openpen-plugin` topic 的公開 GitHub repository。要被列入：
+
+1. 建立 plugin。執行 `npx openpen-cli create @scope/name` 產生專案，再執行 `npm install` 與 `npm run build` 產生 `dist/renderer.js`。專案內附範例翻譯（`src/locales/`：`en`、`ja`、`zh-Hans`、`zh-Hant`），它們會被打包進 `renderer.js`，可保留、修改或刪除。開發流程請見[快速入門](./plugin-quickstart.md)。
+2. 確認 `plugin.json` 有 `id`、`name`、`version`、`description`、`minAppVersion`。請把專案範本預設的 `description`（「A short description of what your plugin does.」）改成真實的描述，它就是清單中顯示在你 plugin 上的文字。`version` 須為 semver，`id` 的 scope 須等於擁有該 repository 的 GitHub 帳號或組織名稱（小寫），例如 `github.com/alice/todo-app` 對應 `@alice/todo-app`。掃描器只比對 scope 與 repository 擁有者，不會檢查你目前登入哪個帳號；組織只要 repository 在該組織底下即可。`create` 會拿 scope 與你個人的登入名稱比對，組織 scope 可能出現警告，這不會影響社群清單。`@openpen` scope 與官方目錄已有的 id 會被拒絕。
+3. 把專案放進公開的 GitHub repository。執行 `git init`，然後在 plugin id 的 scope 所指的帳號或組織底下建立 repository（`@alice/todo-app` 就建在 `alice` 底下）並 push，例如 `gh repo create alice/todo-app --public --source . --push`。repository 名稱不必與 plugin 名稱相同，只有擁有者會拿來與 scope 比對。私有、fork 與已封存的 repository 會被略過。第一次 commit 之前，確認專案有 `.gitignore`，並列出 `node_modules/`、`dist/` 與 `*.zip`，讓建置產物與打包的 zip 不進 repository。舊版 CLI 產生的專案不會附這個檔案；若沒有，請自行建立並寫入這三行。若產生的 README 含有以 `../../docs` 開頭的連結，請改成文件站的完整網址 `https://openpen.pages.dev/docs/`（例如 `https://openpen.pages.dev/docs/guides/publishing`），因為相對連結只在 OpenPen repository 內有效。專案 `package.json` 內的 `"private": true` 只會阻止 `npm publish`，不影響 release 與掃描。
+4. 在由 `create` 產生的專案中執行 `npm run pack`（它會執行 `npx openpen-cli pack`），再建立 `v<version>` 的 GitHub Release 並附上 zip，例如 `gh release create v<version> ./<scope>-<name>-<version>.zip`。zip 內有 `plugin.json`、`dist/`，以及（若資料夾存在的話）`locales/`。`pack` 結尾會印出要你執行 `publish` 的提示，那一步屬於官方目錄，走社群清單可以略過。部分舊版 CLI 把提示印成 `npx openpen publish`：指令名稱一律是 `npx openpen-cli`，因為 npm 上裸名的 `openpen` 套件是無關的工具。release 必須已發布，不能是草稿或預發布。掃描器取最新 release 的第一個 `.zip` 附件，zip 根目錄須有 `plugin.json`。
+5. 在 repository 加上 `openpen-plugin` topic：repository 頁面 About 旁的齒輪，Topics；或用 GitHub CLI：`gh repo edit --add-topic openpen-plugin`。
+6. 等待下一次掃描。掃描器自行下載 zip、讀取 `plugin.json` 並計算 sha256，你不需要提交雜湊值或 pull request。掃描每 30 分鐘一次，你無法自行觸發，請預留最多約 30 分鐘。要確認是否已列入，請打開目錄 repository 的 [`community/plugins.json`](https://raw.githubusercontent.com/openpen-platform/OpenPen-plugins/main/community/plugins.json)，找你的 plugin id；`latestVersion` 欄位顯示已收錄的版本。
+
+發布更新時，提高 `version` 後重複步驟 4。`plugin.json` 版本不高於已列出版本的 release 會被忽略。移除 topic、將 repository 設為私有或封存，之後的掃描會把該 plugin 移出清單。
+
+plugin 沒出現時，掃描器會在目錄 repository 的 `Update community index` workflow 記錄每個 repository 被略過的原因（例如缺少 `.zip` 附件、scope 與擁有者不符、草稿 release）。維護者可透過 `community/blocklist.json` 排除特定 plugin、repository 或擁有者。
+
+### 官方目錄
+
+官方目錄中的 plugin 可用 id 安裝：`npx openpen-cli plugin install @scope/name`，並會顯示在應用程式的 Marketplace 分頁中。
+
+若要列入官方目錄，請在把 zip 附到 GitHub Release 之後執行 `npx openpen-cli publish`。它會檢查該 release、確認你的 GitHub 登入帳號與 plugin id 的 scope 相符，並對目錄開啟一個 pull request：首次提交為 Registration PR，新版本則為 Update PR。首次提交在合併前會由維護者審閱。完整流程請見[建立你的第一個 plugin](../tutorials/build-your-first-plugin.md) 的第 7 節，各步驟的細節請見 [`reference/openpen-cli.md`](../reference/openpen-cli.md)。
 
 ---
 

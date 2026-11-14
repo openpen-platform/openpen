@@ -17,7 +17,7 @@ OpenPen UIKit 封装层自动处理 inject key、互斥逻辑、动画守卫以�
 import {
   AppButton, AppButtonDropdown,
   AppPopover, AppPopoverPanel, AppPopoverRow, AppDialog,
-  AppSlider, AppToggle, AppSegmented,
+  AppSlider, AppToggle, AppToggleButton, AppSegmented, AppSwatchPicker,
   AppSelect, AppTooltip, AppTabs,
   AppBanner,
   useDialog, useDialogPluginComponent,
@@ -64,7 +64,9 @@ Plugin MUST NOT 在自己的 `package.json` 中安装 `reka-ui`，也不得直�
 | [`useDialog`](./use-dialog) | 封装层 | 基于 Promise 的命令式 dialog API |
 | [`AppSlider`](./app-slider) | 封装层 | 数值范围输入 |
 | [`AppToggle`](./app-toggle) | 封装层 | 布尔开关 |
+| [`AppToggleButton`](./app-toggle-button) | 封装层 | 双状态按钮（按下/未按下），如粗体、斜体 |
 | [`AppSegmented`](./app-segmented) | 封装层 | 互斥分段控件 |
+| [`AppSwatchPicker`](./app-swatch-picker) | 封装层 | 单选颜色色块 |
 | [`AppSelect`](./app-select) | 封装层 | 单选下拉选择器 |
 | [`AppTooltip`](./app-tooltip) | 封装层 | 悬停提示标签 |
 | [`AppTabs`](./app-tabs) | 封装层 | 受控标签页内容容器 |

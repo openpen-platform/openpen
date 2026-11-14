@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { StrokeColor } from '@openpen/module-api'
+import { AppSwatchPicker } from '@openpen/module-api/uikit'
 import {
   hexToHsv, hsvToHex, isValidHex,
   hsvToRgb, rgbToHex,
@@ -34,6 +35,11 @@ const PRESETS = [
   '#F87171', '#FB923C', '#FBBF24', '#34D399',
   '#60A5FA', '#818CF8', '#F472B6', '#FFFFFF',
 ]
+const PRESET_SWATCHES = PRESETS.map((hex) => ({
+  value: hex,
+  label: hex,
+  testid: `cp-preset-${hex.replace('#', '')}`,
+}))
 
 const hueColor = computed(() => {
   const [r, g, b] = hsvToRgb(hue.value, 100, 100)
@@ -284,12 +290,9 @@ watch(() => props.modelValue, () => {
         @pointerup="onSolidTonePointerUp" @pointercancel="onSolidTonePointerUp">
         <div class="cp-solid-bar-thumb" :style="{ left: solidToneThumbLeft, background: currentSolidHex }" />
       </div>
-      <div class="cp-presets" role="group" :aria-label="t('openpen.color.presets')">
-        <button v-for="p in PRESETS" :key="p" class="cp-color-preset" :data-testid="`cp-preset-${p.replace('#','')}`"
-          :style="{ background: p }"
-          :class="{ active: currentSolidHex.toUpperCase() === p.toUpperCase() }"
-          :aria-label="p" @click="selectPreset(p)" />
-      </div>
+      <AppSwatchPicker
+        :model-value="currentSolidHex" :colors="PRESET_SWATCHES" shape="rounded" spacing="small"
+        :ariaLabel="t('openpen.color.presets')" @update:model-value="selectPreset" />
       <div class="cp-solid-hex-row">
         <input class="cp-solid-hex-input" data-testid="cp-solid-hex-input" type="text" :value="hexInput.toUpperCase()"
           maxlength="7" spellcheck="false" :aria-label="t('openpen.color.hexValue')" @input="onHexInput" />
@@ -326,12 +329,9 @@ watch(() => props.modelValue, () => {
           @pointerup="onHuePointerUp" @pointercancel="onHuePointerUp" />
         <div class="cp-hue-thumb" :style="{ left: hueThumbLeft }" aria-hidden="true" />
       </div>
-      <div class="cp-presets" role="group" :aria-label="t('openpen.color.presets')">
-        <button v-for="p in PRESETS" :key="p" class="cp-color-preset" :data-testid="`cp-preset-${p.replace('#','')}`"
-          :style="{ background: p }"
-          :class="{ active: currentSolidHex.toUpperCase() === p.toUpperCase() }"
-          :aria-label="p" @click="selectPreset(p)" />
-      </div>
+      <AppSwatchPicker
+        :model-value="currentSolidHex" :colors="PRESET_SWATCHES" shape="rounded" spacing="small"
+        :ariaLabel="t('openpen.color.presets')" @update:model-value="selectPreset" />
       <div class="cp-solid-hex-row">
         <input class="cp-solid-hex-input" type="text" :value="hexInput.toUpperCase()"
           maxlength="7" spellcheck="false" :aria-label="t('openpen.color.hexValue')" @input="onHexInput" />
@@ -552,29 +552,4 @@ watch(() => props.modelValue, () => {
   pointer-events: none;
 }
 
-.cp-presets {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 2px;
-}
-
-.cp-color-preset {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: transform 150ms, border-color 150ms;
-}
-
-.cp-color-preset:hover {
-  transform: scale(1.18);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.cp-color-preset.active {
-  border-color: rgba(255, 255, 255, 0.7);
-}
 </style>

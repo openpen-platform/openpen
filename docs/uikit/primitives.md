@@ -21,7 +21,9 @@ import {
   SliderRoot, SliderTrack, SliderRange, SliderThumb,
   // Switch (toggle)
   SwitchRoot, SwitchThumb,
-  // RadioGroup (segmented control)
+  // Toggle (toggle button)
+  Toggle,
+  // RadioGroup (segmented control, swatch picker)
   RadioGroupRoot, RadioGroupItem,
   // Select (dropdown)
   SelectRoot, SelectTrigger, SelectPortal, SelectContent, SelectItem,

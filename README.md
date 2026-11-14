@@ -19,6 +19,12 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-green.svg" alt="License" /></a>
 </p>
 
+<p align="center">
+  <img src=".github/readme-demo.gif" alt="OpenPen circling the June dip on a sign-ups chart in a slide, then marking the same data in a spreadsheet and in a PDF viewer" width="800" />
+</p>
+
+<p align="center"><sub>Background slide adapted from <a href="https://www.slidescarnival.com/template/minimalist-white-slides/237932">Minimalist White</a> by <a href="https://www.slidescarnival.com">SlidesCarnival</a>, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Changes: text and chart data replaced; the data is fictional.</sub></p>
+
 OpenPen is a free, open-source screen annotation overlay for macOS, Windows and Linux.
 Draw over any app — even full-screen ones — then fold it back into a floating ball so your presentation never skips a beat.
 

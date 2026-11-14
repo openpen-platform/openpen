@@ -20,6 +20,7 @@ import { createOverlayPlatform } from './platform/overlay-platform.js';
 import { deriveLinuxWindowState } from './linux-window-state.js';
 import { IS_WAYLAND_SESSION as IS_WAYLAND } from './is-wayland-session.js';
 import { initCursorOs, hideOsCursor, showOsCursor } from './cursor-os.js';
+import { keepWindowStationary } from './macos-window.js';
 import log from 'electron-log/main.js';
 import { onValidated } from './ipc-validation.js';
 import {
@@ -486,6 +487,10 @@ export function createMainWindowForDisplay(display) {
   // or focus changes on the overlay.
   win.setAlwaysOnTop(true, mainOnTopLevel, mainOnTopRelativeLevel);
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // macOS: keep the window in place when the user clicks the wallpaper to reveal
+  // the desktop. Must run after setVisibleOnAllWorkspaces (which rewrites the
+  // collection behavior); no-op off darwin.
+  keepWindowStationary(win);
   // Same throttling guarantee as the overlay window: keep the control bar's
   // animations / RAF callbacks running at full priority on Windows.
   win.webContents.setBackgroundThrottling(false);
@@ -736,6 +741,8 @@ export function createOverlayWindowForDisplay(display) {
 
   win.setAlwaysOnTop(true, overlayOnTopLevel, overlayOnTopRelativeLevel);
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // Same reveal-desktop guard as the control-bar window; no-op off darwin.
+  keepWindowStationary(win);
   // Per-WebContents guarantee that animations/timers run at full priority even
   // when Chromium thinks this transparent overlay is backgrounded. Pairs with
   // the disable-backgrounding-occluded-windows command-line switch in main.js.
@@ -1314,12 +1321,20 @@ function registerIpcHandlers() {
     }
   });
 
-  onValidated(ipcMain, CONTROL_BAR.STROKE_STYLE, strokeStyleSchema, (_, style) => {
+  onValidated(ipcMain, CONTROL_BAR.STROKE_STYLE, strokeStyleSchema, (event, style) => {
     lastStrokeStyle = style;
     for (const win of overlayWindowsByDisplayId.values()) {
       if (!win.isDestroyed()) {
         win.webContents.send(CONTROL_BAR.STROKE_STYLE_CHANGED, style);
       }
+    }
+    // A color picked by a shortcut is applied in the overlay; the control bars
+    // follow through this relay so every swatch shows the active color. The
+    // sender already applied the change locally.
+    const sender = event?.sender;
+    for (const win of mainWindowsByDisplayId.values()) {
+      if (win.isDestroyed() || win.webContents === sender) continue;
+      win.webContents.send(CONTROL_BAR.STROKE_STYLE_CHANGED, style);
     }
   });
 

@@ -22,6 +22,8 @@
     "AppDialog",
     "AppToggle",
     "AppSegmented",
+    "AppToggleButton",
+    "AppSwatchPicker",
     "AppSelect",
     "AppTooltip",
     "AppTabs",

@@ -223,8 +223,12 @@ export const PLUGIN_META = {
 export const PLUGIN = {
   /** renderer → main (invoke): fetch plugins.json from the catalog. */
   FETCH_CATALOG: 'plugin:fetch-catalog',
+  /** renderer -> main (invoke): fetch community/plugins.json; refused while the community setting is off. */
+  FETCH_COMMUNITY_CATALOG: 'plugin:fetch-community-catalog',
   /** renderer → main (invoke): install @scope/name from catalog. */
   INSTALL: 'plugin:install',
+  /** renderer -> main (invoke): install @scope/name from the community catalog ({ id, acknowledgedUnreviewed }). */
+  INSTALL_COMMUNITY: 'plugin:install-community',
   /** main → renderer (send): install progress stage + percentage. */
   INSTALL_PROGRESS: 'plugin:install-progress',
   /** renderer → main (invoke): remove an installed plugin by id. */

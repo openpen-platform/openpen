@@ -119,9 +119,9 @@ async function openSettingsViaUI(mainWin) {
   }
   await settingsWin.waitForLoadState('domcontentloaded');
   await settingsWin.waitForSelector('[data-testid="settings-window"]', { timeout: 10000 });
-  // Wait for the settings draft to be hydrated (aria-pressed="true" appears
+  // Wait for the settings draft to be hydrated (aria-checked="true" appears
   // after loadSettings() resolves and Vue binds the selected chip).
-  await settingsWin.waitForSelector('[data-testid^="settings-color-chip-"][aria-pressed="true"]', { timeout: 8000 });
+  await settingsWin.waitForSelector('[data-testid^="settings-color-chip-"][aria-checked="true"]', { timeout: 8000 });
   return settingsWin;
 }
 
@@ -236,6 +236,71 @@ test('Appearance tab shows the language selector (four languages)', async () => 
   expect(options.length).toBe(4);
   expect(options.some(o => o.includes('繁體中文'))).toBe(true);
   expect(options.some(o => o.includes('English'))).toBe(true);
+
+  await closeAllSettingsWindows(mainWin);
+});
+
+/** Computed outline of the focused element plus whether it matches :focus-visible. */
+async function readFocusRing(settingsWin) {
+  return settingsWin.evaluate(() => {
+    const el = document.activeElement;
+    const cs = getComputedStyle(el);
+    return {
+      testId: el.getAttribute('data-testid'),
+      outlineStyle: cs.outlineStyle,
+      outlineWidth: cs.outlineWidth,
+      focusVisible: el.matches(':focus-visible'),
+    };
+  });
+}
+
+/** Press Tab until the focused element's data-testid matches, or fail. */
+async function tabUntil(settingsWin, pattern) {
+  for (let i = 0; i < 40; i++) {
+    await settingsWin.keyboard.press('Tab');
+    const ring = await readFocusRing(settingsWin);
+    if (pattern.test(ring.testId ?? '')) return ring;
+  }
+  throw new Error(`Tab never reached ${pattern}`);
+}
+
+test('Appearance tab: keyboard focus on the language select and accent chips shows a focus ring', async () => {
+  const mainWin = await getMainWindow();
+  await closeAllSettingsWindows(mainWin);
+  const settingsWin = await openSettingsViaUI(mainWin);
+  expect(settingsWin).not.toBeNull();
+
+  await settingsWin.locator(SETTINGS_TAB_SELECTOR).nth(0).click();
+  await expect(settingsWin.getByTestId('settings-language-select')).toBeVisible();
+  await settingsWin.evaluate(() => document.activeElement?.blur());
+
+  const select = await tabUntil(settingsWin, /^settings-language-select$/);
+  expect(select.focusVisible).toBe(true);
+  expect(select.outlineStyle).toBe('solid');
+  expect(select.outlineWidth).toBe('2px');
+
+  const chip = await tabUntil(settingsWin, /^settings-color-chip-/);
+  expect(chip.focusVisible).toBe(true);
+  expect(chip.outlineStyle).toBe('solid');
+  expect(chip.outlineWidth).toBe('2px');
+
+  await closeAllSettingsWindows(mainWin);
+});
+
+test('Appearance tab: clicking an accent chip with the mouse does not draw a focus ring', async () => {
+  const mainWin = await getMainWindow();
+  await closeAllSettingsWindows(mainWin);
+  const settingsWin = await openSettingsViaUI(mainWin);
+  expect(settingsWin).not.toBeNull();
+
+  await settingsWin.locator(SETTINGS_TAB_SELECTOR).nth(0).click();
+  // Click the chip that is already selected so the saved accent is unchanged.
+  await settingsWin.locator('[data-testid^="settings-color-chip-"][aria-checked="true"]').click();
+
+  const ring = await readFocusRing(settingsWin);
+  expect(ring.testId).toMatch(/^settings-color-chip-/);
+  expect(ring.focusVisible).toBe(false);
+  expect(ring.outlineStyle).toBe('none');
 
   await closeAllSettingsWindows(mainWin);
 });

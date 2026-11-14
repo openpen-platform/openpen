@@ -6,11 +6,12 @@
  *
  * Visual: 4px track, 14×14 white thumb, accent fill,
  * hover scale(1.2) at var(--openpen-duration-fast) easing.
+ * Optional value bubble above the thumb while it is being dragged (`valueLabel`).
  *
  * Styles use --openpen-* design tokens.
  * No Reka UI types are leaked in the public API.
  */
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import {
   SliderRoot,
   SliderTrack,
@@ -48,6 +49,13 @@ const props = withDefaults(defineProps<{
    * startEdge/endEdge on SliderRange — no manual value transformation needed.
    */
   inverted?: boolean
+  /**
+   * Text for the value bubble (e.g. "4px"). When set, a small bubble with this
+   * text appears above the thumb while the slider is being dragged and hides on
+   * release; it is also exposed to assistive technology as `aria-valuetext`.
+   * Horizontal sliders only. Leave unset for no bubble.
+   */
+  valueLabel?: string
 }>(), {
   min: 0,
   max: 100,
@@ -61,6 +69,7 @@ const props = withDefaults(defineProps<{
   thumbHeight: '14px',
   thumbRadius: '50%',
   inverted: false,
+  valueLabel: undefined,
 })
 
 const emit = defineEmits<{
@@ -70,6 +79,27 @@ const emit = defineEmits<{
 // ── Internal state ────────────────────────────────────────────────────────────
 
 const isVertical = computed(() => props.orientation === 'vertical')
+
+// The bubble follows the pointer press on the whole slider (thumb or track), not
+// the thumb's :active state, because pressing the track also starts a drag.
+const dragging = ref(false)
+const showBubble = computed(
+  () => dragging.value && !!props.valueLabel && !isVertical.value,
+)
+
+function endDrag() {
+  dragging.value = false
+  document.removeEventListener('pointerup', endDrag)
+  document.removeEventListener('pointercancel', endDrag)
+}
+
+function onPointerDown() {
+  dragging.value = true
+  document.addEventListener('pointerup', endDrag)
+  document.addEventListener('pointercancel', endDrag)
+}
+
+onBeforeUnmount(endDrag)
 
 /** Root element inline style */
 const rootStyle = computed(() => {
@@ -114,6 +144,7 @@ function onValueChange(val: number[] | undefined) {
     :orientation="orientation"
     :inverted="inverted"
     @update:model-value="onValueChange"
+    @pointerdown="onPointerDown"
   >
     <SliderTrack class="app-slider-track" data-testid="app-slider-track">
       <SliderRange class="app-slider-range" data-testid="app-slider-range" />
@@ -122,11 +153,37 @@ function onValueChange(val: number[] | undefined) {
       class="app-slider-thumb"
       data-testid="app-slider-thumb"
       :aria-label="ariaLabel"
-    />
+      :aria-valuetext="valueLabel"
+    >
+      <span
+        v-if="showBubble"
+        class="app-slider-bubble"
+        data-testid="app-slider-bubble"
+        aria-hidden="true"
+      >{{ valueLabel }}</span>
+    </SliderThumb>
   </SliderRoot>
 </template>
 
 <style scoped>
+/* ── Value bubble (shown while dragging) ───────────────────────────────────── */
+.app-slider-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  padding: 2px 6px;
+  border-radius: var(--openpen-radius-sm);
+  background: var(--openpen-color-tooltip-bg);
+  color: var(--openpen-color-tooltip-text);
+  border: 1px solid var(--openpen-color-tooltip-border);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* ── Root container ────────────────────────────────────────────────────────── */
 .app-slider-root {
   position: relative;

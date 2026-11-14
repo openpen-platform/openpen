@@ -21,11 +21,15 @@ const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
 
 describe('ControlBar tool sync', () => {
   let relayedToolChange: ((config: { tool: string }) => void) | null
+  let relayedStyle: ((style: { color: string }) => void) | null
+  let styleChanged: unknown[]
+  let offStyle: () => void
   let toolChanged: unknown[]
   let off: () => void
 
   beforeEach(() => {
     relayedToolChange = null
+    relayedStyle = null
     const api = new Proxy(
       {
         platform: 'darwin',
@@ -33,6 +37,10 @@ describe('ControlBar tool sync', () => {
         onToolConfigChanged: (cb: (config: { tool: string }) => void) => {
           relayedToolChange = cb
           return () => { relayedToolChange = null }
+        },
+        onStrokeStyleChanged: (cb: (style: { color: string }) => void) => {
+          relayedStyle = cb
+          return () => { relayedStyle = null }
         },
       } as Record<string, unknown>,
       {
@@ -42,10 +50,13 @@ describe('ControlBar tool sync', () => {
     ;(window as unknown as { openPenApi: unknown }).openPenApi = api
     toolChanged = []
     off = eventBusOn('tool-changed', (payload) => { toolChanged.push(payload) })
+    styleChanged = []
+    offStyle = eventBusOn('stroke-style-changed', (payload) => { styleChanged.push(payload) })
   })
 
   afterEach(() => {
     off()
+    offStyle()
     delete (window as unknown as { openPenApi?: unknown }).openPenApi
   })
 
@@ -59,6 +70,18 @@ describe('ControlBar tool sync', () => {
     relayedToolChange!({ tool: 'freehand' })
 
     expect(toolChanged).toEqual([{ tool: 'arrow' }, { tool: 'freehand' }])
+    wrapper.unmount()
+  })
+
+  it('a stroke color relayed from the overlay is re-published so the swatch follows', async () => {
+    const wrapper = mount(ControlBar, { global: { plugins: [i18n] }, attachTo: document.body })
+    await flushPromises()
+    expect(relayedStyle).toBeTypeOf('function')
+    styleChanged.length = 0
+
+    relayedStyle!({ color: '#60A5FA' })
+
+    expect(styleChanged).toEqual([{ color: '#60A5FA' }])
     wrapper.unmount()
   })
 })

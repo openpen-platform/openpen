@@ -8,7 +8,11 @@ const size = ref(16)
 <template>
   <!-- AppPopover wraps the trigger button + AppSlider into a control-bar button
        that opens a popup with a slider. No inject keys or headless library
-       knowledge required — the wrapper handles everything automatically. -->
+       knowledge required — the wrapper handles everything automatically.
+       In each AppPopoverRow put the label (prop) and the control; the panel
+       lines the columns up, so the slider needs no width and the plugin needs
+       no CSS. The slider's number is shown by `value-label` as a bubble above
+       the thumb while dragging, not as a static number beside it. -->
   <AppPopover popover-id="starter-size" placement="auto">
     <template #trigger="{ active }">
       <button class="hello-btn" :class="{ active }" :title="`Size: ${size}px`">
@@ -17,8 +21,8 @@ const size = ref(16)
     </template>
     <template #content>
       <AppPopoverPanel title="Size">
-        <AppPopoverRow :label="`${size}px`">
-          <AppSlider v-model="size" :min="8" :max="64" width="120px" />
+        <AppPopoverRow label="Size">
+          <AppSlider v-model="size" :min="8" :max="64" :value-label="`${size}px`" ariaLabel="Size" />
         </AppPopoverRow>
       </AppPopoverPanel>
     </template>

@@ -225,8 +225,8 @@ contextBridge.exposeInMainWorld('openPenApi', {
    * @param {string} id  - namespaced shortcut id
    * @param {string} keys - Electron accelerator string
    */
-  registerShortcut: (id, keys) =>
-    ipcRenderer.send('module:register-shortcut', { id, keys }),
+  registerShortcut: (id, keys, scope) =>
+    ipcRenderer.send('module:register-shortcut', { id, keys, scope }),
 
   /** Remove a previously-registered shortcut. */
   unregisterShortcut: (id) =>
@@ -257,6 +257,10 @@ contextBridge.exposeInMainWorld('openPenApi', {
   // ── Plugin marketplace ───────────────────────────────────────────────
   /** Fetch the catalog plugins.json from the main process. */
   fetchPluginCatalog: () => ipcRenderer.invoke('plugin:fetch-catalog'),
+  /** Fetch the community catalog (empty failure while the community setting is off). */
+  fetchCommunityPluginCatalog: () => ipcRenderer.invoke('plugin:fetch-community-catalog'),
+  /** Install a community plugin by id, after the user confirmed the unreviewed notice. */
+  installCommunityPlugin: (id) => ipcRenderer.invoke('plugin:install-community', { id, acknowledgedUnreviewed: true }),
   /** Install a plugin by id from the catalog. */
   installPlugin: (id) => ipcRenderer.invoke('plugin:install', { id }),
   /** Remove an installed plugin by id. */

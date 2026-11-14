@@ -17,6 +17,10 @@ import PluginInstallProgressDialog from '../../src/components/settings/plugins/P
 vi.mock('../../src/composables/usePluginMarketplace', () => ({
   usePluginMarketplace: () => ({
     catalog: ref([]),
+    listing: ref([]),
+    communityEnabled: ref(false),
+    communityError: ref(null),
+    watchCommunitySetting: vi.fn(async () => () => {}),
     loading: ref(false),
     error: ref(null),
     installingId: ref(null),

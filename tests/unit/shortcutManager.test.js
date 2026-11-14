@@ -595,3 +595,96 @@ describe('module shortcut trigger target and registrant counting', () => {
     expect(mockGlobalShortcut.unregister).toHaveBeenCalledWith(PLUGIN_KEYS);
   });
 });
+
+describe('drawing-scoped module shortcuts', () => {
+  const registerFromRenderer = (payload) => ipcHandlers.get('module:register-shortcut')({}, payload);
+
+  it('does not grab the key from the OS while drawing mode is off', () => {
+    initShortcutManager();
+    mockGlobalShortcut.register.mockClear();
+    registerFromRenderer({ id: 'mod/pen', keys: 'P', scope: 'drawing' });
+    expect(mockGlobalShortcut.register).not.toHaveBeenCalled();
+  });
+
+  it('grabs the key on entering drawing mode and releases it on exit', async () => {
+    initShortcutManager();
+    const { setDrawingScopeActive } = await import('../../electron/shortcut-manager.js');
+    registerFromRenderer({ id: 'mod/pen', keys: 'P', scope: 'drawing' });
+    mockGlobalShortcut.register.mockClear();
+
+    setDrawingScopeActive(true);
+    expect(mockGlobalShortcut.register).toHaveBeenCalledWith('P', expect.any(Function));
+
+    setDrawingScopeActive(false);
+    expect(mockGlobalShortcut.unregister).toHaveBeenCalledWith('P');
+  });
+
+  it('binds immediately when registered while drawing mode is already on', async () => {
+    initShortcutManager();
+    const { setDrawingScopeActive } = await import('../../electron/shortcut-manager.js');
+    setDrawingScopeActive(true);
+    mockGlobalShortcut.register.mockClear();
+    registerFromRenderer({ id: 'mod/pen', keys: 'P', scope: 'drawing' });
+    expect(mockGlobalShortcut.register).toHaveBeenCalledWith('P', expect.any(Function));
+  });
+
+  it('keeps global-scope shortcuts bound regardless of drawing mode', async () => {
+    initShortcutManager();
+    const { setDrawingScopeActive } = await import('../../electron/shortcut-manager.js');
+    registerFromRenderer({ id: 'mod/g', keys: 'CommandOrControl+Shift+G', scope: 'global' });
+    setDrawingScopeActive(true);
+    setDrawingScopeActive(false);
+    expect(mockGlobalShortcut.unregister).not.toHaveBeenCalledWith('CommandOrControl+Shift+G');
+  });
+
+  it('does not re-grab drawing keys on resume when drawing mode is off', () => {
+    initShortcutManager();
+    registerFromRenderer({ id: 'mod/pen', keys: 'P', scope: 'drawing' });
+    const setSuspended = ipcHandlers.get('shortcuts:set-suspended');
+    setSuspended({}, true);
+    mockGlobalShortcut.register.mockClear();
+    setSuspended({}, false);
+    expect(mockGlobalShortcut.register).not.toHaveBeenCalledWith('P', expect.any(Function));
+    expect(mockGlobalShortcut.register).toHaveBeenCalledWith('CommandOrControl+Z', expect.any(Function));
+  });
+
+  it('rejects rebinding to a key another drawing shortcut already holds', async () => {
+    initShortcutManager();
+    registerFromRenderer({ id: 'mod/pen', keys: 'P', scope: 'drawing' });
+    registerFromRenderer({ id: 'mod/line', keys: 'L', scope: 'drawing' });
+    const set = ipcInvokeHandlers.get('shortcuts:set');
+    const result = await set({}, { id: 'mod/line', accelerator: 'P' });
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects rebinding a drawing shortcut onto a built-in accelerator', async () => {
+    initShortcutManager();
+    registerFromRenderer({ id: 'mod/pen', keys: 'P', scope: 'drawing' });
+    const set = ipcInvokeHandlers.get('shortcuts:set');
+    const result = await set({}, { id: 'mod/pen', accelerator: 'CommandOrControl+Z' });
+    expect(result.ok).toBe(false);
+  });
+
+  it('rebinds to a free key and moves the OS binding while drawing', async () => {
+    initShortcutManager();
+    const { setDrawingScopeActive } = await import('../../electron/shortcut-manager.js');
+    registerFromRenderer({ id: 'mod/pen', keys: 'P', scope: 'drawing' });
+    setDrawingScopeActive(true);
+    mockGlobalShortcut.register.mockClear();
+    const set = ipcInvokeHandlers.get('shortcuts:set');
+    const result = await set({}, { id: 'mod/pen', accelerator: 'Q' });
+    expect(result.ok).toBe(true);
+    expect(mockGlobalShortcut.register).toHaveBeenCalledWith('Q', expect.any(Function));
+    expect(mockGlobalShortcut.unregister).toHaveBeenCalledWith('P');
+  });
+
+  it('flags a drawing shortcut whose key the OS refuses on entry', async () => {
+    initShortcutManager();
+    const { setDrawingScopeActive } = await import('../../electron/shortcut-manager.js');
+    registerFromRenderer({ id: 'mod/pen', keys: 'P', scope: 'drawing' });
+    mockGlobalShortcut.register.mockReturnValue(false);
+    setDrawingScopeActive(true);
+    const conflicts = await ipcInvokeHandlers.get('shortcuts:get-conflicts')();
+    expect(conflicts).toContain('mod/pen');
+  });
+});

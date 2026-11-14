@@ -207,7 +207,7 @@ The host exposes two options under **Settings → Behaviour**:
 | Setting | Description |
 |---------|-------------|
 | `notifyOnDrawingMode` | Whether to show the built-in HUD notification when Drawing Mode is toggled (default: on). Only affects host-issued drawing-mode notifications; does not affect `ctx.notify()` calls from plugins |
-| `notificationPosition` | Where the toast appears in the overlay window, using one of 9 position tokens (see below) |
+| `notificationPosition` | Where the toast appears on screen, using one of 9 position tokens (see below). The built-in drawing-mode toast is drawn above the control bar, so the bar never covers it; toasts from `ctx.notify()` appear in the overlay window |
 
 ### Position tokens (`notificationPosition`)
 

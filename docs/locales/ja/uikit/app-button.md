@@ -3,7 +3,7 @@ title: AppButton
 description: ホストのビジュアルデザインに合わせた標準 36×36 コントロールバーボタン。ツールチップのサポートを内蔵しています。
 translationType: machine
 translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedAt: 2026-11-14T00:00:00Z
 language: ja
 ---
 
@@ -27,7 +27,7 @@ language: ja
 | `active` | `boolean` | `false` | アクセントカラーでボタンをハイライトします (アクティブツール状態に使用します) |
 | `disabled` | `boolean` | `false` | ボタンのコンテンツをグレーアウトします。ツールチップが引き続き発火するようにポインターイベントは有効なままです |
 | `tooltip` | `string` | — | ホバー時にボタンの上に表示される短いラベル |
-| `aria-label` | `string` | — | スクリーンリーダー向けのアクセシブルな名前 |
+| `ariaLabel` | `string` | — | スクリーンリーダー向けのアクセシブルな名前。`vue-tsc` の strict templates で型チェックされるテンプレート（`openpen-build --check` が使う設定）では `ariaLabel` と書いてください。 |
 
 ## スロット
 
@@ -55,7 +55,7 @@ const active = ref(false)
   <AppButton
     :active="active"
     tooltip="Toggle feature"
-    aria-label="Toggle feature"
+    ariaLabel="Toggle feature"
     @click="active = !active"
   >
     <!-- Inline SVG icon (stroke="currentColor" — colour tracks the token) -->

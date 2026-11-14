@@ -10,7 +10,7 @@
  *   - Fill comes from .app-slider-range width (CSS-driven by Reka UI, not inline style)
  *   - Vertical mode: data-orientation="vertical" on .app-slider-root
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { AppSlider } from '@openpen/module-api/uikit';
 
@@ -151,5 +151,68 @@ describe('AppSlider', () => {
     const thumb = wrapper.find('[role="slider"]');
     expect(thumb.attributes('aria-label')).toBe('Radius');
     expect(wrapper.find('[data-testid="app-slider-root"]').attributes('aria-label')).toBeUndefined();
+  });
+
+  describe('value bubble', () => {
+    // jsdom has no pointer capture; Reka's slider calls it on pointerdown.
+    beforeAll(() => {
+      for (const m of ['setPointerCapture', 'releasePointerCapture', 'hasPointerCapture']) {
+        if (!HTMLElement.prototype[m]) HTMLElement.prototype[m] = () => false;
+      }
+    });
+
+    const mountWithLabel = (extra = {}) =>
+      mount(AppSlider, {
+        props: { modelValue: 4, min: 1, max: 20, step: 1, valueLabel: '4px', ...extra },
+        attachTo: document.body,
+      });
+
+    it('shows no bubble before the slider is pressed', () => {
+      const wrapper = mountWithLabel();
+      expect(wrapper.find('[data-testid="app-slider-bubble"]').exists()).toBe(false);
+      wrapper.unmount();
+    });
+
+    it('shows the value label above the thumb while the slider is pressed and hides it on release', async () => {
+      const wrapper = mountWithLabel();
+      await wrapper.find('[data-testid="app-slider-root"]').trigger('pointerdown');
+      const bubble = wrapper.find('[data-testid="app-slider-bubble"]');
+      expect(bubble.exists()).toBe(true);
+      expect(bubble.text()).toBe('4px');
+      document.dispatchEvent(new Event('pointerup'));
+      await wrapper.vm.$nextTick();
+      expect(wrapper.find('[data-testid="app-slider-bubble"]').exists()).toBe(false);
+      wrapper.unmount();
+    });
+
+    it('never shows a bubble when no value label is given', async () => {
+      const wrapper = mount(AppSlider, { props: { modelValue: 4, min: 1, max: 20 } });
+      await wrapper.find('[data-testid="app-slider-root"]').trigger('pointerdown');
+      expect(wrapper.find('[data-testid="app-slider-bubble"]').exists()).toBe(false);
+      document.dispatchEvent(new Event('pointerup'));
+      wrapper.unmount();
+    });
+
+    it('never shows a bubble on a vertical slider', async () => {
+      const wrapper = mountWithLabel({ orientation: 'vertical' });
+      await wrapper.find('[data-testid="app-slider-root"]').trigger('pointerdown');
+      expect(wrapper.find('[data-testid="app-slider-bubble"]').exists()).toBe(false);
+      document.dispatchEvent(new Event('pointerup'));
+      wrapper.unmount();
+    });
+
+    it('exposes the value label to assistive technology as aria-valuetext', () => {
+      const wrapper = mountWithLabel();
+      expect(wrapper.find('[data-testid="app-slider-thumb"]').attributes('aria-valuetext')).toBe('4px');
+      wrapper.unmount();
+    });
+
+    it('keeps the bubble out of the accessibility tree', async () => {
+      const wrapper = mountWithLabel();
+      await wrapper.find('[data-testid="app-slider-root"]').trigger('pointerdown');
+      expect(wrapper.find('[data-testid="app-slider-bubble"]').attributes('aria-hidden')).toBe('true');
+      document.dispatchEvent(new Event('pointerup'));
+      wrapper.unmount();
+    });
   });
 });

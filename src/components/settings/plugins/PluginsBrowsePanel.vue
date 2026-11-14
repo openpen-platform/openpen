@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { AppBanner } from '@openpen/module-api/uikit'
 import { usePluginMarketplace } from '../../../composables/usePluginMarketplace'
 import PluginCard from './PluginCard.vue'
+import PluginActionConfirmDialog from './PluginActionConfirmDialog.vue'
 import PluginDetailDialog from './PluginDetailDialog.vue'
 import PluginInstallProgressDialog from './PluginInstallProgressDialog.vue'
 
@@ -18,10 +20,15 @@ const detailEntry = ref<CatalogEntry | null>(null)
 const installProgressOpen = ref(false)
 const installTargetId = ref('')
 const installTargetVersion = ref('')
+const installTargetCommunity = ref(false)
+
+// Community installs wait here until the user confirms the unreviewed notice.
+const communityConfirmOpen = ref(false)
+const communityConfirmEntry = ref<CatalogEntry | null>(null)
 
 const filteredCatalog = computed(() => {
   const q = props.searchQuery.toLowerCase().trim()
-  return marketplace.catalog.value.filter((entry) => {
+  return marketplace.listing.value.filter((entry) => {
     if (entry.state === 'tombstoned') return false
     if (activeFilter.value !== 'all' && entry.category !== activeFilter.value) return false
     if (!q) return true
@@ -39,12 +46,31 @@ function openDetail(entry: CatalogEntry) {
   detailDialogOpen.value = true
 }
 
-async function startInstall(id: string, version: string) {
-  detailDialogOpen.value = false
+async function runInstall(id: string, version: string, community: boolean) {
   installTargetId.value = id
   installTargetVersion.value = version
+  installTargetCommunity.value = community
   installProgressOpen.value = true
-  await marketplace.installFromCatalog(id)
+  await marketplace.installFromCatalog(id, { community })
+}
+
+async function startInstall(id: string, version: string) {
+  detailDialogOpen.value = false
+  const entry = marketplace.listing.value.find((e) => e.id === id)
+  if (entry?.tier === 'community') {
+    communityConfirmEntry.value = entry as CatalogEntry
+    communityConfirmOpen.value = true
+    return
+  }
+  await runInstall(id, version, false)
+}
+
+async function confirmCommunityInstall() {
+  const entry = communityConfirmEntry.value
+  communityConfirmOpen.value = false
+  communityConfirmEntry.value = null
+  if (!entry) return
+  await runInstall(entry.id, entry.latestVersion, true)
 }
 
 function dismissProgress() {
@@ -65,11 +91,18 @@ async function refresh() {
   await marketplace.fetchCatalog()
 }
 
+let unwatchCommunity: (() => void) | null = null
+
 onMounted(async () => {
-  if (marketplace.catalog.value.length === 0) {
+  const needsCatalog = marketplace.catalog.value.length === 0
+  // A full catalog fetch loads the community entries too, so skip the extra request.
+  unwatchCommunity = await marketplace.watchCommunitySetting({ fetchNow: !needsCatalog })
+  if (needsCatalog) {
     await marketplace.fetchCatalog()
   }
 })
+
+onUnmounted(() => { unwatchCommunity?.() })
 </script>
 
 <template>
@@ -126,6 +159,15 @@ onMounted(async () => {
         </button>
       </div>
 
+      <AppBanner
+        v-if="marketplace.communityEnabled.value && marketplace.communityError.value"
+        variant="error"
+        inline
+        data-testid="plugin-community-load-error"
+      >
+        {{ t('pluginCommunityLoadFailed', { error: marketplace.communityError.value }) }}
+      </AppBanner>
+
       <!-- Empty state -->
       <div v-if="filteredCatalog.length === 0" class="browse-empty">
         {{ t('pluginBrowseEmpty') }}
@@ -164,8 +206,18 @@ onMounted(async () => {
       :percent="marketplace.installPercent.value"
       :error-message="marketplace.installError.value"
       @dismiss="dismissProgress"
-      @retry="() => startInstall(installTargetId, installTargetVersion)"
+      @retry="() => runInstall(installTargetId, installTargetVersion, installTargetCommunity)"
       @restart="restartFromProgress"
+    />
+
+    <!-- Community install confirmation -->
+    <PluginActionConfirmDialog
+      v-model:open="communityConfirmOpen"
+      severity="neutral"
+      :title="t('pluginCommunityConfirmTitle')"
+      :body="t('pluginCommunityConfirmBody', { name: communityConfirmEntry?.name ?? '' })"
+      :confirm-label="t('pluginCommunityConfirmAction')"
+      @confirm="confirmCommunityInstall"
     />
 
     <div class="browse-footer">

@@ -17,7 +17,7 @@ OpenPen UIKit のラッパーは、inject キー、相互排他、アニメー�
 import {
   AppButton, AppButtonDropdown,
   AppPopover, AppPopoverPanel, AppPopoverRow, AppDialog,
-  AppSlider, AppToggle, AppSegmented,
+  AppSlider, AppToggle, AppToggleButton, AppSegmented, AppSwatchPicker,
   AppSelect, AppTooltip, AppTabs,
   AppBanner,
   useDialog, useDialogPluginComponent,
@@ -63,7 +63,9 @@ plugin は自身の `package.json` に `reka-ui` をインストールしたり�
 | [`useDialog`](./use-dialog) | ラッパー | 命令型 Promise ベースのダイアログ API |
 | [`AppSlider`](./app-slider) | ラッパー | 数値範囲入力 |
 | [`AppToggle`](./app-toggle) | ラッパー | ブール値のオン/オフスイッチ |
+| [`AppToggleButton`](./app-toggle-button) | ラッパー | 2 状態ボタン（押下/非押下）。例: 太字・斜体 |
 | [`AppSegmented`](./app-segmented) | ラッパー | 相互排他型のセグメントコントロール |
+| [`AppSwatchPicker`](./app-swatch-picker) | ラッパー | 単一選択の色見本 |
 | [`AppSelect`](./app-select) | ラッパー | 単一選択のドロップダウンピッカー |
 | [`AppTooltip`](./app-tooltip) | ラッパー | ホバー時のヒントラベル |
 | [`AppTabs`](./app-tabs) | ラッパー | コントロール型のタブコンテンツコンテナ |

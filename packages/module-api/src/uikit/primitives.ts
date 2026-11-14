@@ -24,7 +24,8 @@
  *   Dialog     → AppDialog
  *   Slider     → AppSlider
  *   Switch     → AppToggle
- *   RadioGroup → AppSegmented
+ *   RadioGroup → AppSegmented, AppSwatchPicker
+ *   Toggle     → AppToggleButton
  *   Select     → AppSelect
  *   Tooltip    → AppTooltip
  *   Tabs       → AppTabs
@@ -67,7 +68,10 @@ export {
   SwitchThumb,
 } from 'reka-ui'
 
-// ── RadioGroup (Segmented) ────────────────────────────────────────────────────
+// ── Toggle (ToggleButton) ─────────────────────────────────────────────────────
+export { Toggle } from 'reka-ui'
+
+// ── RadioGroup (Segmented, SwatchPicker) ────────────────────────────────────────────────────
 export {
   RadioGroupRoot,
   RadioGroupItem,

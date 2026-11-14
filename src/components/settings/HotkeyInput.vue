@@ -10,6 +10,8 @@ const props = defineProps<{
   shortcutId: string
   hasConflict?: boolean
   conflictMessageKey?: string
+  /** Accept a lone key with no modifier (drawing-scope shortcuts only). */
+  allowBare?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -55,8 +57,9 @@ function buildAccelerator(e: KeyboardEvent): string | null {
 
   const mainKey = KEY_MAP[e.key] ?? (e.key.length === 1 ? e.key.toUpperCase() : e.key)
 
-  // Single-char keys require at least one modifier
-  if (mainKey.length === 1 && modifiers.length === 0) return null
+  // Single-char keys require at least one modifier, unless this row is
+  // scoped to drawing mode where the key is only grabbed while drawing.
+  if (mainKey.length === 1 && modifiers.length === 0 && !props.allowBare) return null
 
   return [...modifiers, mainKey].join('+')
 }

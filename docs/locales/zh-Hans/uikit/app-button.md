@@ -3,7 +3,7 @@ title: AppButton
 description: 标准 36×36 控制栏按钮，与宿主视觉设计保持一致，内置 tooltip 支持。
 translationType: machine
 translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedAt: 2026-11-14T00:00:00Z
 language: zh-Hans
 ---
 
@@ -26,7 +26,7 @@ language: zh-Hans
 | `active` | `boolean` | `false` | 以强调色高亮按钮（用于工具激活状态） |
 | `disabled` | `boolean` | `false` | 使按钮内容变暗；保留指针事件，以便 tooltip 仍可触发 |
 | `tooltip` | `string` | — | 悬停时显示在按钮上方的简短标签 |
-| `aria-label` | `string` | — | 供屏幕阅读器使用的无障碍名称 |
+| `ariaLabel` | `string` | — | 供屏幕阅读器使用的无障碍名称。在由 `vue-tsc` 以严格模板检查的模板中（`openpen-build --check` 即是），请写成 `ariaLabel`。 |
 
 ## 插槽
 
@@ -54,7 +54,7 @@ const active = ref(false)
   <AppButton
     :active="active"
     tooltip="Toggle feature"
-    aria-label="Toggle feature"
+    ariaLabel="Toggle feature"
     @click="active = !active"
   >
     <!-- Inline SVG icon (stroke="currentColor" — colour tracks the token) -->

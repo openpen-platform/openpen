@@ -19,6 +19,7 @@
 import { test, expect } from '@playwright/test';
 import { attachElectronErrorDetection } from '../electron-errors.js';
 import { launchElectronApp } from '../launch.js';
+import { barAlignmentFeasibility } from './screen-feasibility.js';
 
 let electronApp;
 
@@ -125,6 +126,18 @@ test('P1-1 cold-start: horizontal bar stays near ball after first-ever expand at
   const posState = await win.evaluate(() => window.openPenApi?.getPositioningState?.());
   expect(posState).not.toBeNull();
   const ballViewportX = posState.ballScreenPos.x - wa.x;
+
+  // The ball can only stay right of 60% of the viewport when the bar, which
+  // extends from the ball, still fits to its right; otherwise the clamp moves
+  // the ball left by design.
+  const handleBox = await win.getByTestId('controlbar-drag-handle').boundingBox();
+  const { feasible, reason } = barAlignmentFeasibility({
+    ballCenter: { x: nearRightX - wa.x, y: midY - wa.y },
+    barBox,
+    handleBox,
+    viewport,
+  });
+  test.skip(!feasible, reason);
   expect(ballViewportX).toBeGreaterThan(viewport.width * 0.6);
 });
 

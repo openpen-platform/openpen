@@ -4,17 +4,14 @@ import { useCanvas } from '../composables/useCanvas';
 import HtmlOverlayLayer from '../components/HtmlOverlayLayer.vue';
 import NotificationLayer from '../components/NotificationLayer.vue';
 import CustomCursor from '../components/CustomCursor.vue';
-import { i18n } from '../i18n/index';
+import { notifyDrawingMode } from '../services/drawing-mode-notify';
 import {
   initNotificationService,
   cleanupNotificationService,
   pushNotification,
-  isHostNotifyEnabled,
 } from '../services/notification-service';
 
-// Inline SVG icons (stroke uses currentColor).
-const PEN_ICON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>'
-const STOP_ICON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+// Inline SVG icon (stroke uses currentColor).
 const WARN_ICON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
 
 const isDrawingMode = ref(false);
@@ -22,33 +19,10 @@ const { canvasRef } = useCanvas();
 let unsubDrawingMode: (() => void) | null = null;
 let unsubRenderBroken: (() => void) | null = null;
 
-function notifyDrawingMode(enabled: boolean): void {
-  if (!isHostNotifyEnabled()) return
-
-  const t = i18n.global.t
-
-  if (enabled) {
-    pushNotification(
-      {
-        message: t('drawingModeOn'),
-        description: t('drawingModeOnSub'),
-        icon: PEN_ICON_SVG,
-        variant: 'warning',
-      },
-      { source: 'host' },
-    )
-  } else {
-    pushNotification(
-      {
-        message: t('drawingModeOff'),
-        description: t('drawingModeOffSub'),
-        icon: STOP_ICON_SVG,
-        variant: 'default',
-      },
-      { source: 'host' },
-    )
-  }
-}
+// Where the control bar lives in its own window, that window shows the
+// drawing-mode toast above the bar. Only when the bar rides inside this overlay
+// (Wayland) does the overlay show it.
+const showsDrawingModeToast = new URLSearchParams(window.location.search).get('role') === 'overlay-bar';
 
 onMounted(() => {
   // Initialise notification service (reads settings and subscribes to updates).
@@ -56,7 +30,7 @@ onMounted(() => {
 
   unsubDrawingMode = window.openPenApi?.onDrawingModeChanged((enabled) => {
     isDrawingMode.value = enabled;
-    notifyDrawingMode(enabled);
+    if (showsDrawingModeToast) notifyDrawingMode(enabled);
   }) ?? null;
 
   unsubRenderBroken = window.openPenApi?.onTransparentRenderingBroken(() => {

@@ -54,6 +54,21 @@ const installedVersions = ref<Record<string, string>>({})
 const installedIds = computed(() => new Set(Object.keys(installedVersions.value)))
 const operationKind = ref<LocalInstallKind | 'install-from-catalog' | null>(null)
 
+// Community catalog: only fetched and listed while the user setting is on.
+const communityCatalog = ref<CatalogEntry[]>([])
+const communityEnabled = ref(false)
+const communityError = ref<string | null>(null)
+
+/** Official entries, plus community entries while the setting is on. */
+const listing = computed<CatalogEntry[]>(() =>
+  communityEnabled.value ? [...catalog.value, ...communityCatalog.value] : catalog.value,
+)
+
+/** True for an entry that came from the community catalog. */
+export function isCommunityEntry(entry: Pick<CatalogEntry, 'tier'>): boolean {
+  return entry.tier === 'community'
+}
+
 let unsubProgress: (() => void) | null = null
 
 function subscribeProgress() {
@@ -97,9 +112,75 @@ async function fetchCatalog() {
   } finally {
     loading.value = false
   }
+  // Community entries load after the official list is shown, so a slow
+  // community request never holds the official list in its loading state.
+  if (communityEnabled.value) await fetchCommunityCatalog()
 }
 
-async function installFromCatalog(id: string) {
+// Each request gets a number; only the newest one may write state, so a slow
+// stale response cannot overwrite a newer one after the setting is toggled.
+let communityRequestSeq = 0
+let communityInFlight: Promise<void> | null = null
+
+function fetchCommunityCatalog(): Promise<void> {
+  // Callers that overlap share one request.
+  if (communityInFlight) return communityInFlight
+  const seq = ++communityRequestSeq
+  const isCurrent = () => seq === communityRequestSeq && communityEnabled.value
+  communityError.value = null
+  communityInFlight = (async () => {
+    try {
+      const res = await window.openPenApi?.fetchCommunityPluginCatalog()
+      if (!isCurrent()) return
+      if (!res) { communityCatalog.value = []; communityError.value = 'No API available'; return }
+      if (!res.ok) { communityCatalog.value = []; communityError.value = res.error; return }
+      // Tag locally as well: the badge must not depend on the file's own flags.
+      communityCatalog.value = res.plugins.map((p) => ({ ...p, tier: 'community' as const, reviewed: false }))
+    } catch (err_) {
+      if (!isCurrent()) return
+      communityCatalog.value = []
+      communityError.value = err_ instanceof Error ? err_.message : 'Unknown error'
+    } finally {
+      if (seq === communityRequestSeq) communityInFlight = null
+    }
+  })()
+  return communityInFlight
+}
+
+/**
+ * Apply the user's "show community plugins" setting. Turning it off hides and
+ * drops the community entries at once; turning it on fetches them.
+ * Plugins already installed are not touched either way.
+ */
+async function setCommunityEnabled(enabled: boolean, fetchNow = true) {
+  if (communityEnabled.value === enabled) return
+  communityEnabled.value = enabled
+  // Invalidate any request still in flight for the previous state.
+  communityRequestSeq++
+  communityInFlight = null
+  if (!enabled) {
+    communityCatalog.value = []
+    communityError.value = null
+    return
+  }
+  if (fetchNow) await fetchCommunityCatalog()
+}
+
+/**
+ * Read the setting and follow later changes. Returns the unsubscribe function.
+ * Pass `fetchNow: false` when a full catalog fetch follows right away, which
+ * loads the community entries itself.
+ */
+async function watchCommunitySetting(opts: { fetchNow?: boolean } = {}): Promise<() => void> {
+  const settings = await window.openPenApi?.getSettings?.()
+  await setCommunityEnabled(settings?.showCommunityPlugins === true, opts.fetchNow ?? true)
+  const unsub = window.openPenApi?.onSettingsUpdated?.((s) => {
+    void setCommunityEnabled(s.showCommunityPlugins === true)
+  })
+  return () => unsub?.()
+}
+
+async function installFromCatalog(id: string, opts: { community?: boolean } = {}) {
   installingId.value = id
   installStage.value = 'downloading'
   installPercent.value = 0
@@ -107,7 +188,9 @@ async function installFromCatalog(id: string) {
   operationKind.value = 'install-from-catalog'
   subscribeProgress()
   try {
-    const res = await window.openPenApi?.installPlugin(id)
+    const res = opts.community
+      ? await window.openPenApi?.installCommunityPlugin(id)
+      : await window.openPenApi?.installPlugin(id)
     if (!res) { installStage.value = 'failed'; installError.value = 'No API available'; return }
     if (!res.ok) { installStage.value = 'failed'; installError.value = res.error; return }
     installStage.value = 'completed'
@@ -223,6 +306,11 @@ function resetInstallState() {
 /** Internal — clear all module-level state. Used by tests only. */
 export function resetMarketplaceForTest(): void {
   catalog.value = []
+  communityCatalog.value = []
+  communityEnabled.value = false
+  communityError.value = null
+  communityRequestSeq++
+  communityInFlight = null
   loading.value = false
   error.value = null
   installedVersions.value = {}
@@ -233,7 +321,12 @@ export function resetMarketplaceForTest(): void {
 }
 
 export interface UsePluginMarketplaceReturn {
+  /** Official catalog only. */
   catalog: DeepReadonly<Ref<CatalogEntry[]>>
+  /** What the marketplace lists: official entries, plus community ones while the setting is on. */
+  listing: ComputedRef<readonly CatalogEntry[]>
+  communityEnabled: DeepReadonly<Ref<boolean>>
+  communityError: DeepReadonly<Ref<string | null>>
   loading: DeepReadonly<Ref<boolean>>
   error: DeepReadonly<Ref<string | null>>
   /** Id of the plugin currently being installed/updated, or null. */
@@ -250,7 +343,9 @@ export interface UsePluginMarketplaceReturn {
   /** Kind of the current or most recent local install operation. */
   operationKind: DeepReadonly<Ref<LocalInstallKind | 'install-from-catalog' | null>>
   fetchCatalog(): Promise<void>
-  installFromCatalog(id: string): Promise<void>
+  installFromCatalog(id: string, opts?: { community?: boolean }): Promise<void>
+  /** Read the community setting, follow changes, return the unsubscribe function. */
+  watchCommunitySetting(opts?: { fetchNow?: boolean }): Promise<() => void>
   removePlugin(id: string): Promise<{ ok: boolean; error?: string }>
   addFromLocal(sourcePath: string): Promise<{ ok: boolean; error?: string }>
   addFromGitHubRepo(repoUrl: string): Promise<{ ok: boolean; error?: string }>
@@ -262,6 +357,9 @@ export interface UsePluginMarketplaceReturn {
 export function usePluginMarketplace(): UsePluginMarketplaceReturn {
   return {
     catalog: readonly(catalog),
+    listing,
+    communityEnabled: readonly(communityEnabled),
+    communityError: readonly(communityError),
     loading: readonly(loading),
     error: readonly(error),
     installingId: readonly(installingId),
@@ -273,6 +371,7 @@ export function usePluginMarketplace(): UsePluginMarketplaceReturn {
     operationKind: readonly(operationKind),
     fetchCatalog,
     installFromCatalog,
+    watchCommunitySetting,
     removePlugin: removePluginFn,
     addFromLocal,
     addFromGitHubRepo,

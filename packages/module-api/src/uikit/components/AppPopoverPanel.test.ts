@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { h } from 'vue'
 import AppPopoverPanel from './AppPopoverPanel.vue'
 import AppPopoverRow from './AppPopoverRow.vue'
 
@@ -28,5 +29,43 @@ describe('AppPopoverRow', () => {
     const w = mount(AppPopoverRow, { slots: { default: '<i data-testid="ctl" />' } })
     expect(w.text()).toBe('')
     expect(w.find('[data-testid="ctl"]').exists()).toBe(true)
+  })
+})
+
+describe('AppPopoverPanel shared columns', () => {
+  it('keeps every labelled row as a direct child of the panel so the rows share its columns', () => {
+    const w = mount(AppPopoverPanel, {
+      slots: {
+        default: () => [
+          h(AppPopoverRow, { label: 'Radius' }, () => h('i', { class: 'ctl' })),
+          h(AppPopoverRow, { label: 'Dim level' }, () => h('i', { class: 'ctl' })),
+        ],
+      },
+    })
+    const rows = w.findAll('[data-testid="app-popover-row"]')
+    expect(rows).toHaveLength(2)
+    for (const row of rows) {
+      expect(row.element.parentElement).toBe(w.get('[data-testid="app-popover-panel"]').element)
+      expect(row.classes()).not.toContain('openpen-popover-row--bare')
+    }
+  })
+
+  it('keeps label, control and value as the first three children of a row, in that order', () => {
+    const w = mount(AppPopoverRow, {
+      props: { label: 'Radius' },
+      slots: { default: () => [h('i', { class: 'ctl' }), h('b', { class: 'val' }, '150px')] },
+    })
+    const kids = Array.from(w.get('[data-testid="app-popover-row"]').element.children)
+    expect(kids.map((k) => k.className.split(' ')[0])).toEqual(['openpen-popover-row-label', 'ctl', 'val'])
+  })
+
+  it('marks a row without a label as bare so it spans all columns', () => {
+    const w = mount(AppPopoverRow, { slots: { default: '<i class="ctl" />' } })
+    expect(w.get('[data-testid="app-popover-row"]').classes()).toContain('openpen-popover-row--bare')
+  })
+
+  it('does not mark a labelled row as bare', () => {
+    const w = mount(AppPopoverRow, { props: { label: 'Fill' }, slots: { default: '<i class="ctl" />' } })
+    expect(w.get('[data-testid="app-popover-row"]').classes()).not.toContain('openpen-popover-row--bare')
   })
 })

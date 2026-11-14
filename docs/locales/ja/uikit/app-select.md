@@ -3,7 +3,7 @@ title: AppSelect
 description: OpenPen のポップアップスタイルに合わせた単一選択ドロップダウンです。
 translationType: machine
 translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedAt: 2026-11-14T00:00:00Z
 language: ja
 ---
 
@@ -19,6 +19,7 @@ OpenPen のポップアップスタイルに合わせた単一選択ドロップ
 | `options` | `Array<{ value: string; label: string }>` | — (**必須**) | 選択可能なオプション |
 | `placeholder` | `string` | — (**必須**) | オプションが選択されていない場合に表示されます |
 | `disabled` | `boolean` | `false` | インタラクションを無効にします |
+| `ariaLabel` | `string` | — | トリガーボタンのアクセシブルな名前。セレクトに見えるラベルがないときに渡します。渡さないとスクリーンリーダーは現在の値しか読み上げません。`vue-tsc` の strict templates で型チェックされるテンプレート（`openpen-build --check` が使う設定）では `ariaLabel` と書いてください。 |
 
 ## イベント
 
@@ -41,6 +42,6 @@ const options = [
 </script>
 
 <template>
-  <AppSelect v-model="lang" :options="options" placeholder="Pick a language" />
+  <AppSelect v-model="lang" :options="options" placeholder="Pick a language" ariaLabel="Language" />
 </template>
 ```

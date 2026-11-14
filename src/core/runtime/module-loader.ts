@@ -328,7 +328,7 @@ function registerContributions(module: OpenPenModule, isBuiltin: boolean): void 
       const namespacedId = `${module.id}/${s.id}`
       const scope: 'global' | 'drawing' = s.scope === 'drawing' ? 'drawing' : 'global'
       shortcutHandlers.set(namespacedId, { handler: s.handler, scope })
-      window.openPenApi?.registerShortcut(namespacedId, s.keys)
+      window.openPenApi?.registerShortcut(namespacedId, s.keys, scope)
     }
   }
 }

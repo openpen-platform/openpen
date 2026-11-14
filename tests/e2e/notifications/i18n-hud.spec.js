@@ -11,20 +11,15 @@ import { launchElectronApp } from '../launch.js';
 // Helper
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function getOverlayWin(app) {
-  await new Promise(r => setTimeout(r, 1000));
-  const wins = app.windows();
-  for (const w of wins) {
-    if (w.url().includes('window=overlay')) return w;
-  }
-  const w = await app.waitForEvent('window');
-  await w.waitForLoadState('domcontentloaded');
-  return w;
+// The control-bar (main) window's renderer pushes the drawing-mode toast.
+async function getMainWin(app) {
+  const win = await app.firstWindow();
+  await win.waitForLoadState('domcontentloaded');
+  return win;
 }
 
 async function toggleDrawingModeOn(app) {
-  const mainWin = await app.firstWindow();
-  await mainWin.waitForLoadState('domcontentloaded');
+  const mainWin = await getMainWin(app);
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
 }
 
@@ -41,19 +36,19 @@ test('zh-Hant locale → drawing mode ON → HUD message is「進入繪圖模式
   const app = await launchElectronApp({ seedConfig: { language: 'zh-Hant' } });
 
   try {
-    const overlayWin = await getOverlayWin(app);
-    await overlayWin.waitForTimeout(800);
+    const mainWin = await getMainWin(app);
+    await mainWin.waitForTimeout(800);
 
     // Verify debug handle is available.
-    const debugExists = await overlayWin.evaluate(() =>
+    const debugExists = await mainWin.evaluate(() =>
       typeof window.__OPENPEN_DEBUG__?.notifications?.recent === 'function'
     );
     expect(debugExists).toBe(true);
 
     await toggleDrawingModeOn(app);
-    await overlayWin.waitForTimeout(400);
+    await mainWin.waitForTimeout(400);
 
-    const recent = await overlayWin.evaluate(() =>
+    const recent = await mainWin.evaluate(() =>
       window.__OPENPEN_DEBUG__?.notifications?.recent() ?? []
     );
 
@@ -70,13 +65,13 @@ test('en locale → drawing mode ON → HUD message is "Drawing Mode ON"', async
   const app = await launchElectronApp({ seedConfig: { language: 'en' } });
 
   try {
-    const overlayWin = await getOverlayWin(app);
-    await overlayWin.waitForTimeout(800);
+    const mainWin = await getMainWin(app);
+    await mainWin.waitForTimeout(800);
 
     await toggleDrawingModeOn(app);
-    await overlayWin.waitForTimeout(400);
+    await mainWin.waitForTimeout(400);
 
-    const recent = await overlayWin.evaluate(() =>
+    const recent = await mainWin.evaluate(() =>
       window.__OPENPEN_DEBUG__?.notifications?.recent() ?? []
     );
 

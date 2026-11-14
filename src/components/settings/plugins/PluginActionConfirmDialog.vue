@@ -27,7 +27,7 @@ const onUnmountAutoFocus = useDialogFocusReturn(() => props.open)
   <Teleport to="body">
     <div v-if="open" class="ac-overlay" @click.self="emit('update:open', false)">
       <FocusScope as-child trapped loop @unmount-auto-focus="onUnmountAutoFocus">
-        <div role="dialog" aria-modal="true" aria-labelledby="ac-dialog-title" tabindex="-1" class="ac-modal mp-detail-modal">
+        <div role="dialog" aria-modal="true" aria-labelledby="ac-dialog-title" tabindex="-1" class="ac-modal mp-detail-modal" data-testid="plugin-action-confirm-dialog">
         <!-- Header -->
         <div class="ac-title" id="ac-dialog-title">
           <!-- Warning triangle: amber for neutral (reinstall), red for danger (downgrade) -->
@@ -52,6 +52,7 @@ const onUnmountAutoFocus = useDialogFocusReturn(() => props.open)
           <button class="cw-btn cw-btn-cancel" @click="emit('update:open', false)">{{ t('cancel') }}</button>
           <button
             :class="severity === 'danger' ? 'mp-danger-btn' : 'cw-btn cw-btn-save'"
+            data-testid="plugin-action-confirm-btn"
             @click="emit('confirm')"
           >{{ confirmLabel }}</button>
         </div>

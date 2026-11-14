@@ -11,6 +11,7 @@
 import { test, expect } from '@playwright/test';
 import { attachElectronErrorDetection } from '../electron-errors.js';
 import { launchElectronApp } from '../launch.js';
+import { barAlignmentFeasibility } from './screen-feasibility.js';
 
 let electronApp;
 
@@ -147,6 +148,15 @@ async function assertDragHandleAlignedToBall(win, axis) {
   expect(handleBox).not.toBeNull();
   const handleCenterX = handleBox.x + handleBox.width / 2;
   const handleCenterY = handleBox.y + handleBox.height / 2;
+
+  const viewport = await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
+  const { feasible, reason } = barAlignmentFeasibility({
+    ballCenter: { x: ballCenterX, y: ballCenterY },
+    barBox: await bar.boundingBox(),
+    handleBox,
+    viewport,
+  });
+  test.skip(!feasible, reason);
 
   if (axis === 'x') {
     // Horizontal bar: X axes must align within 1 px.

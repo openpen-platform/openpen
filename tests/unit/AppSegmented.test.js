@@ -73,4 +73,41 @@ describe('AppSegmented', () => {
     });
     expect(wrapper.find('[data-testid="icon-light"]').exists()).toBe(true);
   });
+
+  it('shows only the icon for an icon-only option and keeps its label as the accessible name', () => {
+    const opts = [
+      { value: 'a', label: 'Solid head', icon: '<svg data-testid="icon-a"></svg>', iconOnly: true, testid: 'opt-a' },
+      { value: 'b', label: 'Open head', icon: '<svg data-testid="icon-b"></svg>', iconOnly: true, testid: 'opt-b' },
+    ];
+    const wrapper = mount(AppSegmented, { props: { modelValue: 'a', options: opts } });
+    const btn = wrapper.find('[data-testid="opt-a"]');
+    expect(btn.attributes('aria-label')).toBe('Solid head');
+    expect(btn.text()).toBe('');
+    expect(wrapper.find('[data-testid="icon-a"]').exists()).toBe(true);
+  });
+
+  it('keeps visible text on options that are not icon-only', () => {
+    const wrapper = mount(AppSegmented, {
+      props: { modelValue: 'slider', options: OPTIONS },
+    });
+    expect(wrapper.findAll('button')[0].attributes('aria-label')).toBeUndefined();
+    expect(wrapper.findAll('button')[0].text()).toBe('Slider');
+  });
+
+  it('names the whole group with the aria-label prop', () => {
+    const wrapper = mount(AppSegmented, {
+      props: { modelValue: 'slider', options: OPTIONS, ariaLabel: 'Head style' },
+    });
+    expect(wrapper.find('[data-testid="app-seg"]').attributes('aria-label')).toBe('Head style');
+  });
+
+  it('still selects an icon-only option on click', async () => {
+    const opts = [
+      { value: 'a', label: 'A', icon: '<svg></svg>', iconOnly: true, testid: 'opt-a' },
+      { value: 'b', label: 'B', icon: '<svg></svg>', iconOnly: true, testid: 'opt-b' },
+    ];
+    const wrapper = mount(AppSegmented, { props: { modelValue: 'a', options: opts } });
+    await wrapper.find('[data-testid="opt-b"]').trigger('click');
+    expect(wrapper.emitted('update:modelValue')[0]).toEqual(['b']);
+  });
 });

@@ -58,7 +58,7 @@ async function openSettings(electronApp, mainWin) {
   const settingsWin = await winPromise;
   await settingsWin.waitForLoadState('domcontentloaded');
   await settingsWin.waitForSelector('[data-testid="settings-window"]', { timeout: 10000 });
-  await settingsWin.waitForSelector('[data-testid^="settings-color-chip-"][aria-pressed="true"]', { timeout: 8000 });
+  await settingsWin.waitForSelector('[data-testid^="settings-color-chip-"][aria-checked="true"]', { timeout: 8000 });
   return settingsWin;
 }
 

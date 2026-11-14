@@ -411,6 +411,10 @@ function readConfig() {
       } else {
         merged.disabledModules = merged.disabledModules.filter((v) => typeof v === 'string');
       }
+      // Coerce showCommunityPlugins: anything other than a boolean means off.
+      if (typeof merged.showCommunityPlugins !== 'boolean') {
+        merged.showCommunityPlugins = false;
+      }
       // Coerce pluginIdConflictResolutions: must be Record<string, string>; fall back to {}.
       if (
         !merged.pluginIdConflictResolutions ||

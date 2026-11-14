@@ -15,7 +15,7 @@ Import path:
 import {
   AppButton, AppButtonDropdown,
   AppPopover, AppPopoverPanel, AppPopoverRow, AppDialog,
-  AppSlider, AppToggle, AppSegmented,
+  AppSlider, AppToggle, AppToggleButton, AppSegmented, AppSwatchPicker,
   AppSelect, AppTooltip, AppTabs,
   AppBanner,
   useDialog, useDialogPluginComponent,
@@ -80,7 +80,9 @@ headless library" below).
 | [`useDialog`](./use-dialog) | Wrapper | Imperative Promise-based dialog API |
 | [`AppSlider`](./app-slider) | Wrapper | Numeric range input |
 | [`AppToggle`](./app-toggle) | Wrapper | Boolean on/off switch |
+| [`AppToggleButton`](./app-toggle-button) | Wrapper | Two-state button (pressed / unpressed), e.g. bold and italic |
 | [`AppSegmented`](./app-segmented) | Wrapper | Mutually-exclusive segmented control |
+| [`AppSwatchPicker`](./app-swatch-picker) | Wrapper | Single-select colour swatches |
 | [`AppSelect`](./app-select) | Wrapper | Single-select dropdown picker |
 | [`AppTooltip`](./app-tooltip) | Wrapper | Hover hint label |
 | [`AppTabs`](./app-tabs) | Wrapper | Controlled tabbed-content container |

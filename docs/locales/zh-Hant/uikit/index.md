@@ -17,7 +17,7 @@ Import 路徑：
 import {
   AppButton, AppButtonDropdown,
   AppPopover, AppPopoverPanel, AppPopoverRow, AppDialog,
-  AppSlider, AppToggle, AppSegmented,
+  AppSlider, AppToggle, AppToggleButton, AppSegmented, AppSwatchPicker,
   AppSelect, AppTooltip, AppTabs,
   AppBanner,
   useDialog, useDialogPluginComponent,
@@ -64,7 +64,9 @@ Plugin **MUST NOT** 在自己的 `package.json` 中安裝 `reka-ui`，也不得�
 | [`useDialog`](./use-dialog) | 封裝層 | 命令式 Promise 型 dialog API |
 | [`AppSlider`](./app-slider) | 封裝層 | 數值範圍輸入 |
 | [`AppToggle`](./app-toggle) | 封裝層 | 布林開關 |
+| [`AppToggleButton`](./app-toggle-button) | 封裝層 | 雙狀態按鈕（按下／未按下），如粗體、斜體 |
 | [`AppSegmented`](./app-segmented) | 封裝層 | 互斥分段控制項 |
+| [`AppSwatchPicker`](./app-swatch-picker) | 封裝層 | 單選顏色色塊 |
 | [`AppSelect`](./app-select) | 封裝層 | 單選下拉選擇器 |
 | [`AppTooltip`](./app-tooltip) | 封裝層 | 懸停提示標籤 |
 | [`AppTabs`](./app-tabs) | 封裝層 | 受控標籤頁內容容器 |
