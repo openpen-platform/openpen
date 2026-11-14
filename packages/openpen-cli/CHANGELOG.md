@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.1](https://github.com/openpen-platform/openpen/compare/openpen-cli@1.2.0...openpen-cli@1.2.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* **cli:** point new plugin authors at the local install flow ([77bdf3d](https://github.com/openpen-platform/openpen/commit/77bdf3d35c0e980ef94bb9eda49f8003bd5562a5))
+* **cli:** ship license and gitignore with scaffolded plugin projects ([#128](https://github.com/openpen-platform/openpen/issues/128)) ([94f4f7d](https://github.com/openpen-platform/openpen/commit/94f4f7d8691d24d3aad6a43a968d06bbe05a126d))
+* **cli:** teach one command name and describe the plugin catalog ([c860428](https://github.com/openpen-platform/openpen/commit/c860428bc67ec45820140276bb8b273f1b6d910b))
+
 ## [1.2.0](https://github.com/openpen-platform/openpen/compare/v1.1.0...openpen-cli@1.2.0) (2026-06-11)
 
 
