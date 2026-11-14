@@ -31,4 +31,19 @@ describe('popover panel contract', () => {
     expect(rule![1]).toContain('box-shadow: var(--openpen-shadow-sm);')
     expect(vue).toMatch(/\.openpen-popover-content \{[^}]*box-shadow: var\(--openpen-shadow\);/)
   })
+
+  // jsdom does no layout, so the shared-column contract is checked on the SFC styles.
+  it('declares the shared label / control / (optional) value columns and joins them from each row with subgrid', () => {
+    const panel = read('./AppPopoverPanel.vue')
+    const row = read('./AppPopoverRow.vue')
+    expect(panel).toMatch(/grid-template-columns:\s*auto\s+minmax\(140px,\s*1fr\)\s+auto/)
+    expect(row).toMatch(/grid-template-columns:\s*subgrid/)
+    expect(row).toMatch(/grid-column:\s*1\s*\/\s*-1/)
+  })
+
+  it('keeps the stacked layout spacing: 10px between rows and 6px below the title', () => {
+    const panel = read('./AppPopoverPanel.vue')
+    expect(panel).toMatch(/row-gap:\s*10px/)
+    expect(panel).toMatch(/\.openpen-popover-title \{[^}]*margin-bottom:\s*6px/)
+  })
 })
