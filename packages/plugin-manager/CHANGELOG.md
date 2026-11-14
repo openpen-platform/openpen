@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2](https://github.com/openpen-platform/openpen/compare/v1.1.1...plugin-manager@1.1.2) (2026-11-14)
+
+
+### Bug Fixes
+
+* **cli:** teach one command name and describe the plugin catalog ([c860428](https://github.com/openpen-platform/openpen/commit/c860428bc67ec45820140276bb8b273f1b6d910b))
+* **plugin:** remove empty scope directory after uninstalling a plugin ([624e75b](https://github.com/openpen-platform/openpen/commit/624e75bb310a1a38f0dcfbfab5923f89dfdfb087))
+
 ## [1.1.1](https://github.com/openpen-platform/openpen/compare/v1.1.0...v1.1.1) (2026-05-19)
 
 
