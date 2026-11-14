@@ -298,7 +298,7 @@ interface OpenPenApi {
   getModuleManifests(): Promise<ModuleManifest[]>
   onLifecycleEvent(cb: (event: 'quit' | 'suspend' | 'ready') => void): () => void
   moduleCall(moduleId: string, action: string, payload: unknown): Promise<unknown>
-  registerShortcut(id: string, keys: string): void
+  registerShortcut(id: string, keys: string, scope?: 'global' | 'drawing'): void
   unregisterShortcut(id: string): void
   onShortcutTriggered(cb: (payload: { id: string }) => void): () => void
   /** Persist plugin id collision resolutions, then relaunch. */

@@ -41,6 +41,7 @@
 import { test, expect } from '@playwright/test';
 import { attachElectronErrorDetection } from '../electron-errors.js';
 import { launchElectronApp } from '../launch.js';
+import { barAlignmentFeasibility, skipIfPopupCannotFit } from './screen-feasibility.js';
 
 const BALL_HALF = 26;
 
@@ -381,6 +382,7 @@ test.describe('C2: color picker popup must be in viewport and on correct axis', 
           await colorBtn.click();
           await win.waitForTimeout(300);
 
+          await skipIfPopupCannotFit(win, test);
           await assertPopupInViewportAndAxis(win, isVerticalBar);
 
           await win.keyboard.press('Escape');
@@ -564,6 +566,14 @@ test.describe('I5: drag handle center must equal ball center at all snap positio
       expect(handleBox).not.toBeNull();
       const handleCX = handleBox.x + handleBox.width / 2;
       const handleCY = handleBox.y + handleBox.height / 2;
+
+      const { feasible, reason } = barAlignmentFeasibility({
+        ballCenter: { x: ballCX, y: ballCY },
+        barBox: await win.getByTestId('control-bar').boundingBox(),
+        handleBox,
+        viewport: await win.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight })),
+      });
+      test.skip(!feasible, reason);
 
       // I5 invariant: drag handle center aligns with ball center.
       // vbar-left and vbar-right apply a deliberate ±8px horizontal translate so the bar

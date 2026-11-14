@@ -157,7 +157,7 @@ export const shortcutSetSchema = z.object({ id, accelerator });
 
 export const shortcutIdSchema = z.object({ id });
 
-export const moduleShortcutRegisterSchema = z.object({ id, keys: accelerator });
+export const moduleShortcutRegisterSchema = z.object({ id, keys: accelerator, scope: z.enum(['global', 'drawing']).optional() });
 
 // ── Plugin marketplace ───────────────────────────────────────────────────────
 

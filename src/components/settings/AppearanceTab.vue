@@ -214,6 +214,10 @@ function setTheme(theme: string) {
   outline: none;
 }
 .color-chip:hover { transform: scale(1.12); }
+.color-chip:focus-visible {
+  outline: 2px solid var(--accent, #818CF8);
+  outline-offset: 2px;
+}
 .color-chip.selected { border-color: rgba(255, 255, 255, 0.65); }
 
 /* Opacity slider */
@@ -248,5 +252,9 @@ function setTheme(theme: string) {
   flex-shrink: 0;
 }
 .cw-select:hover { border-color: var(--accent); }
+.cw-select:focus-visible {
+  outline: 2px solid var(--accent, #818CF8);
+  outline-offset: 2px;
+}
 .cw-select option { background: var(--select-option-bg); }
 </style>

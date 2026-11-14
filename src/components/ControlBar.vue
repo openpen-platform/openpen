@@ -14,6 +14,7 @@ import { getSlotEntries } from '../core/runtime/contribution-store';
 import type { ControlBarContribution } from '@openpen/module-api';
 import { BUILT_IN_MODULES } from '../core/modules/registry';
 import { reconcileLayoutGroups } from './control-bar-reconcile';
+import { createBarLayoutSwapper } from './control-bar-orientation-transition';
 import { on as eventBusOn, emit as eventBusEmit } from '../core/runtime/event-bus';
 import { useDialog } from '@openpen/module-api/uikit';
 import { formatAccelerator, type Platform } from '../utils/format-accelerator';
@@ -178,7 +179,7 @@ const {
 // fall back to the engine's broadcast state (covers initial persisted snap on boot).
 const activeSnapEdge = computed(() => snapEdge.value ?? engineSnapEdge.value);
 
-const effectiveBarLayout = computed<BarLayoutClass>(() => {
+const targetBarLayout = computed<BarLayoutClass>(() => {
   // Wayland panel: always horizontal. Snap-to-edge / vertical layouts assume a
   // draggable ball that can rest against an edge, but the Wayland ball is pinned
   // in place, so there is no snap state to honour.
@@ -192,6 +193,23 @@ const effectiveBarLayout = computed<BarLayoutClass>(() => {
   }
   if (barLayout.value === 'vertical') return 'vbar-free';
   return 'horizontal';
+});
+
+// Rendered layout. Trails targetBarLayout so that an orientation change on an
+// expanded bar can run inside a same-document view transition: the old DOM is
+// captured first, then the layout is swapped in the update callback.
+const effectiveBarLayout = ref<BarLayoutClass>(targetBarLayout.value);
+const swapBarLayout = createBarLayoutSwapper(document);
+watch(targetBarLayout, (next, prev) => {
+  swapBarLayout({
+    prev,
+    next,
+    expanded: isExpanded.value,
+    apply: async () => {
+      effectiveBarLayout.value = next;
+      await nextTick();
+    },
+  });
 });
 
 // Keep barLayoutClassRef in sync so useDragSnap's timer reads the correct value.
@@ -306,6 +324,7 @@ const activeToolId = ref<string>('freehand');
 provide(ACTIVE_TOOL_KEY, readonly(activeToolId));
 let unsubToolChanged: (() => void) | null = null;
 let unsubToolRelay: (() => void) | null = null;
+let unsubStyleRelay: (() => void) | null = null;
 
 /** Ball shape during edge-snap interactions — avoids visual glitches mid-drag. */
 const ballEdgeClass = computed(() => {
@@ -615,6 +634,11 @@ onMounted(async () => {
     unsubToolRelay = window.openPenApi?.onToolConfigChanged?.((config) => {
       if (config?.tool) eventBusEmit('tool-changed', config);
     }) ?? null;
+    // Same for the stroke color: a color shortcut handled in the overlay reaches
+    // this bar over IPC and is republished so the swatch follows.
+    unsubStyleRelay = window.openPenApi?.onStrokeStyleChanged?.((style) => {
+      eventBusEmit('stroke-style-changed', style);
+    }) ?? null;
   }
 
   const initialSettings = await window.openPenApi?.getSettings();
@@ -713,6 +737,8 @@ onUnmounted(() => {
   unsubToolChanged = null;
   unsubToolRelay?.();
   unsubToolRelay = null;
+  unsubStyleRelay?.();
+  unsubStyleRelay = null;
   unsubDrawingMode?.();
   unsubDrawingMode = null;
   unsubRequestQuit?.();
@@ -947,3 +973,44 @@ onUnmounted(() => {
 </template>
 
 <style src="./ControlBar.css" scoped></style>
+
+<style>
+/* Orientation swap on an expanded bar (horizontal <-> vertical), run as a
+   same-document view transition while <html> has .cb-orient-vt. The old and
+   new bars get different transition names, so there is no shape in between:
+   the old bar fades out in place, then the new bar fades in and scales up from
+   92% (Material fade through: 300ms, the first 30% for the exit). */
+html.cb-orient-vt {
+  view-transition-name: none;
+}
+html.cb-orient-vt .control-bar:not(.is-vertical) {
+  view-transition-name: cb-bar-h;
+}
+html.cb-orient-vt .control-bar.is-vertical {
+  view-transition-name: cb-bar-v;
+}
+/* With backdrop-filter on, the fading snapshot shows a light rectangle at the
+   drag-handle end. The window is transparent, so the filter has no page
+   content to blur; turn it off for the duration of the swap. */
+html.cb-orient-vt .control-bar {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+@keyframes cb-orient-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes cb-orient-fade-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+html.cb-orient-vt::view-transition-old(cb-bar-h),
+html.cb-orient-vt::view-transition-old(cb-bar-v) {
+  animation: cb-orient-fade-out 90ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+html.cb-orient-vt::view-transition-new(cb-bar-h),
+html.cb-orient-vt::view-transition-new(cb-bar-v) {
+  animation: cb-orient-fade-in 210ms cubic-bezier(0, 0, 0.2, 1) 90ms both;
+}
+</style>

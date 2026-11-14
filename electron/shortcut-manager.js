@@ -73,6 +73,20 @@ export function onShortcutsSuspendChange(cb) {
 /** @type {Map<string, () => void>} accelerator → handler */
 const acceleratorToHandler = new Map();
 
+/**
+ * Accelerators whose OS binding exists only while drawing mode is on
+ * (`scope: 'drawing'`). They stay in `acceleratorToHandler` so conflict
+ * detection sees them, but are bound to the OS only while `_drawingActive`.
+ * Outside drawing mode the key is never grabbed and reaches the focused app.
+ * @type {Set<string>}
+ */
+const _drawingScoped = new Set();
+
+/** @type {Map<string, 'global' | 'drawing'>} namespacedId to scope of a module shortcut */
+const _idScope = new Map();
+
+let _drawingActive = false;
+
 /** @type {Map<string, string>} shortcutId → accelerator (module shortcuts only) */
 const idToAccelerator = new Map();
 
@@ -176,10 +190,13 @@ export function initShortcutManager({
 
   // Module IPC bridge: renderer-side modules register their accelerators
   // dynamically via system.shortcuts contributions.
-  onValidated(ipcMain, MODULE.REGISTER_SHORTCUT, moduleShortcutRegisterSchema, (event, { id, keys }) => {
+  onValidated(ipcMain, MODULE.REGISTER_SHORTCUT, moduleShortcutRegisterSchema, (event, { id, keys, scope }) => {
     // No delivery path on this desktop: the shortcut cannot work, so nothing is registered.
     if (_pluginBackend === 'none') return;
     if (_pluginBackend === 'gnome-desktop' && !_desktopBindingsAllowed) return;
+    // Desktop keybindings are always on, so a drawing-scoped key could not be
+    // released outside drawing mode and would swallow the key in other apps.
+    if (scope === 'drawing' && _pluginBackend) return;
 
     _trackRegistrant(id, event?.sender);
     if (idToAccelerator.has(id) || moduleShortcutHandlers.has(id)) return;
@@ -190,6 +207,7 @@ export function initShortcutManager({
     const handler = () => triggerModuleShortcut(id);
     idDefaultKeys.set(id, keys);
     moduleShortcutHandlers.set(id, handler);
+    _idScope.set(id, scope === 'drawing' ? 'drawing' : 'global');
 
     if (_pluginBackend === 'gnome-desktop') {
       void _installPluginDesktopBinding(id, effectiveKeys).then((ok) => {
@@ -204,7 +222,7 @@ export function initShortcutManager({
       return;
     }
 
-    const ok = registerShortcut(effectiveKeys, handler);
+    const ok = registerShortcut(effectiveKeys, handler, { drawingOnly: scope === 'drawing' });
     if (ok) {
       idToAccelerator.set(id, effectiveKeys);
     } else {
@@ -258,8 +276,10 @@ function _releaseModuleShortcut(id) {
   } else if (accelerator) {
     globalShortcut.unregister(accelerator);
     acceleratorToHandler.delete(accelerator);
+    _drawingScoped.delete(accelerator);
   }
   idToAccelerator.delete(id);
+  _idScope.delete(id);
   idDefaultKeys.delete(id);
   moduleShortcutHandlers.delete(id);
   if (idConflicts.delete(id)) _broadcastConflicts();
@@ -363,11 +383,22 @@ function _registerIpcHandlers() {
  *
  * @param {string} accelerator e.g. `'CommandOrControl+Shift+A'`
  * @param {() => void} handler
+ * @param {{ drawingOnly?: boolean }} [options] `drawingOnly` binds the key to
+ *   the OS only while drawing mode is on; it is still reserved for conflict checks.
  * @returns {boolean} success
  */
-export function registerShortcut(accelerator, handler) {
+export function registerShortcut(accelerator, handler, { drawingOnly = false } = {}) {
   if (acceleratorToHandler.has(accelerator)) {
     console.warn(`[ShortcutManager] Accelerator already registered: ${accelerator}`);
+    return false;
+  }
+  if (drawingOnly) {
+    _drawingScoped.add(accelerator);
+    acceleratorToHandler.set(accelerator, handler);
+    if (!_drawingActive || _suspended) return true;
+    if (_bindDrawingAccelerator(accelerator, handler)) return true;
+    _drawingScoped.delete(accelerator);
+    acceleratorToHandler.delete(accelerator);
     return false;
   }
   let ok = false;
@@ -389,6 +420,52 @@ export function registerShortcut(accelerator, handler) {
     console.error(`[ShortcutManager] Failed to register accelerator (likely taken): ${accelerator}`);
   }
   return ok;
+}
+
+/**
+ * Bind one drawing-scoped accelerator to the OS. An unparseable or taken key
+ * returns false.
+ *
+ * @param {string} accelerator
+ * @param {() => void} handler
+ * @returns {boolean}
+ */
+function _bindDrawingAccelerator(accelerator, handler) {
+  try {
+    return globalShortcut.register(accelerator, handler);
+  } catch (err) {
+    console.error(`[ShortcutManager] Invalid accelerator "${accelerator}": ${err?.message}`);
+    return false;
+  }
+}
+
+/**
+ * Tell the manager whether drawing mode is on. Drawing-scoped shortcuts are
+ * grabbed from the OS on entry and released on exit, so outside drawing mode
+ * their keys go to the app underneath. A key the OS refuses on entry flags
+ * its shortcut id in the conflict list.
+ *
+ * @param {boolean} active
+ */
+export function setDrawingScopeActive(active) {
+  if (_drawingActive === active) return;
+  _drawingActive = active;
+  if (_suspended) return;
+  let conflictsChanged = false;
+  for (const accelerator of _drawingScoped) {
+    if (!active) {
+      globalShortcut.unregister(accelerator);
+      continue;
+    }
+    const handler = acceleratorToHandler.get(accelerator);
+    const ok = handler ? _bindDrawingAccelerator(accelerator, handler) : false;
+    for (const [id, accel] of idToAccelerator) {
+      if (accel !== accelerator) continue;
+      if (!ok && !idConflicts.has(id)) { idConflicts.add(id); conflictsChanged = true; }
+      if (ok && idConflicts.delete(id)) conflictsChanged = true;
+    }
+  }
+  if (conflictsChanged) _broadcastConflicts();
 }
 
 /**
@@ -454,7 +531,7 @@ function _updateModuleShortcut(namespacedId, newAccelerator) {
     });
   }
 
-  if (!registerShortcut(newAccelerator, handler)) {
+  if (!registerShortcut(newAccelerator, handler, { drawingOnly: _idScope.get(namespacedId) === 'drawing' })) {
     return {
       ok: false,
       error: `Failed to register "${newAccelerator}" — it may be taken by another shortcut or app`,
@@ -464,6 +541,7 @@ function _updateModuleShortcut(namespacedId, newAccelerator) {
   if (oldAccelerator && acceleratorToHandler.has(oldAccelerator)) {
     globalShortcut.unregister(oldAccelerator);
     acceleratorToHandler.delete(oldAccelerator);
+    _drawingScoped.delete(oldAccelerator);
   }
   idToAccelerator.set(namespacedId, newAccelerator);
   if (idConflicts.delete(namespacedId)) _broadcastConflicts();
@@ -496,6 +574,7 @@ function _resumeShortcuts() {
   if (!_suspended) return;
   _suspended = false;
   for (const [accel, handler] of acceleratorToHandler) {
+    if (_drawingScoped.has(accel) && !_drawingActive) continue;
     globalShortcut.register(accel, handler);
   }
   if (_pluginBackend === 'gnome-desktop') {
@@ -524,6 +603,9 @@ function _broadcastConflicts() {
 export function unregisterAllShortcuts() {
   globalShortcut.unregisterAll();
   acceleratorToHandler.clear();
+  _drawingScoped.clear();
+  _idScope.clear();
+  _drawingActive = false;
   idToAccelerator.clear();
   idDefaultKeys.clear();
   moduleShortcutHandlers.clear();

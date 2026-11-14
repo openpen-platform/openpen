@@ -1,0 +1,20 @@
+{
+  "name": "Drawing Hotkeys",
+  "description": "Single-key shortcuts for switching tools and colors while drawing.",
+  "hotkeys": {
+    "tool-freehand": "Freehand",
+    "tool-line": "Line",
+    "tool-shape": "Shape",
+    "tool-highlighter": "Highlighter",
+    "tool-eraser": "Eraser",
+    "tool-stroke-eraser": "Stroke eraser",
+    "color-red": "Red",
+    "color-orange": "Orange",
+    "color-yellow": "Yellow",
+    "color-green": "Green",
+    "color-blue": "Blue",
+    "color-indigo": "Indigo",
+    "color-pink": "Pink",
+    "color-white": "White"
+  }
+}

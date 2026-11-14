@@ -5,6 +5,9 @@ import ModalStack from './components/ModalStack.vue';
 import PluginConflictDialog from './components/PluginConflictDialog.vue';
 import StatusBar from './components/StatusBar.vue';
 import OverlayView from './views/OverlayView.vue';
+import NotificationLayer from './components/NotificationLayer.vue';
+import { initNotificationService, cleanupNotificationService } from './services/notification-service';
+import { notifyDrawingMode } from './services/drawing-mode-notify';
 import SettingsView from './views/SettingsView.vue';
 import { setLanguage } from './i18n/index';
 import { initModuleRuntime, cleanupModuleRuntime, usePluginConflicts } from './core/runtime/bootstrap';
@@ -33,6 +36,12 @@ const isOverlayWindow = params.get('window') === 'overlay';
 // always-present main window and this is never set.
 const overlayHostsBar = isOverlayWindow && params.get('role') === 'overlay-bar';
 
+// The control-bar window shows the drawing-mode toast so it stacks above the bar
+// (the overlay sits below the bar window, which would cover the toast). The
+// Wayland panel is a small fixed window pinned top-left, so there the overlay
+// keeps showing it.
+const hostsDrawingModeToast = !isOverlayWindow && !isSettingsWindow && params.get('role') !== 'panel';
+
 /**
  * Display id this renderer instance belongs to, parsed from the URL query string.
  * -1 means "unknown / primary display" (settings window or legacy launch without query param).
@@ -49,6 +58,7 @@ const isActiveDisplay = computed(() =>
 );
 
 let unsubSettings: (() => void) | null = null;
+let unsubDrawingMode: (() => void) | null = null;
 
 function applyTheme(theme: string) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -101,6 +111,11 @@ onMounted(async () => {
 
   unsubSettings = window.openPenApi?.onSettingsUpdated(onSettingsUpdated) ?? null;
 
+  if (hostsDrawingModeToast) {
+    initNotificationService();
+    unsubDrawingMode = window.openPenApi?.onDrawingModeChanged((enabled) => notifyDrawingMode(enabled)) ?? null;
+  }
+
   const settings = await window.openPenApi?.getSettings();
   if (settings) onSettingsUpdated(settings);
 
@@ -111,6 +126,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   unsubSettings?.();
+  unsubDrawingMode?.();
+  if (hostsDrawingModeToast) cleanupNotificationService();
   cleanupModuleRuntime();
 });
 </script>
@@ -130,6 +147,7 @@ onUnmounted(() => {
     <ControlBar />
     <StatusBar />
     <ModalStack />
+    <NotificationLayer v-if="hostsDrawingModeToast" host-only data-capture-exclude />
   </div>
   <DialogHost />
   <PluginConflictDialog
