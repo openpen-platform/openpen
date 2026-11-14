@@ -12,10 +12,10 @@ How to build, install, and distribute an OpenPen plugin.
 ## Build
 
 ```bash
-npm run build    # outputs dist/renderer.js via @openpen/build (Rollup)
+npm run build    # outputs dist/renderer.js via @openpen/build (Vite)
 ```
 
-`@openpen/build` pre-configures Rollup to externalize `vue` and
+`@openpen/build` pre-configures Vite to externalize `vue` and
 `@openpen/module-api` — these are supplied at runtime by the host. Do not
 bundle them.
 
@@ -104,29 +104,41 @@ be listed:
    bundled into `renderer.js`; keep, edit or delete them. See the
    [quickstart](./plugin-quickstart.md) for the development loop.
 2. Make sure `plugin.json` has `id`, `name`, `version`, `description` and
-   `minAppVersion`. `version` must be semver, and the scope of `id` must be the name of
-   the GitHub account or organization that owns the repository, in lowercase
+   `minAppVersion`. Replace the scaffold's placeholder `description` ("A short
+   description of what your plugin does.") with a real one; it is the text shown for
+   your plugin in the list. `version` must be semver, and the scope of `id` must be the
+   name of the GitHub account or organization that owns the repository, in lowercase
    (`@alice/todo-app` for `github.com/alice/todo-app`). The scanner compares the scope
    with the repository owner only; it does not check which account you are logged in
    with, so for an organization it is enough that the repository lives under that
    organization. `create` compares the scope with your personal login and may print a
    warning for an organization scope; that does not block the community list. The
    `@openpen` scope and ids already in the official catalog are refused.
-3. Keep the repository public. Private, forked and archived repositories are skipped.
-   Before the first push, check that `.gitignore` excludes `node_modules/`, `dist/` and
-   `*.zip`, so build output and the packed zip stay out of the repository. If the
-   generated README has links that start with `../../docs`, replace them with full
-   URLs, because they only work inside the OpenPen repository. The `"private": true`
-   line in the scaffolded `package.json` only stops `npm publish`; it does not affect
-   releases or the scan.
+3. Put the project in a public GitHub repository. Run `git init`, then create the
+   repository under the account or organization named by the scope of your plugin id
+   (for `@alice/todo-app`, under `alice`) and push, for example
+   `gh repo create alice/todo-app --public --source . --push`. The repository name does
+   not have to match the plugin name; only the owner is compared with the scope.
+   Private, forked and archived repositories are skipped. Before the first commit, make
+   sure the project has a `.gitignore` that lists `node_modules/`, `dist/` and `*.zip`,
+   so build output and the packed zip stay out of the repository. The scaffold of older
+   CLI versions does not create this file; if it is missing, create it with those three
+   lines. If the generated README has links that start with `../../docs`, replace them
+   with full URLs on the documentation site, `https://openpen.pages.dev/docs/` (for
+   example `https://openpen.pages.dev/docs/guides/publishing`), because the relative
+   links only work inside the OpenPen repository. The `"private": true` line in the
+   scaffolded `package.json` only stops `npm publish`; it does not affect releases or
+   the scan.
 4. Run `npm run pack` in a scaffolded project (it runs `npx openpen-cli pack`), then
    create a GitHub Release for `v<version>` with the zip attached, for example
    `gh release create v<version> ./<scope>-<name>-<version>.zip`. The zip holds
    `plugin.json`, `dist/` and, if the folder exists, `locales/`. At the end `pack`
-   prints "Run: npx openpen-cli publish"; that step belongs to the official catalog
-   and you can skip it for the community list. The release must be published, not a
-   draft or a prerelease. The scanner uses the latest release and its first `.zip`
-   asset, which must have `plugin.json` at the zip root.
+   prints a hint to run `publish`; that step belongs to the official catalog and you can
+   skip it for the community list. Some older CLI versions print the hint as
+   `npx openpen publish`: the command name is always `npx openpen-cli`, because the
+   bare `openpen` package on npm is an unrelated tool. The release must be published,
+   not a draft or a prerelease. The scanner uses the latest release and its first
+   `.zip` asset, which must have `plugin.json` at the zip root.
 5. Add the `openpen-plugin` topic to the repository: on the repository page, the gear
    next to About, Topics; or with the GitHub CLI,
    `gh repo edit --add-topic openpen-plugin`.
