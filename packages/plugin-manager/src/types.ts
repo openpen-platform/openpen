@@ -49,3 +49,26 @@ export interface CatalogIndex {
   updatedAt?: string
   plugins: CatalogEntry[]
 }
+
+/** Which catalog a plugin was listed in. */
+export type CatalogTier = 'official' | 'community'
+
+/**
+ * A plugin entry in the community catalog (`community/plugins.json`).
+ * Same fields as the official entry, except `registeredAt` is replaced by
+ * `indexedAt`, and the tier and review flags are explicit.
+ */
+export interface CommunityCatalogEntry extends Omit<CatalogEntry, 'registeredAt' | 'state'> {
+  state: 'active'
+  tier: 'community'
+  reviewed: false
+  indexedAt: string
+  releasedAt: string
+}
+
+export interface CommunityCatalogIndex {
+  schemaVersion: 1
+  tier: 'community'
+  updatedAt?: string
+  plugins: CommunityCatalogEntry[]
+}

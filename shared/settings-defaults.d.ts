@@ -37,6 +37,8 @@ export interface AppSettings {
   strokeFadeSeconds: number
   /** Whether to check GitHub Releases for a newer version on launch. */
   autoCheckUpdate: boolean
+  /** Whether the marketplace also lists unreviewed community plugins. Off by default. */
+  showCommunityPlugins: boolean
   disabledModules: string[]
   /**
    * Plugin id collision resolutions chosen by the user.

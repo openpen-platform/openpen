@@ -385,6 +385,19 @@ export async function installFromCatalog(
     )
   }
 
+  return installVerifiedEntry(entry, opts)
+}
+
+/**
+ * Download an entry's release zip, verify its sha256 against the catalog,
+ * then extract, validate and copy it into the plugins directory.
+ */
+async function installVerifiedEntry(
+  entry: { id: string; releaseUrl: string; sha256: string },
+  opts?: InstallOptions,
+  requireManifestIdMatch = false,
+): Promise<PluginEntry> {
+  const id = entry.id
   // Download the zip to a temp file so we can verify sha256 before extracting.
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-'))
   try {
@@ -413,6 +426,12 @@ export async function installFromCatalog(
     await extractZip(zipPath, extractDir)
 
     const manifest = validateManifest(extractDir)
+    if (requireManifestIdMatch && manifest.id !== id) {
+      throw new Error(
+        `Plugin id mismatch: the catalog lists "${id}" but the package declares ` +
+        `${JSON.stringify(manifest.id)}. Not installed.`
+      )
+    }
     const pluginsDir = defaultPluginsDir(opts)
     fs.mkdirSync(pluginsDir, { recursive: true })
 
@@ -423,4 +442,34 @@ export async function installFromCatalog(
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true })
   }
+}
+
+/**
+ * Install a plugin by id from the community catalog.
+ *
+ * Community plugins are not reviewed. The entry is looked up only in the
+ * community catalog, and the download goes through the same sha256 check as
+ * an official install.
+ */
+export async function installFromCommunityCatalog(
+  id: string,
+  opts?: InstallOptions & { catalogUrl?: string },
+): Promise<PluginEntry> {
+  const { COMMUNITY_CATALOG_URL_DEFAULT } = await import('./config.js')
+  const { parseCommunityCatalog } = await import('./community.js')
+  const catalogUrl = opts?.catalogUrl ?? COMMUNITY_CATALOG_URL_DEFAULT
+
+  const res = await fetch(catalogUrl, {
+    headers: { 'User-Agent': 'openpen-cli' },
+    signal: opts?.signal,
+  })
+  if (!res.ok) {
+    throw new Error(`Failed to fetch community catalog from ${catalogUrl}: HTTP ${res.status}`)
+  }
+
+  const entry = parseCommunityCatalog(await res.json()).find((p) => p.id === id)
+  if (!entry) {
+    throw new Error(`Plugin "${id}" not found in the community catalog.`)
+  }
+  return installVerifiedEntry(entry, opts, true)
 }

@@ -87,6 +87,7 @@ const settingsValueSchemas = {
   strokeFadeEnabled: z.boolean(),
   strokeFadeSeconds: z.number().int().min(1).max(30),
   autoCheckUpdate: z.boolean(),
+  showCommunityPlugins: z.boolean(),
   disabledModules: z.array(id),
   pluginIdConflictResolutions: z.record(id, z.string().max(MAX_PATH_LENGTH)),
 };
@@ -162,6 +163,12 @@ export const moduleShortcutRegisterSchema = z.object({ id, keys: accelerator, sc
 // ── Plugin marketplace ───────────────────────────────────────────────────────
 
 export const pluginIdPayloadSchema = z.object({ id });
+
+/** Community installs must carry the user's confirmation of the unreviewed notice. */
+export const communityInstallPayloadSchema = z.object({
+  id,
+  acknowledgedUnreviewed: z.literal(true),
+});
 
 export const pluginSourcePathSchema = z.object({
   sourcePath: z.string().min(1).max(MAX_PATH_LENGTH),

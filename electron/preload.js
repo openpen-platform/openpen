@@ -257,6 +257,10 @@ contextBridge.exposeInMainWorld('openPenApi', {
   // ── Plugin marketplace ───────────────────────────────────────────────
   /** Fetch the catalog plugins.json from the main process. */
   fetchPluginCatalog: () => ipcRenderer.invoke('plugin:fetch-catalog'),
+  /** Fetch the community catalog (empty failure while the community setting is off). */
+  fetchCommunityPluginCatalog: () => ipcRenderer.invoke('plugin:fetch-community-catalog'),
+  /** Install a community plugin by id, after the user confirmed the unreviewed notice. */
+  installCommunityPlugin: (id) => ipcRenderer.invoke('plugin:install-community', { id, acknowledgedUnreviewed: true }),
   /** Install a plugin by id from the catalog. */
   installPlugin: (id) => ipcRenderer.invoke('plugin:install', { id }),
   /** Remove an installed plugin by id. */

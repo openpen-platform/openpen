@@ -169,6 +169,23 @@ const barLayoutOptions = computed(() => [
   </div>
 
   <div class="cw-section">
+    <div class="cw-section-title">{{ t('sectionMarketplace') }}</div>
+
+    <div class="cw-row">
+      <div>
+        <div class="cw-row-label">{{ t('showCommunityPlugins') }}</div>
+        <div class="cw-row-sub">{{ t('showCommunityPluginsSub') }}</div>
+      </div>
+      <AppToggle
+        :model-value="draft.showCommunityPlugins"
+        :aria-label="t('showCommunityPlugins')"
+        testid="settings-show-community-plugins"
+        @update:model-value="draft.showCommunityPlugins = $event"
+      />
+    </div>
+  </div>
+
+  <div class="cw-section">
     <div class="cw-section-title">{{ t('sectionUpdates') }}</div>
 
     <div class="cw-row">

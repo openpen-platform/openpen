@@ -99,6 +99,10 @@ interface CatalogEntry {
   forkOf?: string
   incompatible?: boolean
   category?: 'draw' | 'tool' | 'integration'
+  /** Which catalog listed it; absent on official entries. */
+  tier?: 'official' | 'community'
+  /** False on community entries: not reviewed by the marketplace maintainers. */
+  reviewed?: boolean
 }
 
 /** A locally installed plugin entry returned from plugin-manager operations. */
@@ -277,6 +281,8 @@ interface OpenPenApi {
 
   // Plugin marketplace
   fetchPluginCatalog(): Promise<{ ok: true; plugins: CatalogEntry[] } | { ok: false; error: string }>
+  fetchCommunityPluginCatalog(): Promise<{ ok: true; plugins: CatalogEntry[] } | { ok: false; error: string }>
+  installCommunityPlugin(id: string): Promise<{ ok: true; entry: PluginEntry } | { ok: false; error: string }>
   installPlugin(id: string): Promise<{ ok: true; entry: PluginEntry } | { ok: false; error: string }>
   removePlugin(id: string): Promise<{ ok: true } | { ok: false; error: string }>
   addPluginFromLocal(sourcePath: string): Promise<{ ok: true; entry: PluginEntry } | { ok: false; error: string }>

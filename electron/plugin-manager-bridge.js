@@ -13,6 +13,7 @@ import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
 import { handleValidated } from './ipc-validation.js'
 import {
   pluginIdPayloadSchema,
+  communityInstallPayloadSchema,
   pluginRepoUrlSchema,
   pluginSourcePathSchema,
 } from './ipc-payload-schemas.js'
@@ -22,11 +23,14 @@ import { PLUGIN } from './ipc-channels.js'
 import {
   inspectLocalSource,
   installFromCatalog,
+  installFromCommunityCatalog,
   installFromLocal,
   installFromGitHubRepo,
   removePlugin,
 } from '@openpen/plugin-manager'
 import { rescanPlugins } from './module-manifest-loader.js'
+import { getSetting } from './settings-store.js'
+import { loadCommunityPlugins, checkCommunityInstallAllowed } from './community-catalog.js'
 import { log } from './logger.js'
 import { registerMarketplaceLinkHandlers } from './marketplace-links.js'
 
@@ -44,6 +48,16 @@ import { registerMarketplaceLinkHandlers } from './marketplace-links.js'
  * @returns {Promise<import('@openpen/plugin-manager').CatalogEntry[]>}
  */
 function fetchCatalogJson(url) {
+  return fetchJson(url).then((index) => (Array.isArray(index?.plugins) ? index.plugins : []))
+}
+
+/**
+ * Fetch and parse a JSON document over HTTP(S).
+ *
+ * @param {string} url
+ * @returns {Promise<any>}
+ */
+function fetchJson(url) {
   const transport = url.startsWith('http://') ? http : https
   return new Promise((resolve, reject) => {
     const req = transport.get(
@@ -51,7 +65,7 @@ function fetchCatalogJson(url) {
       { headers: { 'User-Agent': 'openpen-marketplace', Accept: 'application/json' } },
       (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          resolve(fetchCatalogJson(res.headers.location))
+          resolve(fetchJson(res.headers.location))
           return
         }
         if (res.statusCode !== 200) {
@@ -62,8 +76,7 @@ function fetchCatalogJson(url) {
         res.on('data', (c) => chunks.push(c))
         res.on('end', () => {
           try {
-            const index = JSON.parse(Buffer.concat(chunks).toString('utf-8'))
-            resolve(Array.isArray(index?.plugins) ? index.plugins : [])
+            resolve(JSON.parse(Buffer.concat(chunks).toString('utf-8')))
           } catch (err) {
             reject(new Error(`Failed to parse catalog JSON: ${err.message}`))
           }
@@ -78,6 +91,17 @@ function fetchCatalogJson(url) {
 /** Failure value returned to the renderer when a marketplace payload is invalid. */
 const INVALID_RESULT = { onInvalid: () => ({ ok: false, error: 'Invalid payload' }) }
 
+/** Dependencies for the community gate: live setting value plus both catalog URLs. */
+async function communityDeps() {
+  const { CATALOG_URL_DEFAULT, COMMUNITY_CATALOG_URL_DEFAULT } = await import('@openpen/plugin-manager')
+  return {
+    isEnabled: () => getSetting('showCommunityPlugins') === true,
+    fetchJson,
+    officialUrl: process.env.OPENPEN_CATALOG_URL ?? CATALOG_URL_DEFAULT,
+    communityUrl: process.env.OPENPEN_COMMUNITY_CATALOG_URL ?? COMMUNITY_CATALOG_URL_DEFAULT,
+  }
+}
+
 export function initPluginManagerBridge() {
   // ── Fetch catalog ─────────────────────────────────────────────────────────
   ipcMain.handle(PLUGIN.FETCH_CATALOG, async () => {
@@ -91,6 +115,38 @@ export function initPluginManagerBridge() {
       return { ok: false, error: err?.message ?? 'Unknown error fetching catalog' }
     }
   })
+
+  // Fetch community catalog (only while the setting is on)
+  ipcMain.handle(PLUGIN.FETCH_COMMUNITY_CATALOG, async () => {
+    try {
+      return await loadCommunityPlugins(await communityDeps())
+    } catch (err) {
+      log.error('[PluginBridge] fetch-community-catalog failed:', err?.message)
+      return { ok: false, error: err?.message ?? 'Unknown error fetching community catalog' }
+    }
+  })
+
+  // Install from community catalog
+  handleValidated(ipcMain, PLUGIN.INSTALL_COMMUNITY, communityInstallPayloadSchema, async (event, { id }) => {
+    try {
+      const deps = await communityDeps()
+      const allowed = await checkCommunityInstallAllowed(deps, id)
+      if (!allowed.ok) return allowed
+      const entry = await installFromCommunityCatalog(id, {
+        catalogUrl: deps.communityUrl,
+        onProgress: (p) => {
+          if (!event.sender.isDestroyed()) {
+            event.sender.send(PLUGIN.INSTALL_PROGRESS, p)
+          }
+        },
+      })
+      await rescanPlugins()
+      return { ok: true, entry }
+    } catch (err) {
+      log.error(`[PluginBridge] install-community "${id}" failed:`, err?.message)
+      return { ok: false, error: err?.message ?? `Failed to install ${id}` }
+    }
+  }, INVALID_RESULT)
 
   // ── Install from catalog ──────────────────────────────────────────────────
   handleValidated(ipcMain, PLUGIN.INSTALL, pluginIdPayloadSchema, async (event, { id }) => {

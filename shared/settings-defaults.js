@@ -31,6 +31,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   strokeFadeEnabled: false,
   strokeFadeSeconds: 5,       // 1 ~ 30
   autoCheckUpdate: true,
+  showCommunityPlugins: false,
   disabledModules: /** @type {string[]} */ ([]),
   pluginIdConflictResolutions: /** @type {Record<string, string>} */ ({}),
 })
