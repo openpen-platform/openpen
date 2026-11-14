@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/openpen-platform/openpen/compare/build@1.1.1...build@1.2.0) (2026-11-14)
+
+
+### Features
+
+* **cli:** type-check Vue templates in the plugin check command ([#142](https://github.com/openpen-platform/openpen/issues/142)) ([cbb8f15](https://github.com/openpen-platform/openpen/commit/cbb8f158094172dba0686400d582a88ccb4070a1))
+
 ## [1.1.1](https://github.com/openpen-platform/openpen/compare/v1.1.0...build@1.1.1) (2026-06-12)
 
 
