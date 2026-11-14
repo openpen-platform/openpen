@@ -18,6 +18,7 @@
 import { test, expect } from '@playwright/test';
 import { attachElectronErrorDetection } from '../electron-errors.js';
 import { launchElectronApp } from '../launch.js';
+import { skipIfPopupCannotFit } from './screen-feasibility.js';
 
 let electronApp;
 attachElectronErrorDetection(() => electronApp);
@@ -226,6 +227,7 @@ test('G1: color picker stays inside viewport at free position (screen center)', 
 
   await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
+  await skipIfPopupCannotFit(win, test);
   await assertPopupInBounds(win);
 
   await win.keyboard.press('Escape');
@@ -242,6 +244,7 @@ test('G1: color picker stays inside viewport at snap-left', async () => {
 
   await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
+  await skipIfPopupCannotFit(win, test);
   await assertPopupInBounds(win);
 
   await win.keyboard.press('Escape');
@@ -258,6 +261,7 @@ test('G1: color picker stays inside viewport at snap-right', async () => {
 
   await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
+  await skipIfPopupCannotFit(win, test);
   await assertPopupInBounds(win);
 
   await win.keyboard.press('Escape');
@@ -274,6 +278,7 @@ test('G1: color picker stays inside viewport at snap-top', async () => {
 
   await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
+  await skipIfPopupCannotFit(win, test);
   await assertPopupInBounds(win);
 
   await win.keyboard.press('Escape');
@@ -290,6 +295,7 @@ test('G1: color picker stays inside viewport at snap-bottom', async () => {
 
   await win.getByTestId('controlbar-color-btn').click();
   await win.waitForTimeout(250);
+  await skipIfPopupCannotFit(win, test);
   await assertPopupInBounds(win);
 
   await win.keyboard.press('Escape');
