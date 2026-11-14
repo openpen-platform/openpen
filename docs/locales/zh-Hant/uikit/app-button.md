@@ -3,7 +3,7 @@ title: AppButton
 description: 符合 host 視覺設計的標準 36×36 控制列按鈕，內建 tooltip 支援。
 translationType: machine
 translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedAt: 2026-11-14T00:00:00Z
 language: zh-Hant
 ---
 
@@ -27,7 +27,7 @@ language: zh-Hant
 | `active` | `boolean` | `false` | 以強調色突顯按鈕（用於工具啟用狀態） |
 | `disabled` | `boolean` | `false` | 使按鈕內容變暗；保留滑鼠事件，讓 tooltip 仍可觸發 |
 | `tooltip` | `string` | — | 懸停時顯示於按鈕上方的簡短標籤 |
-| `aria-label` | `string` | — | 供螢幕閱讀器使用的無障礙名稱 |
+| `ariaLabel` | `string` | — | 供螢幕閱讀器使用的無障礙名稱。在由 `vue-tsc` 以嚴格模板檢查的模板中（`openpen-build --check` 即是），請寫成 `ariaLabel`。 |
 
 ## 插槽
 
@@ -55,7 +55,7 @@ const active = ref(false)
   <AppButton
     :active="active"
     tooltip="Toggle feature"
-    aria-label="Toggle feature"
+    ariaLabel="Toggle feature"
     @click="active = !active"
   >
     <!-- Inline SVG icon (stroke="currentColor" — colour tracks the token) -->

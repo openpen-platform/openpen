@@ -3,7 +3,7 @@ title: AppSelect
 description: 与 OpenPen 弹出层样式一致的单选下拉组件。
 translationType: machine
 translatedFrom: 8e4d741
-translatedAt: 2026-05-22T00:00:00Z
+translatedAt: 2026-11-14T00:00:00Z
 language: zh-Hans
 ---
 
@@ -19,6 +19,7 @@ language: zh-Hans
 | `options` | `Array<{ value: string; label: string }>` | — (**必填**) | 可选选项列表 |
 | `placeholder` | `string` | — (**必填**) | 未选中任何选项时显示的占位文本 |
 | `disabled` | `boolean` | `false` | 禁用交互 |
+| `ariaLabel` | `string` | — | 触发按钮的无障碍名称；选择器没有可见标签时请传入，否则屏幕阅读器只会朗读当前值。在由 `vue-tsc` 以严格模板检查的模板中（`openpen-build --check` 即是），请写成 `ariaLabel`。 |
 
 ## 事件
 
@@ -41,6 +42,6 @@ const options = [
 </script>
 
 <template>
-  <AppSelect v-model="lang" :options="options" placeholder="Pick a language" />
+  <AppSelect v-model="lang" :options="options" placeholder="Pick a language" ariaLabel="Language" />
 </template>
 ```
