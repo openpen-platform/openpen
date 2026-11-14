@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useEscapeLayer } from '../../../composables/useEscapeLayer'
+import { FocusScope } from 'reka-ui'
+import { useDialogFocusReturn } from '../../../composables/useDialogFocusReturn'
 
 const { t } = useI18n()
 
@@ -22,16 +24,18 @@ const emit = defineEmits<{
 }>()
 
 useEscapeLayer(() => props.open, () => emit('update:open', false))
+const onUnmountAutoFocus = useDialogFocusReturn(() => props.open)
 
 </script>
 
 <template>
   <Teleport to="body">
     <div v-if="open" class="puc-overlay" @click.self="emit('update:open', false)">
-      <div class="puc-modal mp-detail-modal">
+      <FocusScope as-child trapped loop @unmount-auto-focus="onUnmountAutoFocus">
+        <div role="dialog" aria-modal="true" aria-labelledby="puc-dialog-title" tabindex="-1" class="puc-modal mp-detail-modal">
         <div class="puc-header">
           <div>
-            <div class="puc-name">{{ displayName }}</div>
+            <div class="puc-name" id="puc-dialog-title">{{ displayName }}</div>
             <div class="puc-scope">{{ pluginId }}</div>
           </div>
           <button class="puc-close" :aria-label="t('close')" @click="emit('update:open', false)">
@@ -68,7 +72,8 @@ useEscapeLayer(() => props.open, () => emit('update:open', false))
             {{ t('pluginUpdateTo', { version: nextVersion }) }}
           </button>
         </div>
-      </div>
+        </div>
+      </FocusScope>
     </div>
   </Teleport>
 </template>

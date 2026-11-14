@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useEscapeLayer } from '../../../composables/useEscapeLayer'
+import { FocusScope } from 'reka-ui'
+import { useDialogFocusReturn } from '../../../composables/useDialogFocusReturn'
 
 const { t } = useI18n()
 
@@ -16,14 +18,16 @@ const emit = defineEmits<{
 }>()
 
 useEscapeLayer(() => props.open, () => emit('update:open', false))
+const onUnmountAutoFocus = useDialogFocusReturn(() => props.open)
 </script>
 
 <template>
   <Teleport to="body">
     <div v-if="open" class="rc-overlay" @click.self="emit('update:open', false)">
-      <div class="rc-modal mp-detail-modal">
+      <FocusScope as-child trapped loop @unmount-auto-focus="onUnmountAutoFocus">
+        <div role="dialog" aria-modal="true" aria-labelledby="rc-dialog-title" tabindex="-1" class="rc-modal mp-detail-modal">
         <!-- Header -->
-        <div class="rc-title">
+        <div class="rc-title" id="rc-dialog-title">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.5"
             stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
             <polyline points="3 6 5 6 21 6"/>
@@ -46,7 +50,8 @@ useEscapeLayer(() => props.open, () => emit('update:open', false))
           <button class="cw-btn cw-btn-cancel" @click="emit('update:open', false)">{{ t('cancel') }}</button>
           <button class="mp-danger-btn" @click="emit('confirm')">{{ t('pluginRemove') }}</button>
         </div>
-      </div>
+        </div>
+      </FocusScope>
     </div>
   </Teleport>
 </template>

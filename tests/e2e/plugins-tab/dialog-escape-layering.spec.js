@@ -7,9 +7,9 @@
  *      Escape closes only the "Add source" dialog, the second closes the
  *      detail dialog.
  *
- * The detail overlay covers the settings window, so the "Add source" button
- * behind it is reachable by keyboard only: the spec focuses it and presses
- * Enter, which is the same path as Tab + Enter.
+ * The detail dialog traps focus, so the "Add source" button behind it cannot be
+ * reached by mouse or keyboard. The spec dispatches the click directly to stack
+ * a second dialog on top of the first.
  *
  * The specs need at least one catalog card. When the catalog is unreachable
  * from the test machine the tests are skipped and say so.
@@ -92,9 +92,9 @@ test('Escape closes the detail dialog when it is the only layer', async () => {
 test('Escape closes only the dialog stacked above the detail dialog', async () => {
   const detail = await openDetailDialog();
 
-  // The overlay blocks the mouse, not the keyboard.
-  await settingsWin.getByTestId('plugins-add-source-btn').focus();
-  await settingsWin.keyboard.press('Enter');
+  // Neither the mouse nor the keyboard can reach the button behind the focus
+  // trap, so dispatch the click to stack a second dialog.
+  await settingsWin.getByTestId('plugins-add-source-btn').dispatchEvent('click');
   const addSourceTitle = settingsWin.getByTestId('modal-plugin-add-custom-title');
   await expect(addSourceTitle).toBeVisible();
   await expect(detail).toBeVisible();

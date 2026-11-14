@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEscapeLayer } from '../../../composables/useEscapeLayer'
+import { FocusScope } from 'reka-ui'
+import { useDialogFocusReturn } from '../../../composables/useDialogFocusReturn'
 import { AppBanner } from '@openpen/module-api/uikit'
 
 const { t } = useI18n()
@@ -30,6 +32,7 @@ const emit = defineEmits<{
 // Not dismissible with Escape (no overlay-click close either), but it still
 // has to keep the dialogs underneath it open.
 useEscapeLayer(() => props.open, null)
+const onUnmountAutoFocus = useDialogFocusReturn(() => props.open)
 
 const progressPercent = computed(() => {
   if (props.stage === 'downloading') return props.percent
@@ -88,8 +91,9 @@ const extractStatus = computed<StepStatus>(() => {
 <template>
   <Teleport to="body">
     <div v-if="open" class="pip-overlay">
-      <div class="pip-modal mp-progress-modal" data-testid="modal-plugin-install-progress-dialog" v-auto-animate>
-        <div class="pip-title">{{ titleText }}</div>
+      <FocusScope as-child trapped loop @unmount-auto-focus="onUnmountAutoFocus">
+        <div role="dialog" aria-modal="true" aria-labelledby="pip-dialog-title" tabindex="-1" class="pip-modal mp-progress-modal" data-testid="modal-plugin-install-progress-dialog" v-auto-animate>
+        <div class="pip-title" id="pip-dialog-title">{{ titleText }}</div>
         <div v-if="subtitleText" class="pip-version">{{ subtitleText }}</div>
 
         <!-- Progress bar -->
@@ -152,7 +156,8 @@ const extractStatus = computed<StepStatus>(() => {
             </button>
           </template>
         </div>
-      </div>
+        </div>
+      </FocusScope>
     </div>
   </Teleport>
 </template>

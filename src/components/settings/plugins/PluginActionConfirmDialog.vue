@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useEscapeLayer } from '../../../composables/useEscapeLayer'
+import { FocusScope } from 'reka-ui'
+import { useDialogFocusReturn } from '../../../composables/useDialogFocusReturn'
 
 const { t } = useI18n()
 
@@ -18,14 +20,16 @@ const emit = defineEmits<{
 }>()
 
 useEscapeLayer(() => props.open, () => emit('update:open', false))
+const onUnmountAutoFocus = useDialogFocusReturn(() => props.open)
 </script>
 
 <template>
   <Teleport to="body">
     <div v-if="open" class="ac-overlay" @click.self="emit('update:open', false)">
-      <div class="ac-modal mp-detail-modal">
+      <FocusScope as-child trapped loop @unmount-auto-focus="onUnmountAutoFocus">
+        <div role="dialog" aria-modal="true" aria-labelledby="ac-dialog-title" tabindex="-1" class="ac-modal mp-detail-modal">
         <!-- Header -->
-        <div class="ac-title">
+        <div class="ac-title" id="ac-dialog-title">
           <!-- Warning triangle: amber for neutral (reinstall), red for danger (downgrade) -->
           <svg
             width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -51,7 +55,8 @@ useEscapeLayer(() => props.open, () => emit('update:open', false))
             @click="emit('confirm')"
           >{{ confirmLabel }}</button>
         </div>
-      </div>
+        </div>
+      </FocusScope>
     </div>
   </Teleport>
 </template>

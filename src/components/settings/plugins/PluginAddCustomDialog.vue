@@ -2,6 +2,8 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEscapeLayer } from '../../../composables/useEscapeLayer'
+import { FocusScope } from 'reka-ui'
+import { useDialogFocusReturn } from '../../../composables/useDialogFocusReturn'
 import { AppBanner } from '@openpen/module-api/uikit'
 
 const { t } = useI18n()
@@ -24,6 +26,7 @@ const emit = defineEmits<{
 }>()
 
 useEscapeLayer(() => props.open, () => emit('update:open', false))
+const onUnmountAutoFocus = useDialogFocusReturn(() => props.open)
 
 
 const activeTab = ref<CustomTab>('local')
@@ -158,10 +161,11 @@ function install() {
 <template>
   <Teleport to="body">
     <div v-if="open" class="pac-overlay" data-testid="pac-overlay" @click.self="emit('update:open', false)">
-      <div class="pac-modal mp-custom-modal" data-testid="pac-modal">
+      <FocusScope as-child trapped loop @unmount-auto-focus="onUnmountAutoFocus">
+        <div role="dialog" aria-modal="true" aria-labelledby="pac-dialog-title" tabindex="-1" class="pac-modal mp-custom-modal" data-testid="pac-modal">
         <!-- Header -->
         <div class="pac-header">
-          <div class="pac-title" data-testid="modal-plugin-add-custom-title">{{ t('pluginAddCustomTitle') }}</div>
+          <div class="pac-title" id="pac-dialog-title" data-testid="modal-plugin-add-custom-title">{{ t('pluginAddCustomTitle') }}</div>
           <button class="pac-close" :aria-label="t('close')" @click="emit('update:open', false)">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M18 6 6 18M6 6l12 12"/>
@@ -252,7 +256,8 @@ function install() {
             {{ installing ? t('pluginInstallingButton') : t('pluginInstallAction') }}
           </button>
         </div>
-      </div>
+        </div>
+      </FocusScope>
     </div>
   </Teleport>
 </template>

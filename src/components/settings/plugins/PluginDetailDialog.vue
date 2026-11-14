@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useEscapeLayer } from '../../../composables/useEscapeLayer'
+import { FocusScope } from 'reka-ui'
+import { useDialogFocusReturn } from '../../../composables/useDialogFocusReturn'
 
 const { t } = useI18n()
 
@@ -36,16 +38,18 @@ function openRepo() {
 }
 
 useEscapeLayer(() => props.open, () => emit('update:open', false))
+const onUnmountAutoFocus = useDialogFocusReturn(() => props.open)
 </script>
 
 <template>
   <Teleport to="body">
     <div v-if="open && entry" class="pd-overlay" @click.self="emit('update:open', false)">
-      <div class="pd-modal mp-detail-modal" data-testid="plugin-detail-dialog">
+      <FocusScope as-child trapped loop @unmount-auto-focus="onUnmountAutoFocus">
+        <div role="dialog" aria-modal="true" aria-labelledby="pd-dialog-title" tabindex="-1" class="pd-modal mp-detail-modal" data-testid="plugin-detail-dialog">
         <!-- Header -->
         <div class="pd-header">
           <div>
-            <div class="pd-name">{{ entry.name }}</div>
+            <div class="pd-name" id="pd-dialog-title">{{ entry.name }}</div>
             <div class="pd-scope">{{ entry.id }}</div>
             <div class="pd-author">
               by {{ entry.ownerLogin }}
@@ -129,7 +133,8 @@ useEscapeLayer(() => props.open, () => emit('update:open', false))
             {{ t('pluginInstall') }}
           </button>
         </div>
-      </div>
+        </div>
+      </FocusScope>
     </div>
   </Teleport>
 </template>
