@@ -72,19 +72,38 @@ OpenPen plugin **不**透過 npm registry 發佈——請使用上述 GitHub 格
 2. 使用者可直接從該 release 安裝：
    `npx openpen-cli plugin add <github-url>`。
 
-### Plugin 目錄
+### 兩種上架方式
 
-OpenPen 維護一個中央目錄，即
-[OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) repository。
-列在其中的 plugin 可用 id 安裝：
-`npx openpen-cli plugin install @scope/name`，並會顯示在應用程式的 Marketplace 分頁中。
+OpenPen 有兩份獨立的清單，依需求擇一，兩者不是同一流程的前後步驟。
 
-若要將你的 plugin 列入目錄，請在把 zip 附到 GitHub Release 之後執行 `npx openpen-cli publish`。
-它會檢查該 release、確認你的 GitHub 登入帳號與 plugin id 的 scope 相符，
-並對目錄開啟一個 pull request：首次提交為 Registration PR，新版本則為 Update PR。
-首次提交在合併前會由維護者審閱。完整流程請見
-[建立你的第一個 plugin](../tutorials/build-your-first-plugin.md) 的第 7 節，
-各步驟的細節請見 [`reference/openpen-cli.md`](../reference/openpen-cli.md)。
+| | 社群清單 | 官方目錄 |
+| --- | --- | --- |
+| 如何進入 | 發布 release，並在 repository 加上 `openpen-plugin` topic | 執行 `npx openpen-cli publish`，開啟 pull request |
+| 審核 | 無人工審核，由掃描器自動檢查套件 | 首次提交由維護者審閱；更新由目錄機器人檢查 |
+| 出現時間 | 下一次掃描（每 30 分鐘） | pull request 合併後 |
+| 記錄位置 | 目錄 repository 的 `community/plugins.json` | 目錄 repository 的 `plugins.json` |
+
+兩份清單都在 [OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) repository。社群條目不會併入官方 `plugins.json`，列入任何一份清單都不代表對你的程式碼做過安全稽核。
+
+### 社群清單
+
+掃描器會讀取帶有 `openpen-plugin` topic 的公開 GitHub repository。要被列入：
+
+1. 確認 `plugin.json` 有 `id`、`name`、`version`、`description`、`minAppVersion`。`version` 須為 semver，`id` 的 scope 須等於你的 GitHub 帳號或組織名稱（小寫），例如 `github.com/alice/todo-app` 對應 `@alice/todo-app`。`@openpen` scope 與官方目錄已有的 id 會被拒絕。
+2. repository 保持公開。私有、fork 與已封存的 repository 會被略過。
+3. 執行 `npx openpen-cli pack`，再建立 `v<version>` 的 GitHub Release 並附上 zip。release 必須已發布，不能是草稿或預發布。掃描器取最新 release 的第一個 `.zip` 附件，zip 根目錄須有 `plugin.json`。
+4. 在 repository 加上 `openpen-plugin` topic（repository 頁面 About 旁的齒輪，Topics）。
+5. 等待下一次掃描。掃描器自行下載 zip、讀取 `plugin.json` 並計算 sha256，你不需要提交雜湊值或 pull request。
+
+發布更新時，提高 `version` 後重複步驟 3。`plugin.json` 版本不高於已列出版本的 release 會被忽略。移除 topic、將 repository 設為私有或封存，之後的掃描會把該 plugin 移出清單。
+
+plugin 沒出現時，掃描器會在目錄 repository 的 `Update community index` workflow 記錄每個 repository 被略過的原因（例如缺少 `.zip` 附件、scope 與擁有者不符、草稿 release）。維護者可透過 `community/blocklist.json` 排除特定 plugin、repository 或擁有者。
+
+### 官方目錄
+
+官方目錄中的 plugin 可用 id 安裝：`npx openpen-cli plugin install @scope/name`，並會顯示在應用程式的 Marketplace 分頁中。
+
+若要列入官方目錄，請在把 zip 附到 GitHub Release 之後執行 `npx openpen-cli publish`。它會檢查該 release、確認你的 GitHub 登入帳號與 plugin id 的 scope 相符，並對目錄開啟一個 pull request：首次提交為 Registration PR，新版本則為 Update PR。首次提交在合併前會由維護者審閱。完整流程請見[建立你的第一個 plugin](../tutorials/build-your-first-plugin.md) 的第 7 節，各步驟的細節請見 [`reference/openpen-cli.md`](../reference/openpen-cli.md)。
 
 ---
 

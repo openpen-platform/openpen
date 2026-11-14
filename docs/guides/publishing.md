@@ -76,11 +76,56 @@ for the full command reference.
 2. Users can install it straight from that release with
    `npx openpen-cli plugin add <github-url>`.
 
-### The plugin catalog
+### Two ways to be listed
 
-OpenPen keeps a central catalog, the
+OpenPen has two separate lists. Pick the one that fits; they are not steps of one
+process.
+
+| | Community list | Official catalog |
+| --- | --- | --- |
+| How you get in | Publish a release and add the `openpen-plugin` topic to your repository | Run `npx openpen-cli publish`, which opens a pull request |
+| Review | None. A scanner checks the package automatically | A maintainer reviews a first submission; updates are checked by the catalog bot |
+| Time to appear | Next scan (every 30 minutes) | After the pull request is merged |
+| Where it is recorded | `community/plugins.json` in the catalog repository | `plugins.json` in the catalog repository |
+
+Both lists live in the
 [OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) repository.
-Plugins listed there can be installed by id with
+Community entries are never merged into the official `plugins.json`, and a listing in
+either one is not a security audit of your code.
+
+### Community list
+
+A scanner reads public GitHub repositories that carry the `openpen-plugin` topic. To
+be listed:
+
+1. Make sure `plugin.json` has `id`, `name`, `version`, `description` and
+   `minAppVersion`. `version` must be semver, and the scope of `id` must be your
+   GitHub account or organization name in lowercase (`@alice/todo-app` for
+   `github.com/alice/todo-app`). The `@openpen` scope and ids already in the official
+   catalog are refused.
+2. Keep the repository public. Private, forked and archived repositories are skipped.
+3. Run `npx openpen-cli pack`, then create a GitHub Release for `v<version>` with the
+   zip attached. The release must be published, not a draft or a prerelease. The
+   scanner uses the latest release and its first `.zip` asset, which must have
+   `plugin.json` at the zip root.
+4. Add the `openpen-plugin` topic to the repository (repository page, the gear next to
+   About, Topics).
+5. Wait for the next scan. The scanner downloads the zip, reads `plugin.json` and
+   computes the sha256 itself; you do not submit a hash or a pull request.
+
+To ship an update, bump `version`, then repeat step 3. A release whose `plugin.json`
+version is not higher than the listed one is ignored. Removing the topic, making the
+repository private or archiving it removes the plugin on a later scan.
+
+If your plugin does not show up, the scanner logs why it skipped each repository (for
+example a missing `.zip` asset, a scope that does not match the owner, or a
+draft release) in the catalog repository's `Update community index` workflow runs.
+Maintainers can exclude a plugin, a repository or an owner through
+`community/blocklist.json`.
+
+### Official catalog
+
+Plugins in the official catalog can be installed by id with
 `npx openpen-cli plugin install @scope/name` and are shown in the app's Marketplace tab.
 
 To get your plugin listed, run `npx openpen-cli publish` after attaching the zip to

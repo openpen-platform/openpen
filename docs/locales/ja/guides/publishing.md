@@ -68,11 +68,38 @@ OpenPen の plugin は npm レジストリ経由では配布されません — 
 1. Pluginをビルドし、`npx openpen-cli pack` を実行して `dist/`、`plugin.json`、`locales/` の zip を生成し、`v<version>` タグの GitHub Release に添付します。
 2. ユーザーはその release から `npx openpen-cli plugin add <github-url>` で直接インストールできます。
 
-### plugin カタログ
+### 掲載の2つの方法
 
-OpenPen は中央カタログとして [OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) リポジトリを管理しています。ここに登録された plugin は `npx openpen-cli plugin install @scope/name` で id を指定してインストールでき、アプリの Marketplace タブにも表示されます。
+OpenPen には独立した2つのリストがあります。目的に合う方を選んでください。同じ手順の前後のステップではありません。
 
-plugin を登録するには、zip を GitHub Release に添付した後で `npx openpen-cli publish` を実行します。release を確認し、GitHub ログインが plugin id のスコープと一致することを検証したうえで、カタログに対して pull request を開きます。初回の提出は Registration PR、新バージョンは Update PR になります。初回の提出は、マージ前にメンテナーがレビューします。詳しい手順はチュートリアルのセクション 7 の [最初の plugin を作る](../tutorials/build-your-first-plugin.md)、各ステップの動作は [`reference/openpen-cli.md`](../reference/openpen-cli.md) を参照してください。
+| | コミュニティリスト | 公式カタログ |
+| --- | --- | --- |
+| 掲載の方法 | release を公開し、リポジトリに `openpen-plugin` topic を付ける | `npx openpen-cli publish` を実行して pull request を開く |
+| レビュー | なし。スキャナーがパッケージを自動チェックする | 初回提出はメンテナーがレビュー。更新はカタログボットがチェック |
+| 反映までの時間 | 次回のスキャン（30分ごと） | pull request のマージ後 |
+| 記録先 | カタログリポジトリの `community/plugins.json` | カタログリポジトリの `plugins.json` |
+
+どちらのリストも [OpenPen-plugins](https://github.com/openpen-platform/OpenPen-plugins) リポジトリにあります。コミュニティのエントリは公式の `plugins.json` にはマージされません。どちらのリストへの掲載も、コードのセキュリティ監査を意味しません。
+
+### コミュニティリスト
+
+スキャナーは `openpen-plugin` topic が付いた公開 GitHub リポジトリを読み取ります。掲載されるには：
+
+1. `plugin.json` に `id`、`name`、`version`、`description`、`minAppVersion` があることを確認します。`version` は semver、`id` のスコープは GitHub アカウントまたは organization 名（小文字）と一致する必要があります（`github.com/alice/todo-app` なら `@alice/todo-app`）。`@openpen` スコープと公式カタログに既にある id は拒否されます。
+2. リポジトリを公開のままにします。非公開、fork、アーカイブ済みのリポジトリはスキップされます。
+3. `npx openpen-cli pack` を実行し、zip を添付した `v<version>` の GitHub Release を作成します。release は公開済みで、ドラフトやプレリリースであってはいけません。スキャナーは最新 release の最初の `.zip` アセットを使い、zip のルートに `plugin.json` が必要です。
+4. リポジトリに `openpen-plugin` topic を追加します（リポジトリページの About 横の歯車、Topics）。
+5. 次回のスキャンを待ちます。スキャナーが zip をダウンロードし、`plugin.json` を読み、sha256 を自分で計算します。ハッシュや pull request を提出する必要はありません。
+
+更新を出すには `version` を上げて手順 3 を繰り返します。`plugin.json` の version が掲載中のものより高くない release は無視されます。topic を外す、リポジトリを非公開にする、アーカイブすると、後のスキャンでリストから外れます。
+
+plugin が表示されない場合、スキャナーはカタログリポジトリの `Update community index` workflow の実行ログに、各リポジトリをスキップした理由（`.zip` アセットがない、スコープが所有者と一致しない、ドラフト release など）を記録します。メンテナーは `community/blocklist.json` で特定の plugin、リポジトリ、所有者を除外できます。
+
+### 公式カタログ
+
+公式カタログの plugin は `npx openpen-cli plugin install @scope/name` で id を指定してインストールでき、アプリの Marketplace タブにも表示されます。
+
+公式カタログに登録するには、zip を GitHub Release に添付した後で `npx openpen-cli publish` を実行します。release を確認し、GitHub ログインが plugin id のスコープと一致することを検証したうえで、カタログに対して pull request を開きます。初回の提出は Registration PR、新バージョンは Update PR になります。初回の提出は、マージ前にメンテナーがレビューします。詳しい手順はチュートリアルのセクション 7 の [最初の plugin を作る](../tutorials/build-your-first-plugin.md)、各ステップの動作は [`reference/openpen-cli.md`](../reference/openpen-cli.md) を参照してください。
 
 ---
 
