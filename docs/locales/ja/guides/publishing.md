@@ -106,8 +106,8 @@ plugin が表示されない場合、スキャナーはカタログリポジト�
 
 公式カタログにはセルフサービスの削除手段はありません。`publish` が開くのは Registration PR と Update PR だけで、CLI に yank や tombstone のコマンドもありません。削除を依頼するには、[OpenPen-plugins の Issue](https://github.com/openpen-platform/OpenPen-plugins/issues) に plugin id と理由を書いて起票してください。カタログのメンテナーが plugin の `state` を設定します。
 
-- `yanked`: エントリはカタログと Marketplace に警告付きで残ります。`npx openpen-cli plugin install @scope/name` は拒否され、特定の zip URL を直接指定するよう案内されます。
-- `tombstoned`: エントリは公開インデックスと Marketplace から外れ、id によるインストールはブロックされます。id は予約されたままで、再登録はできません。
+- `yanked`: エントリはカタログに残り、Marketplace にも引き続き表示されます（カードに個別の警告は出ません）。id によるインストール（Marketplace から、または `npx openpen-cli plugin install @scope/name`）は、yank 済みであることを示すメッセージで失敗し、特定の zip URL を直接指定するよう案内されます。
+- `tombstoned`: エントリは公開インデックスと Marketplace から外れ、id によるインストールはブロックされます。id は予約されたままで、再登録はできません。tombstone 済み plugin のインストールエラーは、セキュリティ上の理由で完全に削除されたことを示します。
 
 manifest を削除する PR は更新とは扱われず、カタログボットが「メンテナーが判断する」とコメントします。すでにインストールしたユーザーは、`npx openpen-cli plugin remove @scope/name` を実行するまで plugin を使い続けます。コミュニティリストの plugin の外し方は、上のコミュニティリストの節の末尾を参照してください。
 

@@ -104,7 +104,7 @@ The file you submit is `plugins/<scope>/<name>/manifest.json`:
 
 There is no self-service takedown. Open an issue in this repository with the plugin id and the reason; a maintainer sets the entry's `state`:
 
-- `yanked`: stays listed with a warning, and installing it by id is refused.
+- `yanked`: stays listed, and installing it by id is refused with a message that points to a direct zip URL.
 - `tombstoned`: dropped from the public index, installation is blocked, and the id stays reserved.
 
 A PR that deletes a manifest is not an update; the bot comments and a maintainer decides.
@@ -113,7 +113,7 @@ A PR that deletes a manifest is not an update; the bot comments and a maintainer
 
 ## Reporting issues
 
-Open an issue in [openpen/openpen](https://github.com/openpen-platform/openpen/issues) for:
-- CLI bugs
-- Catalog bot false positives/negatives
-- Policy questions
+- Open an issue in this repository for anything about the catalog itself: removal requests,
+  catalog bot false positives or negatives, and policy questions.
+- Open an issue in [openpen-platform/openpen](https://github.com/openpen-platform/openpen/issues)
+  for CLI bugs.

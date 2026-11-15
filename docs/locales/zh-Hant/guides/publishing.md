@@ -110,8 +110,8 @@ plugin 沒出現時，掃描器會在目錄 repository 的 `Update community ind
 
 官方目錄沒有自助下架：`publish` 只會開 Registration PR 與 Update PR，CLI 也沒有 yank 或 tombstone 指令。要下架 plugin，請在 [OpenPen-plugins 的 Issues](https://github.com/openpen-platform/OpenPen-plugins/issues) 開 issue，寫明 plugin id 與原因。目錄維護者會設定該 plugin 的 `state`：
 
-- `yanked`：條目仍留在目錄與 Marketplace，並顯示警告。`npx openpen-cli plugin install @scope/name` 會拒絕安裝，並提示改為直接指定某個 zip 網址安裝。
-- `tombstoned`：條目從公開索引與 Marketplace 移除，依 id 安裝會被阻擋。該 id 仍被保留，不能再次註冊。
+- `yanked`：條目仍留在目錄中，也仍顯示在 Marketplace（卡片上沒有單獨的警告）。依 id 安裝（從 Marketplace 或用 `npx openpen-cli plugin install @scope/name`）會失敗，並提示該 plugin 已被 yank，同時建議改為直接指定某個 zip 網址安裝。
+- `tombstoned`：條目從公開索引與 Marketplace 移除，依 id 安裝會被阻擋。該 id 仍被保留，不能再次註冊。對 tombstone 的 plugin 安裝時，錯誤訊息會說明它因安全原因被永久移除。
 
 刪除 manifest 的 PR 不會被當作更新：目錄機器人會留言說明由維護者決定。已安裝的使用者在執行 `npx openpen-cli plugin remove @scope/name` 之前仍可繼續使用。社群清單中的 plugin 如何移除，請見上方社群清單一節的結尾。
 

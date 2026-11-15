@@ -180,8 +180,8 @@ for what each step does.
 
 There is no self-service takedown for the official catalog: `publish` only opens Registration and Update PRs, and the CLI has no yank or tombstone command. To have a plugin removed, open an issue in the [OpenPen-plugins issue tracker](https://github.com/openpen-platform/OpenPen-plugins/issues) naming the plugin id and the reason. Catalog maintainers set the plugin's `state`:
 
-- `yanked`: the entry stays in the catalog and Marketplace with a warning. `npx openpen-cli plugin install @scope/name` refuses it and points to installing a specific zip URL directly.
-- `tombstoned`: the entry is dropped from the public index and Marketplace and installation by id is blocked. The id stays reserved and cannot be registered again.
+- `yanked`: the entry stays in the catalog and is still listed in the Marketplace, with no separate warning on the card. Installing it by id (from the Marketplace or with `npx openpen-cli plugin install @scope/name`) fails with a message that the plugin was yanked and points to installing a specific zip URL directly.
+- `tombstoned`: the entry is dropped from the public index and Marketplace and installation by id is blocked. The id stays reserved and cannot be registered again. The install error for a tombstoned plugin says it was permanently removed for security reasons.
 
 A PR that deletes a manifest is not treated as an update: the catalog bot comments that a maintainer decides. Users who already installed the plugin keep it until they run `npx openpen-cli plugin remove @scope/name`. A plugin on the community list is removed differently: see the end of the community list section above.
 
