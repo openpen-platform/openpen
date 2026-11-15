@@ -30,7 +30,7 @@ import { getSettings } from './settings-store.js'
  * which bypasses the HOME env var and always returns the real user home —
  * making it impossible to redirect plugin discovery in integration tests.
  */
-const PLUGINS_DIR = path.join(
+export const PLUGINS_DIR = path.join(
   process.env.HOME ?? app.getPath('home'),
   '.openpen',
   'plugins'

@@ -17,7 +17,8 @@ import { initUpdateManager } from './update-manager.js';
 import { initPluginMetaManager } from './plugin-meta-manager.js';
 import { initI18n } from './i18n/index.js';
 import { initConfigLoader } from './config-loader.js';
-import { initModuleManifestLoader, sendModuleManifests, resolvePluginFilePath } from './module-manifest-loader.js';
+import { initModuleManifestLoader, sendModuleManifests, resolvePluginFilePath, PLUGINS_DIR } from './module-manifest-loader.js';
+import { seedBundledPlugins, BUNDLED_STATE_FILE } from './bundled-plugins.js';
 import { APP, AUDIT, HISTORY, LOG, MODULE, POSITIONING, SYSTEM, WINDOW } from './ipc-channels.js';
 import { initPluginManagerBridge } from './plugin-manager-bridge.js';
 import { createAuditLog } from './audit-log.js';
@@ -297,6 +298,24 @@ app.whenReady().then(async () => {
   initPluginManagerBridge();
   initSettingsStore();
   await initI18n(getSetting('language'));
+  // Seed the bundled plugins before the first scan so they load on this launch.
+  // OPENPEN_BUNDLED_PLUGINS_DIR overrides the source; an empty value disables it.
+  const bundledDir = process.env.OPENPEN_BUNDLED_PLUGINS_DIR ?? (app.isPackaged
+    ? path.join(process.resourcesPath, 'bundled-plugins')
+    : path.join(__dirname, '..', 'build', 'bundled-plugins'));
+  if (bundledDir) {
+    try {
+      const seeded = seedBundledPlugins({
+        bundledDir,
+        pluginsDir: PLUGINS_DIR,
+        statePath: path.join(app.getPath('userData'), BUNDLED_STATE_FILE),
+        log,
+      });
+      if (seeded.installed.length > 0) log.info('[Main] Seeded bundled plugins:', seeded.installed.join(', '));
+    } catch (error) {
+      log.error('[Main] Bundled plugin seeding failed:', error?.message || error);
+    }
+  }
   await initModuleManifestLoader();
   initWindowManager(rendererEntry);
   initScreenCaptureManager({ getAllOverlayWindows, supported: !IS_WAYLAND_SESSION });

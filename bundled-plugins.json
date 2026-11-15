@@ -1,0 +1,6 @@
+{
+  "plugins": [
+    { "id": "@openpen/text", "version": "1.1.0" },
+    { "id": "@openpen/arrow", "version": "1.1.0" }
+  ]
+}

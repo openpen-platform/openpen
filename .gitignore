@@ -23,3 +23,5 @@ pnpm-debug.log*
 .cody/
 .copilot/
 .opencode/
+# Bundled plugins fetched at build time (npm run bundled:fetch)
+build/bundled-plugins/

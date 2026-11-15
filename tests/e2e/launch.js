@@ -92,6 +92,8 @@ export async function launchElectronApp(overrides = {}) {
       NODE_ENV: 'development',
       OPENPEN_USER_DATA_DIR: userDataDir,
       OPENPEN_AUTO_CONFIRM_QUIT: '1',
+      // Specs start without bundled plugins unless they point this at a fixture folder.
+      OPENPEN_BUNDLED_PLUGINS_DIR: '',
       // Point Electron at whatever URL globalSetup booted Vite at.
       // The 5173 fallback is for ad-hoc spec runs that bypass globalSetup
       // (e.g. an IDE harness that ignores playwright.config.js) — in normal

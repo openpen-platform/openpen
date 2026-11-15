@@ -18,15 +18,16 @@
     "test:e2e:standard": "XDG_SESSION_TYPE=x11 ELECTRON_OZONE_PLATFORM_HINT=x11 npx playwright test --project=functional",
     "test:e2e:wayland": "XDG_SESSION_TYPE=wayland ELECTRON_OZONE_PLATFORM_HINT=wayland npx playwright test --project=functional",
     "test:e2e:ci": "OPENPEN_E2E_SUBSET=ci-stable XDG_SESSION_TYPE=x11 ELECTRON_OZONE_PLATFORM_HINT=x11 npx playwright test --project=functional",
-    "dist": "npm run build && npm run test:prod-smoke && electron-builder",
-    "dist:mac": "npm run build && npm run test:prod-smoke && electron-builder --mac",
-    "dist:win": "npm run build && npm run test:prod-smoke && electron-builder --win",
-    "dist:linux": "npm run build && npm run test:prod-smoke && electron-builder --linux",
+    "dist": "npm run bundled:fetch && npm run build && npm run test:prod-smoke && electron-builder",
+    "dist:mac": "npm run bundled:fetch && npm run build && npm run test:prod-smoke && electron-builder --mac",
+    "dist:win": "npm run bundled:fetch && npm run build && npm run test:prod-smoke && electron-builder --win",
+    "dist:linux": "npm run bundled:fetch && npm run build && npm run test:prod-smoke && electron-builder --linux",
     "preview": "vite preview",
     "test:unit": "vitest run",
     "test:unit:coverage": "vitest run --coverage",
     "lint": "eslint src/ tests/ packages/ && node scripts/check-syntax.mjs",
-    "catalog:serve": "node scripts/serve-catalog.mjs"
+    "catalog:serve": "node scripts/serve-catalog.mjs",
+    "bundled:fetch": "node scripts/fetch-bundled-plugins.mjs"
   },
   "build": {
     "appId": "com.openpen.app",
@@ -44,6 +45,10 @@
       "repo": "openpen"
     },
     "extraResources": [
+      {
+        "from": "build/bundled-plugins",
+        "to": "bundled-plugins"
+      },
       {
         "from": "THIRD_PARTY_NOTICES.md",
         "to": "THIRD_PARTY_NOTICES.md"
