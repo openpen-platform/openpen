@@ -1,0 +1,140 @@
+name: Sync org repos to GitHub (scheduled)
+
+# Scheduled mirror of every repo in the Gitea organisation to the GitHub repo
+# of the same name. The main app repo (openpen) keeps its own push-triggered
+# workflow (sync-to-github.yml) and is skipped here. Only `main` is pushed,
+# fast-forward only; tags and other branches are never touched, and nothing is
+# ever deleted on GitHub.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+
+concurrency:
+  group: sync-org-to-github
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Sync org repos main -> GitHub main
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GITEA_TOKEN: ${{ gitea.token }}
+          GT_HOST: ${{ secrets.GT_HOST }}
+          ORG: openpen-platform
+          # Space-separated repo names to skip. Kept in a Gitea org Actions variable
+          # so the (public) workflow file does not list private repo names.
+          EXCLUDE: ${{ vars.SYNC_EXCLUDE }}
+        run: |
+          # Explicitly no -e: a failure on one repo must not abort the job; failures
+          # are collected in FAILED and turned into a red run at the end.
+          set +e
+          set -uo pipefail
+          N_LISTED=0; N_EXCLUDED=0; N_SYNCED=0; N_UPTODATE=0; N_SKIPPED=0; N_FAILED=0
+
+          for v in GH_PAT GITEA_TOKEN GT_HOST EXCLUDE; do
+            if [ -z "${!v:-}" ]; then
+              echo "::error::$v is empty (GH_PAT / GT_HOST: Gitea org secrets; EXCLUDE: org variable SYNC_EXCLUDE). Refusing to sync anything."
+              exit 1
+            fi
+          done
+          # whitespace-only value counts as empty
+          if [ -z "$(echo $EXCLUDE)" ]; then
+            echo "::error::EXCLUDE is blank. Refusing to sync anything."
+            exit 1
+          fi
+          command -v jq >/dev/null || { echo "::error::jq not found on runner"; exit 1; }
+
+          GH_B64=$(printf 'x-access-token:%s' "$GH_PAT" | base64 -w0)
+          GT_B64=$(printf 'oauth2:%s' "$GITEA_TOKEN" | base64 -w0)
+          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic ${GH_B64}"
+          git config --global "http.https://${GT_HOST}/.extraheader" "AUTHORIZATION: basic ${GT_B64}"
+          git config --global user.email "sync-bot@openpen.local"
+          git config --global user.name "openpen-sync"
+
+          # 1. List org repos from Gitea (paginated)
+          REPOS=""
+          page=1
+          while :; do
+            body=$(curl -sS --fail -H "Authorization: token ${GITEA_TOKEN}" \
+              "https://${GT_HOST}/api/v1/orgs/${ORG}/repos?limit=50&page=${page}") || {
+              echo "::error::Gitea repo listing failed (page ${page})"; exit 1; }
+            names=$(printf '%s' "$body" | jq -r '.[].name') || { echo "::error::bad Gitea response"; exit 1; }
+            [ -z "$names" ] && break
+            REPOS="${REPOS}${names}"$'\n'
+            page=$((page + 1))
+          done
+
+          FAILED=""
+          N_LISTED=$(printf '%s' "$REPOS" | grep -c .)
+          echo "Gitea org ${ORG}: ${N_LISTED} repo(s) listed"
+          if [ "$N_LISTED" -eq 0 ]; then
+            echo "::error::Gitea returned 0 repos for ${ORG}; refusing to report success"
+            exit 1
+          fi
+          fail() { N_FAILED=$((N_FAILED + 1)); FAILED="${FAILED}${1}: ${2}"$'\n'; echo "::error::${1}: ${2}"; }
+
+          while IFS= read -r name; do
+            [ -z "$name" ] && continue
+
+            # 2. Exclusions
+            skip=0
+            for x in $EXCLUDE; do [ "$x" = "$name" ] && skip=1; done
+            if [ "$skip" = 1 ]; then N_EXCLUDED=$((N_EXCLUDED + 1)); echo "[$name] excluded — skip"; continue; fi
+
+            # 3. GitHub must already have a same-named repo; never create one
+            code=$(curl -sS -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer ${GH_PAT}" \
+              "https://api.github.com/repos/${ORG}/${name}")
+            if [ "$code" = 404 ]; then N_SKIPPED=$((N_SKIPPED + 1)); echo "[$name] no GitHub repo — skip"; continue; fi
+            if [ "$code" != 200 ]; then fail "$name" "GitHub repo probe returned HTTP ${code}"; continue; fi
+
+            d="/tmp/sync/${name}"
+            rm -rf "$d"; mkdir -p "$d"
+            if ! git -C "$d" init -q; then fail "$name" "git init failed"; continue; fi
+            git -C "$d" remote add origin "https://${GT_HOST}/${ORG}/${name}.git"
+            git -C "$d" remote add github "https://github.com/${ORG}/${name}.git"
+
+            if ! git -C "$d" fetch -q --no-tags origin "+refs/heads/main:refs/remotes/origin/main" 2>/tmp/err; then
+              # exit 2 = reachable but no main (skip); any other code is a real failure
+              git ls-remote --exit-code --heads "https://${GT_HOST}/${ORG}/${name}.git" main >/dev/null 2>&1
+              rc=$?
+              if [ "$rc" = 2 ]; then
+                N_SKIPPED=$((N_SKIPPED + 1)); echo "[$name] Gitea has no main — skip"
+              else
+                fail "$name" "Gitea fetch failed (ls-remote rc=${rc}): $(tr '\n' ' ' </tmp/err)"
+              fi
+              continue
+            fi
+            if ! git -C "$d" fetch -q --no-tags github "+refs/heads/main:refs/remotes/github/main" 2>/tmp/err; then
+              fail "$name" "GitHub main fetch failed: $(tr '\n' ' ' </tmp/err)"; continue
+            fi
+
+            G=$(git -C "$d" rev-parse origin/main)
+            H=$(git -C "$d" rev-parse github/main)
+            if [ "$G" = "$H" ]; then N_UPTODATE=$((N_UPTODATE + 1)); echo "[$name] already match (${G:0:7})"; continue; fi
+
+            # 4. Fast-forward only: GitHub main must be an ancestor of Gitea main
+            if ! git -C "$d" merge-base --is-ancestor github/main origin/main; then
+              fail "$name" "main diverged or GitHub is ahead (gitea ${G:0:7}, github ${H:0:7}); not pushing"
+              continue
+            fi
+
+            # Explicit single refspec, no --force, no --tags, no --mirror
+            if git -C "$d" push github "refs/remotes/origin/main:refs/heads/main" 2>/tmp/err; then
+              N_SYNCED=$((N_SYNCED + 1)); echo "[$name] fast-forwarded ${H:0:7} -> ${G:0:7}"
+            else
+              fail "$name" "push failed: $(tr '\n' ' ' </tmp/err)"
+            fi
+          done <<< "$REPOS"
+
+          echo "Summary: listed=${N_LISTED} excluded=${N_EXCLUDED} synced=${N_SYNCED} up-to-date=${N_UPTODATE} skipped=${N_SKIPPED} failed=${N_FAILED}"
+          if [ -n "$FAILED" ]; then
+            echo "Sync finished with failures:"
+            printf '%s' "$FAILED"
+            exit 1
+          fi
+          echo "Sync finished OK."
