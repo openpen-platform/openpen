@@ -33,6 +33,7 @@ import {
   CATALOG_REPO,
 } from '@openpen/plugin-manager'
 import { promptInstallConfirm, extractYesFlag } from '../lib/confirm.js'
+import { parseOwnerInfo } from '../lib/owner-info.js'
 
 const PLUGINS_DIR = path.join(os.homedir(), '.openpen', 'plugins')
 
@@ -410,7 +411,13 @@ async function cmdPublish() {
     console.error(`Error: Could not fetch owner info for "${authenticatedLogin}".`)
     process.exit(1)
   }
-  const [ownerId, ownerLogin, ownerType] = JSON.parse(JSON.parse(ownerResult.stdout.trim()))
+  let ownerId, ownerLogin, ownerType
+  try {
+    ;({ ownerId, ownerLogin, ownerType } = parseOwnerInfo(ownerResult.stdout))
+  } catch (err) {
+    console.error(`Error: ${err.message}`)
+    process.exit(1)
+  }
 
   // Step 7: detect Registration vs Update PR
   const catalogOwner = CATALOG_OWNER
