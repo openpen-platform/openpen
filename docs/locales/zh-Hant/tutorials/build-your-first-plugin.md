@@ -452,6 +452,8 @@ npx openpen-cli publish
 - 維護者審閱註冊 PR——首次提交需要人工審核。
 - 合併後，CI 會重新生成 `plugins.json`，使你的 plugin 可在 OpenPen 市集中被發現。
 
+> **儲存庫位置。** 對官方目錄而言，plugin 的儲存庫必須位於你的個人 GitHub 帳號下，且以 plugin 名稱命名：`publish` 會把儲存庫記錄為 `https://github.com/<your-login>/<plugin-name>`，目錄機器人會將儲存庫擁有者與註冊該 plugin 的帳號比對。位於組織或其他帳號下的儲存庫會被拒絕。
+
 ### 更新你的 plugin
 
 後續發佈的流程相同，但步驟 2 會開啟**更新 PR** 而非註冊 PR。機器人會驗證 PR 並留言說明結果，不會合併；是否合併由維護者決定。

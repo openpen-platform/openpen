@@ -75,6 +75,10 @@ GitHub Release for `v<version>` must be live with the zip attached.
    official `@openpen` scope, which organization members submit directly to the catalog
    repository without `publish`. (The community list has no such restriction; see the
    [publishing guide](../guides/publishing.md).)
+   For the official catalog the plugin repository must also belong to your personal account:
+   `publish` records it as `https://github.com/<your-login>/<plugin-name>`, and the catalog bot
+   compares the repository owner with the account that registered the plugin. A repository
+   under an organization or another account is rejected.
 4. Computes the zip SHA-256.
 5. Detects whether this is a first-time registration or a version update:
    - **New plugin** → opens a Registration PR (`register/<scope>-<name>`). Requires

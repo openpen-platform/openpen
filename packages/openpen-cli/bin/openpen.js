@@ -119,6 +119,8 @@ async function cmdCreate(pluginId) {
   console.log('  npm install')
   console.log('  npm run build')
   console.log('  npx openpen-cli plugin add .')
+  console.log('\nTo share it later: npm run pack (writes the release zip), then see')
+  console.log('  https://github.com/openpen-platform/openpen/blob/main/docs/guides/publishing.md')
 }
 
 function findStarterDir() {
@@ -177,6 +179,33 @@ function copyStarterTo(starterDir, destDir, pluginId, scope, name) {
       .replace('# OpenPen Plugin Starter', `# ${toTitleCase(name)}`)
       .replace('A minimal scaffold for building OpenPen plugins.', `OpenPen plugin \`${pluginId}\`.`),
   )
+  // The starter README teaches "run create"; this project already exists, so say how to use it.
+  const readme = fs.readFileSync(readmePath, 'utf-8')
+  const from = readme.indexOf('## Quickstart')
+  const to = readme.indexOf("## What's inside")
+  if (from !== -1 && to > from) {
+    const quickstart = [
+      '## Quickstart',
+      '',
+      '```bash',
+      'npm install',
+      'npm run build',
+      'npx openpen-cli plugin add .',
+      '```',
+      '',
+      '`plugin add` copies `plugin.json`, `dist/` and `locales/` into',
+      `\`~/.openpen/plugins/${pluginId}/\`.`,
+      '',
+      'Restart OpenPen (a packaged build; the host\'s dev server does not load',
+      'plugins). The plugin loads automatically, and a toast tells you where its',
+      'buttons landed on the control bar.',
+      '',
+      'To share it, run `npm run pack` to write the release zip (git ignores `*.zip`).',
+      '',
+      '',
+    ].join('\n')
+    fs.writeFileSync(readmePath, readme.slice(0, from) + quickstart + readme.slice(to))
+  }
 }
 
 function toTitleCase(str) {

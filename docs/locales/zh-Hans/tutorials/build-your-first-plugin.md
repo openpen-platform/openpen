@@ -439,6 +439,8 @@ npx openpen-cli publish
 - 维护者审查 Registration PR——首次提交需要人工批准。
 - 合并后，CI 会重新生成 `plugins.json`，使你的 plugin 在 OpenPen 市场中可被发现。
 
+> **仓库位置。** 对官方目录而言，plugin 的仓库必须位于你的个人 GitHub 账号下，且以 plugin 名称命名：`publish` 会把仓库记录为 `https://github.com/<your-login>/<plugin-name>`，目录机器人会将仓库所有者与注册该 plugin 的账号比对。位于组织或其他账号下的仓库会被拒绝。
+
 ### 更新你的 plugin
 
 后续发布的流程相同，但步骤 2 会提交 **Update PR** 而非 Registration PR。机器人会验证 PR 并留言说明结果，不会合并；是否合并由维护者决定。

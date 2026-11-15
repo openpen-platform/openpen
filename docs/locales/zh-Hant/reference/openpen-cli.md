@@ -62,7 +62,7 @@ npx openpen-cli <command>
 **行為：**
 1. 驗證 `plugin.json` 與 zip 檔。
 2. 確認 GitHub Release 及其附加資源存在。
-3. 確認已認證的 GitHub 登入帳號與 plugin `id` 中的 `scope` 一致。這是唯一支援的規則：scope 為組織名稱的 plugin 會在此被拒絕，目錄機器人也會對 PR 提交者做同樣的檢查，因此他人代表組織 scope 開啟的註冊 PR 會在第一項檢查（scope matches submitter）失敗。請使用你個人的 GitHub 登入帳號作為 scope。唯一的例外是官方 `@openpen` scope，由組織成員不經 `publish`、直接提交到目錄儲存庫。（社群列表沒有這項限制。）
+3. 確認已認證的 GitHub 登入帳號與 plugin `id` 中的 `scope` 一致。這是唯一支援的規則：scope 為組織名稱的 plugin 會在此被拒絕，目錄機器人也會對 PR 提交者做同樣的檢查，因此他人代表組織 scope 開啟的註冊 PR 會在第一項檢查（scope matches submitter）失敗。請使用你個人的 GitHub 登入帳號作為 scope。唯一的例外是官方 `@openpen` scope，由組織成員不經 `publish`、直接提交到目錄儲存庫。（社群列表沒有這項限制。）對官方目錄而言，plugin 的儲存庫也必須屬於你的個人帳號：`publish` 會把儲存庫記錄為 `https://github.com/<your-login>/<plugin-name>`，目錄機器人會將儲存庫擁有者與註冊該 plugin 的帳號比對。位於組織或其他帳號下的儲存庫會被拒絕。
 4. 計算 zip 的 SHA-256。
 5. 偵測這是首次註冊還是版本更新：
    - **新 plugin** → 開啟一個「首次註冊 PR」（`register/<scope>-<name>`）。合併前需要維護者審查。

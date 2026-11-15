@@ -100,7 +100,7 @@ plugin が表示されない場合、スキャナーはカタログリポジト�
 
 公式カタログの plugin は `npx openpen-cli plugin install @scope/name` で id を指定してインストールでき、アプリの Marketplace タブにも表示されます。
 
-公式カタログに登録するには、zip を GitHub Release に添付した後で `npx openpen-cli publish` を実行します。release を確認し、GitHub ログインが plugin id のスコープと一致することを検証したうえで、カタログに対して pull request を開きます。初回の提出は Registration PR、新バージョンは Update PR になります。 組織スコープは `publish` では非対応です。公式の `@openpen` スコープは、組織メンバーがカタログリポジトリへ直接提出します。初回の提出は、マージ前にメンテナーがレビューします。詳しい手順はチュートリアルのセクション 7 の [最初の plugin を作る](../tutorials/build-your-first-plugin.md)、各ステップの動作は [`reference/openpen-cli.md`](../reference/openpen-cli.md) を参照してください。
+公式カタログに登録するには、zip を GitHub Release に添付した後で `npx openpen-cli publish` を実行します。release を確認し、GitHub ログインが plugin id のスコープと一致することを検証したうえで、カタログに対して pull request を開きます。初回の提出は Registration PR、新バージョンは Update PR になります。 組織スコープは `publish` では非対応です。公式の `@openpen` スコープは、組織メンバーがカタログリポジトリへ直接提出します。初回の提出は、マージ前にメンテナーがレビューします。詳しい手順はチュートリアルのセクション 7 の [最初の plugin を作る](../tutorials/build-your-first-plugin.md)、各ステップの動作は [`reference/openpen-cli.md`](../reference/openpen-cli.md) を参照してください。 plugin のリポジトリも個人アカウント配下にあり、plugin 名と同じ名前である必要があります（`publish` は `https://github.com/<your-login>/<plugin-name>` として記録します）。カタログボットはリポジトリの所有者を登録アカウントと照合し、組織や他のアカウントのリポジトリは拒否されます。
 
 ---
 

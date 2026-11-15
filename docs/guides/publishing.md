@@ -169,7 +169,7 @@ To get your plugin listed, run `npx openpen-cli publish` after attaching the zip
 your GitHub Release. It checks the release, confirms that your GitHub login equals
 the scope of the plugin id (organization scopes are not supported here; the official
 `@openpen` scope is submitted directly to the catalog repository by organization members), and opens a pull request against the catalog: a
-Registration PR for a first submission, an Update PR for a new version. A first
+Registration PR for a first submission, an Update PR for a new version. The plugin repository must also be under your personal account and named after the plugin (`publish` records it as `https://github.com/<your-login>/<plugin-name>`); the catalog bot compares the repository owner with the registering account, and a repository under an organization or another account is rejected. A first
 submission is reviewed by a maintainer before it is merged. See section 7 of
 [Build your first plugin](../tutorials/build-your-first-plugin.md)
 for the full walkthrough and [`reference/openpen-cli.md`](../reference/openpen-cli.md)

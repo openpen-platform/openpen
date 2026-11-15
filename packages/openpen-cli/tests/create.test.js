@@ -88,7 +88,7 @@ describe('openpen create @scope/name', () => {
       )
 
       expect(result.status).toBe(0)
-      const steps = result.stdout.split('Next steps:')[1].trim().split('\n').map((l) => l.trim())
+      const steps = result.stdout.split('Next steps:')[1].split('\n\n')[0].trim().split('\n').map((l) => l.trim())
       expect(steps).toEqual([
         'cd baz',
         'npm install',
@@ -115,6 +115,11 @@ describe('openpen create @scope/name', () => {
       expect(readme).toMatch(/^# My Tool/)
       expect(readme).toMatch(/@demo\/my-tool/)
       expect(readme).not.toMatch(/Plugin Starter|minimal scaffold/)
+      // the project already exists: its Quickstart must not tell the author to run create again
+      expect(readme).not.toMatch(/openpen-cli create/)
+      expect(readme).toMatch(/npm run pack/)
+      expect(result.stdout).toMatch(/npm run pack/)
+      expect(fs.readFileSync(path.join(dir, '.gitignore'), 'utf-8')).toMatch(/^\*\.zip$/m)
       const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))
       expect(pkg.description).toBe('OpenPen plugin @demo/my-tool.')
     } finally {

@@ -104,7 +104,7 @@ plugin 沒出現時，掃描器會在目錄 repository 的 `Update community ind
 
 官方目錄中的 plugin 可用 id 安裝：`npx openpen-cli plugin install @scope/name`，並會顯示在應用程式的 Marketplace 分頁中。
 
-若要列入官方目錄，請在把 zip 附到 GitHub Release 之後執行 `npx openpen-cli publish`。它會檢查該 release、確認你的 GitHub 登入帳號與 plugin id 的 scope 相符，並對目錄開啟一個 pull request：首次提交為 Registration PR，新版本則為 Update PR。 組織 scope 不支援透過 `publish` 提交；官方 `@openpen` scope 由組織成員直接提交到目錄儲存庫。首次提交在合併前會由維護者審閱。完整流程請見[建立你的第一個 plugin](../tutorials/build-your-first-plugin.md) 的第 7 節，各步驟的細節請見 [`reference/openpen-cli.md`](../reference/openpen-cli.md)。
+若要列入官方目錄，請在把 zip 附到 GitHub Release 之後執行 `npx openpen-cli publish`。它會檢查該 release、確認你的 GitHub 登入帳號與 plugin id 的 scope 相符，並對目錄開啟一個 pull request：首次提交為 Registration PR，新版本則為 Update PR。 組織 scope 不支援透過 `publish` 提交；官方 `@openpen` scope 由組織成員直接提交到目錄儲存庫。首次提交在合併前會由維護者審閱。完整流程請見[建立你的第一個 plugin](../tutorials/build-your-first-plugin.md) 的第 7 節，各步驟的細節請見 [`reference/openpen-cli.md`](../reference/openpen-cli.md)。 plugin 的儲存庫也必須位於你的個人帳號下，並以 plugin 名稱命名（`publish` 會記錄為 `https://github.com/<your-login>/<plugin-name>`）；目錄機器人會將儲存庫擁有者與註冊帳號比對，位於組織或其他帳號下的儲存庫會被拒絕。
 
 ---
 
