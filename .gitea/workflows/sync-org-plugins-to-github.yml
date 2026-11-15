@@ -5,6 +5,7 @@ name: Sync org repos to GitHub (scheduled)
 # workflow (sync-to-github.yml) and is skipped here. Only `main` is pushed,
 # fast-forward only; tags and other branches are never touched, and nothing is
 # ever deleted on GitHub.
+# Gitea registers this schedule when the file is pushed to the default branch.
 
 on:
   schedule:
