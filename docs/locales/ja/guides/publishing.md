@@ -102,6 +102,15 @@ plugin が表示されない場合、スキャナーはカタログリポジト�
 
 公式カタログに登録するには、zip を GitHub Release に添付した後で `npx openpen-cli publish` を実行します。release を確認し、GitHub ログインが plugin id のスコープと一致することを検証したうえで、カタログに対して pull request を開きます。初回の提出は Registration PR、新バージョンは Update PR になります。 組織スコープは `publish` では非対応です。公式の `@openpen` スコープは、組織メンバーがカタログリポジトリへ直接提出します。初回の提出は、マージ前にメンテナーがレビューします。詳しい手順はチュートリアルのセクション 7 の [最初の plugin を作る](../tutorials/build-your-first-plugin.md)、各ステップの動作は [`reference/openpen-cli.md`](../reference/openpen-cli.md) を参照してください。 plugin のリポジトリも個人アカウント配下にあり、plugin 名と同じ名前である必要があります（`publish` は `https://github.com/<your-login>/<plugin-name>` として記録します）。カタログボットはリポジトリの所有者を登録アカウントと照合し、組織や他のアカウントのリポジトリは拒否されます。
 
+### Plugin の削除
+
+公式カタログにはセルフサービスの削除手段はありません。`publish` が開くのは Registration PR と Update PR だけで、CLI に yank や tombstone のコマンドもありません。削除を依頼するには、[OpenPen-plugins の Issue](https://github.com/openpen-platform/OpenPen-plugins/issues) に plugin id と理由を書いて起票してください。カタログのメンテナーが plugin の `state` を設定します。
+
+- `yanked`: エントリはカタログと Marketplace に警告付きで残ります。`npx openpen-cli plugin install @scope/name` は拒否され、特定の zip URL を直接指定するよう案内されます。
+- `tombstoned`: エントリは公開インデックスと Marketplace から外れ、id によるインストールはブロックされます。id は予約されたままで、再登録はできません。
+
+manifest を削除する PR は更新とは扱われず、カタログボットが「メンテナーが判断する」とコメントします。すでにインストールしたユーザーは、`npx openpen-cli plugin remove @scope/name` を実行するまで plugin を使い続けます。コミュニティリストの plugin の外し方は、上のコミュニティリストの節の末尾を参照してください。
+
 ---
 
 ## トラストモデルと責任

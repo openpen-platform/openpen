@@ -79,7 +79,7 @@ npx openpen-cli <command>
 
 **行为：**
 1. 从目录获取 `plugins.json`。
-2. 查找 `@scope/name` 对应的条目；若该 plugin 已被撤回或标记为墓碑则报告错误。
+2. 查找 `@scope/name` 对应的条目；若该 plugin 已被撤回或标记为墓碑则报告错误。这些状态由目录维护者设置，见[下架 plugin](../guides/publishing.md#下架-plugin)。
 3. 下载 release zip。
 4. 根据目录记录验证 SHA-256 摘要。不匹配时中止并删除已下载的文件。
 5. 解压到 `~/.openpen/plugins/@scope/name/`。

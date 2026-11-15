@@ -100,6 +100,17 @@ The file you submit is `plugins/<scope>/<name>/manifest.json`:
 
 ---
 
+## Removing a plugin
+
+There is no self-service takedown. Open an issue in this repository with the plugin id and the reason; a maintainer sets the entry's `state`:
+
+- `yanked`: stays listed with a warning, and installing it by id is refused.
+- `tombstoned`: dropped from the public index, installation is blocked, and the id stays reserved.
+
+A PR that deletes a manifest is not an update; the bot comments and a maintainer decides.
+
+---
+
 ## Reporting issues
 
 Open an issue in [openpen/openpen](https://github.com/openpen-platform/openpen/issues) for:

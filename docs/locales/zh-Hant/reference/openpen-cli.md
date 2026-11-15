@@ -79,7 +79,7 @@ npx openpen-cli <command>
 
 **行為：**
 1. 從目錄取得 `plugins.json`。
-2. 查找 `@scope/name` 的條目；若 plugin 已被 yank 或 tombstone，則回報錯誤。
+2. 查找 `@scope/name` 的條目；若 plugin 已被 yank 或 tombstone，則回報錯誤。這些狀態由目錄維護者設定，見[下架 plugin](../guides/publishing.md#下架-plugin)。
 3. 下載 release zip。
 4. 對照目錄記錄驗證 SHA-256 摘要。若不符則中止並刪除已下載的檔案。
 5. 解壓縮至 `~/.openpen/plugins/@scope/name/`。若目錄已存在，會先備份；成功後刪除備份，失敗時還原備份。

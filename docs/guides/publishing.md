@@ -176,6 +176,15 @@ submission is reviewed by a maintainer before it is merged. See section 7 of
 for the full walkthrough and [`reference/openpen-cli.md`](../reference/openpen-cli.md)
 for what each step does.
 
+### Removing a plugin
+
+There is no self-service takedown for the official catalog: `publish` only opens Registration and Update PRs, and the CLI has no yank or tombstone command. To have a plugin removed, open an issue in the [OpenPen-plugins issue tracker](https://github.com/openpen-platform/OpenPen-plugins/issues) naming the plugin id and the reason. Catalog maintainers set the plugin's `state`:
+
+- `yanked`: the entry stays in the catalog and Marketplace with a warning. `npx openpen-cli plugin install @scope/name` refuses it and points to installing a specific zip URL directly.
+- `tombstoned`: the entry is dropped from the public index and Marketplace and installation by id is blocked. The id stays reserved and cannot be registered again.
+
+A PR that deletes a manifest is not treated as an update: the catalog bot comments that a maintainer decides. Users who already installed the plugin keep it until they run `npx openpen-cli plugin remove @scope/name`. A plugin on the community list is removed differently: see the end of the community list section above.
+
 ---
 
 ## Trust model & responsibility

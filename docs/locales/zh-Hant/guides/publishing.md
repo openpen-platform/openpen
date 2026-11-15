@@ -106,6 +106,15 @@ plugin 沒出現時，掃描器會在目錄 repository 的 `Update community ind
 
 若要列入官方目錄，請在把 zip 附到 GitHub Release 之後執行 `npx openpen-cli publish`。它會檢查該 release、確認你的 GitHub 登入帳號與 plugin id 的 scope 相符，並對目錄開啟一個 pull request：首次提交為 Registration PR，新版本則為 Update PR。 組織 scope 不支援透過 `publish` 提交；官方 `@openpen` scope 由組織成員直接提交到目錄儲存庫。首次提交在合併前會由維護者審閱。完整流程請見[建立你的第一個 plugin](../tutorials/build-your-first-plugin.md) 的第 7 節，各步驟的細節請見 [`reference/openpen-cli.md`](../reference/openpen-cli.md)。 plugin 的儲存庫也必須位於你的個人帳號下，並以 plugin 名稱命名（`publish` 會記錄為 `https://github.com/<your-login>/<plugin-name>`）；目錄機器人會將儲存庫擁有者與註冊帳號比對，位於組織或其他帳號下的儲存庫會被拒絕。
 
+### 下架 plugin
+
+官方目錄沒有自助下架：`publish` 只會開 Registration PR 與 Update PR，CLI 也沒有 yank 或 tombstone 指令。要下架 plugin，請在 [OpenPen-plugins 的 Issues](https://github.com/openpen-platform/OpenPen-plugins/issues) 開 issue，寫明 plugin id 與原因。目錄維護者會設定該 plugin 的 `state`：
+
+- `yanked`：條目仍留在目錄與 Marketplace，並顯示警告。`npx openpen-cli plugin install @scope/name` 會拒絕安裝，並提示改為直接指定某個 zip 網址安裝。
+- `tombstoned`：條目從公開索引與 Marketplace 移除，依 id 安裝會被阻擋。該 id 仍被保留，不能再次註冊。
+
+刪除 manifest 的 PR 不會被當作更新：目錄機器人會留言說明由維護者決定。已安裝的使用者在執行 `npx openpen-cli plugin remove @scope/name` 之前仍可繼續使用。社群清單中的 plugin 如何移除，請見上方社群清單一節的結尾。
+
 ---
 
 ## 信任模型與責任

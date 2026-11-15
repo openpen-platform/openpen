@@ -98,7 +98,7 @@ Download and install a plugin from the central catalog.
 
 **Behaviour:**
 1. Fetches `plugins.json` from the catalog.
-2. Looks up the entry for `@scope/name`; reports an error if the plugin is yanked or tombstoned.
+2. Looks up the entry for `@scope/name`; reports an error if the plugin is yanked or tombstoned. These states are set by catalog maintainers; see [Removing a plugin](../guides/publishing.md#removing-a-plugin).
 3. Downloads the release zip.
 4. Verifies the SHA-256 digest against the catalog record. Aborts and deletes the download on mismatch.
 5. Extracts to `~/.openpen/plugins/@scope/name/`.
