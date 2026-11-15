@@ -9,7 +9,7 @@ language: ja
 
 # はじめての OpenPen plugin を作る
 
-このチュートリアルでは、`openpen-cli` パッケージを使って plugin のスキャフォールディング、ビルド、OpenPen へのインストール、そしてコミュニティカタログへの公開までを一通り体験します。
+このチュートリアルでは、`openpen-cli` パッケージを使って plugin のスキャフォールディング、ビルド、OpenPen へのインストール、そして公式カタログへの公開までを一通り体験します。
 
 ## 前提条件
 
@@ -28,7 +28,7 @@ cd my-highlighter
 npm install
 ```
 
-`yourscope` は GitHub のユーザー名または組織名 (小文字) に置き換えてください。
+`yourscope` は GitHub のユーザー名 (小文字) に置き換えてください。公式カタログへの公開 (セクション 7) では、スコープが GitHub ログイン名と一致している必要があり、組織スコープは `publish` で拒否されます。
 `npx openpen-cli create` は plugin-starter テンプレートをコピーし、id のプレースホルダーを置換して、次のステップを出力します。
 
 以下のようなフォルダー構成が生成されます。
@@ -414,15 +414,28 @@ zip には `plugin.json`、`dist/`、`locales/` のみが含まれます。`src/
 
 ---
 
-## 7. カタログへの公開
+## 7. 公式カタログへの公開
 
-### ステップ 1 — GitHub Release の作成
+### ステップ 1 — プロジェクトを GitHub に push する
+
+`gh release create` にはリモートリポジトリが必要です。個人アカウントの下に、plugin 名と同じ名前で作成してください。`publish` はリポジトリを `https://github.com/<your-login>/<plugin-name>` として記録します。
+
+```bash
+git init
+git add -A
+git commit -m "Initial commit"
+gh repo create yourscope/my-highlighter --public --source . --push
+```
+
+スキャフォールドには、`node_modules/`、`dist/`、`*.zip` をリポジトリに入れない `.gitignore` が最初から含まれています。
+
+### ステップ 2 — GitHub Release の作成
 
 ```bash
 gh release create v0.1.0 ./yourscope-my-highlighter-0.1.0.zip
 ```
 
-### ステップ 2 — カタログ PR のオープン
+### ステップ 3 — カタログ PR のオープン
 
 ```bash
 npx openpen-cli publish
@@ -440,7 +453,7 @@ npx openpen-cli publish
 
 ### plugin の更新
 
-以降のリリースでも流れは同じですが、ステップ 2 では Registration PR の代わりに**Update PR** がオープンされます。ボットは PR を検証して結果をコメントしますが、マージは行いません。マージするかどうかはメンテナーが判断します。
+以降のリリースでも流れは同じですが、ステップ 3 では Registration PR の代わりに**Update PR** がオープンされます。ボットは PR を検証して結果をコメントしますが、マージは行いません。マージするかどうかはメンテナーが判断します。
 
 ```bash
 # bump version in plugin.json, then:

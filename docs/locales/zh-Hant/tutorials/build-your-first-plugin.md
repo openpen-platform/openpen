@@ -10,7 +10,7 @@ language: zh-Hant
 # 打造你的第一個 OpenPen Plugin
 
 在本教學中，你將使用 `openpen-cli` 套件建立一個 plugin 的骨架、編譯它、安裝至 OpenPen，
-並發佈到社群目錄。
+並發佈到官方目錄（另有免審核的社群清單，見發佈指南）。
 
 ## 前置需求
 
@@ -29,7 +29,7 @@ cd my-highlighter
 npm install
 ```
 
-將 `yourscope` 替換為你的 GitHub 使用者名稱或組織名稱（小寫）。
+將 `yourscope` 替換為你的 GitHub 使用者名稱（小寫）。發佈到官方目錄（第 7 節）時，scope 必須與你的 GitHub 登入帳號一致，組織 scope 會被 `publish` 拒絕。
 `npx openpen-cli create` 會複製 plugin-starter 範本、替換 id 佔位符，並輸出後續步驟說明。
 
 你會得到如下的資料夾結構：
@@ -428,15 +428,28 @@ zip 檔僅包含 `plugin.json`、`dist/` 和 `locales/`——不含 `src/`、
 
 ---
 
-## 7. 發佈至目錄
+## 7. 發佈至官方目錄
 
-### 步驟 1 — 建立 GitHub Release
+### 步驟 1 — 把專案推送到 GitHub
+
+`gh release create` 需要遠端 repository。請在你的個人帳號下建立，並以 plugin 名稱命名：`publish` 會把 repository 記錄為 `https://github.com/<your-login>/<plugin-name>`。
+
+```bash
+git init
+git add -A
+git commit -m "Initial commit"
+gh repo create yourscope/my-highlighter --public --source . --push
+```
+
+腳手架已附 `.gitignore`，會讓 `node_modules/`、`dist/` 與 `*.zip` 不進 repository。
+
+### 步驟 2 — 建立 GitHub Release
 
 ```bash
 gh release create v0.1.0 ./yourscope-my-highlighter-0.1.0.zip
 ```
 
-### 步驟 2 — 開啟目錄 PR
+### 步驟 3 — 開啟目錄 PR
 
 ```bash
 npx openpen-cli publish
@@ -456,7 +469,7 @@ npx openpen-cli publish
 
 ### 更新你的 plugin
 
-後續發佈的流程相同，但步驟 2 會開啟**更新 PR** 而非註冊 PR。機器人會驗證 PR 並留言說明結果，不會合併；是否合併由維護者決定。
+後續發佈的流程相同，但步驟 3 會開啟**更新 PR** 而非註冊 PR。機器人會驗證 PR 並留言說明結果，不會合併；是否合併由維護者決定。
 
 ```bash
 # bump version in plugin.json, then:

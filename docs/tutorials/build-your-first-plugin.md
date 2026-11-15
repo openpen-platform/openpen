@@ -6,7 +6,8 @@ description: Scaffold, build, install, and publish a plugin from zero to running
 # Build Your First OpenPen Plugin
 
 In this tutorial you'll scaffold a plugin, build it, install it into OpenPen,
-and publish it to the community catalog — all using the `openpen-cli` package.
+and publish it to the official catalog — all using the `openpen-cli` package. (There is also a
+review-free community list; see the [publishing guide](../guides/publishing.md).)
 
 ## Prerequisites
 
@@ -25,7 +26,9 @@ cd my-highlighter
 npm install
 ```
 
-Replace `yourscope` with your GitHub username or org name (lowercase).
+Replace `yourscope` with your GitHub username (lowercase). Publishing to the official catalog
+(section 7) requires the scope to equal your GitHub login; organization scopes are rejected by
+`publish`.
 `npx openpen-cli create` copies the plugin-starter template, substitutes the id
 placeholders, and prints next steps.
 
@@ -441,15 +444,31 @@ no `node_modules/`, no lifecycle scripts.
 
 ---
 
-## 7. Publish to the catalog
+## 7. Publish to the official catalog
 
-### Step 1 — Create a GitHub Release
+### Step 1 — Push the project to GitHub
+
+`gh release create` needs a remote repository. Create it under your personal account and name it
+after the plugin: `publish` records the repository as
+`https://github.com/<your-login>/<plugin-name>`.
+
+```bash
+git init
+git add -A
+git commit -m "Initial commit"
+gh repo create yourscope/my-highlighter --public --source . --push
+```
+
+The scaffold already ships a `.gitignore` that keeps `node_modules/`, `dist/` and `*.zip` out of
+the repository.
+
+### Step 2 — Create a GitHub Release
 
 ```bash
 gh release create v0.1.0 ./yourscope-my-highlighter-0.1.0.zip
 ```
 
-### Step 2 — Open a catalog PR
+### Step 3 — Open a catalog PR
 
 ```bash
 npx openpen-cli publish
@@ -475,7 +494,7 @@ the sha256, and opens a **Registration PR** in the `OpenPen-plugins` catalog rep
 
 ### Updating your plugin
 
-For subsequent releases the flow is the same, but step 2 opens an **Update PR**
+For subsequent releases the flow is the same, but step 3 opens an **Update PR**
 instead of a Registration PR. The bot validates the PR and comments with the
 result; it does not merge. A maintainer decides whether to merge it.
 
