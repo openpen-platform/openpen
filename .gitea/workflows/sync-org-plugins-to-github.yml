@@ -26,9 +26,9 @@ jobs:
           GITEA_TOKEN: ${{ gitea.token }}
           GT_HOST: ${{ secrets.GT_HOST }}
           ORG: openpen-platform
-          # Space-separated repo names to skip. Kept in a Gitea org Actions variable
-          # so the (public) workflow file does not list private repo names.
-          EXCLUDE: ${{ vars.SYNC_EXCLUDE }}
+          # Space-separated repo names to skip. Kept in a Gitea org secret so neither
+          # this (public) file nor the job log lists private repo names.
+          EXCLUDE: ${{ secrets.SYNC_EXCLUDE }}
         run: |
           # Explicitly no -e: a failure on one repo must not abort the job; failures
           # are collected in FAILED and turned into a red run at the end.
@@ -38,7 +38,7 @@ jobs:
 
           for v in GH_PAT GITEA_TOKEN GT_HOST EXCLUDE; do
             if [ -z "${!v:-}" ]; then
-              echo "::error::$v is empty (GH_PAT / GT_HOST: Gitea org secrets; EXCLUDE: org variable SYNC_EXCLUDE). Refusing to sync anything."
+              echo "::error::$v is empty (GH_PAT / GT_HOST: Gitea org secrets; EXCLUDE: org secret SYNC_EXCLUDE). Refusing to sync anything."
               exit 1
             fi
           done
@@ -47,7 +47,7 @@ jobs:
             echo "::error::EXCLUDE is blank. Refusing to sync anything."
             exit 1
           fi
-          command -v jq >/dev/null || { echo "::error::jq not found on runner"; exit 1; }
+          command -v node >/dev/null || { echo "::error::node not found on runner"; exit 1; }
 
           GH_B64=$(printf 'x-access-token:%s' "$GH_PAT" | base64 -w0)
           GT_B64=$(printf 'oauth2:%s' "$GITEA_TOKEN" | base64 -w0)
@@ -63,7 +63,7 @@ jobs:
             body=$(curl -sS --fail -H "Authorization: token ${GITEA_TOKEN}" \
               "https://${GT_HOST}/api/v1/orgs/${ORG}/repos?limit=50&page=${page}") || {
               echo "::error::Gitea repo listing failed (page ${page})"; exit 1; }
-            names=$(printf '%s' "$body" | jq -r '.[].name') || { echo "::error::bad Gitea response"; exit 1; }
+            names=$(printf '%s' "$body" | node -e 'const a=JSON.parse(require("fs").readFileSync(0,"utf8"));if(!Array.isArray(a))process.exit(1);for(const r of a)console.log(r.name)') || { echo "::error::bad Gitea response"; exit 1; }
             [ -z "$names" ] && break
             REPOS="${REPOS}${names}"$'\n'
             page=$((page + 1))
