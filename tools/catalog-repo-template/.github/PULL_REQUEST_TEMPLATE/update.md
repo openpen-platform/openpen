@@ -1,5 +1,5 @@
 <!-- Update PR: version bump for an existing catalog entry. -->
-<!-- The bot validates and auto-merges after all checks pass. No human review needed. -->
+<!-- The bot validates and comments with the result. A maintainer decides whether to merge. -->
 
 ## Plugin update: `@scope/name` v<version>
 

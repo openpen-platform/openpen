@@ -66,7 +66,8 @@
 ### Update PR (version bumps)
 
 - Title format: `plugin: update @scope/name v<version>`
-- Fully automated — the bot merges after all checks pass. No human review needed.
+- The bot validates the PR and comments with the result. It does not merge; a maintainer
+  decides whether to merge.
 - The bot additionally verifies:
   - `ownerId` matches the original registration (prevents repo-transfer hijacks)
   - `latestVersion` is newer than the current catalog entry (no downgrades)

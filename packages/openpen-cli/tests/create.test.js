@@ -49,7 +49,7 @@ describe('openpen create @scope/name', () => {
     }
   })
 
-  it('does not clobber other package.json fields (description / version / scripts)', () => {
+  it('keeps version / scripts and sets a plugin-specific description', () => {
     const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-create-test-'))
     try {
       const result = spawnSync(
@@ -67,7 +67,7 @@ describe('openpen create @scope/name', () => {
       const pkg = JSON.parse(fs.readFileSync(path.join(tmpdir, 'bar', 'package.json'), 'utf-8'))
       expect(pkg.name).toBe('@demo/bar')
       expect(pkg.version).toBe('0.1.0')
-      expect(pkg.description).toBe('Starter template for OpenPen plugins.')
+      expect(pkg.description).toBe('OpenPen plugin @demo/bar.')
       expect(pkg.scripts).toMatchObject({ build: 'openpen-build' })
     } finally {
       fs.rmSync(tmpdir, { recursive: true, force: true })
@@ -95,6 +95,28 @@ describe('openpen create @scope/name', () => {
         'npm run build',
         'npx openpen-cli plugin add .',
       ])
+    } finally {
+      fs.rmSync(tmpdir, { recursive: true, force: true })
+    }
+  })
+
+  it('names the plugin in the README title and package.json description', () => {
+    const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-create-test-'))
+    try {
+      const result = spawnSync(
+        process.execPath,
+        [CLI_BIN, 'create', '@demo/my-tool'],
+        { encoding: 'utf-8', cwd: tmpdir, env: { ...process.env, HOME: tmpdir } },
+      )
+      expect(result.status).toBe(0)
+
+      const dir = path.join(tmpdir, 'my-tool')
+      const readme = fs.readFileSync(path.join(dir, 'README.md'), 'utf-8')
+      expect(readme).toMatch(/^# My Tool/)
+      expect(readme).toMatch(/@demo\/my-tool/)
+      expect(readme).not.toMatch(/Plugin Starter|minimal scaffold/)
+      const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))
+      expect(pkg.description).toBe('OpenPen plugin @demo/my-tool.')
     } finally {
       fs.rmSync(tmpdir, { recursive: true, force: true })
     }

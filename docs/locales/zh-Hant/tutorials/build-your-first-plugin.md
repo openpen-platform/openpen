@@ -454,7 +454,7 @@ npx openpen-cli publish
 
 ### 更新你的 plugin
 
-後續發佈的流程相同，但步驟 2 會開啟**更新 PR** 而非註冊 PR。更新 PR 在通過驗證後會由機器人自動合併——無需人工審閱。
+後續發佈的流程相同，但步驟 2 會開啟**更新 PR** 而非註冊 PR。機器人會驗證 PR 並留言說明結果，不會合併；是否合併由維護者決定。
 
 ```bash
 # bump version in plugin.json, then:

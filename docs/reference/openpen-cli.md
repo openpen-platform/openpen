@@ -67,13 +67,21 @@ GitHub Release for `v<version>` must be live with the zip attached.
 **Behaviour:**
 1. Validates `plugin.json` and the zip file.
 2. Verifies the GitHub Release and attached asset exist.
-3. Confirms your authenticated GitHub login matches the `scope` in the plugin `id`.
+3. Confirms your authenticated GitHub login equals the `scope` in the plugin `id`. This is
+   the only supported rule: a plugin whose scope is an organization name is rejected here, and
+   the catalog bot applies the same check to the PR author, so a registration PR opened by
+   someone else for an organization scope fails the bot's first check (scope matches
+   submitter). Use your personal GitHub login as the scope. The one exception is the
+   official `@openpen` scope, which organization members submit directly to the catalog
+   repository without `publish`. (The community list has no such restriction; see the
+   [publishing guide](../guides/publishing.md).)
 4. Computes the zip SHA-256.
 5. Detects whether this is a first-time registration or a version update:
    - **New plugin** → opens a Registration PR (`register/<scope>-<name>`). Requires
      a maintainer review before merge.
    - **Version update** → opens an Update push PR (`update/<scope>-<name>-<version>`).
-     Merged automatically by the catalog bot once all checks pass.
+     The catalog bot validates it and comments with the result. It does not merge the PR;
+     a maintainer decides whether to merge.
 6. Prints the PR URL.
 
 **Authentication:** Uses a GitHub OAuth token or the `GITHUB_TOKEN` environment variable.

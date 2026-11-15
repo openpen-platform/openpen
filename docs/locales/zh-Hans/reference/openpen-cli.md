@@ -62,11 +62,11 @@ npx openpen-cli <command>
 **行为：**
 1. 验证 `plugin.json` 和 zip 文件。
 2. 确认 GitHub Release 及附件资产存在。
-3. 确认你已验证的 GitHub 登录名与 plugin `id` 中的 `scope` 匹配。
+3. 确认你已验证的 GitHub 登录名与 plugin `id` 中的 `scope` 一致。这是唯一受支持的规则：scope 为组织名的 plugin 会在此被拒绝，目录机器人也会对 PR 提交者做同样的检查，因此他人代表组织 scope 开启的 Registration PR 会在第一项检查（scope matches submitter）失败。请使用你个人的 GitHub 登录名作为 scope。唯一的例外是官方 `@openpen` scope，由组织成员不经 `publish`、直接提交到目录仓库。（社区列表没有这项限制。）
 4. 计算 zip 的 SHA-256 值。
 5. 检测本次是首次注册还是版本更新：
    - **新 plugin** → 开启注册 PR（`register/<scope>-<name>`）。合并前需维护者审核。
-   - **版本更新** → 开启更新推送 PR（`update/<scope>-<name>-<version>`）。所有检查通过后，目录机器人自动合并。
+   - **版本更新** → 开启更新推送 PR（`update/<scope>-<name>-<version>`）。目录机器人会验证并留言说明结果，不会合并该 PR，是否合并由维护者决定。
 6. 打印 PR URL。
 
 **身份验证：** 使用 GitHub OAuth token 或 `GITHUB_TOKEN` 环境变量。

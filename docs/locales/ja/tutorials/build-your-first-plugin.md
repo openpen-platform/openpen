@@ -438,7 +438,7 @@ npx openpen-cli publish
 
 ### plugin の更新
 
-以降のリリースでも流れは同じですが、ステップ 2 では Registration PR の代わりに**Update PR** がオープンされます。Update PR は検証が通ると、人間のレビューなしにボットによって自動マージされます。
+以降のリリースでも流れは同じですが、ステップ 2 では Registration PR の代わりに**Update PR** がオープンされます。ボットは PR を検証して結果をコメントしますが、マージは行いません。マージするかどうかはメンテナーが判断します。
 
 ```bash
 # bump version in plugin.json, then:

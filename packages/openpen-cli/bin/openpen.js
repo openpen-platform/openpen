@@ -163,6 +163,19 @@ function copyStarterTo(starterDir, destDir, pluginId, scope, name) {
   }
 
   copyDir(starterDir, destDir)
+
+  // The starter's own README and description describe the template, not your plugin.
+  const pkgPath = path.join(destDir, 'package.json')
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
+  pkg.description = `OpenPen plugin ${pluginId}.`
+  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
+  const readmePath = path.join(destDir, 'README.md')
+  fs.writeFileSync(
+    readmePath,
+    fs.readFileSync(readmePath, 'utf-8')
+      .replace('# OpenPen Plugin Starter', `# ${toTitleCase(name)}`)
+      .replace('A minimal scaffold for building OpenPen plugins.', `OpenPen plugin \`${pluginId}\`.`),
+  )
 }
 
 function toTitleCase(str) {
@@ -384,6 +397,8 @@ async function cmdPublish() {
   if (authenticatedLogin.toLowerCase() !== scopePart.toLowerCase()) {
     console.error(`Error: Authenticated GitHub login "${authenticatedLogin}" does not match plugin scope "${scopePart}".`)
     console.error('  Your GitHub login must equal the scope in the plugin id.')
+    console.error('  Organization scopes are not supported by `publish`. The official @openpen scope is')
+    console.error('  registered by organization members submitting directly to the catalog repository.')
     process.exit(1)
   }
 

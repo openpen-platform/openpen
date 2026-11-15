@@ -441,7 +441,7 @@ npx openpen-cli publish
 
 ### 更新你的 plugin
 
-后续发布的流程相同，但步骤 2 会提交 **Update PR** 而非 Registration PR。Update PR 在验证通过后由机器人自动合并——无需人工审查。
+后续发布的流程相同，但步骤 2 会提交 **Update PR** 而非 Registration PR。机器人会验证 PR 并留言说明结果，不会合并；是否合并由维护者决定。
 
 ```bash
 # bump version in plugin.json, then:

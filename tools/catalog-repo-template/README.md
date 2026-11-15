@@ -15,7 +15,7 @@ It mirrors the Obsidian community-plugins pattern:
 - Plugin authors submit pull requests to register or update their plugins.
 - A GitHub Actions bot validates every PR automatically.
 - Registration PRs (first-time) receive a human review from a maintainer.
-- Update PRs (version bumps) are auto-merged by the bot after validation.
+- Update PRs (version bumps) are validated by the bot, which comments with the result; a maintainer decides whether to merge.
 - A CI workflow regenerates `plugins.json` (the aggregate catalog index) after each merge.
 
 ## Structure

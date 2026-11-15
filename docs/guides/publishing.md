@@ -166,8 +166,9 @@ Plugins in the official catalog can be installed by id with
 `npx openpen-cli plugin install @scope/name` and are shown in the app's Marketplace tab.
 
 To get your plugin listed, run `npx openpen-cli publish` after attaching the zip to
-your GitHub Release. It checks the release, confirms that your GitHub login matches
-the scope of the plugin id, and opens a pull request against the catalog: a
+your GitHub Release. It checks the release, confirms that your GitHub login equals
+the scope of the plugin id (organization scopes are not supported here; the official
+`@openpen` scope is submitted directly to the catalog repository by organization members), and opens a pull request against the catalog: a
 Registration PR for a first submission, an Update PR for a new version. A first
 submission is reviewed by a maintainer before it is merged. See section 7 of
 [Build your first plugin](../tutorials/build-your-first-plugin.md)

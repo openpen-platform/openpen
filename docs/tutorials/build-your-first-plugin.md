@@ -456,7 +456,8 @@ npx openpen-cli publish
 ```
 
 `npx openpen-cli publish` reads `plugin.json`, verifies the GitHub Release exists,
-checks that your authenticated GitHub login matches the plugin scope, computes
+checks that your authenticated GitHub login equals the plugin scope (organization scopes
+are not supported by `publish`), computes
 the sha256, and opens a **Registration PR** in the `OpenPen-plugins` catalog repo.
 
 **What happens next:**
@@ -469,8 +470,8 @@ the sha256, and opens a **Registration PR** in the `OpenPen-plugins` catalog rep
 ### Updating your plugin
 
 For subsequent releases the flow is the same, but step 2 opens an **Update PR**
-instead of a Registration PR. Update PRs are auto-merged by the bot after
-validation passes — no human review needed.
+instead of a Registration PR. The bot validates the PR and comments with the
+result; it does not merge. A maintainer decides whether to merge it.
 
 ```bash
 # bump version in plugin.json, then:
