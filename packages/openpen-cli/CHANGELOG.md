@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.2](https://github.com/openpen-platform/openpen/compare/openpen-cli@1.2.1...openpen-cli@1.2.2) (2026-11-15)
+
+
+### Bug Fixes
+
+* **cli:** align plugin publishing docs and scaffold with actual behavior ([3a8364e](https://github.com/openpen-platform/openpen/commit/3a8364e5925d21a04efa4821b072ae248f464f4f))
+* **cli:** scaffold ignores zips and guides a new project; catalog bot only comments ([9287fbb](https://github.com/openpen-platform/openpen/commit/9287fbbc4c4dbfd0d784764259adf3d61c1a2ded))
+* **cli:** stop publish crashing while reading the owner info ([9acf8f6](https://github.com/openpen-platform/openpen/commit/9acf8f6b53673824a00c848f0e9623551bd5ccea))
+
 ## [1.2.1](https://github.com/openpen-platform/openpen/compare/openpen-cli@1.2.0...openpen-cli@1.2.1) (2026-11-14)
 
 
