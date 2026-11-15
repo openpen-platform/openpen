@@ -12,6 +12,7 @@ import SettingsView from './views/SettingsView.vue';
 import { setLanguage } from './i18n/index';
 import { initModuleRuntime, cleanupModuleRuntime, usePluginConflicts } from './core/runtime/bootstrap';
 import { useStrokeStyle } from './composables/useStrokeStyle';
+import { startEditableFocusShortcutGuard } from './composables/useEditableFocusShortcutGuard';
 import { usePositioning } from './composables/usePositioning';
 import type { AppSettings } from './types/settings';
 import { STROKE_STYLE_CONTEXT_KEY, HOST_DIALOG_OPEN_COUNT_KEY } from '@openpen/module-api';
@@ -58,6 +59,7 @@ const isActiveDisplay = computed(() =>
 );
 
 let unsubSettings: (() => void) | null = null;
+let stopFocusGuard: (() => void) | null = null;
 let unsubDrawingMode: (() => void) | null = null;
 
 function applyTheme(theme: string) {
@@ -111,6 +113,10 @@ onMounted(async () => {
 
   unsubSettings = window.openPenApi?.onSettingsUpdated(onSettingsUpdated) ?? null;
 
+  // The settings window already suspends shortcuts while open; the other windows
+  // must release the OS key grabs while a text editor has focus.
+  if (!isSettingsWindow) stopFocusGuard = startEditableFocusShortcutGuard();
+
   if (hostsDrawingModeToast) {
     initNotificationService();
     unsubDrawingMode = window.openPenApi?.onDrawingModeChanged((enabled) => notifyDrawingMode(enabled)) ?? null;
@@ -125,6 +131,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  stopFocusGuard?.();
   unsubSettings?.();
   unsubDrawingMode?.();
   if (hostsDrawingModeToast) cleanupNotificationService();
