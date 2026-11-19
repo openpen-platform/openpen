@@ -151,6 +151,15 @@ interface HistoryState {
   canRedo: boolean
 }
 
+interface McpServerStatus {
+  running: boolean
+  url: string | null
+  error: null | 'port_in_use' | 'failed'
+  message?: string
+  /** The user turned the switch on but starting failed; `enabled` was not saved. */
+  pendingEnable?: boolean
+}
+
 interface OpenPenApi {
   /** Node-style platform identifier from the main process. */
   platform: 'darwin' | 'win32' | 'linux'
@@ -309,6 +318,16 @@ interface OpenPenApi {
   onShortcutTriggered(cb: (payload: { id: string }) => void): () => void
   /** Persist plugin id collision resolutions, then relaunch. */
   setPluginConflictResolutions(resolutions: Record<string, string>): Promise<void>
+
+  // MCP (local AI-app endpoint)
+  getMcpStatus(): Promise<McpServerStatus>
+  /** Rotate the API key now; the old key stops working immediately. Resolves to the new key. */
+  regenerateMcpKey(): Promise<string>
+  /** Start the server again after a failed enable; resolves to the new status. */
+  retryMcpStart(): Promise<McpServerStatus>
+  onMcpStatusChanged(cb: (status: McpServerStatus) => void): () => void
+  /** Overlay only. The resolved value (or a thrown error) is reported back to the MCP tool call. */
+  onMcpCommand(handler: (command: Record<string, unknown>) => unknown | Promise<unknown>): () => void
 }
 
 interface Window {

@@ -69,6 +69,22 @@ export const CAPTURE = {
   RESULT: 'capture:result',
 }
 
+/** Local MCP endpoint (AI apps drawing on the overlay). */
+export const MCP = {
+  /** renderer → main (invoke): current server status `{ running, url, error, message? }`. */
+  GET_STATUS: 'mcp:get-status',
+  /** renderer → main (invoke): rotate the API key now; the old key stops working at once. Resolves to the new key. */
+  REGENERATE_KEY: 'mcp:regenerate-key',
+  /** renderer → main (invoke): try again to start a server whose enabling failed. Resolves to the status. */
+  RETRY_START: 'mcp:retry-start',
+  /** main → renderer (send): server status changed. */
+  STATUS_CHANGED: 'mcp:status-changed',
+  /** main → overlay (send): run a canvas command. Payload `{ requestId, command }`. */
+  COMMAND: 'mcp:command',
+  /** overlay → main (send): outcome of a command. Payload `{ requestId, ok, result?, error? }`. */
+  COMMAND_RESULT: 'mcp:command-result',
+}
+
 /** User preferences. */
 export const SETTINGS = {
   GET: 'settings:get',

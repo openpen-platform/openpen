@@ -124,17 +124,21 @@ export function createScreenCapture(deps) {
   }
 
   /**
-   * Capture the display under the cursor.
-   * @param {{ includeAnnotations?: boolean }} [opts]
+   * Capture one display: `displayId` when given, otherwise the display under the cursor.
+   * An unknown `displayId` answers `failed`.
+   * @param {{ includeAnnotations?: boolean, displayId?: number }} [opts]
    * @returns {Promise<{ ok: true, image: Electron.NativeImage, display: Electron.Display } | { ok: false, error: 'permission-denied' | 'unsupported' | 'busy' | 'failed' }>}
    */
-  async function captureDisplayImage({ includeAnnotations = true } = {}) {
+  async function captureDisplayImage({ includeAnnotations = true, displayId } = {}) {
     if (!deps.supported) return { ok: false, error: 'unsupported' };
     if (busy) return { ok: false, error: 'busy' };
     busy = true;
     let restore = null;
     try {
-      const display = deps.screen.getDisplayNearestPoint(deps.screen.getCursorScreenPoint());
+      const display = displayId === undefined
+        ? deps.screen.getDisplayNearestPoint(deps.screen.getCursorScreenPoint())
+        : deps.screen.getAllDisplays().find((d) => d.id === displayId);
+      if (!display) return { ok: false, error: 'failed' };
       const size = {
         width: Math.round(display.size.width * display.scaleFactor),
         height: Math.round(display.size.height * display.scaleFactor),

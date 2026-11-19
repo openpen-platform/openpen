@@ -19,6 +19,9 @@ Cross-platform Electron + Vue 3 desktop overlay app for drawing on-screen during
 | Control bar layout schema | `packages/module-api/src/types/control-bar-layout.ts` (`ControlBarLayout`, `LayoutGroup`, `GroupInset`) |
 | Plugin module manifest discovery | `electron/module-manifest-loader.js` |
 | Plugin network audit log | `electron/audit-log.js` |
+| Local MCP endpoint (manager, HTTP server, built-in tools; IPC under `MCP.*`) | `electron/mcp-server-manager.js`, `electron/mcp/` |
+| MCP tool execution in the overlay renderer | `src/services/mcp-tool-bridge.ts` |
+| MCP settings tab | `src/components/settings/McpTab.vue` |
 | Centralised file logger | `electron/logger.js` |
 | Developer app config | `electron/config-loader.js` (loads `app.config.js`) |
 | IPC channel constants (single source) | `electron/ipc-channels.js` |

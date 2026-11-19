@@ -29,8 +29,10 @@ onMounted(() => {
   initNotificationService();
 
   unsubDrawingMode = window.openPenApi?.onDrawingModeChanged((enabled) => {
+    // Main may re-send the current state (MCP readiness); only a real change toasts.
+    const changed = enabled !== isDrawingMode.value;
     isDrawingMode.value = enabled;
-    if (showsDrawingModeToast) notifyDrawingMode(enabled);
+    if (showsDrawingModeToast && changed) notifyDrawingMode(enabled);
   }) ?? null;
 
   unsubRenderBroken = window.openPenApi?.onTransparentRenderingBroken(() => {
