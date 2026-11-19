@@ -9,6 +9,7 @@ import ModulesTab from '../components/settings/ModulesTab.vue';
 import ShortcutsTab from '../components/settings/ShortcutsTab.vue';
 import AboutTab from '../components/settings/AboutTab.vue';
 import DiagnosticsTab from '../components/settings/DiagnosticsTab.vue';
+import McpTab from '../components/settings/McpTab.vue';
 import LayoutTab from '../components/settings/LayoutTab.vue';
 import { pluginSettingsTabs } from '../services/plugin-registry';
 import { resolveLabel } from '../services/i18n-utils';
@@ -40,7 +41,12 @@ function scrollTabs(dir: 'left' | 'right') {
 // pattern where the UI shows a value the draft does not actually hold, and
 // any wrapper emit before loadSettings() resolves writes the fallback back
 // into the live cache via the previewSettings IPC.
-const draft = reactive<AppSettings>({ ...DEFAULT_SETTINGS });
+// `mcp` is nested: copy it so the draft never aliases DEFAULT_SETTINGS.mcp
+// (its enabledPlugins array would otherwise be mutated in the shared default).
+const draft = reactive<AppSettings>({
+  ...DEFAULT_SETTINGS,
+  mcp: { ...DEFAULT_SETTINGS.mcp, enabledPlugins: [...DEFAULT_SETTINGS.mcp.enabledPlugins] },
+});
 
 /** Gates the draft watcher so it only fires for user edits, not programmatic assigns. */
 let isWatcherArmed = false;
@@ -52,6 +58,7 @@ async function loadSettings() {
     isWatcherArmed = false;
     const { disabledModules: _, ...rest } = settings;
     Object.assign(draft, rest);
+    if (rest.mcp) draft.mcp = { ...rest.mcp, enabledPlugins: [...(rest.mcp.enabledPlugins ?? [])] };
     // Defer live-preview until after Vue processes the Object.assign reactive update.
     // nextTick() resolves in the same microtask batch as Vue's re-render, so the
     // watcher is guaranteed armed before any subsequent macrotask runs.
@@ -144,6 +151,7 @@ const TABS = computed<TabEntry[]>(() => [
   { id: 'shortcuts',   label: t('tabShortcuts'),   component: ShortcutsTab,   props: {} },
   { id: 'about',       label: t('tabAbout'),       component: AboutTab,       props: {} },
   { id: 'diagnostics', label: t('tabDiagnostics'), component: DiagnosticsTab, props: {} },
+  { id: 'mcp',         label: t('tabMcp'),         component: McpTab,         props: { draft } },
   ...pluginSettingsTabs.value.map((tab) => ({
     id: tab.id,
     label: resolveLabel(tab.label, locale.value),
