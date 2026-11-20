@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { on } from '../../src/core/runtime/event-bus'
 import { executeMcpCommand } from '../../src/services/mcp-tool-bridge'
 import { getAllStrokes, clearAll, resetHistory, canUndo, canRedo } from '../../src/services/stroke-store'
@@ -166,6 +166,21 @@ describe('mcp-tool-bridge', () => {
         await pending
         expect(settled).toBe(true)
       } finally {
+        off()
+      }
+    })
+
+    it('ping replies once the repaint is reported, without waiting for another frame', async () => {
+      const off = on('canvas-redraw-requested', (payload) => {
+        (payload as { onPainted?: () => void } | undefined)?.onPainted?.()
+      })
+      vi.stubGlobal('requestAnimationFrame', () => 0) // frames never come
+      try {
+        const started = Date.now()
+        await executeMcpCommand({ type: 'ping' })
+        expect(Date.now() - started).toBeLessThan(50)
+      } finally {
+        vi.unstubAllGlobals()
         off()
       }
     })

@@ -149,6 +149,23 @@ describe('canvas-engine committed-stroke cache (TASK-241)', () => {
     expect(mainClears).toBe(1)
   })
 
+  it('paints a stroke added mid-stroke on top right away, without clearing the stroke being drawn', async () => {
+    const { engine } = makeEngine()
+    add(1)
+    engine.redrawAll()
+    const directTool = { id: 'pen', onPointerDown: vi.fn(), onPointerMove: vi.fn(), onPointerUp: vi.fn(() => null) }
+    engine.setActiveTool(directTool as never)
+    engine.handlePointerDown({ x: 0, y: 0 }, { color: '#f00', lineWidth: 4, lineCap: 'round', lineJoin: 'round' })
+    add(42) // an agent draws while the user is drawing
+    mainClears = 0
+    strokedX.length = 0
+    const painted = engine.requestRedraw()
+    runFrame()
+    await painted
+    expect(mainClears).toBe(0)
+    expect(strokedX).toContain(42)
+  })
+
   it('repaints every stroke from the store after the GPU context is restored', () => {
     const { engine, canvas } = makeEngine()
     for (let i = 0; i < 3; i++) add(i)

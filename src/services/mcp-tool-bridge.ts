@@ -108,15 +108,6 @@ function requestRedraw(): Promise<void> {
   })
 }
 
-/** Resolves after the next paint opportunity (bounded: a throttled window may never fire rAF). */
-function nextFrame(): Promise<void> {
-  if (typeof requestAnimationFrame === 'undefined') return Promise.resolve()
-  return new Promise((resolve) => {
-    const timer = setTimeout(resolve, 100)
-    requestAnimationFrame(() => { clearTimeout(timer); resolve() })
-  })
-}
-
 function buildStroke(cmd: Extract<McpCommand, { type: 'draw' }>): Stroke {
   const off = cmd.offset ?? { x: 0, y: 0 }
   const toO = (p: Point) => toOverlay(p, off)
@@ -185,7 +176,6 @@ export async function executeMcpCommand(command: McpCommand): Promise<McpCommand
       // Readiness probe from main: answered only once this bridge is subscribed
       // (after the modules loaded). Repaint whatever the store already holds.
       await requestRedraw()
-      await nextFrame()
       return { ready: true }
     case 'draw': {
       const stroke = buildStroke(command)

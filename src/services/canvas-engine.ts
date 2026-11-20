@@ -439,9 +439,30 @@ export class CanvasEngine {
     const tool = this.activeTool
     if (this.drawing && tool && !tool.needsPreviewRedraw) {
       this.repaintAfterStroke = true
+      this.paintAppendedOnTop()
       return
     }
     this.redrawAllInternal(this.drawing ? tool : null)
+  }
+
+  /**
+   * While a stroke is being painted straight onto the canvas the full repaint
+   * waits for pointer-up, but strokes appended meanwhile (an agent drawing)
+   * should show now: draw just those on top. Pointer-up's full repaint then
+   * puts them in their proper layer order. Other changes to the stroke list
+   * still wait for that repaint.
+   */
+  private paintAppendedOnTop(): void {
+    const strokes = getAllStrokes()
+    if (
+      !this.cacheValid ||
+      getRewriteVersion() !== this.cacheVersion ||
+      strokes.length <= this.cacheCount ||
+      this.fader.isFading(this.now())
+    ) return
+    const from = this.cacheCount
+    if (!this.syncStrokeCache()) return
+    for (let i = from; i < strokes.length; i++) renderStroke(this.ctx, strokes[i])
   }
 
   /**
