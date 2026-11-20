@@ -34,4 +34,13 @@ export const DEFAULT_SETTINGS = Object.freeze({
   showCommunityPlugins: false,
   disabledModules: /** @type {string[]} */ ([]),
   pluginIdConflictResolutions: /** @type {Record<string, string>} */ ({}),
+  // Local MCP endpoint. Off on a fresh install; the key is generated the first
+  // time the switch is turned on.
+  mcp: {
+    enabled: false,
+    apiKey: '',
+    readOnly: false,
+    exposeAll: true,
+    enabledPlugins: /** @type {string[]} */ ([]),
+  },
 })

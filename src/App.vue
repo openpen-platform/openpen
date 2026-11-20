@@ -8,6 +8,7 @@ import OverlayView from './views/OverlayView.vue';
 import NotificationLayer from './components/NotificationLayer.vue';
 import { initNotificationService, cleanupNotificationService } from './services/notification-service';
 import { notifyDrawingMode } from './services/drawing-mode-notify';
+import { initMcpToolBridge } from './services/mcp-tool-bridge';
 import SettingsView from './views/SettingsView.vue';
 import { setLanguage } from './i18n/index';
 import { initModuleRuntime, cleanupModuleRuntime, usePluginConflicts } from './core/runtime/bootstrap';
@@ -61,6 +62,7 @@ const isActiveDisplay = computed(() =>
 let unsubSettings: (() => void) | null = null;
 let stopFocusGuard: (() => void) | null = null;
 let unsubDrawingMode: (() => void) | null = null;
+let unsubMcp: (() => void) | null = null;
 
 function applyTheme(theme: string) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -128,10 +130,15 @@ onMounted(async () => {
   const locale = (await window.openPenApi?.getLocale()) ?? 'en';
   const windowType = isOverlayWindow ? 'overlay' : isSettingsWindow ? 'settings' : 'main';
   await initModuleRuntime({ locale, windowType });
+  // Agent commands from the MCP server land on this display's overlay. Subscribe only
+  // now: main holds commands until the bridge answers, and the tool renderers (shape,
+  // highlighter...) are registered by the module runtime.
+  if (isOverlayWindow) unsubMcp = initMcpToolBridge();
 });
 
 onUnmounted(() => {
   stopFocusGuard?.();
+  unsubMcp?.();
   unsubSettings?.();
   unsubDrawingMode?.();
   if (hostsDrawingModeToast) cleanupNotificationService();

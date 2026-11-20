@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, applyLinuxWindowPositioning, destroyAllWindowsForUpdate } from './window-manager.js';
 import { initTrayManager, setTrayWarning, setTrayDrawingMode, setTrayBarHidden } from './tray-manager.js';
 import { initScreenCaptureManager } from './screen-capture-manager.js';
+import { initMcpServerManager } from './mcp-server-manager.js';
 import { initShortcutManager, unregisterAllShortcuts, onShortcutsSuspendChange, triggerModuleShortcut, setDrawingScopeActive } from './shortcut-manager.js';
 import { initSettingsStore, getSetting, updateSettings, flushWrites } from './settings-store.js';
 import { initDiagnosticsManager } from './diagnostics-manager.js';
@@ -318,7 +319,9 @@ app.whenReady().then(async () => {
   }
   await initModuleManifestLoader();
   initWindowManager(rendererEntry);
-  initScreenCaptureManager({ getAllOverlayWindows, supported: !IS_WAYLAND_SESSION });
+  const screenCapture = initScreenCaptureManager({ getAllOverlayWindows, supported: !IS_WAYLAND_SESSION });
+  // After windows + settings exist; with the switch off this only registers IPC (nothing listens).
+  initMcpServerManager({ captureDisplayImage: (opts) => screenCapture.captureDisplayImage(opts) });
   initTrayManager({
     onShowMain: () => showMainWindow(),
     onHideMain: () => hideMainWindow(),

@@ -69,6 +69,14 @@ const notificationPosition = z.enum([
   'bottom-left', 'bottom-center', 'bottom-right',
 ]);
 
+const mcpSettings = z.object({
+  enabled: z.boolean(),
+  apiKey: z.string().max(MAX_ID_LENGTH),
+  readOnly: z.boolean(),
+  exposeAll: z.boolean(),
+  enabledPlugins: z.array(id),
+});
+
 /**
  * Value schema per user-settings key. Keys mirror `DEFAULT_SETTINGS`.
  */
@@ -90,6 +98,7 @@ const settingsValueSchemas = {
   showCommunityPlugins: z.boolean(),
   disabledModules: z.array(id),
   pluginIdConflictResolutions: z.record(id, z.string().max(MAX_PATH_LENGTH)),
+  mcp: mcpSettings,
 };
 
 /**

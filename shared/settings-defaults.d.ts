@@ -19,6 +19,18 @@ export type NotificationPosition =
   | 'middle-left' | 'center' | 'middle-right'
   | 'bottom-left' | 'bottom-center' | 'bottom-right'
 
+export interface McpSettings {
+  /** Whether the local MCP server is running. */
+  enabled: boolean
+  /** Bearer key AI apps must present (`opk_` + 32 chars); empty until first enabled. */
+  apiKey: string
+  /** Read-only mode exposes only the tools that cannot change the canvas. */
+  readOnly: boolean
+  /** true = every plugin tool is exposed; false = only `enabledPlugins`. */
+  exposeAll: boolean
+  enabledPlugins: string[]
+}
+
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system'
   language: 'en' | 'zh-Hans' | 'zh-Hant' | 'ja'
@@ -46,6 +58,7 @@ export interface AppSettings {
    * Other manifests with the same id are silently skipped on subsequent loads.
    */
   pluginIdConflictResolutions: Record<string, string>
+  mcp: McpSettings
 }
 
 export declare const DEFAULT_SETTINGS: Readonly<AppSettings>

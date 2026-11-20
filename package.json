@@ -134,6 +134,7 @@
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.10.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@openpen/plugin-manager": "*",
     "electron-log": "^5.4.4",
     "electron-updater": "^6.8.11",

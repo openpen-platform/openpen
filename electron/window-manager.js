@@ -1162,6 +1162,48 @@ export function getOverlayWindow() {
   return overlayWindowsByDisplayId.get(activeDisplayId) ?? null;
 }
 
+/**
+ * Overlay window of one display (MCP routes canvas commands by display id).
+ * @param {number} displayId
+ * @returns {BrowserWindow | null}
+ */
+export function getOverlayWindowForDisplay(displayId) {
+  return overlayWindowsByDisplayId.get(displayId) ?? null;
+}
+
+/**
+ * Enter or leave drawing mode (the same path as the shortcut and the control
+ * bar), for callers outside window-manager such as the MCP server.
+ * @param {boolean} enabled
+ */
+export function setDrawingMode(enabled) {
+  setDrawingModeState(enabled);
+}
+
+/**
+ * The tool config last broadcast by any window, or null before the first
+ * switch. Lets MCP report the active tool without asking a renderer.
+ * @returns {{ tool: string } | null}
+ */
+export function getActiveToolConfig() {
+  return /** @type {{ tool: string } | null} */ (lastToolConfig);
+}
+
+/**
+ * Switch the active tool from the main process: remember it (so a Wayland
+ * overlay created later picks it up) and relay it to every overlay and control
+ * bar, the same as a switch made in the control bar.
+ * @param {{ tool: string }} config
+ */
+export function applyToolConfigFromMain(config) {
+  lastToolConfig = config;
+  for (const windows of [overlayWindowsByDisplayId, mainWindowsByDisplayId]) {
+    for (const win of windows.values()) {
+      if (!win.isDestroyed()) win.webContents.send(CONTROL_BAR.TOOL_CONFIG_CHANGED, config);
+    }
+  }
+}
+
 /** @returns {BrowserWindow | null} */
 export function getSettingsWindow() {
   return settingsWindow;

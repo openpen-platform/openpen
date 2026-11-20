@@ -15,6 +15,7 @@ import { DEFAULT_SETTINGS, DEFAULT_SHORTCUTS } from '../shared/settings-defaults
 import { setLocale as setMainLocale } from './i18n/index.js';
 import { refreshTrayLocale } from './tray-manager.js';
 import { handleValidated, logRejected, onValidated } from './ipc-validation.js';
+import { generateApiKey } from './mcp/api-key.js';
 import { CURRENT_CONFIG_VERSION, migrateConfig, getConfigVersion } from './settings-migrations.js';
 import {
   knownIdsSchema,
@@ -429,6 +430,7 @@ function readConfig() {
         }
         merged.pluginIdConflictResolutions = coerced;
       }
+      merged.mcp = coerceMcpSettings(parsed.mcp);
       cache = merged;
 
       // Layout field: 3-layer corruption detection.
@@ -523,6 +525,36 @@ function applyTheme(theme) {
 }
 
 /**
+ * Hook the MCP manager installs so a Save that touches `mcp` can start/stop the
+ * server before the value is persisted. Resolves to the mcp settings to store
+ * (the previous `enabled` when starting failed, a generated key on first enable).
+ * @type {((prev: typeof DEFAULT_SETTINGS['mcp'], next: typeof DEFAULT_SETTINGS['mcp']) => Promise<typeof DEFAULT_SETTINGS['mcp']>) | null}
+ */
+let mcpApplier = null;
+
+/** @param {typeof mcpApplier} fn */
+export function setMcpSettingsApplier(fn) {
+  mcpApplier = fn;
+}
+
+/**
+ * Merge a stored `mcp` value over the defaults, keeping only well-typed fields.
+ * @param {unknown} raw
+ * @returns {typeof DEFAULT_SETTINGS['mcp']}
+ */
+function coerceMcpSettings(raw) {
+  const out = { ...DEFAULT_SETTINGS.mcp, enabledPlugins: [] };
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  const r = /** @type {Record<string, unknown>} */ (raw);
+  if (typeof r.enabled === 'boolean') out.enabled = r.enabled;
+  if (typeof r.apiKey === 'string') out.apiKey = r.apiKey;
+  if (typeof r.readOnly === 'boolean') out.readOnly = r.readOnly;
+  if (typeof r.exposeAll === 'boolean') out.exposeAll = r.exposeAll;
+  if (Array.isArray(r.enabledPlugins)) out.enabledPlugins = r.enabledPlugins.filter((v) => typeof v === 'string');
+  return out;
+}
+
+/**
  * @returns {typeof DEFAULT_SETTINGS & { effectiveTheme: 'light' | 'dark' }}
  */
 export function getSettings() {
@@ -572,6 +604,8 @@ export function updateSettings(patch) {
 export function previewSettings(patch) {
   const safePatch = {};
   for (const key of Object.keys(DEFAULT_SETTINGS)) {
+    // MCP changes start a server or rotate a key; they are never live-previewed.
+    if (key === 'mcp') continue;
     if (key in patch) safePatch[key] = patch[key];
   }
   cache = { ...cache, ...safePatch };
@@ -833,9 +867,38 @@ function broadcastLayout() {
   BrowserWindow.getAllWindows().forEach((win) => safeSend(win, LAYOUT.UPDATED, payload));
 }
 
+/**
+ * The MCP API key is only for the settings window (which shows and copies it).
+ * Every other renderer, overlay and control bar host plugin code that can call
+ * getSettings(), so it gets the settings with an empty key.
+ * @param {Electron.WebContents | undefined} wc
+ */
+function isSettingsWebContents(wc) {
+  try {
+    return String(wc?.getURL?.() ?? '').includes('window=settings');
+  } catch (_) {
+    return false;
+  }
+}
+
+/** @param {Electron.WebContents | undefined} wc */
+function getSettingsFor(wc) {
+  if (isSettingsWebContents(wc)) {
+    // Show the connection details right after the switch is turned on, before any
+    // Save: create the key once if none exists yet. Nothing starts listening here;
+    // only Save (via the MCP applier) starts the server.
+    if (!cache.mcp.apiKey) updateSettings({ mcp: { ...cache.mcp, apiKey: generateApiKey() } });
+    return getSettings();
+  }
+  const all = getSettings();
+  return { ...all, mcp: { ...all.mcp, apiKey: '' } };
+}
+
 function broadcastSettings() {
-  const payload = getSettings();
-  BrowserWindow.getAllWindows().forEach((win) => safeSend(win, SETTINGS.UPDATED, payload));
+  BrowserWindow.getAllWindows().forEach((win) => {
+    if (win.isDestroyed()) return;
+    safeSend(win, SETTINGS.UPDATED, getSettingsFor(win.webContents));
+  });
 }
 
 /**
@@ -872,8 +935,8 @@ function registerIpcHandlers() {
     repairLayoutWithKnownIds(knownIds);
   }, { onInvalid: () => undefined });
 
-  ipcMain.handle(SETTINGS.GET, () => {
-    return getSettings();
+  ipcMain.handle(SETTINGS.GET, (event) => {
+    return getSettingsFor(event?.sender);
   });
 
   ipcMain.handle(SETTINGS.GET_LOCALE, () => {
@@ -883,10 +946,17 @@ function registerIpcHandlers() {
   // The schema checks each known key's type and range on its own: invalid
   // values are dropped (and logged) without touching the stored value, valid
   // ones apply. A payload that is not an object changes nothing.
-  handleValidated(ipcMain, SETTINGS.SET, settingsPatchSchema, (_, { patch, droppedKeys }) => {
+  handleValidated(ipcMain, SETTINGS.SET, settingsPatchSchema, async (event, { patch, droppedKeys }) => {
     logDroppedSettingsKeys(SETTINGS.SET, droppedKeys);
+    // The key only changes through MCP.REGENERATE_KEY (and first-enable). The
+    // settings panel echoes a whole draft, so a stale copy of the key must not
+    // overwrite a freshly regenerated one.
+    if (patch.mcp) {
+      const next = { ...patch.mcp, apiKey: cache.mcp.apiKey };
+      patch.mcp = mcpApplier ? await mcpApplier(cache.mcp, next) : next;
+    }
     updateSettings(patch);
-    return getSettings();
+    return getSettingsFor(event?.sender);
   }, { onInvalid: () => getSettings() });
 
   ipcMain.handle(MODULE.GET_INITIAL_DISABLED, () => getInitialDisabledModules());

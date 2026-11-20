@@ -249,6 +249,7 @@ vi.mock('../../electron/tray-manager.js', () => ({
   setTrayBarHidden: vi.fn(),
 }));
 vi.mock('../../electron/screen-capture-manager.js', () => ({ initScreenCaptureManager: vi.fn() }));
+vi.mock('../../electron/mcp-server-manager.js', () => ({ initMcpServerManager: vi.fn() }));
 vi.mock('../../electron/diagnostics-manager.js', () => ({ initDiagnosticsManager: vi.fn() }));
 vi.mock('../../electron/update-manager.js', () => ({ initUpdateManager: vi.fn() }));
 vi.mock('../../electron/plugin-meta-manager.js', () => ({ initPluginMetaManager: vi.fn() }));

@@ -402,6 +402,37 @@ contextBridge.exposeInMainWorld('openPenApi', {
     return () => ipcRenderer.removeListener('capture:result', handler);
   },
 
+  // ── MCP (local AI-app endpoint) ──────────────────────────────────────
+  /** Current server status: `{ running, url, error: null | 'port_in_use' | 'failed', message? }`. */
+  getMcpStatus: () => ipcRenderer.invoke('mcp:get-status'),
+  /** Rotate the API key immediately; resolves to the new key. */
+  regenerateMcpKey: () => ipcRenderer.invoke('mcp:regenerate-key'),
+  /** Start the server again after a failed enable (port was busy, etc.); resolves to the status. */
+  retryMcpStart: () => ipcRenderer.invoke('mcp:retry-start'),
+  onMcpStatusChanged: (callback) => {
+    const handler = (_, status) => callback(status);
+    ipcRenderer.on('mcp:status-changed', handler);
+    return () => ipcRenderer.removeListener('mcp:status-changed', handler);
+  },
+  /**
+   * Overlay only: serve canvas commands sent by the MCP tools. The handler's
+   * resolved value (or thrown error) is reported back to main.
+   * @param {(command: object) => Promise<unknown> | unknown} handler
+   * @returns {() => void} unsubscribe
+   */
+  onMcpCommand: (handler) => {
+    const listener = async (_, { requestId, command }) => {
+      try {
+        const result = await handler(command);
+        ipcRenderer.send('mcp:command-result', { requestId, ok: true, result: result ?? null });
+      } catch (err) {
+        ipcRenderer.send('mcp:command-result', { requestId, ok: false, error: String(err?.message ?? err) });
+      }
+    };
+    ipcRenderer.on('mcp:command', listener);
+    return () => ipcRenderer.removeListener('mcp:command', listener);
+  },
+
   // ── Audit log (read-only) ────────────────────────────────────────────
   /**
    * Fetch structured audit-log entries from the main-process ring buffer.
