@@ -116,6 +116,8 @@ export default {
   // Clear canvas confirmation
   confirmBeforeClearCanvas: '清除畫布前詢問',
   confirmBeforeClearCanvasSub: '按下清除按鈕時顯示確認對話框',
+  hideStrokesOnExit: '離開繪圖模式時隱藏筆畫',
+  hideStrokesOnExitSub: '筆畫只是從畫面隱藏，不會刪除',
   clearCanvasConfirmTitle: '清除畫布？',
   clearCanvasConfirmBody: '這會清除畫布上所有筆畫。',
   clearCanvasConfirmAction: '清除',
@@ -149,6 +151,8 @@ export default {
   pluginShortcutsUnsupported: '此桌面環境不支援插件快捷鍵。',
   shortcutToggleDrawingMode: '切換繪圖模式',
   shortcutToggleDrawingModeSub: '開始或停止在螢幕上繪圖',
+  shortcutToggleStrokesVisible: '隱藏／顯示筆畫',
+  shortcutToggleStrokesVisibleSub: '隱藏或顯示畫面上的筆畫，不會刪除',
   shortcutToggleBar: '隱藏／顯示控制列',
   shortcutToggleBarSub: '隱藏或顯示浮動控制列',
   shortcutUndo: '復原',

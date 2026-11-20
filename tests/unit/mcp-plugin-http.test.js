@@ -392,7 +392,7 @@ describe('plugin tools over Streamable HTTP', () => {
     expect(await listed()).toEqual([...READ_ONLY_TOOL_NAMES, measure].sort())
   })
 
-  it('AC-1 a non-read-only plugin tool turns drawing mode on and shows the canvas before the call', async () => {
+  it('AC-1 a non-read-only plugin tool draws without switching drawing mode on', async () => {
     await start()
     register([arrowTool, rulerTool])
     electron.sent = []
@@ -402,7 +402,8 @@ describe('plugin tools over Streamable HTTP', () => {
     const order = electron.sent
       .filter(e => e.channel !== 'mcp:command' || e.payload.command.type === 'plugin-tool-call')
       .map(e => e.channel === 'mcp:command' ? 'call' : e.channel === 'set-drawing-mode' ? `set:${e.on}` : `${e.channel}:${e.payload}`)
-    expect(order).toEqual(['set:true', 'overlay:drawing-mode-changed:true', 'call'])
+    expect(order).toEqual(['overlay:drawing-mode-changed:false', 'call'])
+    expect(electron.drawingMode).toBe(false)
   })
 
   it('AC-2 a read-only plugin tool leaves drawing mode alone', async () => {

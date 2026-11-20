@@ -7,6 +7,7 @@
 export interface UserShortcuts {
   toggleDrawingMode: string
   toggleBar: string
+  toggleStrokesVisible: string
   undo: string
   redo: string
   quitApp: string
@@ -43,6 +44,8 @@ export interface AppSettings {
   notifyOnDrawingMode: boolean
   notificationPosition: NotificationPosition
   confirmBeforeClearCanvas: boolean
+  /** Whether leaving drawing mode hides the strokes (they are kept, not erased). Off by default. */
+  hideStrokesOnExit: boolean
   /** Whether newly drawn strokes fade out and disappear on their own. */
   strokeFadeEnabled: boolean
   /** Seconds a stroke stays fully visible before it fades out (1 to 30). */

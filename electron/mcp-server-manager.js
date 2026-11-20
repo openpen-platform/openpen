@@ -30,6 +30,7 @@ import {
 } from './window-manager.js';
 import { MCP_PORT } from '../shared/mcp-constants.js';
 import { createMcpHttpServer } from './mcp/http-server.js';
+import { IS_WAYLAND_SESSION } from './is-wayland-session.js';
 import { createBuiltinTools, ensureDrawingVisible, filterTools } from './mcp/tools.js';
 import { buildPluginTools, sanitizePluginReport, pluginToolPrefix } from './mcp/plugin-tools.js';
 import { generateApiKey } from './mcp/api-key.js';
@@ -174,6 +175,9 @@ export function initMcpServerManager({ captureDisplayImage }) {
       setDrawingMode(enabled);
     },
 
+    // Wayland has no overlay outside drawing mode, so drawing there still needs it on.
+    overlayNeedsDrawingMode: () => IS_WAYLAND_SESSION,
+
     setTool(id) {
       applyToolConfigFromMain({ tool: id });
     },
@@ -194,11 +198,9 @@ export function initMcpServerManager({ captureDisplayImage }) {
       // drawn before the tool renderers exist. Hold the command until the
       // renderer answers a ping.
       win = await waitForOverlayReady(targetId, deadline);
-      // Drawing mode is switched on before the overlay is known to be ready (the draw
-      // tools do it first). The overlay shows its canvas only while its renderer
-      // believes drawing mode is on (opacity 0 otherwise), and a broadcast sent while
-      // the page was still loading is lost, so the stroke would exist but stay
-      // invisible. Re-send the current state now that the renderer is listening.
+      // On Wayland the draw tools switch drawing mode on before the overlay is known
+      // to be ready, and a broadcast sent while the page was still loading is lost.
+      // Re-send the current state now that the renderer is listening.
       win.webContents.send(OVERLAY.DRAWING_MODE_CHANGED, getDrawingMode());
       return sendOverlayCommand(win.webContents, { ...command, offset: overlayOffset(targetId) }, COMMAND_TIMEOUT_MS);
     },
@@ -310,9 +312,10 @@ export function initMcpServerManager({ captureDisplayImage }) {
       return failResult('invalid_params', `Unknown displayId ${requested}.`, 'call openpen__get_state to see the display ids, then retry.');
     }
     const targetId = requested ?? cursorDisplayId();
-    // A plugin tool not annotated read-only may draw, so it gets the same
-    // "make it visible" step as the built-in draw tools. Done before waiting for
-    // the overlay: on Wayland the overlay only exists while drawing.
+    // A plugin tool not annotated read-only may draw, so it goes through the same
+    // drawing-mode step as the built-in draw tools (it only switches the mode on
+    // where the overlay needs it, i.e. Wayland). Done before waiting for the
+    // overlay: on Wayland the overlay only exists while drawing.
     const draws = !tool.readOnly;
     if (draws) ensureDrawingVisible(host);
     let wc;
@@ -326,7 +329,9 @@ export function initMcpServerManager({ captureDisplayImage }) {
     // not reach the overlay before the call it belongs to.
     if (ctx.signal?.aborted) return cancelledResult(tool);
     // Same reason as in runOnOverlay: a drawing-mode broadcast sent before the
-    // renderer listened is lost, and the canvas stays hidden (opacity 0).
+    // renderer listened is lost, so re-send it to keep the renderer's mode in
+    // step. It does not decide whether strokes are visible: that follows the
+    // user's hide/show state.
     if (draws) wc.send(OVERLAY.DRAWING_MODE_CHANGED, getDrawingMode());
     const callId = crypto.randomUUID();
     pluginCalls.set(callId, { sender: wc, onProgress: (p, total, message) => ctx.reportProgress?.(p, total, message) });

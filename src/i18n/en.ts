@@ -116,6 +116,8 @@ export default {
   // Clear canvas confirmation
   confirmBeforeClearCanvas: 'Ask before clearing canvas',
   confirmBeforeClearCanvasSub: 'Show a confirmation dialog when the clear button is pressed',
+  hideStrokesOnExit: 'Hide strokes when leaving drawing mode',
+  hideStrokesOnExitSub: 'Strokes are hidden from the screen, not erased',
   clearCanvasConfirmTitle: 'Clear canvas?',
   clearCanvasConfirmBody: 'This will erase all strokes on the canvas. This action cannot be undone after dismiss.',
   clearCanvasConfirmAction: 'Clear',
@@ -149,6 +151,8 @@ export default {
   pluginShortcutsUnsupported: 'Plugin shortcuts are not supported on this desktop environment.',
   shortcutToggleDrawingMode: 'Toggle Drawing Mode',
   shortcutToggleDrawingModeSub: 'Start or stop drawing on screen',
+  shortcutToggleStrokesVisible: 'Hide / Show Strokes',
+  shortcutToggleStrokesVisibleSub: 'Hide or show on-screen strokes without erasing them',
   shortcutToggleBar: 'Hide / Show Control Bar',
   shortcutToggleBarSub: 'Hide or show the floating control bar',
   shortcutUndo: 'Undo',

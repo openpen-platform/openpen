@@ -277,6 +277,8 @@ test.describe('MCP on', () => {
     const after = await shot(client, { displayId: d.id });
     expect(await hasRedNear(main, before.data, 600, 600)).toBe(false);
     expect(await hasRedNear(main, after.data, 600, 600)).toBe(true);
+    // Drawing leaves the mode alone: the mouse stays with the user.
+    if (process.platform !== 'linux') expect((await callJson(client, 'get_state')).drawingMode).toBe(false);
     await client.close();
   });
 

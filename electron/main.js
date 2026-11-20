@@ -7,7 +7,7 @@ import { app, BrowserWindow, ipcMain, protocol, net, session, screen } from 'ele
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, setCoreWindowQuitHooks, applyLinuxWindowPositioning, destroyAllWindowsForUpdate } from './window-manager.js';
+import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, toggleStrokesHidden, setHideStrokesOnExitReader, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, setCoreWindowQuitHooks, applyLinuxWindowPositioning, destroyAllWindowsForUpdate } from './window-manager.js';
 import { initTrayManager, setTrayWarning, setTrayDrawingMode, setTrayBarHidden } from './tray-manager.js';
 import { initScreenCaptureManager } from './screen-capture-manager.js';
 import { initMcpServerManager } from './mcp-server-manager.js';
@@ -335,6 +335,7 @@ app.whenReady().then(async () => {
     onToggleDrawingMode: () => toggleDrawingMode(),
     onQuit: () => quitCoordinator.requestQuit(),
   });
+  setHideStrokesOnExitReader(() => getSetting('hideStrokesOnExit') === true);
   setDrawingModeChangedListener((isDrawing) => {
     setTrayDrawingMode(isDrawing);
     setDrawingScopeActive(isDrawing);
@@ -362,6 +363,7 @@ app.whenReady().then(async () => {
     },
     onToggleDrawingMode: toggleDrawingMode,
     onToggleBar: toggleControlsHidden,
+    onToggleStrokesVisible: toggleStrokesHidden,
     onUndo: () => {
       const overlay = getOverlayWindow();
       if (overlay && !overlay.isDestroyed()) overlay.webContents.send(HISTORY.UNDO);

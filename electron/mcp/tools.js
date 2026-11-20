@@ -104,7 +104,7 @@ Translucent colours are written with rgba(), hsla() or 8-digit hex (#RRGGBBAA); 
 
 - ${P}get_guide: returns this text. Use it once before the first drawing.
 - ${P}get_state: drawing mode, active tool, the tool ids set_tool accepts and the displays (id, pixel size, which one holds the cursor). Use it to find displayId values.
-- ${P}set_drawing_mode {enabled}: turn drawing mode on or off. Turning it off hides every annotation from the screen (they are kept, and appear again when drawing mode is turned back on). While it is on, the overlay takes the mouse, so the user cannot click through to the apps below. The draw tools switch it on themselves.
+- ${P}set_drawing_mode {enabled}: turn drawing mode on or off. Turning it off leaves every annotation on screen and lets the user click through to the apps below; while it is on, the overlay takes the mouse instead. The annotations are not visible, though they are kept, while the user has hidden them with the hide/show shortcut, or after leaving drawing mode when the user turned on hiding strokes on leaving. The draw tools do not switch it on: what they draw shows while it is off, and the mouse stays with the user. On a Linux Wayland session they still switch it on, because the overlay only exists while drawing mode is on.
 - ${P}set_tool {tool}: select the active tool by id; the control bar follows. Valid ids: ${BUILTIN_DRAWING_TOOL_IDS.join(', ')}. It only changes what the user's mouse will draw next; the draw tools below do not need it.
 - ${P}draw_freehand {points:[{x,y},...], color?, lineWidth?, displayId?}: a free line through two or more points with round line ends. Good for quick curves, circles and handwriting as an annotation; for smooth curves in a painting use ${P}paint_strokes with smooth.
 - ${P}draw_line {x1,y1,x2,y2, color?, lineWidth?, displayId?}: a straight line with round line ends. Good for underlines, connectors and arrow shafts or heads built from several lines.
@@ -261,16 +261,18 @@ function pluginIndex(exposed) {
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 
 /**
- * The one place that makes sure what a tool is about to draw will be visible:
- * the built-in draw and paint tools and every plugin tool not annotated as
- * read-only call it before they dispatch. The overlay hides its canvas outside
- * drawing mode, so today this switches drawing mode on. A later decision on
- * whether drawing should switch modes is changed here only.
+ * The one place that decides whether drawing switches drawing mode on. It does
+ * not: the overlay keeps its canvas visible outside drawing mode, so what a tool
+ * draws shows without taking the mouse from the user. The exception is a
+ * platform whose overlay only exists while drawing (Linux Wayland), reported by
+ * `host.overlayNeedsDrawingMode`; there the mode is still switched on so the
+ * call has an overlay to draw on. Built-in draw and paint tools and every
+ * plugin tool not annotated as read-only call it before they dispatch.
  *
- * @param {{ getState: () => { drawingMode: boolean }, setDrawingMode: (enabled: boolean) => void }} host
+ * @param {{ getState: () => { drawingMode: boolean }, setDrawingMode: (enabled: boolean) => void, overlayNeedsDrawingMode?: () => boolean }} host
  */
 export function ensureDrawingVisible(host) {
-  if (!host.getState().drawingMode) host.setDrawingMode(true);
+  if (host.overlayNeedsDrawingMode?.() && !host.getState().drawingMode) host.setDrawingMode(true);
 }
 
 /**
@@ -335,7 +337,10 @@ export function createBuiltinTools(host) {
     }
   }
 
-  /** Draw tools make the canvas visible first so the stroke shows (AC-8). */
+  /**
+   * Draw tools leave drawing mode as it is (see ensureDrawingVisible for the Wayland
+   * exception). Whether the stroke can be seen follows the user's hide/show state.
+   */
   async function drawOn(name, args, display, command) {
     const bad = styleProblem(name, args);
     if (bad) return fail(bad);
@@ -601,7 +606,7 @@ export function createBuiltinTools(host) {
       }],
     ['get_state', 'Reports the current drawing mode, the active tool, the tool ids that can be selected and the connected displays with their id, pixel size, scale factor and whether the mouse cursor is on them. Suited to finding a display id before drawing on a multi-monitor setup, or to checking whether drawing mode is on. It does not list annotations and changes nothing. Takes no parameters.', true,
       async () => json(host.getState())],
-    ['set_drawing_mode', 'Turns OpenPen drawing mode on or off. Suited to hiding the annotations from the screen or showing them again. Turning it off hides every annotation (they stay saved and reappear when it is turned on); while it is on, the overlay takes the mouse, so the user cannot click through to the apps below. The draw tools switch it on by themselves. It does not draw anything or change the selected tool. Parameter: enabled, true or false.', false, async ({ enabled }) => {
+    ['set_drawing_mode', 'Turns OpenPen drawing mode on or off. Suited to handing the mouse back to the user once the annotations are drawn. Turning it off leaves every annotation on screen and lets the user click through to the apps below (on a Linux Wayland session they are hidden until drawing mode is back on); while it is on, the overlay takes the mouse, so the user cannot click through. The annotations are not visible, though they are kept, while the user has hidden them with the hide/show shortcut, or after leaving drawing mode when the user turned on hiding strokes on leaving. The draw tools do not switch it on by themselves: what they draw shows while it is off. On a Linux Wayland session they still switch it on, because the overlay only exists while drawing mode is on. It does not draw anything or change the selected tool. Parameter: enabled, true or false.', false, async ({ enabled }) => {
       if (typeof enabled !== 'boolean') return fail(`${P}set_drawing_mode needs "enabled": true or false.`);
       host.setDrawingMode(enabled);
       return json({ drawingMode: enabled });

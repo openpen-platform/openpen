@@ -10,6 +10,7 @@
 export const DEFAULT_SHORTCUTS = Object.freeze({
   toggleDrawingMode: 'CommandOrControl+Shift+A',
   toggleBar: 'CommandOrControl+Shift+\\',
+  toggleStrokesVisible: 'CommandOrControl+F9',
   undo: 'CommandOrControl+Z',
   redo: 'CommandOrControl+Shift+Z',
   quitApp: 'CommandOrControl+Alt+Shift+X',
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   notifyOnDrawingMode: true,
   notificationPosition: /** @type {import('./settings-defaults').NotificationPosition} */ ('top-center'),
   confirmBeforeClearCanvas: true,
+  hideStrokesOnExit: false,
   strokeFadeEnabled: false,
   strokeFadeSeconds: 5,       // 1 ~ 30
   autoCheckUpdate: true,

@@ -154,3 +154,122 @@ test('body cursor is restored when drawing mode exits (OS cursor returns)', asyn
   // the OS cursor for the whole non-drawing session.
   expect(bodyCursor).toBe('');
 });
+
+test('strokes stay on screen after drawing mode exits, and the overlay lets clicks through', async () => {
+  const mainWin = await getMainWindow();
+  const overlayWin = await getOverlayWindow();
+  const canvas = overlayWin.getByTestId('canvas-overlay');
+
+  await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
+  await overlayWin.waitForTimeout(200);
+  await canvas.dispatchEvent('pointerdown', { clientX: 60, clientY: 60, pointerId: 1, buttons: 1, bubbles: true });
+  await canvas.dispatchEvent('pointermove', { clientX: 180, clientY: 160, pointerId: 1, buttons: 1, bubbles: true });
+  await canvas.dispatchEvent('pointerup', { clientX: 180, clientY: 160, pointerId: 1, bubbles: true });
+  await overlayWin.waitForTimeout(200);
+
+  // Record how main sets mouse handling on the overlay from here on.
+  await electronApp.evaluate(({ BrowserWindow }) => {
+    globalThis.__overlayIgnoreCalls = [];
+    for (const w of BrowserWindow.getAllWindows()) {
+      if (!w.webContents.getURL().includes('window=overlay')) continue;
+      const orig = w.setIgnoreMouseEvents.bind(w);
+      w.setIgnoreMouseEvents = (...args) => { globalThis.__overlayIgnoreCalls.push(args); return orig(...args); };
+    }
+  });
+
+  await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));
+  await overlayWin.waitForTimeout(200);
+
+  const after = await canvas.evaluate((el) => {
+    const data = el.getContext('2d').getImageData(0, 0, el.width, el.height).data;
+    let painted = false;
+    for (let i = 3; i < data.length; i += 4) if (data[i] > 0) { painted = true; break; }
+    const s = window.getComputedStyle(el);
+    return { painted, opacity: s.opacity, visibility: s.visibility, display: s.display, pointerEvents: s.pointerEvents };
+  });
+  expect(after).toEqual({ painted: true, opacity: '1', visibility: 'visible', display: 'block', pointerEvents: 'none' });
+
+  const calls = await electronApp.evaluate(() => globalThis.__overlayIgnoreCalls);
+  expect(calls.at(-1)).toEqual([true, { forward: true }]);
+
+  await mainWin.evaluate(() => window.openPenApi?.clearCanvas?.());
+});
+
+/** Draw one stroke in drawing mode, then leave drawing mode. */
+async function drawThenExit(mainWin, overlayWin) {
+  const canvas = overlayWin.getByTestId('canvas-overlay');
+  await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
+  await overlayWin.waitForTimeout(200);
+  await canvas.dispatchEvent('pointerdown', { clientX: 60, clientY: 60, pointerId: 1, buttons: 1, bubbles: true });
+  await canvas.dispatchEvent('pointermove', { clientX: 180, clientY: 160, pointerId: 1, buttons: 1, bubbles: true });
+  await canvas.dispatchEvent('pointerup', { clientX: 180, clientY: 160, pointerId: 1, bubbles: true });
+  await overlayWin.waitForTimeout(200);
+  await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));
+  await overlayWin.waitForTimeout(200);
+}
+
+/** Canvas opacity and whether its pixels are still there. */
+async function canvasState(overlayWin) {
+  return overlayWin.getByTestId('canvas-overlay').evaluate((el) => {
+    const data = el.getContext('2d').getImageData(0, 0, el.width, el.height).data;
+    let painted = false;
+    for (let i = 3; i < data.length; i += 4) if (data[i] > 0) { painted = true; break; }
+    return { painted, opacity: window.getComputedStyle(el).opacity };
+  });
+}
+
+test('the hide/show strokes shortcut hides the strokes without erasing them, and shows them again', async () => {
+  const mainWin = await getMainWindow();
+  const overlayWin = await getOverlayWindow();
+  await drawThenExit(mainWin, overlayWin);
+
+  // The shortcut is bound by default; trigger its toggle through the main-window
+  // API (same code path as the global shortcut, as undo-redo.spec.js does).
+  expect(await electronApp.evaluate(({ globalShortcut }) => globalShortcut.isRegistered('CommandOrControl+F9'))).toBe(true);
+  const toggle = () => mainWin.evaluate(() => window.openPenApi?.toggleStrokesHidden());
+
+  await toggle();
+  await overlayWin.waitForTimeout(200);
+  expect(await canvasState(overlayWin)).toEqual({ painted: true, opacity: '0' });
+
+  await toggle();
+  await overlayWin.waitForTimeout(200);
+  expect(await canvasState(overlayWin)).toEqual({ painted: true, opacity: '1' });
+
+  await mainWin.evaluate(() => window.openPenApi?.clearCanvas?.());
+});
+
+test('with "hide strokes when leaving drawing mode" on, leaving drawing mode hides the strokes as before', async () => {
+  const mainWin = await getMainWindow();
+  const overlayWin = await getOverlayWindow();
+  await mainWin.evaluate(() => window.openPenApi?.updateSettings({ hideStrokesOnExit: true }));
+  await overlayWin.waitForTimeout(200);
+
+  await drawThenExit(mainWin, overlayWin);
+  expect(await canvasState(overlayWin)).toEqual({ painted: true, opacity: '0' });
+
+  await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
+  await overlayWin.waitForTimeout(200);
+  expect(await canvasState(overlayWin)).toEqual({ painted: true, opacity: '1' });
+
+  await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));
+  await mainWin.evaluate(() => window.openPenApi?.updateSettings({ hideStrokesOnExit: false }));
+  await mainWin.evaluate(() => window.openPenApi?.clearCanvas?.());
+});
+
+test('with "hide strokes when leaving drawing mode" on, the hide/show shortcut still shows the strokes after leaving', async () => {
+  const mainWin = await getMainWindow();
+  const overlayWin = await getOverlayWindow();
+  await mainWin.evaluate(() => window.openPenApi?.updateSettings({ hideStrokesOnExit: true }));
+  await overlayWin.waitForTimeout(200);
+
+  await drawThenExit(mainWin, overlayWin);
+  expect(await canvasState(overlayWin)).toEqual({ painted: true, opacity: '0' });
+
+  await mainWin.evaluate(() => window.openPenApi?.toggleStrokesHidden());
+  await overlayWin.waitForTimeout(200);
+  expect(await canvasState(overlayWin)).toEqual({ painted: true, opacity: '1' });
+
+  await mainWin.evaluate(() => window.openPenApi?.updateSettings({ hideStrokesOnExit: false }));
+  await mainWin.evaluate(() => window.openPenApi?.clearCanvas?.());
+});

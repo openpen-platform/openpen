@@ -66,6 +66,7 @@ function updateShortcut(id: keyof UserShortcuts, accel: string) {
 
 const SYSTEM_ROWS: Array<{ id: keyof UserShortcuts; labelKey: string; subKey: string }> = [
   { id: 'toggleDrawingMode', labelKey: 'shortcutToggleDrawingMode', subKey: 'shortcutToggleDrawingModeSub' },
+  { id: 'toggleStrokesVisible', labelKey: 'shortcutToggleStrokesVisible', subKey: 'shortcutToggleStrokesVisibleSub' },
   { id: 'toggleBar',         labelKey: 'shortcutToggleBar',         subKey: 'shortcutToggleBarSub' },
   { id: 'undo',              labelKey: 'shortcutUndo',              subKey: 'shortcutUndoSub' },
   { id: 'redo',              labelKey: 'shortcutRedo',              subKey: 'shortcutRedoSub' },

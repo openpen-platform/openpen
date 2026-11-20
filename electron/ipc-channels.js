@@ -27,6 +27,11 @@ export const WINDOW = {
 export const OVERLAY = {
   SET_DRAWING_MODE: 'overlay:set-drawing-mode',
   DRAWING_MODE_CHANGED: 'overlay:drawing-mode-changed',
+  /** main → overlay renderers: strokes hidden (true) or shown (false) by the
+   *  hide/show shortcut. Hiding never erases them. */
+  STROKES_HIDDEN_CHANGED: 'overlay:strokes-hidden-changed',
+  /** renderer → main: hide or show the strokes, as the hide/show shortcut does. */
+  TOGGLE_STROKES_HIDDEN: 'overlay:toggle-strokes-hidden',
   /** overlay renderer → main (Linux): persist the current drawing snapshot
    *  (strokes + history) so it survives the overlay window being recreated. */
   PERSIST_STATE: 'overlay:persist-drawing-state',

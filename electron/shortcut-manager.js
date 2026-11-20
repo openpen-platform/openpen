@@ -139,6 +139,7 @@ const idConflicts = new Set();
  * @param {{
  *   onToggleDrawingMode?: () => void,
  *   onToggleBar?: () => void,
+ *   onToggleStrokesVisible?: () => void,
  *   onUndo?: () => void,
  *   onRedo?: () => void,
  *   onQuitApp?: () => void,
@@ -151,6 +152,7 @@ const idConflicts = new Set();
 export function initShortcutManager({
   onToggleDrawingMode,
   onToggleBar,
+  onToggleStrokesVisible,
   onUndo,
   onRedo,
   onQuitApp,
@@ -181,6 +183,8 @@ export function initShortcutManager({
     () => { if (!_suspended) onToggleDrawingMode?.(); });
   registerBuiltin('toggleBar', shortcuts.toggleBar,
     () => { if (!_suspended) onToggleBar?.(); });
+  registerBuiltin('toggleStrokesVisible', shortcuts.toggleStrokesVisible,
+    () => { if (!_suspended) onToggleStrokesVisible?.(); });
   registerBuiltin('undo', shortcuts.undo,
     () => { if (!_suspended) onUndo?.(); });
   registerBuiltin('redo', shortcuts.redo,

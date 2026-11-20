@@ -97,7 +97,8 @@ describe('AC-4 batch painting tools (main side)', () => {
       ],
     })
     expect(strokeRes.isError).not.toBe(true)
-    expect(host.setDrawingMode).toHaveBeenCalledWith(true)
+    // Drawing never switches the mode on its own: the strokes show outside drawing mode.
+    expect(host.setDrawingMode).not.toHaveBeenCalled()
     expect(host.runOnOverlay).toHaveBeenCalledTimes(1)
 
     const [strokeDisplayId, strokeCmd] = host.runOnOverlay.mock.calls[0]
@@ -562,5 +563,25 @@ describe('AC-8 usage guide Painting section and updated descriptions', () => {
         expect(tool.description, `${own} must not reference ${other}`).not.toContain(other)
       }
     }
+  })
+})
+
+describe('drawing does not switch drawing mode on its own', () => {
+  it('leaves drawing mode alone where the overlay shows strokes outside it', async () => {
+    const host = makeHost({ getState: () => ({ drawingMode: false, tool: 'freehand', displays: [DISPLAY] }) })
+    const draw = byName(createBuiltinTools(host), 'openpen__draw_line')
+    const res = await draw.handler({ x1: 0, y1: 0, x2: 10, y2: 10 })
+    expect(res.isError).not.toBe(true)
+    expect(host.setDrawingMode).not.toHaveBeenCalled()
+  })
+
+  it('still switches it on where the overlay only exists while drawing (Linux Wayland)', async () => {
+    const host = makeHost({
+      getState: () => ({ drawingMode: false, tool: 'freehand', displays: [DISPLAY] }),
+      overlayNeedsDrawingMode: () => true,
+    })
+    const draw = byName(createBuiltinTools(host), 'openpen__draw_line')
+    await draw.handler({ x1: 0, y1: 0, x2: 10, y2: 10 })
+    expect(host.setDrawingMode).toHaveBeenCalledWith(true)
   })
 })

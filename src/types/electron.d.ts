@@ -210,6 +210,7 @@ interface OpenPenApi {
   // Drawing overlay
   setDrawingMode(enabled: boolean): void
   onDrawingModeChanged(cb: (enabled: boolean) => void): () => void
+  onStrokesHiddenChanged(cb: (hidden: boolean) => void): () => void
   onInteractiveHoverChanged(cb: (hover: boolean) => void): () => void
   /** Linux: persist the current drawing snapshot (strokes + history) across overlay recreation. */
   persistDrawingState(snapshot: unknown): void
@@ -259,6 +260,8 @@ interface OpenPenApi {
 
   // History cross-window broadcast
   triggerUndo(): void
+  /** Hide or show the strokes on every display (same path as the hide/show shortcut). */
+  toggleStrokesHidden(): void
   triggerRedo(): void
   onUndo(cb: () => void): () => void
   onRedo(cb: () => void): () => void

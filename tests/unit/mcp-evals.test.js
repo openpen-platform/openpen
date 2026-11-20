@@ -78,7 +78,7 @@ describe('MCP evaluation questions (#1, #2)', () => {
         case 3: return `${leftmost.bounds.x},${leftmost.bounds.y}`
         case 4: return `${kinds('rect')[0].bounds.width}×${kinds('rect')[0].bounds.height}`
         case 5: return `${kinds('rect').length}；${Math.max(...kinds('rect').map((a) => a.bounds.width))}`
-        case 6: return !state.drawingMode && /reappear/.test(describe('set_drawing_mode')) ? `${list.length}；set_drawing_mode` : ''
+        case 6: return state.drawingMode && /leaves every annotation on screen/.test(describe('set_drawing_mode')) ? `${list.length}；set_drawing_mode` : ''
         case 7: return state.tool
         case 8: return state.tools.filter((t) => t.includes('eraser')).join('；')
         case 9: return String(getAllStrokes().filter((s) => s.style.color.toLowerCase() === '#ff0000').length)
@@ -108,7 +108,7 @@ describe('MCP evaluation questions (#1, #2)', () => {
     const list = (await call('list_annotations')).annotations
     expect(list.map((a) => a.kind)).toEqual(['rect', 'ellipse'])
     expect(list[0].bounds).toEqual({ x: 200, y: 200, width: 300, height: 200 })
-    expect(host.state.drawingMode).toBe(false)
+    expect(host.state.drawingMode).toBe(true)
     expect(calls.slice(0, 3)).toEqual(['clear_canvas', 'draw_rect', 'draw_ellipse'])
 
     await seedScene(call, questions.find((q) => q.id === 7).scene)

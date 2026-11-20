@@ -79,6 +79,21 @@ let activeDisplayId = -1;
 /** @type {boolean} Whether drawing mode is currently active. */
 let drawingMode = false;
 
+/** @type {boolean} Whether the strokes are hidden (shortcut, or leaving drawing mode with the setting on). */
+let strokesHidden = false;
+
+/** @type {(() => boolean) | null} Reads the "hide strokes when leaving drawing mode" setting. */
+let _hideStrokesOnExit = null;
+
+/**
+ * Tell the window manager how to read the "hide strokes when leaving drawing
+ * mode" setting (the settings store lives outside this module).
+ * @param {() => boolean} fn
+ */
+export function setHideStrokesOnExitReader(fn) {
+  _hideStrokesOnExit = fn;
+}
+
 // IS_WAYLAND (imported above from ./is-wayland-session.js, the shared predicate):
 // the Linux workarounds below (always-bar window, on-demand overlay, gsettings
 // shortcuts) target NATIVE WAYLAND only. On an X11/Xorg session the classic
@@ -440,6 +455,7 @@ function resyncRecoveredWindow(win) {
   if (lastToolConfig) wc.send(CONTROL_BAR.TOOL_CONFIG_CHANGED, lastToolConfig);
   if (lastStrokeStyle) wc.send(CONTROL_BAR.STROKE_STYLE_CHANGED, lastStrokeStyle);
   wc.send(OVERLAY.DRAWING_MODE_CHANGED, drawingMode);
+  wc.send(OVERLAY.STROKES_HIDDEN_CHANGED, strokesHidden);
 }
 
 /**
@@ -803,6 +819,12 @@ export function createOverlayWindowForDisplay(display) {
     overlayWindowsByDisplayId.delete(display.id);
   });
 
+  // An overlay created while strokes are hidden (display hot-plug) must hide its
+  // strokes too; the renderer boots showing them.
+  win.webContents.on('did-finish-load', () => {
+    if (strokesHidden && !win.isDestroyed()) win.webContents.send(OVERLAY.STROKES_HIDDEN_CHANGED, true);
+  });
+
   // Linux overlays are created on drawing-enter, so the fresh renderer must be
   // told drawing mode is on once it loads (it missed any earlier broadcast).
   if (IS_WAYLAND) {
@@ -852,6 +874,29 @@ export function createOverlayWindowForDisplay(display) {
 
 // ─── Drawing-mode management ──────────────────────────────────────────────────
 
+/** Toggle whether the strokes on every display are hidden (wired to the global shortcut). */
+export function toggleStrokesHidden() {
+  setStrokesHidden(!strokesHidden);
+}
+
+/** @returns {boolean} whether the hide/show shortcut currently hides the strokes */
+export function areStrokesHidden() {
+  return strokesHidden;
+}
+
+/**
+ * Hide or show the strokes on every display. Hiding never erases them; the
+ * overlay renderers only stop painting the canvas.
+ * @param {boolean} hidden
+ */
+function setStrokesHidden(hidden) {
+  if (hidden === strokesHidden) return;
+  strokesHidden = hidden;
+  for (const win of overlayWindowsByDisplayId.values()) {
+    if (!win.isDestroyed()) win.webContents.send(OVERLAY.STROKES_HIDDEN_CHANGED, strokesHidden);
+  }
+}
+
 /** Toggle drawing mode (wired to the global shortcut). */
 export function toggleDrawingMode() {
   setDrawingModeState(!drawingMode);
@@ -888,6 +933,13 @@ function setDrawingModeState(enabled) {
   }
 
   drawingMode = enabled;
+
+  // Drawing on hidden strokes would be drawing blind: entering drawing mode
+  // shows them again. Leaving hides them when the user chose that in settings;
+  // the hide/show shortcut can then show them again. Sent before the
+  // drawing-mode broadcast so the strokes never flash on screen.
+  if (enabled) setStrokesHidden(false);
+  else if (_hideStrokesOnExit?.()) setStrokesHidden(true);
 
   // Hide/show the OS cursor through the native platform API. No-op on Linux and
   // any platform without bindings. The DOM cursor rendered by the overlay takes
@@ -1414,6 +1466,9 @@ function registerIpcHandlers() {
       activeOverlay.webContents.send(CONTROL_BAR.CLEAR_CANVAS_TRIGGERED);
     }
   });
+
+  // Same path as the hide/show-strokes global shortcut.
+  ipcMain.on(OVERLAY.TOGGLE_STROKES_HIDDEN, () => toggleStrokesHidden());
 
   ipcMain.on(HISTORY.TRIGGER_UNDO, () => {
     const activeOverlay = overlayWindowsByDisplayId.get(activeDisplayId);

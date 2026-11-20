@@ -70,7 +70,7 @@
     },
     {
       "id": 6,
-      "question": "我剛剛畫的標註都不見了，是被刪掉了嗎？先不要動任何東西，告訴我它們還剩幾個，以及要用哪個工具讓它們重新顯示（給工具名）。",
+      "question": "我想點畫面底下的 app，但標註要留在畫面上。先不要動任何東西，告訴我現在畫面上有幾個標註，以及要用哪個工具把滑鼠交還給我（給工具名）。",
       "answer": "2；set_drawing_mode",
       "needs": ["get_state", "list_annotations"],
       "scene": {
@@ -78,7 +78,7 @@
           { "tool": "draw_rect", "args": { "x": 200, "y": 200, "width": 300, "height": 200 } },
           { "tool": "draw_ellipse", "args": { "x": 600, "y": 200, "width": 200, "height": 200 } }
         ],
-        "drawingMode": false
+        "drawingMode": true
       }
     },
     {

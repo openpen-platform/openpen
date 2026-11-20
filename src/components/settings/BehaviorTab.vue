@@ -106,6 +106,18 @@ const barLayoutOptions = computed(() => [
 
     <div class="cw-row">
       <div>
+        <div class="cw-row-label">{{ t('hideStrokesOnExit') }}</div>
+        <div class="cw-row-sub">{{ t('hideStrokesOnExitSub') }}</div>
+      </div>
+      <AppToggle
+        :model-value="draft.hideStrokesOnExit"
+        :aria-label="t('hideStrokesOnExit')"
+        @update:model-value="draft.hideStrokesOnExit = $event"
+      />
+    </div>
+
+    <div class="cw-row">
+      <div>
         <div class="cw-row-label">{{ t('strokeFade') }}</div>
         <div class="cw-row-sub">{{ t('strokeFadeSub') }}</div>
       </div>

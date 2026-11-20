@@ -116,6 +116,8 @@ export default {
   // Clear canvas confirmation
   confirmBeforeClearCanvas: 'キャンバスをクリアする前に確認',
   confirmBeforeClearCanvasSub: 'クリアボタンを押したときに確認ダイアログを表示します',
+  hideStrokesOnExit: '描画モード終了時にストロークを隠す',
+  hideStrokesOnExitSub: 'ストロークは画面から隠すだけで、削除されません',
   clearCanvasConfirmTitle: 'キャンバスをクリアしますか？',
   clearCanvasConfirmBody: 'キャンバス上のすべてのストロークが消去されます。',
   clearCanvasConfirmAction: 'クリア',
@@ -150,6 +152,8 @@ export default {
   pluginShortcutsUnsupported: 'このデスクトップ環境ではプラグインのショートカットを利用できません。',
   shortcutToggleDrawingMode: '描画モード切替',
   shortcutToggleDrawingModeSub: '画面への描画を開始または停止する',
+  shortcutToggleStrokesVisible: 'ストロークの表示／非表示',
+  shortcutToggleStrokesVisibleSub: '画面上のストロークを削除せずに隠す、または表示する',
   shortcutToggleBar: 'コントロールバーの表示／非表示',
   shortcutToggleBarSub: 'フローティングコントロールバーを表示または非表示にする',
   shortcutUndo: '元に戻す',

@@ -15,8 +15,12 @@ import {
 const WARN_ICON_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
 
 const isDrawingMode = ref(false);
+// Main decides when strokes are hidden (hide/show shortcut, or leaving drawing
+// mode with the setting on); the canvas contents are kept either way.
+const strokesHidden = ref(false);
 const { canvasRef } = useCanvas();
 let unsubDrawingMode: (() => void) | null = null;
+let unsubStrokesHidden: (() => void) | null = null;
 let unsubRenderBroken: (() => void) | null = null;
 
 // Where the control bar lives in its own window, that window shows the
@@ -33,6 +37,10 @@ onMounted(() => {
     const changed = enabled !== isDrawingMode.value;
     isDrawingMode.value = enabled;
     if (showsDrawingModeToast && changed) notifyDrawingMode(enabled);
+  }) ?? null;
+
+  unsubStrokesHidden = window.openPenApi?.onStrokesHiddenChanged((hidden) => {
+    strokesHidden.value = hidden;
   }) ?? null;
 
   unsubRenderBroken = window.openPenApi?.onTransparentRenderingBroken(() => {
@@ -52,6 +60,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   unsubDrawingMode?.();
+  unsubStrokesHidden?.();
   unsubRenderBroken?.();
   cleanupNotificationService();
 });
@@ -62,7 +71,7 @@ onUnmounted(() => {
     ref="canvasRef"
     class="overlay-canvas"
     data-testid="canvas-overlay"
-    :class="{ 'drawing-mode': isDrawingMode }"
+    :class="{ 'drawing-mode': isDrawingMode, 'strokes-hidden': strokesHidden }"
     aria-hidden="true"
   />
   <HtmlOverlayLayer />
@@ -79,12 +88,16 @@ onUnmounted(() => {
   background: transparent;
   display: block;
   cursor: default;
+  /* Strokes stay visible outside drawing mode; main makes the overlay
+     click-through, so the mouse reaches the apps below. */
   pointer-events: none;
-  opacity: 0; /* Hide strokes outside drawing mode; canvas contents are kept. */
+}
+
+.overlay-canvas.strokes-hidden {
+  opacity: 0; /* Hidden, not erased: canvas contents are kept. */
 }
 
 .overlay-canvas.drawing-mode {
-  opacity: 1;
   /* OS cursor is hidden so the DOM CustomCursor element is the only
      visible cursor; useCanvas.applyCursor also writes this inline to
      beat any cascade order surprises on first paint. */

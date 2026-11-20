@@ -33,6 +33,11 @@ contextBridge.exposeInMainWorld('openPenApi', {
     ipcRenderer.on('overlay:drawing-mode-changed', handler);
     return () => ipcRenderer.removeListener('overlay:drawing-mode-changed', handler);
   },
+  onStrokesHiddenChanged: (callback) => {
+    const handler = (_, hidden) => callback(hidden);
+    ipcRenderer.on('overlay:strokes-hidden-changed', handler);
+    return () => ipcRenderer.removeListener('overlay:strokes-hidden-changed', handler);
+  },
   /** Linux: persist the current drawing snapshot so it survives the overlay
    *  window being recreated on the next drawing session. */
   persistDrawingState: (snapshot) => ipcRenderer.send('overlay:persist-drawing-state', snapshot),
@@ -129,6 +134,7 @@ contextBridge.exposeInMainWorld('openPenApi', {
 
   // ── History cross-window broadcast ─────────────────────────────────────
   triggerUndo: () => ipcRenderer.send('history:trigger-undo'),
+  toggleStrokesHidden: () => ipcRenderer.send('overlay:toggle-strokes-hidden'),
   triggerRedo: () => ipcRenderer.send('history:trigger-redo'),
   onUndo: (callback) => {
     const handler = () => callback();
