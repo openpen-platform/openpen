@@ -6,6 +6,7 @@ Checks whether the OpenPen MCP tool descriptions and usage guide are enough for 
 | --- | --- |
 | `questions.json` | The questions: one sentence from a user, the scene to lay out first, the answer keywords and the tools the reference path uses |
 | `seed.js` | Lays out one question's scene through the MCP tools |
+| `prompt.js` | Prints the prompt for one question: the question sentence plus the answer-line instruction (`answerSuffix` in `questions.json`) |
 | `grade.js` | Grades one run and prints its record; `--out` appends it to a JSON Lines file |
 
 `tests/unit/mcp-evals.test.js` checks that every answer follows from its seeded scene through the read-only tools, so the questions stay correct when the tools change.
@@ -29,12 +30,12 @@ Run against a test instance of OpenPen: seeding clears the annotations on the di
 
 2. Lay out the scene of question `<id>`: `node "$REPO/tests/mcp-evals/seed.js" <id> "$KEY"`.
 
-3. Hand the question sentence, and nothing else, to a fresh Claude Code agent that only has the OpenPen MCP server, from an empty directory:
+3. Hand the prompt that `prompt.js` prints, and nothing else, to a fresh Claude Code agent (the prompt is the question sentence plus a request to end the reply with a line `答案：<answer>`, which is the only line graded) that only has the OpenPen MCP server, from an empty directory:
 
    ```sh
    cd "$EVAL_DIR/agent"
    printf '{"mcpServers":{"openpen":{"type":"http","url":"http://127.0.0.1:17639/mcp","headers":{"Authorization":"Bearer %s"}}}}' "$KEY" > mcp.json
-   CLAUDE_CODE_DISABLE_CLAUDE_MDS=1 claude -p "<question sentence>" \
+   CLAUDE_CODE_DISABLE_CLAUDE_MDS=1 claude -p "$(node "$REPO/tests/mcp-evals/prompt.js" <id>)" \
      --mcp-config mcp.json --strict-mcp-config --allowedTools mcp__openpen \
      --tools "" --setting-sources project --disable-slash-commands --no-session-persistence \
      --output-format stream-json --verbose > "run-<id>.jsonl"
@@ -46,7 +47,7 @@ Run against a test instance of OpenPen: seeding clears the annotations on the di
 
 5. Quit OpenPen and remove `$EVAL_DIR`.
 
-Other clients can be graded too: write `{"answer": "<final reply>", "toolCalls": ["list_annotations", ...]}` to a file and pass that as the run file.
+A reply without an answer line is graded wrong and flagged `needsReview`; read it yourself. Other clients can be graded too: write `{"answer": "<final reply>", "toolCalls": ["list_annotations", ...]}` to a file and pass that as the run file.
 
 ## Records
 
@@ -56,8 +57,9 @@ Other clients can be graded too: write `{"answer": "<final reply>", "toolCalls":
 | --- | --- |
 | `id`, `round` | Question id and round number |
 | `question`, `expected` | The sentence given to the agent and the answer keywords |
-| `answer` | The agent's final reply, verbatim |
-| `correct`, `missing` | Whether every keyword appeared, and the ones that did not |
+| `answer`, `answerLine` | The agent's final reply, verbatim, and the text after `答案：` on its answer line (`null` when it has none) |
+| `correct`, `missing` | Whether every keyword appeared in the answer line, and the ones that did not |
+| `needsReview` | `true` when the reply has no answer line, so nothing was graded |
 | `toolCalls` | OpenPen tools the agent called, in order |
 | `usedNeeds` | Whether every tool in the question's `needs` was called |
 | `changedCanvas` | Whether the agent called a tool that changes the screen, which a read-only question never needs |

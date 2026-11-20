@@ -14,12 +14,20 @@
  *   question         the sentence given to the agent
  *   expected         the answer keywords, separated by '；'
  *   answer           the agent's final reply, verbatim
- *   correct          true when every keyword appears in the reply
- *   missing          the keywords that did not appear
+ *   answerLine       the text after "答案：" on the reply's answer line, or null when it has none
+ *   correct          true when every keyword appears in the answer line
+ *   missing          the keywords that did not appear in it (all of them when there is no answer line)
+ *   needsReview      true when the reply has no answer line, so nothing was graded; read the answer yourself
  *   toolCalls        OpenPen tools the agent called, in order, without prefixes
  *   usedNeeds        true when every tool in the question's `needs` was called
  *   changedCanvas    true when the agent called any tool that is not read-only
  *   gradedAt         ISO time of grading
+ *
+ * The agent is asked (prompt.js adds the instruction) to end its reply with a
+ * line "答案：<answer>". Only that line is graded, so a reply that explains
+ * "... the list has 3 rectangles" is not taken for the answer 3. When the
+ * reply has several such lines the last one counts; with none the reply is
+ * wrong and flagged with needsReview.
  *
  * Matching ignores case and white space, reads full-width characters as
  * half-width and treats "400x300" and "400*300" as "400×300". A keyword must
@@ -50,6 +58,16 @@ function containsKeyword(reply, keyword) {
   const before = numeric ? String.raw`(?<![\d.])` : '(?<![a-z0-9-])';
   const after = numeric ? String.raw`(?!\d|\.\d)` : '(?![a-z0-9-])';
   return new RegExp(`${before}${escapeRe(keyword)}${after}`).test(reply);
+}
+
+/** The text after the last "答案：" that opens a line (markdown emphasis, quotes and bullets may come before it); null when there is none. */
+function answerLineOf(answer) {
+  const lines = String(answer).normalize('NFKC').split('\n');
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const m = /^[\s>*_`#+-]*答案[*_`]*\s*[:：]\s*(.*)$/.exec(lines[i]);
+    if (m) return m[1].replace(/[*_`\s]+$/, '');
+  }
+  return null;
 }
 
 /** "mcp__openpen__openpen__get_state" or "openpen__get_state" -> "get_state"; other tools keep their name. */
@@ -98,7 +116,8 @@ function parseRun(text) {
  */
 export function gradeRun(question, runText, { round = 1 } = {}) {
   const { answer, toolCalls } = parseRun(runText);
-  const reply = normalize(answer);
+  const answerLine = answerLineOf(answer);
+  const reply = normalize(answerLine ?? '');
   const keywords = question.answer.split('；');
   const missing = keywords.filter((k) => !containsKeyword(reply, normalize(k)));
   return {
@@ -107,8 +126,10 @@ export function gradeRun(question, runText, { round = 1 } = {}) {
     question: question.question,
     expected: question.answer,
     answer,
+    answerLine,
     correct: missing.length === 0,
     missing,
+    needsReview: answerLine === null,
     toolCalls,
     usedNeeds: question.needs.every((n) => toolCalls.includes(n)),
     changedCanvas: toolCalls.some((t) => !READ_ONLY.has(t)),
