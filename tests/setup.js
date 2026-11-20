@@ -21,4 +21,22 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   }
 }
 
+// ── Web Storage from jsdom ────────────────────────────────────────────────────
+// Node 25+ defines its own `localStorage` / `sessionStorage` globals, which are
+// undefined unless Node runs with --localstorage-file. Vitest's jsdom
+// environment does not copy window keys the Node global already has, so the
+// Node getters shadow jsdom's and renderer code reading `localStorage` throws.
+// Rebind both to the jsdom window's Storage. No-op on Node <25 and in the node
+// environment (no `jsdom` global there).
+if (globalThis.jsdom?.window) {
+  for (const key of ['localStorage', 'sessionStorage']) {
+    if (globalThis[key] instanceof globalThis.jsdom.window.Storage) continue
+    Object.defineProperty(globalThis, key, {
+      get: () => globalThis.jsdom.window[key],
+      configurable: true,
+      enumerable: true,
+    })
+  }
+}
+
 bootstrapHost()

@@ -13,7 +13,9 @@
 import { test, expect } from '@playwright/test';
 import { launchElectronApp } from '../launch.js';
 
-test.setTimeout(15000);
+// Budget = cold Electron boot on a busy CI runner + 2s deadline + up to the
+// 5s quit safety timer. 15s was too tight for the first spec of a CI run.
+test.setTimeout(30000);
 
 test('app quits within deadline when the dev URL is unreachable', async () => {
   const electronApp = await launchElectronApp({
@@ -24,9 +26,22 @@ test('app quits within deadline when the dev URL is unreachable', async () => {
   });
 
   const start = Date.now();
-  await new Promise((resolve) => electronApp.once('close', resolve));
+  // Watch the child process rather than the 'close' event: if the watchdog
+  // quits the app before this line runs, 'close' has already fired and a late
+  // listener would wait forever.
+  const proc = electronApp.process();
+  let output = '';
+  proc.stdout?.on('data', (chunk) => { output += chunk; });
+  proc.stderr?.on('data', (chunk) => { output += chunk; });
+  const exitCode = proc.exitCode !== null || proc.signalCode !== null
+    ? proc.exitCode
+    : await new Promise((resolve) => proc.once('exit', (code) => resolve(code)));
   const elapsed = Date.now() - start;
 
+  // A crash or any other exit must not pass: the quit has to be the clean one
+  // the watchdog starts (the dev logger echoes its timeout report to stdio).
+  expect(exitCode).toBe(0);
+  expect(output).toContain('[RendererReadyWatchdog] no renderer reported ready');
   // 2s deadline + boot overhead; anything under 10s proves the watchdog fired
   // rather than the test harness timing out.
   expect(elapsed).toBeLessThan(10000);

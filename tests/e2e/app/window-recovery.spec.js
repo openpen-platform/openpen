@@ -96,7 +96,11 @@ async function expectReloadedAndDrawable() {
     })
     .toBe(true);
 
-  const drewPixels = await inOverlay(`(async () => {
+  // The reloaded canvas mounts (and takes the drawing-mode class) before the
+  // module runtime registers the drawing tools, so a stroke in that gap is
+  // ignored. Retry the stroke until one lands instead of racing the boot.
+  await expect
+    .poll(() => inOverlay(`(async () => {
     const canvas = document.querySelector('[data-testid="canvas-overlay"]');
     const fire = (type, x, y) => canvas.dispatchEvent(
       new PointerEvent(type, { clientX: x, clientY: y, pointerId: 1, buttons: type === 'pointerup' ? 0 : 1, bubbles: true }));
@@ -107,8 +111,8 @@ async function expectReloadedAndDrawable() {
     const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
     for (let i = 3; i < data.length; i += 4) if (data[i] > 0) return true;
     return false;
-  })()`);
-  expect(drewPixels, 'a stroke can be drawn on the recovered overlay').toBe(true);
+  })()`), { timeout: 20000, message: 'a stroke can be drawn on the recovered overlay' })
+    .toBe(true);
 }
 
 test('a crashed drawing window reloads itself and can draw again', async () => {

@@ -46,14 +46,14 @@ test('zh-Hant locale → drawing mode ON → HUD message is「進入繪圖模式
     expect(debugExists).toBe(true);
 
     await toggleDrawingModeOn(app);
-    await mainWin.waitForTimeout(400);
 
-    const recent = await mainWin.evaluate(() =>
-      window.__OPENPEN_DEBUG__?.notifications?.recent() ?? []
-    );
-
-    expect(recent.length).toBeGreaterThan(0);
-    expect(recent[0].message).toBe('進入繪圖模式');
+    // The toast arrives via a main-process round trip; poll instead of a
+    // fixed sleep so a slow runner does not read the history too early.
+    await expect
+      .poll(() => mainWin.evaluate(() =>
+        window.__OPENPEN_DEBUG__?.notifications?.recent()[0]?.message ?? null
+      ))
+      .toBe('進入繪圖模式');
 
     await toggleDrawingModeOff(app);
   } finally {
@@ -69,14 +69,14 @@ test('en locale → drawing mode ON → HUD message is "Drawing Mode ON"', async
     await mainWin.waitForTimeout(800);
 
     await toggleDrawingModeOn(app);
-    await mainWin.waitForTimeout(400);
 
-    const recent = await mainWin.evaluate(() =>
-      window.__OPENPEN_DEBUG__?.notifications?.recent() ?? []
-    );
-
-    expect(recent.length).toBeGreaterThan(0);
-    expect(recent[0].message).toBe('Drawing Mode ON');
+    // The toast arrives via a main-process round trip; poll instead of a
+    // fixed sleep so a slow runner does not read the history too early.
+    await expect
+      .poll(() => mainWin.evaluate(() =>
+        window.__OPENPEN_DEBUG__?.notifications?.recent()[0]?.message ?? null
+      ))
+      .toBe('Drawing Mode ON');
 
     await toggleDrawingModeOff(app);
   } finally {

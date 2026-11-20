@@ -59,15 +59,15 @@ test('notifyOnDrawingMode=true (default): debug count increases after toggling d
     window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
   );
 
-  // Toggle drawing mode ON.
+  // Toggle drawing mode ON. The toast arrives via a main-process round trip;
+  // poll instead of a fixed sleep so a slow runner does not read too early.
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
-  await mainWin.waitForTimeout(300);
 
-  const after = await mainWin.evaluate(() =>
-    window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
-  );
-
-  expect(after).toBeGreaterThan(before);
+  await expect
+    .poll(() => mainWin.evaluate(() =>
+      window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
+    ))
+    .toBeGreaterThan(before);
 
   // Cleanup: toggle back OFF.
   await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));

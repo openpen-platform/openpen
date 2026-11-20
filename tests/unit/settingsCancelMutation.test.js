@@ -8,7 +8,7 @@
  * forget preview IPC.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { createI18n } from 'vue-i18n';
 import en from '../../src/i18n/en';
@@ -103,6 +103,14 @@ async function mountSettingsView(api) {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('SettingsView cancel → no enableDragAutoSnap mutation', () => {
+  // The first import of SettingsView transforms its whole component tree
+  // (~4 s idle, past the 5 s test timeout on a busy machine). Pay that cost
+  // once here under a generous hook timeout so no single test absorbs it;
+  // later imports after vi.resetModules() reuse the transform cache.
+  beforeAll(async () => {
+    await import('../../src/views/SettingsView.vue');
+  }, 120_000);
+
   afterEach(() => {
     delete window.openPenApi;
     vi.resetModules();
