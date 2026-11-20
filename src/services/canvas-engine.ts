@@ -1,5 +1,5 @@
 import type { Tool, StrokeStyle, Stroke, PointerModifiers } from '../types/tool-types'
-import { addStroke, getAllStrokes, clearAll, pushCommand, purgeStroke, undo as storeUndo, redo as storeRedo } from './stroke-store'
+import { addStroke, getAllStrokes, getRewriteVersion, clearAll, pushCommand, purgeStroke, undo as storeUndo, redo as storeRedo } from './stroke-store'
 import { StrokeFader } from './stroke-fade'
 import { resolveColorStyle } from './color-utils'
 import { getSlotEntries } from '../core/runtime/contribution-store'
@@ -14,15 +14,24 @@ type CustomRenderer = (ctx: CanvasRenderingContext2D, stroke: Stroke) => void
  *
  * Returns undefined to fall back to the default polyline render.
  */
+// Tool id → renderer, rebuilt only when the canvas.tools slot changes (the
+// slot store replaces its entry array on every change).
+let rendererMapSource: unknown = null
+let rendererMap = new Map<string, CustomRenderer>()
+
 function findCustomRenderer(toolId: string): CustomRenderer | undefined {
   const entries = getSlotEntries<ToolContribution>('canvas.tools').value
-  for (const e of entries) {
-    if (e.contribution.id === toolId) {
+  if (entries !== rendererMapSource) {
+    const map = new Map<string, CustomRenderer>()
+    for (const e of entries) {
       const fn = (e.contribution as { renderStroke?: unknown }).renderStroke
-      if (typeof fn === 'function') return fn as CustomRenderer
+      // First registration wins, matching the previous linear search.
+      if (typeof fn === 'function' && !map.has(e.contribution.id)) map.set(e.contribution.id, fn as CustomRenderer)
     }
+    rendererMap = map
+    rendererMapSource = entries
   }
-  return undefined
+  return rendererMap.get(toolId)
 }
 
 /**
@@ -71,6 +80,22 @@ export class CanvasEngine {
   private fadeScratch: HTMLCanvasElement | null = null
   private onFadeRemoved: (() => void) | null = null
   private now: () => number = () => performance.now()
+  /**
+   * Offscreen copy of the committed strokes. Adding a stroke draws just that
+   * stroke into it; a repaint then costs one image copy however many strokes
+   * are on screen. Rebuilt from the store when strokes are removed or replaced.
+   */
+  private strokeCache: HTMLCanvasElement | null = null
+  private strokeCacheCtx: CanvasRenderingContext2D | null = null
+  private cacheValid = false
+  private cacheCount = 0
+  private cacheVersion = -1
+  private cacheTools: unknown = null
+  private redrawScheduled = false
+  private redrawFallback: ReturnType<typeof setTimeout> | null = null
+  /** A merged repaint was held back because a stroke was being drawn. */
+  private repaintAfterStroke = false
+  private onContextRestored: () => void
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -84,6 +109,13 @@ export class CanvasEngine {
       this.onResize()
       this.watchDpr()
     }
+    // A GPU process restart wipes the canvas pixels while the store keeps
+    // every stroke; repaint everything once the context is back.
+    this.onContextRestored = () => {
+      this.cacheValid = false
+      this.requestRedraw()
+    }
+    canvas.addEventListener('contextrestored', this.onContextRestored)
     this.watchDpr()
     this.onResize()
   }
@@ -103,6 +135,7 @@ export class CanvasEngine {
     this.canvas.width = rect.width * dpr
     this.canvas.height = rect.height * dpr
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    this.cacheValid = false
     this.redrawAllInternal()
   }
 
@@ -197,6 +230,11 @@ export class CanvasEngine {
     // Abort in-flight stroke when the tool changes mid-draw.
     this.drawing = false
     this.activeTool = tool
+    // No pointer-up will come for the aborted stroke; repaint what was held back.
+    if (this.repaintAfterStroke) {
+      this.repaintAfterStroke = false
+      this.requestRedraw()
+    }
   }
 
   handlePointerDown(point: { x: number; y: number }, style: StrokeStyle): void {
@@ -238,7 +276,10 @@ export class CanvasEngine {
         this.scheduleFadeTick()
       }
       this.redrawAllInternal()
+    } else if (this.repaintAfterStroke) {
+      this.redrawAllInternal()
     }
+    this.repaintAfterStroke = false
   }
 
   private redrawAllInternal(): void {
@@ -246,14 +287,100 @@ export class CanvasEngine {
     ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr)
     // Layer order: background → strokes → overlay. Modules wire grids,
     // watermarks, rulers, snap guides into the relevant slot.
+    const hasBackground = sortedLayers('canvas.layers.background').length > 0
     renderLayers(ctx, 'canvas.layers.background')
     const now = this.now()
-    for (const stroke of getAllStrokes()) {
-      const alpha = this.fader.alpha(stroke.id, now)
-      if (alpha < 1) this.renderFaded(stroke, alpha)
-      else renderStroke(ctx, stroke)
+    // The cache holds strokes only, so it is used when drawing it gives the
+    // same pixels as drawing each stroke: no background layer for an eraser
+    // stroke to cut into, and no stroke part-way through fading out.
+    const cache = !hasBackground && !this.fader.isFading(now) ? this.syncStrokeCache() : null
+    if (cache) {
+      ctx.save()
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
+      ctx.drawImage(cache, 0, 0)
+      ctx.restore()
+    } else {
+      this.cacheValid = false
+      for (const stroke of getAllStrokes()) {
+        const alpha = this.fader.alpha(stroke.id, now)
+        if (alpha < 1) this.renderFaded(stroke, alpha)
+        else renderStroke(ctx, stroke)
+      }
     }
     renderLayers(ctx, 'canvas.layers.overlay')
+  }
+
+  /**
+   * Bring the stroke cache up to date and return it, or null when no
+   * offscreen 2D context is available. Strokes appended since the last call
+   * are drawn into it; any other change to the stroke list, a resize or a
+   * change of tool renderers redraws it from scratch.
+   */
+  private syncStrokeCache(): HTMLCanvasElement | null {
+    const { canvas, dpr } = this
+    if (!this.strokeCache) {
+      this.strokeCache = document.createElement('canvas')
+      this.strokeCacheCtx = this.strokeCache.getContext('2d')
+    }
+    const cache = this.strokeCache
+    const cctx = this.strokeCacheCtx
+    if (!cctx) return null
+    if (cache.width !== canvas.width || cache.height !== canvas.height) {
+      cache.width = canvas.width
+      cache.height = canvas.height
+      this.cacheValid = false
+    }
+    const strokes = getAllStrokes()
+    const version = getRewriteVersion()
+    const tools = getSlotEntries<ToolContribution>('canvas.tools').value
+    if (
+      !this.cacheValid ||
+      version !== this.cacheVersion ||
+      tools !== this.cacheTools ||
+      strokes.length < this.cacheCount
+    ) {
+      cctx.setTransform(1, 0, 0, 1, 0, 0)
+      cctx.clearRect(0, 0, cache.width, cache.height)
+      this.cacheCount = 0
+      this.cacheVersion = version
+      this.cacheTools = tools
+      this.cacheValid = true
+    }
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    for (let i = this.cacheCount; i < strokes.length; i++) renderStroke(cctx, strokes[i])
+    this.cacheCount = strokes.length
+    return cache
+  }
+
+  /**
+   * Repaint on the next frame. Requests made before then share one repaint.
+   * A timer backs up the frame callback, which a hidden or occluded window may
+   * never run.
+   */
+  requestRedraw(): void {
+    if (this.redrawScheduled) return
+    this.redrawScheduled = true
+    const run = (): void => {
+      if (!this.redrawScheduled) return
+      this.redrawScheduled = false
+      if (this.redrawFallback !== null) {
+        clearTimeout(this.redrawFallback)
+        this.redrawFallback = null
+      }
+      this.syncFades()
+      // Same rule as a fade step: a tool painting its partial stroke straight
+      // onto the canvas would lose it to a full repaint, so that repaint waits
+      // for pointer-up; preview tools get their preview painted back on top.
+      const tool = this.activeTool
+      if (this.drawing && tool && !tool.needsPreviewRedraw) {
+        this.repaintAfterStroke = true
+        return
+      }
+      this.redrawAllInternal()
+      if (this.drawing && tool?.renderPreview) tool.renderPreview(this.ctx)
+    }
+    if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(run)
+    this.redrawFallback = setTimeout(run, 100)
   }
 
   /**
@@ -286,6 +413,10 @@ export class CanvasEngine {
 
   destroy(): void {
     this.clearFadeTimer()
+    this.redrawScheduled = false
+    if (this.redrawFallback !== null) clearTimeout(this.redrawFallback)
+    this.redrawFallback = null
+    this.canvas.removeEventListener('contextrestored', this.onContextRestored)
     this.resizeObserver.disconnect()
     this.dprMediaQuery?.removeEventListener('change', this.onDprChange)
     this.dprMediaQuery = null

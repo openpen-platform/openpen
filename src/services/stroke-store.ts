@@ -7,6 +7,17 @@ type Command = AddStrokeCommand | RemoveStrokeCommand | ClearAllCommand
 
 let strokes: Stroke[] = []
 
+/**
+ * Bumped on every change that is not a plain append (removal, clear, restore,
+ * history replacing the list). Renderers that cache already-drawn strokes
+ * compare it to tell "new strokes were appended" from "rebuild everything".
+ */
+let rewriteVersion = 0
+
+export function getRewriteVersion(): number {
+  return rewriteVersion
+}
+
 const HISTORY_LIMIT = 50
 let undoStack: Command[] = []
 let redoStack: Command[] = []
@@ -21,12 +32,14 @@ export function getAllStrokes(): Stroke[] {
 
 export function clearAll(): void {
   strokes = []
+  rewriteVersion++
 }
 
 export function removeStrokeById(id: string): boolean {
   const idx = strokes.findIndex((s) => s.id === id)
   if (idx === -1) return false
   strokes.splice(idx, 1)
+  rewriteVersion++
   return true
 }
 
@@ -110,6 +123,7 @@ export function hydrateState(snapshot: DrawingSnapshot): void {
   strokes = Array.isArray(snapshot.strokes) ? [...snapshot.strokes] : []
   undoStack = Array.isArray(snapshot.undoStack) ? [...snapshot.undoStack] : []
   redoStack = Array.isArray(snapshot.redoStack) ? [...snapshot.redoStack] : []
+  rewriteVersion++
 }
 
 function applyUndo(command: Command): void {
@@ -119,6 +133,7 @@ function applyUndo(command: Command): void {
     strokes.push(command.stroke)
   } else if (command.type === 'CLEAR_ALL') {
     strokes = [...command.strokes]
+    rewriteVersion++
   }
 }
 
@@ -129,5 +144,6 @@ function applyRedo(command: Command): void {
     removeStrokeById(command.stroke.id)
   } else if (command.type === 'CLEAR_ALL') {
     strokes = []
+    rewriteVersion++
   }
 }

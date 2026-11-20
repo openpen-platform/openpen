@@ -281,7 +281,9 @@ export function useCanvas() {
 
     unsubs.push(
       eventBusOn('canvas-redraw-requested', () => {
-        engine?.redrawAll()
+        // Bursts of requests (e.g. strokes added in quick succession) share
+        // one repaint on the next frame.
+        engine?.requestRedraw()
         reportHistoryState()
       })
     )
