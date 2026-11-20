@@ -383,6 +383,10 @@ export default {
   mcpFilterPlaceholder: "{n} 個のプラグインを絞り込む",
   mcpPluginList: "エージェントに公開するプラグイン",
   mcpExposePlugin: "{id} のツールを公開",
+  mcpToolsNotExposed: "{n} 件のツールは非公開",
+  mcpIssueInvalidChars: "名前に使用できない文字が含まれています",
+  mcpIssueTooLong: "名前が 128 文字を超えています",
+  mcpIssueDuplicate: "公開済みのツールと同じ名前です",
   mcpCmdClaude: "Claude Code",
   mcpCmdCodex: "Codex",
 };

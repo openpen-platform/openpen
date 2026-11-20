@@ -382,6 +382,10 @@ export default {
   mcpFilterPlaceholder: "Filter {n} plugins",
   mcpPluginList: "Plugins exposed to agents",
   mcpExposePlugin: "Expose {id} tools",
+  mcpToolsNotExposed: "{n} tool not exposed | {n} tools not exposed",
+  mcpIssueInvalidChars: "name contains a character that isn't allowed",
+  mcpIssueTooLong: "name is longer than 128 characters",
+  mcpIssueDuplicate: "same name as a tool already exposed",
   mcpCmdClaude: "Claude Code",
   mcpCmdCodex: "Codex",
 };

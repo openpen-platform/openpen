@@ -383,6 +383,10 @@ export default {
   mcpFilterPlaceholder: "筛选 {n} 个插件",
   mcpPluginList: "开放给代理的插件",
   mcpExposePlugin: "开放 {id} 的工具",
+  mcpToolsNotExposed: "{n} 个工具未开放",
+  mcpIssueInvalidChars: "名称含不允许的字符",
+  mcpIssueTooLong: "名称超过 128 个字符",
+  mcpIssueDuplicate: "与已开放的工具同名",
   mcpCmdClaude: "Claude Code",
   mcpCmdCodex: "Codex",
 };

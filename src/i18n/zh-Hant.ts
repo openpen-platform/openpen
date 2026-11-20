@@ -382,6 +382,10 @@ export default {
   mcpFilterPlaceholder: "篩選 {n} 個插件",
   mcpPluginList: "開放給代理的插件",
   mcpExposePlugin: "開放 {id} 的工具",
+  mcpToolsNotExposed: "{n} 個工具未開放",
+  mcpIssueInvalidChars: "名稱含不允許的字元",
+  mcpIssueTooLong: "名稱超過 128 字",
+  mcpIssueDuplicate: "與已開放的工具同名",
   mcpCmdClaude: "Claude Code",
   mcpCmdCodex: "Codex",
 };

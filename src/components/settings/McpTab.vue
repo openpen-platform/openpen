@@ -157,6 +157,31 @@ const pluginSummary = computed(() =>
     ? t('mcpPluginsAll', { n: plugins.value.length })
     : t('mcpPluginsSome', { n: exposedCount.value, total: plugins.value.length }),
 )
+
+// Tools a plugin declared but the endpoint does not expose, with the reason.
+const issueReasonKey: Record<McpPluginToolIssue['reason'], string> = {
+  invalid_chars: 'mcpIssueInvalidChars',
+  too_long: 'mcpIssueTooLong',
+  duplicate: 'mcpIssueDuplicate',
+}
+const issuesFor = (id: string): McpPluginToolIssue[] => status.value.pluginToolIssues?.[id] ?? []
+const expandedIssues = ref<Set<string>>(new Set())
+function toggleIssues(id: string) {
+  const next = new Set(expandedIssues.value)
+  if (!next.delete(id)) next.add(id)
+  expandedIssues.value = next
+}
+
+// Which rows the plugin list shows. Choosing plugins: all of them, with toggles.
+// "All plugins" and read-only: no toggles, only plugins with tools that are not exposed.
+const showToggles = computed(() => !mcp.value.readOnly && !mcp.value.exposeAll)
+const pluginsWithIssues = computed(() => plugins.value.filter((p) => issuesFor(p.id).length > 0))
+const listedPlugins = computed(() => (showToggles.value ? visiblePlugins.value : pluginsWithIssues.value))
+const listShown = computed(() => {
+  if (mcp.value.readOnly) return pluginsWithIssues.value.length > 0
+  return pluginsOpen.value && listedPlugins.value.length > 0
+})
+
 const visiblePlugins = computed(() => {
   const q = filter.value.trim().toLowerCase()
   return q ? plugins.value.filter((p) => p.id.toLowerCase().includes(q)) : plugins.value
@@ -286,39 +311,73 @@ onUnmounted(() => {
             <div class="b-divider" />
             <div class="empty" data-testid="mcp-no-plugins">{{ t('mcpNoPlugins') }}</div>
           </template>
-          <template v-else-if="!mcp.readOnly">
+          <template v-else>
             <div class="b-divider" />
-            <button type="button" class="b-disclose" :aria-expanded="pluginsOpen" aria-controls="mcp-plugs" data-testid="mcp-plugins-disclose" @click="pluginsOpen = !pluginsOpen">
-              <span class="b-disc-l">{{ t('mcpPluginTools') }} <small data-testid="mcp-plugins-summary">· {{ pluginSummary }}</small></span>
-              <span class="b-disc-hint">{{ pluginsOpen ? t('mcpHide') : t('mcpChoose') }}</span>
-              <svg class="b-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
-            </button>
-            <div v-if="pluginsOpen" id="mcp-plugs" class="b-plugs">
-              <AppSegmented
-                data-testid="mcp-expose-seg"
-                :model-value="mcp.exposeAll ? 'all' : 'choose'"
-                :options="exposeOptions"
-                :aria-label="t('mcpPluginTools')"
-                @update:model-value="draft.mcp.exposeAll = $event === 'all'"
-              />
-              <template v-if="!mcp.exposeAll">
-                <template v-if="plugins.length > 8">
+            <template v-if="!mcp.readOnly">
+              <button type="button" class="b-disclose" :aria-expanded="pluginsOpen" aria-controls="mcp-plugs" data-testid="mcp-plugins-disclose" @click="pluginsOpen = !pluginsOpen">
+                <span class="b-disc-l">{{ t('mcpPluginTools') }} <small data-testid="mcp-plugins-summary">· {{ pluginSummary }}</small></span>
+                <span class="b-disc-hint">{{ pluginsOpen ? t('mcpHide') : t('mcpChoose') }}</span>
+                <svg class="b-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
+              </button>
+              <div v-if="pluginsOpen" id="mcp-plugs" class="b-plugs">
+                <AppSegmented
+                  data-testid="mcp-expose-seg"
+                  :model-value="mcp.exposeAll ? 'all' : 'choose'"
+                  :options="exposeOptions"
+                  :aria-label="t('mcpPluginTools')"
+                  @update:model-value="draft.mcp.exposeAll = $event === 'all'"
+                />
+                <template v-if="!mcp.exposeAll && plugins.length > 8">
                   <label class="sr-only" for="mcp-filter">{{ t('mcpFilterPlugins') }}</label>
                   <input id="mcp-filter" v-model="filter" class="b-filter" type="search" data-testid="mcp-plugin-filter" :placeholder="t('mcpFilterPlaceholder', { n: plugins.length })" />
                 </template>
-                <ul class="plug-list" :aria-label="t('mcpPluginList')" data-testid="mcp-plugin-list">
-                  <li v-for="p in visiblePlugins" :key="p.id" class="b-plug" :data-testid="`mcp-plugin-row-${p.id}`">
-                    <span class="b-plug-name">{{ p.id }}<span v-if="p.description" class="b-plug-d">{{ p.description }}</span></span>
-                    <AppToggle
-                      :model-value="mcp.enabledPlugins.includes(p.id)"
-                      :aria-label="t('mcpExposePlugin', { id: p.id })"
-                      :testid="`mcp-plugin-toggle-${p.id}`"
-                      @update:model-value="setExposed(p.id, $event)"
-                    />
-                  </li>
-                </ul>
-              </template>
-            </div>
+              </div>
+            </template>
+            <!--
+              One list for every mode. Choosing plugins: every plugin with its toggle.
+              "All plugins" and read-only: no toggles, and only the plugins that have
+              tools which are not exposed (nothing extra when there are none).
+            -->
+            <ul v-if="listShown" class="plug-list" :class="{ 'plug-list-after-seg': !mcp.readOnly }" :aria-label="t('mcpPluginList')" data-testid="mcp-plugin-list">
+              <li v-for="p in listedPlugins" :key="p.id" class="b-plug" :class="{ 'b-plug-wrap': issuesFor(p.id).length > 0 }" :data-testid="`mcp-plugin-row-${p.id}`">
+                <span class="b-plug-name">
+                  <span class="b-plug-top">
+                    {{ p.id }}
+                    <button
+                      v-if="issuesFor(p.id).length > 0"
+                      type="button"
+                      class="chip chip-warn"
+                      :aria-expanded="expandedIssues.has(p.id)"
+                      :aria-controls="`mcp-issues-${p.id}`"
+                      :data-testid="`mcp-plugin-issues-${p.id}`"
+                      @click="toggleIssues(p.id)"
+                    >
+                      {{ t('mcpToolsNotExposed', { n: issuesFor(p.id).length }, issuesFor(p.id).length) }}
+                      <svg class="b-chev" :class="{ 'is-open': expandedIssues.has(p.id) }" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
+                    </button>
+                  </span>
+                  <span v-if="p.description" class="b-plug-d">{{ p.description }}</span>
+                </span>
+                <AppToggle
+                  v-if="showToggles"
+                  :model-value="mcp.enabledPlugins.includes(p.id)"
+                  :aria-label="t('mcpExposePlugin', { id: p.id })"
+                  :testid="`mcp-plugin-toggle-${p.id}`"
+                  @update:model-value="setExposed(p.id, $event)"
+                />
+                <div
+                  v-if="issuesFor(p.id).length > 0 && expandedIssues.has(p.id)"
+                  :id="`mcp-issues-${p.id}`"
+                  class="b-issues"
+                  :data-testid="`mcp-plugin-issues-list-${p.id}`"
+                >
+                  <div v-for="issue in issuesFor(p.id)" :key="issue.fullName" class="b-issue">
+                    <code class="b-issue-name" :title="issue.tool">{{ issue.tool }}</code>
+                    <span>— {{ t(issueReasonKey[issue.reason]) }}</span>
+                  </div>
+                </div>
+              </li>
+            </ul>
           </template>
         </div>
       </section>
@@ -402,9 +461,20 @@ onUnmounted(() => {
 .b-filter { width: 100%; font-size: 12.5px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-hi); background: var(--input-bg); color: var(--text-primary); font-family: inherit; min-height: 30px; box-sizing: border-box; }
 .b-filter::placeholder { color: var(--text-dim); }
 .plug-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.plug-list-after-seg { margin-top: -2px; } /* the card gap is 10px, the segmented control sits 8px above its list */
 .b-plug { display: flex; align-items: center; gap: 10px; padding: 6px 2px; min-height: 32px; border-bottom: 1px solid var(--border); }
 .b-plug:last-child { border-bottom: none; }
 .b-plug-name { font-size: 12.5px; font-weight: 600; flex: 1; min-width: 0; }
+.b-plug-wrap { flex-wrap: wrap; }
+.b-plug-top { display: flex; align-items: center; gap: 8px; }
+/* The chip must not grow the first line, so a row keeps its height with or without it. */
+.b-plug-top .chip { margin: -3px 0; }
+.chip-warn { color: var(--op-state-warning-text); border-color: var(--op-state-warning-border); background: var(--op-state-warning-bg); font-family: inherit; cursor: pointer; }
+.chip-warn .b-chev { transition: transform 150ms; }
+.chip-warn .b-chev.is-open { transform: rotate(90deg); }
+.b-issues { order: 3; flex-basis: 100%; border-radius: 8px; border: 1px solid var(--op-state-warning-border); background: var(--op-state-warning-bg); color: var(--op-state-warning-text); padding: 8px 12px; margin: 2px 0 4px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 1.45; font-weight: 400; }
+.b-issue { display: flex; gap: 8px; align-items: baseline; }
+.b-issue-name { font-family: var(--mono, 'SF Mono', Consolas, monospace); font-size: 11.5px; font-weight: 600; flex: 0 1 auto; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .b-plug-d { display: block; font-weight: 400; font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .empty { padding: 8px 0; font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
