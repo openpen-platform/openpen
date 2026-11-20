@@ -31,6 +31,11 @@ export function emit(event: string, payload: unknown = undefined): void {
   }
 }
 
+/** True when at least one subscriber listens for `event`. */
+export function hasListeners(event: string): boolean {
+  return (bus.get(event)?.size ?? 0) > 0
+}
+
 /**
  * Subscribe to an event. Returns a function that removes this exact
  * subscription — call it from `onUnmounted` (Vue) or any cleanup hook.

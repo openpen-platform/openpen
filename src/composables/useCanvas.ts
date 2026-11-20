@@ -280,11 +280,14 @@ export function useCanvas() {
     )
 
     unsubs.push(
-      eventBusOn('canvas-redraw-requested', () => {
+      eventBusOn('canvas-redraw-requested', (payload) => {
         // Bursts of requests (e.g. strokes added in quick succession) share
-        // one repaint on the next frame.
-        engine?.requestRedraw()
+        // one repaint on the next frame. A requester that must know when the
+        // canvas shows the change passes onPainted (the MCP bridge does).
+        const painted = engine ? engine.requestRedraw() : Promise.resolve()
         reportHistoryState()
+        const onPainted = (payload as { onPainted?: unknown } | undefined)?.onPainted
+        if (typeof onPainted === 'function') void painted.then(() => onPainted())
       })
     )
 

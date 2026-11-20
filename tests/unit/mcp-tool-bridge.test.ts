@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { on } from '../../src/core/runtime/event-bus'
 import { executeMcpCommand } from '../../src/services/mcp-tool-bridge'
 import { getAllStrokes, clearAll, resetHistory, canUndo, canRedo } from '../../src/services/stroke-store'
 
@@ -148,4 +149,25 @@ describe('mcp-tool-bridge', () => {
     })
   })
 
+
+  describe('TASK-241 the canvas shows the stroke when draw returns', () => {
+    it('draw resolves only after the overlay reports the repaint done', async () => {
+      let painted: (() => void) | null = null
+      const off = on('canvas-redraw-requested', (payload) => {
+        painted = (payload as { onPainted?: () => void } | undefined)?.onPainted ?? null
+      })
+      try {
+        let settled = false
+        const pending = executeMcpCommand({ type: 'draw', shape: 'rect', x: 0, y: 0, width: 10, height: 10 }).then(() => { settled = true })
+        await new Promise((r) => setTimeout(r, 20))
+        expect(settled).toBe(false)
+        expect(painted).not.toBeNull()
+        painted!()
+        await pending
+        expect(settled).toBe(true)
+      } finally {
+        off()
+      }
+    })
+  })
 })

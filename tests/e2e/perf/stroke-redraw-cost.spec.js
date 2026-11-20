@@ -3,9 +3,9 @@
 // regular functional suite never runs it.
 //
 // Fills the overlay to each level in T241_LEVELS (default 100,1000,2000,5000,10000),
-// then adds T241_ADDS strokes (default 20) one at a time through the stroke
-// store + 'canvas-redraw-requested' path that the MCP bridge uses, waiting one
-// frame per stroke. Records ms per added stroke, frame rate / longest frame
+// then adds T241_ADDS strokes (default 20) one at a time through the
+// MCP bridge (executeMcpCommand draw, which returns once the overlay has
+// repainted). Records ms per added stroke, frame rate / longest frame
 // and input latency while adding and while idle, and per-process CPU from
 // app.getAppMetrics(). Writes JSON to $T241_OUT when set.
 //
@@ -43,6 +43,7 @@ test('measure redraw cost vs stroke count', async () => {
     result.env = await overlay.evaluate(async () => {
       const store = await import('/src/services/stroke-store.ts');
       const bus = await import('/src/core/runtime/event-bus.ts');
+      const bridge = await import('/src/services/mcp-tool-bridge.ts').catch(() => null);
       const c = document.querySelector('[data-testid="canvas-overlay"]');
       let seq = 0;
       // Deterministic pseudo-random so runs are comparable across platforms.
@@ -50,7 +51,7 @@ test('measure redraw cost vs stroke count', async () => {
       const rnd = () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
       const W = c.clientWidth, H = c.clientHeight;
       window.__t241 = {
-        store, bus,
+        store, bus, bridge,
         makeStroke(points) {
           const x0 = rnd() * (W - 200) + 100, y0 = rnd() * (H - 200) + 100;
           const pts = [];
@@ -136,21 +137,28 @@ test('measure redraw cost vs stroke count', async () => {
       const r = await overlay.evaluate(async ({ adds, points }) => {
         window.__t241.acc = { syncMs: 0, rafMs: 0, rafCount: 0 };
         const per = [];
+        const { bridge } = window.__t241;
         const a = performance.now();
         for (let i = 0; i < adds; i++) {
           const b = performance.now();
-          window.__t241.mcpDraw(points);
-          // Wait until the stroke has been through a frame (≈ what the user sees).
-          await new Promise((res) => requestAnimationFrame(() => setTimeout(res, 0)));
+          if (bridge) {
+            // The real MCP draw command: it returns once the overlay has repainted.
+            const pts = window.__t241.makeStroke(points).points.map((p) => ({ x: p.x * devicePixelRatio, y: p.y * devicePixelRatio }));
+            await bridge.executeMcpCommand({ type: 'draw', shape: 'freehand', points: pts, color: '#818cf8', lineWidth: 4 * devicePixelRatio });
+          } else {
+            window.__t241.mcpDraw(points);
+            // Wait until the stroke has been through a frame (≈ what the user sees).
+            await new Promise((res) => requestAnimationFrame(() => setTimeout(res, 0)));
+          }
           per.push(performance.now() - b);
         }
         const acc = window.__t241.acc;
         per.sort((x, y) => x - y);
-        return { wall: performance.now() - a, medianAddMs: per[Math.floor(per.length / 2)], maxAddMs: per[per.length - 1], ...acc };
+        return { viaBridge: !!bridge, wall: performance.now() - a, medianAddMs: per[Math.floor(per.length / 2)], maxAddMs: per[per.length - 1], ...acc };
       }, { adds: ADDS, points: POINTS });
       stop = true; await wig;
       await cpu(`adds-${level}:end`);
-      result.batches.push({ level, adds: ADDS, wallMs: r.wall, perStrokeMs: r.wall / ADDS, medianAddMs: r.medianAddMs, maxAddMs: r.maxAddMs, syncMsPerAdd: r.syncMs / ADDS, rafMsPerAdd: r.rafMs / Math.max(1, r.rafCount), ...(await frameStats()) });
+      result.batches.push({ level, adds: ADDS, viaBridge: r.viaBridge, wallMs: r.wall, perStrokeMs: r.wall / ADDS, medianAddMs: r.medianAddMs, maxAddMs: r.maxAddMs, syncMsPerAdd: r.syncMs / ADDS, rafMsPerAdd: r.rafMs / Math.max(1, r.rafCount), ...(await frameStats()) });
       console.log(`[t241] level ${level}: ${(r.wall / ADDS).toFixed(1)} ms/stroke (median ${r.medianAddMs.toFixed(1)}), sync redraw ${(r.syncMs / ADDS).toFixed(1)} ms, raf redraw ${(r.rafMs / Math.max(1, r.rafCount)).toFixed(1)} ms`);
     }
   } finally {

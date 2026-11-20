@@ -96,6 +96,7 @@ export class CanvasEngine {
   private cacheTools: unknown = null
   private redrawScheduled = false
   private redrawFallback: ReturnType<typeof setTimeout> | null = null
+  private redrawWaiters: Array<() => void> = []
   /** A merged repaint was held back because a stroke was being drawn. */
   private repaintAfterStroke = false
   private onContextRestored: () => void
@@ -403,10 +404,12 @@ export class CanvasEngine {
   /**
    * Repaint on the next frame. Requests made before then share one repaint.
    * A timer backs up the frame callback, which a hidden or occluded window may
-   * never run.
+   * never run. Resolves once that repaint has run (or was held back because a
+   * stroke is being drawn).
    */
-  requestRedraw(): void {
-    if (this.redrawScheduled) return
+  requestRedraw(): Promise<void> {
+    const done = new Promise<void>((resolve) => this.redrawWaiters.push(resolve))
+    if (this.redrawScheduled) return done
     this.redrawScheduled = true
     const run = (): void => {
       if (!this.redrawScheduled) return
@@ -415,19 +418,30 @@ export class CanvasEngine {
         clearTimeout(this.redrawFallback)
         this.redrawFallback = null
       }
-      this.syncFades()
-      // Same rule as a fade step: a tool painting its partial stroke straight
-      // onto the canvas would lose it to a full repaint, so that repaint waits
-      // for pointer-up; preview tools get their preview painted back on top.
-      const tool = this.activeTool
-      if (this.drawing && tool && !tool.needsPreviewRedraw) {
-        this.repaintAfterStroke = true
-        return
+      const waiters = this.redrawWaiters
+      this.redrawWaiters = []
+      try {
+        this.runScheduledRedraw()
+      } finally {
+        for (const resolve of waiters) resolve()
       }
-      this.redrawAllInternal(this.drawing ? tool : null)
     }
     if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(run)
     this.redrawFallback = setTimeout(run, 100)
+    return done
+  }
+
+  private runScheduledRedraw(): void {
+    this.syncFades()
+    // Same rule as a fade step: a tool painting its partial stroke straight
+    // onto the canvas would lose it to a full repaint, so that repaint waits
+    // for pointer-up; preview tools get their preview painted back on top.
+    const tool = this.activeTool
+    if (this.drawing && tool && !tool.needsPreviewRedraw) {
+      this.repaintAfterStroke = true
+      return
+    }
+    this.redrawAllInternal(this.drawing ? tool : null)
   }
 
   /**
@@ -463,6 +477,7 @@ export class CanvasEngine {
     this.redrawScheduled = false
     if (this.redrawFallback !== null) clearTimeout(this.redrawFallback)
     this.redrawFallback = null
+    for (const resolve of this.redrawWaiters.splice(0)) resolve()
     this.canvas.removeEventListener('contextrestored', this.onContextRestored)
     this.resizeObserver.disconnect()
     this.dprMediaQuery?.removeEventListener('change', this.onDprChange)

@@ -11,7 +11,7 @@
  */
 import type { Point, Stroke } from '@openpen/module-api'
 import { addStroke, clearAll, getAllStrokes, pushCommand, purgeStroke, undo as storeUndo, redo as storeRedo } from './stroke-store'
-import { emit } from '../core/runtime/event-bus'
+import { emit, hasListeners } from '../core/runtime/event-bus'
 import { getSlotEntries } from '../core/runtime/contribution-store'
 
 type DrawShape = 'freehand' | 'line' | 'rect' | 'ellipse' | 'highlighter'
@@ -79,14 +79,26 @@ function toOverlay(p: Point, offset: McpOffset = { x: 0, y: 0 }): Point {
   return { x: (p.x - offset.x) / r, y: (p.y - offset.y) / r }
 }
 
-function requestRedraw(): void {
-  // useCanvas listens: redraws the canvas and reports undo / redo availability.
-  emit('canvas-redraw-requested')
-  // Same forced second paint as CanvasEngine.clearCanvas: transparent overlay
-  // windows on Windows defer painting until the next frame is requested.
-  if (typeof requestAnimationFrame !== 'undefined') {
-    requestAnimationFrame(() => emit('canvas-redraw-requested'))
-  }
+/** Longest wait for the overlay to report a repaint before replying anyway. */
+const REPAINT_WAIT_MS = 250
+
+/**
+ * Ask the overlay to repaint and resolve once it has, so a reply sent after
+ * this (and a screenshot the agent takes next) already shows the change.
+ * useCanvas listens: it merges requests into one repaint on the next frame,
+ * which also makes transparent overlay windows on Windows flush their paint.
+ */
+function requestRedraw(): Promise<void> {
+  if (!hasListeners('canvas-redraw-requested')) return Promise.resolve()
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, REPAINT_WAIT_MS)
+    emit('canvas-redraw-requested', {
+      onPainted: () => {
+        clearTimeout(timer)
+        resolve()
+      },
+    })
+  })
 }
 
 /** Resolves after the next paint opportunity (bounded: a throttled window may never fire rAF). */
@@ -165,7 +177,7 @@ export async function executeMcpCommand(command: McpCommand): Promise<McpCommand
     case 'ping':
       // Readiness probe from main: answered only once this bridge is subscribed
       // (after the modules loaded). Repaint whatever the store already holds.
-      requestRedraw()
+      await requestRedraw()
       await nextFrame()
       return { ready: true }
     case 'draw': {
@@ -173,7 +185,7 @@ export async function executeMcpCommand(command: McpCommand): Promise<McpCommand
       // Same path as a manually drawn stroke: store + ADD_STROKE history entry.
       addStroke(stroke)
       pushCommand({ type: 'ADD_STROKE', stroke })
-      requestRedraw()
+      await requestRedraw()
       return { id: stroke.id }
     }
     case 'list':
@@ -188,7 +200,7 @@ export async function executeMcpCommand(command: McpCommand): Promise<McpCommand
     case 'delete': {
       // purgeStroke is what the stroke eraser uses: undo / redo cannot bring it back.
       const deleted = purgeStroke(command.id)
-      if (deleted) requestRedraw()
+      if (deleted) await requestRedraw()
       return { deleted }
     }
     case 'clear': {
@@ -196,17 +208,17 @@ export async function executeMcpCommand(command: McpCommand): Promise<McpCommand
       const strokes = getAllStrokes()
       if (strokes.length > 0) pushCommand({ type: 'CLEAR_ALL', strokes: [...strokes] })
       clearAll()
-      requestRedraw()
+      await requestRedraw()
       return { ok: true }
     }
     case 'undo': {
       const ok = storeUndo()
-      requestRedraw()
+      await requestRedraw()
       return { ok }
     }
     case 'redo': {
       const ok = storeRedo()
-      requestRedraw()
+      await requestRedraw()
       return { ok }
     }
   }
