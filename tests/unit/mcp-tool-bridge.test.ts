@@ -169,5 +169,21 @@ describe('mcp-tool-bridge', () => {
         off()
       }
     })
+
+    it('replies without waiting when the overlay is hidden, while still asking for the repaint', async () => {
+      const requests: unknown[] = []
+      const off = on('canvas-redraw-requested', (payload) => { requests.push(payload) })
+      const visibility = Object.getOwnPropertyDescriptor(document, 'visibilityState')
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+      try {
+        const reply = await executeMcpCommand({ type: 'draw', shape: 'rect', x: 0, y: 0, width: 10, height: 10 })
+        expect(reply).toHaveProperty('id')
+        expect(requests).toHaveLength(1)
+      } finally {
+        if (visibility) Object.defineProperty(document, 'visibilityState', visibility)
+        else delete (document as unknown as Record<string, unknown>).visibilityState
+        off()
+      }
+    })
   })
 })

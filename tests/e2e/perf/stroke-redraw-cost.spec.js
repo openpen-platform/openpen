@@ -95,9 +95,11 @@ test('measure redraw cost vs stroke count', async () => {
       return { fps: span ? ((f.length - 1) * 1000) / span : null, maxFrameMs: d.length ? Math.max(...d) : null, p95FrameMs: q(d.slice().sort((a, b) => a - b), 0.95), inputLatP50: q(lat, 0.5), inputLatP95: q(lat, 0.95), inputLatMax: lat.length ? lat[lat.length - 1] : null, inputSamples: lat.length };
     });
     // Moves the pointer through the CDP input pipeline (same queue as real input).
+    // Bounded: CDP input waits for a frame, which a hidden window never produces.
+    const move = (x, y) => Promise.race([overlay.mouse.move(x, y).catch(() => {}), new Promise((r) => setTimeout(r, 2000))]);
     const wiggle = async (ms) => {
       const end = Date.now() + ms; let k = 0;
-      while (Date.now() < end) { await overlay.mouse.move(200 + (k % 50) * 4, 200 + (k % 30) * 3); k++; await new Promise((r) => setTimeout(r, 16)); }
+      while (Date.now() < end) { await move(200 + (k % 50) * 4, 200 + (k % 30) * 3); k++; await new Promise((r) => setTimeout(r, 16)); }
     };
     // Synchronous cost of one 'canvas-redraw-requested'. Before TASK-241 this was
     // a full repaint; since then the repaint runs on the next frame, so this
@@ -133,7 +135,7 @@ test('measure redraw cost vs stroke count', async () => {
       await idle(String(level));
       await resetProbes(); await cpu(`adds-${level}:start`);
       let stop = false;
-      const wig = (async () => { let k = 0; while (WIGGLE && !stop) { await overlay.mouse.move(300 + (k % 40) * 5, 300).catch(() => {}); k++; await new Promise((r) => setTimeout(r, 50)); } })();
+      const wig = (async () => { let k = 0; while (WIGGLE && !stop) { await move(300 + (k % 40) * 5, 300); k++; await new Promise((r) => setTimeout(r, 50)); } })();
       const r = await overlay.evaluate(async ({ adds, points }) => {
         window.__t241.acc = { syncMs: 0, rafMs: 0, rafCount: 0 };
         const per = [];
@@ -158,7 +160,8 @@ test('measure redraw cost vs stroke count', async () => {
       }, { adds: ADDS, points: POINTS });
       stop = true; await wig;
       await cpu(`adds-${level}:end`);
-      result.batches.push({ level, adds: ADDS, viaBridge: r.viaBridge, wallMs: r.wall, perStrokeMs: r.wall / ADDS, medianAddMs: r.medianAddMs, maxAddMs: r.maxAddMs, syncMsPerAdd: r.syncMs / ADDS, rafMsPerAdd: r.rafMs / Math.max(1, r.rafCount), ...(await frameStats()) });
+      const visibility = await overlay.evaluate(() => document.visibilityState);
+      result.batches.push({ level, adds: ADDS, viaBridge: r.viaBridge, visibility, wallMs: r.wall, perStrokeMs: r.wall / ADDS, medianAddMs: r.medianAddMs, maxAddMs: r.maxAddMs, syncMsPerAdd: r.syncMs / ADDS, rafMsPerAdd: r.rafMs / Math.max(1, r.rafCount), ...(await frameStats()) });
       console.log(`[t241] level ${level}: ${(r.wall / ADDS).toFixed(1)} ms/stroke (median ${r.medianAddMs.toFixed(1)}), sync redraw ${(r.syncMs / ADDS).toFixed(1)} ms, raf redraw ${(r.rafMs / Math.max(1, r.rafCount)).toFixed(1)} ms`);
     }
   } finally {

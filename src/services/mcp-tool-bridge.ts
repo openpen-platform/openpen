@@ -90,6 +90,13 @@ const REPAINT_WAIT_MS = 250
  */
 function requestRedraw(): Promise<void> {
   if (!hasListeners('canvas-redraw-requested')) return Promise.resolve()
+  // A hidden overlay (display asleep, screen locked) runs no frames and its
+  // timers are throttled, so waiting could stall the reply for a long time.
+  // The repaint is still requested and lands once the overlay is visible.
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+    emit('canvas-redraw-requested')
+    return Promise.resolve()
+  }
   return new Promise((resolve) => {
     const timer = setTimeout(resolve, REPAINT_WAIT_MS)
     emit('canvas-redraw-requested', {
