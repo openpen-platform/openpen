@@ -13,7 +13,7 @@
  */
 
 import crypto from 'node:crypto';
-import { app, BrowserWindow, ipcMain, screen, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeImage, screen, shell } from 'electron';
 import { z } from 'zod';
 import { MCP, OVERLAY } from './ipc-channels.js';
 import { log } from './logger.js';
@@ -34,6 +34,7 @@ import { createBuiltinTools, filterTools } from './mcp/tools.js';
 import { buildPluginTools, sanitizePluginReport, pluginToolPrefix } from './mcp/plugin-tools.js';
 import { generateApiKey } from './mcp/api-key.js';
 import { installClaudeDesktopBundle } from './mcp/claude-desktop-bundle.js';
+import { computeRegionView, drawCoordinateGrid } from './mcp/screenshot-view.js';
 
 /** How long a command may wait for the overlay (including its creation on Wayland). */
 const OVERLAY_READY_TIMEOUT_MS = 8000;
@@ -202,16 +203,38 @@ export function initMcpServerManager({ captureDisplayImage }) {
       return sendOverlayCommand(win.webContents, { ...command, offset: overlayOffset(targetId) }, COMMAND_TIMEOUT_MS);
     },
 
-    async screenshot(displayId) {
+    async screenshot(displayId, { region, grid } = {}) {
       const result = await captureDisplayImage({ displayId });
       if (!result.ok) throw new Error(CAPTURE_ERRORS[result.error] ?? CAPTURE_ERRORS.failed);
-      const { width, height } = result.image.getSize();
+      let image = result.image;
+      const full = image.getSize();
+      let view = null;
+      if (region) {
+        view = computeRegionView(region, full);
+        image = image.crop(view.crop);
+        if (view.outputWidth !== view.crop.width || view.outputHeight !== view.crop.height) {
+          image = image.resize({ width: view.outputWidth, height: view.outputHeight, quality: 'best' });
+        }
+      }
+      const { width, height } = image.getSize();
+      if (grid !== undefined) {
+        // Labels carry full-screenshot coordinates, so pass where this view starts and how much it was scaled.
+        const bitmap = drawCoordinateGrid(image.toBitmap(), width, height, {
+          grid,
+          originX: view?.crop.x ?? 0,
+          originY: view?.crop.y ?? 0,
+          scale: view?.scale ?? 1,
+        });
+        image = nativeImage.createFromBitmap(Buffer.from(bitmap.buffer, bitmap.byteOffset, bitmap.byteLength), { width, height });
+      }
       return {
-        data: result.image.toPNG().toString('base64'),
+        data: image.toPNG().toString('base64'),
         mimeType: 'image/png',
         width,
         height,
         displayId: result.display.id,
+        ...(view ? { region: view.crop, scale: view.scale } : {}),
+        ...(grid !== undefined ? { grid } : {}),
       };
     },
   };

@@ -53,6 +53,7 @@ describe('AC-22 get_guide states tool limits and what each tool is for', () => {
       '## Coordinates and colours',
       '## Tools: limits and what each is good for',
       '## Composing a drawing',
+      '## Painting',
       '## Example',
       '## Checking your work',
       '## Common mistakes',
