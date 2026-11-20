@@ -330,7 +330,16 @@ export function initMcpServerManager({ captureDisplayImage }) {
     try {
       const result = await sendOverlayCommand(
         wc,
-        { type: 'plugin-tool-call', callId, pluginId: tool.pluginId, name: tool.localName, args: pluginArgs },
+        // `offset` (where the overlay starts in screenshot pixels) backs `ctx.toCanvas`
+        // on the overlay; it is never handed to the plugin as a value of its own.
+        {
+          type: 'plugin-tool-call',
+          callId,
+          pluginId: tool.pluginId,
+          name: tool.localName,
+          args: pluginArgs,
+          offset: overlayOffset(targetId),
+        },
         PLUGIN_TOOL_TIMEOUT_MS,
       );
       if (!result || typeof result !== 'object' || !Array.isArray(result.content)) {

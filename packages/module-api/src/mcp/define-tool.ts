@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import type { Point } from '../types/tool'
 import type { McpToolReturn } from './result'
 
 export interface McpToolAnnotations {
@@ -19,6 +20,18 @@ export interface McpToolContext {
   signal: AbortSignal
   reportProgress(progress: number, total?: number, message?: string): void
   log(level: 'info' | 'warn' | 'error', message: string): void
+  /**
+   * Converts a point the agent gave in screenshot pixels of the target
+   * display (origin at the screenshot's top-left, the coordinates every
+   * OpenPen tool uses) into a canvas point for the strokes your plugin
+   * draws. Accounts for the menu bar, the taskbar or dock, the display
+   * scale factor and which display the call targets. Lengths such as a
+   * line width are not converted.
+   *
+   * @example
+   * const start = ctx.toCanvas({ x: args.x1, y: args.y1 })
+   */
+  toCanvas(point: Point): Point
 }
 
 /**

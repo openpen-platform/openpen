@@ -283,6 +283,23 @@ describe('plugin tools over Streamable HTTP', () => {
     expect(run).toHaveBeenLastCalledWith(2, expect.objectContaining({ args: { text: 'text' } }))
   })
 
+  it('sends the target overlay its offset in screenshot pixels with a plugin tool call', async () => {
+    // Display 2: 2x scale, work area 25 pt below and 10 pt right of the display (menu bar / side dock).
+    const original = electron.displays[1]
+    electron.displays[1] = { ...original, scaleFactor: 2, bounds: { x: 800, y: 0 }, workArea: { x: 810, y: 25 } }
+    try {
+      const run = vi.fn(() => textResult('drawn'))
+      await start({ run })
+      register([arrowTool])
+      await call(draw, { displayId: 2, text: 'arrow' })
+      expect(run).toHaveBeenLastCalledWith(2, expect.objectContaining({
+        type: 'plugin-tool-call', args: { text: 'arrow' }, offset: { x: 20, y: 50 },
+      }))
+    } finally {
+      electron.displays[1] = original
+    }
+  })
+
   it('AC-3 regression: a plugin cannot make the host displayId required', async () => {
     const inputSchema = z.object({ text: z.string(), displayId: z.number().int() })
     const handler = vi.fn(({ text }) => text)

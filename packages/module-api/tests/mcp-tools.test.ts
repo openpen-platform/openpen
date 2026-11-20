@@ -22,6 +22,7 @@ function makeContext() {
     signal: new AbortController().signal,
     reportProgress: vi.fn(),
     log: vi.fn(),
+    toCanvas: (point: { x: number; y: number }) => point,
   } satisfies McpToolContext
 }
 

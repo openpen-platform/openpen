@@ -112,6 +112,23 @@ describe('overlay plugin tool bridge', () => {
     }
   })
 
+  it('converts screenshot pixels to canvas points with the offset main sent and the device pixel ratio', async () => {
+    vi.stubGlobal('devicePixelRatio', 2)
+    const { receive, disconnect } = connectBridge((_args, ctx) =>
+      (ctx as unknown as { toCanvas(p: { x: number; y: number }): { x: number; y: number } }).toCanvas({ x: 220, y: 450 }))
+    try {
+      expect(await receive({ ...command('arrow'), offset: { x: 20, y: 50 } })).toMatchObject({
+        structuredContent: { x: 100, y: 200 },
+      })
+      // No offset (overlay covers the whole display): only the pixel ratio applies.
+      expect(await receive(command('arrow'))).toMatchObject({
+        structuredContent: { x: 110, y: 225 },
+      })
+    } finally {
+      disconnect()
+    }
+  })
+
   it('AC-19 aborts the matching in-flight handler and reports its result', async () => {
     let signal: AbortSignal | undefined
     let finish: ((value: string) => void) | undefined

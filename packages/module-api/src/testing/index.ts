@@ -29,7 +29,8 @@ export type McpTestCallResult = McpCallResult & {
  * Calls a tool as the app would: arguments are validated against
  * `inputSchema` first, so wrong arguments return an `invalid_params` error
  * and the handler does not run. `ctx` overrides the fake defaults
- * (displayId 0, an unaborted signal); caller-supplied `log` and
+ * (displayId 0, an unaborted signal, a `toCanvas` that returns the point
+ * unchanged); caller-supplied `log` and
  * `reportProgress` are still invoked in addition to being recorded.
  */
 export async function callMcpTool(
@@ -42,6 +43,7 @@ export async function callMcpTool(
   const context: McpToolContext = {
     displayId: ctx.displayId ?? 0,
     signal: ctx.signal ?? new AbortController().signal,
+    toCanvas: ctx.toCanvas ?? ((point) => ({ x: point.x, y: point.y })),
     reportProgress(value, total, message) {
       progress.push({ progress: value, total, message })
       ctx.reportProgress?.(value, total, message)

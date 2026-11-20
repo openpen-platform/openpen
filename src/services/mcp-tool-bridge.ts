@@ -76,7 +76,7 @@ export type McpCommand =
   | { type: 'clear' }
   | { type: 'undo' }
   | { type: 'redo' }
-  | { type: 'plugin-tool-call'; callId: string; pluginId: string; name: string; args?: unknown }
+  | { type: 'plugin-tool-call'; callId: string; pluginId: string; name: string; args?: unknown; offset?: McpOffset }
   | { type: 'plugin-tool-cancel'; callId: string }
 
 export interface McpAnnotation {
@@ -397,9 +397,12 @@ async function runPluginToolCall(command: Extract<McpCommand, { type: 'plugin-to
   }
   const controller = new AbortController()
   inFlightCalls.set(command.callId, controller)
+  const offset = command.offset ?? { x: 0, y: 0 }
   const ctx: McpToolContext = {
     displayId: overlayDisplayId(),
     signal: controller.signal,
+    // Same conversion the built-in draw tools use, so plugin and built-in drawings line up.
+    toCanvas: (point) => toOverlay(point, offset),
     reportProgress: (progress, total, message) => {
       window.openPenApi?.mcpSendToolProgress({
         callId: command.callId,

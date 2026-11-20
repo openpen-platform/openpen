@@ -75,6 +75,7 @@ A tool is one object with a name, a description for the model, a [zod 4](https:/
 
 ```ts
 import { defineMcpTool, z } from '@openpen/module-api'
+import { commitStroke } from '@openpen/module-api/host'
 
 export const drawArrow = defineMcpTool({
   name: 'draw',
@@ -85,13 +86,22 @@ export const drawArrow = defineMcpTool({
     y1: z.number().describe('Start Y in pixels from the top edge of the display.'),
     x2: z.number().describe('End X in pixels from the left edge of the display.'),
     y2: z.number().describe('End Y in pixels from the top edge of the display.'),
-    color: z.string().optional().describe('CSS colour such as "#ff3b30". Defaults to the current pen colour.'),
+    color: z.string().optional().describe('CSS colour such as "#ff3b30". Defaults to red.'),
   }),
   annotations: { readOnly: false, destructive: false, idempotent: false, openWorld: false },
   async handler({ x1, y1, x2, y2, color }, ctx) {
-    // ctx.displayId is the display the call targets
-    // … draw using your own plugin code …
-    return { drawn: true }
+    // The agent sends screenshot pixels; convert them before drawing.
+    const start = ctx.toCanvas({ x: x1, y: y1 })
+    const end = ctx.toCanvas({ x: x2, y: y2 })
+    const id = crypto.randomUUID()
+    // Adds the stroke, records it for undo and repaints the canvas.
+    commitStroke({
+      id,
+      tool: 'freehand', // draws the points as a line; see "Drawing the result"
+      points: [start, end],
+      style: { color: color ?? '#ff3b30', lineWidth: 4, lineCap: 'round', lineJoin: 'round' },
+    })
+    return { id }
   },
 })
 ```
@@ -109,6 +119,25 @@ Then list it in `contributes.mcpTools`. One plugin may contribute any number of 
 | `handler` | yes | `(args, ctx) => result` (may be async) |
 
 Your `inputSchema` is converted to JSON Schema for the agent. OpenPen adds one optional integer parameter, `displayId`, to every plugin tool, the same one the built-in tools have, to choose which display the call targets; when it is missing the display under the cursor is used. Your handler never receives `displayId` in `args` — read it from `ctx.displayId`. Do not declare a `displayId` parameter yourself: if you do, OpenPen's definition wins and a warning is written to the log.
+
+### Coordinates
+
+Agents give positions in pixels of the display's screenshot, with the origin at the screenshot's top-left corner; these are the coordinates `openpen__screenshot` shows and the built-in drawing tools take. Your plugin draws on the canvas, whose coordinates differ: the canvas does not cover the macOS menu bar or the Windows taskbar, and it counts in points rather than pixels on a display with a scale factor above 1.
+
+Pass every position from the agent through `ctx.toCanvas({ x, y })` and draw at the point it returns, for example in the `points` of a stroke you hand to [`commitStroke`](../slots/canvas.md#host-stroke-service) from `@openpen/module-api/host`. The point then lands where the agent saw it in the screenshot, on whichever display the call targets. Convert positions only: a length such as a line width is not a position and stays as it is.
+
+### Drawing the result
+
+A handler draws by passing a stroke to `commitStroke(stroke)` from `@openpen/module-api/host`, as in the example above. It adds the stroke to the canvas of the display the call targets, records it so the user can undo it, and repaints. These fields are required:
+
+| Field | Value |
+|---|---|
+| `id` | A new unique string, for example `crypto.randomUUID()`. `openpen__list_annotations` reports the stroke under this id, so returning it lets the agent refer to the stroke later |
+| `tool` | Picks how the stroke is drawn. The id of one of your plugin's own [`canvas.tools`](../slots/canvas.md) contributions draws it with that tool's `renderStroke`, and `openpen__list_annotations` lists your plugin as its source. `'freehand'` draws the points as a line with the default renderer and lists it as a freehand stroke. Any other id also falls back to the line renderer, and the id itself is reported as the source |
+| `points` | Canvas points, each one returned by `ctx.toCanvas`. The line renderer needs at least two points and draws nothing for fewer |
+| `style` | `{ color, lineWidth, lineCap, lineJoin }`: a CSS colour, the width in canvas points, and the canvas `lineCap` and `lineJoin` values such as `'round'` |
+
+`opacity` (0 to 1) is optional. Any other key you add is kept on the stroke for your own `renderStroke` to read.
 
 ### Arguments are checked before your handler runs
 
@@ -207,6 +236,7 @@ The second handler argument is a context object:
 | `ctx.signal` | An `AbortSignal` that is aborted when the AI app cancels the call. Pass it to `fetch` or check `ctx.signal.aborted` in long loops |
 | `ctx.reportProgress(progress, total?, message?)` | Sends a progress notification for a long call. It reaches the agent only if the agent asked for progress on that call; otherwise it is dropped |
 | `ctx.log(level, message)` | Writes `info`, `warn` or `error` to OpenPen's log (`main.log`), prefixed with `[mcp] plugin <your plugin id>` |
+| `ctx.toCanvas(point)` | Converts a point in screenshot pixels of the target display into the canvas point to draw at. See [Coordinates](#coordinates) |
 
 Tool handlers run in OpenPen's overlay window, the same place as the rest of your plugin code.
 
@@ -237,7 +267,7 @@ it('rejects a wrong argument without running the handler', async () => {
 - `logs` — every `ctx.log` call as `{ level, message }`, in order. An unexpected exception from your handler appears here as an `error` entry containing the original error, while the result itself only carries the generic text.
 - `progress` — every `ctx.reportProgress` call as `{ progress, total?, message? }`.
 
-The fake context uses `displayId` `0` and a signal that is never aborted. Pass a partial context as the third argument to override these, for example `{ displayId: 2 }` or a signal from your own `AbortController`.
+The fake context uses `displayId` `0`, a signal that is never aborted and a `toCanvas` that returns the point unchanged. Pass a partial context as the third argument to override these, for example `{ displayId: 2 }`, a signal from your own `AbortController`, or `{ toCanvas: (p) => ({ x: p.x / 2, y: p.y / 2 }) }` to check that your handler converts what it draws.
 
 The starter runs its tests with `npm test`; in your own project, install a test runner such as `vitest` and point it at your test files.
 
@@ -267,7 +297,9 @@ The SDK exports the constant `MCP_TOOLS_MIN_APP_VERSION` with this value. `npx o
    npx openpen-cli plugin add . --yes
    ```
 
-   Without `--yes`, `plugin add` asks you to confirm the install; in a non-interactive shell (a script, CI, an agent's terminal) there is no one to answer, so pass `--yes` there. Plugin code is loaded when the app starts, so a newly installed or rebuilt plugin appears only after a restart. Plugins are loaded only by the packaged app, not by the host's Vite dev server (see the [Quick-start](./plugin-quickstart.md#step-4--test-in-the-app)).
+   Without `--yes`, `plugin add` asks you to confirm the install; in a non-interactive shell (a script, CI, an agent's terminal) there is no one to answer, so pass `--yes` there. Plugin code is loaded when the app starts, so a newly installed or rebuilt plugin appears only after a restart.
+
+   **OpenPen run from source.** To try your tool against an OpenPen that is not released yet, run it from a checkout of the OpenPen repository with `npm install` and then `npm run dev`. It loads the plugins installed in `~/.openpen/plugins` of the user it runs as, the same folder `plugin add` writes to. It reports the version in the checkout's `package.json` as the app version, and skips a plugin whose `minAppVersion` is higher; the terminal running `npm run dev` then shows `Plugin <your plugin id> requires app >= <minAppVersion> (have <version>), skipping`. For such a test, lower `minAppVersion` in the installed copy, `~/.openpen/plugins/<your plugin id>/plugin.json`, to that version and restart. Keep the value in your project's `plugin.json` as it is: `openpen-cli pack` requires it.
 2. In OpenPen, open the settings: click the OpenPen icon in the system tray (menu bar on macOS) and choose **Preferences…**. Select the **MCP** tab. If the tab bar is too narrow to show every tab, the **MCP** tab sits behind the overflow arrow at the right end of the bar; click the arrow to scroll it into view. Turn on **Enable MCP server** and click **Save**. Copy the **Endpoint** (it looks like `http://127.0.0.1:<port>/mcp`) and the **API key**.
 
    If you start OpenPen with the `OPENPEN_MCP_PORT` environment variable to use a different port, click **Save** and then close and reopen the settings window; the **Endpoint** shows the new port only after that.
