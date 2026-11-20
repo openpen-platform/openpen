@@ -110,6 +110,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.js'],
+    // Points HOME at a throwaway dir so main-process code under test never
+    // writes into the developer's real log directory.
+    globalSetup: ['./tests/unit-global-setup.js'],
     include: [
       'tests/unit/**/*.test.{js,ts}',
       'src/core/modules/**/*.test.{js,ts}',
