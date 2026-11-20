@@ -201,6 +201,30 @@ export function setBarHiddenChangedListener(cb) {
   _barHiddenChangedCb = cb;
 }
 
+/** @type {{ onExternalClose: (event: Electron.Event) => void, onSessionEnd: () => void } | null} */
+let _quitHooks = null;
+
+/**
+ * Register how OpenPen's core windows (control bar, main, overlay) react when
+ * Windows asks them to go away: a WM_CLOSE from outside (`taskkill` without
+ * /F, Alt+F4) or a logoff/shutdown. OpenPen itself tears these windows down
+ * with destroy(), which never emits 'close', so every 'close' seen here is
+ * external. Without the hook, closing one window leaves the rest alive and the
+ * process never ends. Must be set before the windows are created.
+ * @param {{ onExternalClose: (event: Electron.Event) => void, onSessionEnd: () => void }} hooks
+ */
+export function setCoreWindowQuitHooks(hooks) {
+  _quitHooks = hooks;
+}
+
+/** @param {BrowserWindow} win */
+function attachQuitHooks(win) {
+  if (process.platform !== 'win32' || !_quitHooks) return;
+  const hooks = _quitHooks;
+  win.on('close', (event) => hooks.onExternalClose(event));
+  win.on('session-end', () => hooks.onSessionEnd());
+}
+
 /**
  * @param {string} entry - Renderer entry URL.
  */
@@ -521,6 +545,7 @@ export function createMainWindowForDisplay(display) {
   });
 
   attachWindowRecovery(win, 'main', { onRecovered: resyncRecoveredWindow });
+  attachQuitHooks(win);
   loadRenderer(win, `?displayId=${display.id}`);
 
   if (shouldOpenDevTools('main')) {
@@ -592,6 +617,7 @@ function createLinuxControlWindowsForDisplay(display) {
   });
 
   attachWindowRecovery(bar, 'control-bar', { onRecovered: resyncRecoveredWindow });
+  attachQuitHooks(bar);
   loadRenderer(bar, `?displayId=${display.id}&role=panel`);
   if (shouldOpenDevTools('main')) bar.webContents.openDevTools({ mode: 'detach' });
 
@@ -764,6 +790,7 @@ export function createOverlayWindowForDisplay(display) {
   // Wayland overlays replay their state in the did-finish-load handler below, so
   // only the persistent (non-Wayland) overlay needs the extra resync.
   attachWindowRecovery(win, 'overlay', IS_WAYLAND ? undefined : { onRecovered: resyncRecoveredWindow });
+  attachQuitHooks(win);
   loadRenderer(win, overlayQuery);
 
   if (shouldOpenDevTools('overlay')) {

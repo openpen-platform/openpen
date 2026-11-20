@@ -152,13 +152,14 @@ function _buildIcons() {
  * @property {() => void} onHideMain
  * @property {() => void} onOpenSettings
  * @property {() => void} [onToggleDrawingMode]
+ * @property {() => void} [onQuit] Tray "Quit" — asks for confirmation; falls back to app.quit()
  */
 
 /**
  * @param {TrayCallbacks} callbacks
  */
 export function initTrayManager(callbacks) {
-  const { onShowMain, onHideMain, onOpenSettings, onToggleDrawingMode } = callbacks;
+  const { onShowMain, onHideMain, onOpenSettings, onToggleDrawingMode, onQuit } = callbacks;
 
   // macOS: hide the Dock icon — the app is driven entirely from the tray.
   if (process.platform === 'darwin') {
@@ -170,7 +171,7 @@ export function initTrayManager(callbacks) {
   tray = new Tray(_normalIcon);
   tray.setToolTip('OpenPen');
 
-  _buildContextMenu(tray, { onShowMain, onHideMain, onOpenSettings, onToggleDrawingMode });
+  _buildContextMenu(tray, { onShowMain, onHideMain, onOpenSettings, onToggleDrawingMode, onQuit });
 }
 
 /**
@@ -217,7 +218,7 @@ export function setTrayBarHidden(hidden) {
  * @param {import('electron').Tray} trayInstance
  * @param {TrayCallbacks} callbacks
  */
-function _buildContextMenu(trayInstance, { onShowMain, onHideMain, onOpenSettings, onToggleDrawingMode }) {
+function _buildContextMenu(trayInstance, { onShowMain, onHideMain, onOpenSettings, onToggleDrawingMode, onQuit }) {
   function rebuild() {
     /** @type {Electron.MenuItemConstructorOptions[]} */
     const template = [
@@ -252,7 +253,9 @@ function _buildContextMenu(trayInstance, { onShowMain, onHideMain, onOpenSetting
       { type: 'separator' },
       {
         label: t('tray.quit'),
-        click: () => app.quit(),
+        // Same confirm dialog as the Cmd+Q shortcut; app.quit() is reserved
+        // for external quits that must not wait on a dialog.
+        click: () => (onQuit ? onQuit() : app.quit()),
       },
     );
 

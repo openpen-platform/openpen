@@ -7,7 +7,7 @@ import { app, BrowserWindow, ipcMain, protocol, net, session, screen } from 'ele
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, applyLinuxWindowPositioning, destroyAllWindowsForUpdate } from './window-manager.js';
+import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, setCoreWindowQuitHooks, applyLinuxWindowPositioning, destroyAllWindowsForUpdate } from './window-manager.js';
 import { initTrayManager, setTrayWarning, setTrayDrawingMode, setTrayBarHidden } from './tray-manager.js';
 import { initScreenCaptureManager } from './screen-capture-manager.js';
 import { initMcpServerManager } from './mcp-server-manager.js';
@@ -31,6 +31,7 @@ import { auditQuerySchema, positioningIntentSchema, rendererErrorSchema } from '
 import { initPositioningEngine, processIntent, getState as getPositioningState } from './positioning-engine.js';
 import { probeTransparentRendering } from './transparent-render-probe.js';
 import { createRendererReadyWatchdog, resolveTimeoutMs } from './renderer-ready-watchdog.js';
+import { createQuitCoordinator } from './quit-coordinator.js';
 import { isShortcutRegistered, registerDesktopShortcut, unregisterDesktopShortcut, suspendDesktopShortcut, resumeDesktopShortcut, electronToGtkAccelerator, buildCliCommand, detectWaylandShortcutBackend, shouldRegisterBuiltinDesktopShortcuts, clearPluginDesktopShortcuts, PLUGIN_SHORTCUT_FLAG, DESKTOP_ENTRY_NAME, DRAWING_MODE_BINDING_ID, TOGGLE_DRAWING_MODE_FLAG, BAR_BINDING_ID, TOGGLE_BAR_FLAG, SUMMON_BINDING_ID } from './linux-shortcut.js';
 import { IS_WAYLAND_SESSION } from './is-wayland-session.js';
 
@@ -41,29 +42,28 @@ ipcMain.on(APP.RELAUNCH, () => {
   app.exit(0);
 });
 
-// Quit is gated by a renderer-side confirm dialog. Two entry points:
+// Quit is gated by a renderer-side confirm dialog for user-facing quits:
 //   1. Control-bar Quit button — renderer shows the dialog, then sends APP.QUIT.
-//   2. Cmd+Q / Dock-quit / external app.quit() — before-quit preventDefault()s
-//      and asks the renderer to show the dialog via APP.REQUEST_QUIT. Once the
-//      user confirms there, the renderer sends APP.QUIT.
-//
-// APP.QUIT broadcasts the lifecycle event so modules can run onQuit hooks,
-// then calls app.exit(0) — bypassing app.quit()'s before-quit / window-close
-// dance. Going through app.quit() on macOS leaves transparent
-// screen-saver-level BrowserWindows in an unclean close state that requires
-// a second trigger; app.exit() short-circuits that path entirely.
-let _isQuitting = false;
-const LIFECYCLE_FLUSH_MS = 50;
-
-ipcMain.on(APP.QUIT, () => {
-  if (_isQuitting) return;
-  _isQuitting = true;
-  broadcastLifecycle('quit');
-  setTimeout(async () => {
+//   2. Cmd+Q shortcut / tray Quit — main asks the renderer to show the dialog
+//      via APP.REQUEST_QUIT. Once the user confirms there, it sends APP.QUIT.
+// Everything else that ends the app (external app.quit(), an OpenPen window
+// closed from outside, Windows session end) goes through quit-coordinator.js,
+// which also guarantees the process exits within QUIT_SAFETY_TIMEOUT_MS once
+// quitting has started.
+const quitCoordinator = createQuitCoordinator({
+  onQuitStart: () => broadcastLifecycle('quit'),
+  flush: async () => {
     await flushWrites();
     unregisterAllShortcuts();
-    app.exit(0);
-  }, LIFECYCLE_FLUSH_MS);
+  },
+  exit: (code) => app.exit(code),
+  requestConfirm: () => requestQuitFromRenderer(),
+  appQuit: () => app.quit(),
+  log: (msg) => log.info(msg),
+});
+
+ipcMain.on(APP.QUIT, () => {
+  quitCoordinator.quitNow('confirmed');
 });
 
 function requestQuitFromRenderer() {
@@ -319,6 +319,10 @@ app.whenReady().then(async () => {
   }
   await initModuleManifestLoader();
   initWindowManager(rendererEntry);
+  setCoreWindowQuitHooks({
+    onExternalClose: (event) => quitCoordinator.handleWindowClose(event),
+    onSessionEnd: () => quitCoordinator.handleSessionEnd(),
+  });
   const screenCapture = initScreenCaptureManager({ getAllOverlayWindows, supported: !IS_WAYLAND_SESSION });
   // After windows + settings exist; with the switch off this only registers IPC (nothing listens).
   initMcpServerManager({ captureDisplayImage: (opts) => screenCapture.captureDisplayImage(opts) });
@@ -327,6 +331,7 @@ app.whenReady().then(async () => {
     onHideMain: () => hideMainWindow(),
     onOpenSettings: () => createSettingsWindow(),
     onToggleDrawingMode: () => toggleDrawingMode(),
+    onQuit: () => quitCoordinator.requestQuit(),
   });
   setDrawingModeChangedListener((isDrawing) => {
     setTrayDrawingMode(isDrawing);
@@ -363,7 +368,7 @@ app.whenReady().then(async () => {
       const overlay = getOverlayWindow();
       if (overlay && !overlay.isDestroyed()) overlay.webContents.send(HISTORY.REDO);
     },
-    onQuitApp: () => { requestQuitFromRenderer(); },
+    onQuitApp: () => { quitCoordinator.requestQuit(); },
     onShortcutConflict: (accelerator) => {
       setTrayWarning(`⚠️ OpenPen: shortcut ${accelerator} is taken by another app`);
     },
@@ -603,7 +608,7 @@ app.whenReady().then(async () => {
   }
 
   app.on('activate', () => {
-    if (!_isQuitting && BrowserWindow.getAllWindows().length === 0) {
+    if (!quitCoordinator.isQuitting() && BrowserWindow.getAllWindows().length === 0) {
       createMainWindowForDisplay(screen.getPrimaryDisplay());
     }
   });
@@ -623,30 +628,11 @@ app.whenReady().then(async () => {
   }
 });
 
-app.on('before-quit', (event) => {
-  // Already exiting via APP.QUIT (renderer-confirmed path); let app.exit run.
-  if (_isQuitting) return;
-
-  // External app.quit() (Cmd+Q / Dock-quit / system shutdown). Intercept and
-  // ask the renderer to confirm via the same dialog that the control-bar
-  // Quit button uses.
-  event.preventDefault();
-
-  // Test seam: OPENPEN_AUTO_CONFIRM_QUIT=1 skips the renderer round-trip and
-  // exits immediately, mirroring the confirmed-quit code path.
-  if (process.env.OPENPEN_AUTO_CONFIRM_QUIT) {
-    _isQuitting = true;
-    broadcastLifecycle('quit');
-    setTimeout(async () => {
-      await flushWrites();
-      unregisterAllShortcuts();
-      app.exit(0);
-    }, LIFECYCLE_FLUSH_MS);
-    return;
-  }
-
-  requestQuitFromRenderer();
-});
+// External app.quit(): system logout/shutdown, Activity Monitor Quit,
+// SIGTERM/SIGINT (Electron converts those signals into app.quit()),
+// window-all-closed on Windows/Linux and the renderer-ready watchdog. These
+// save and exit without the confirm dialog.
+app.on('before-quit', (event) => quitCoordinator.handleBeforeQuit(event));
 
 app.on('will-quit', () => {
   unregisterAllShortcuts();

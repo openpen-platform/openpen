@@ -239,6 +239,7 @@ vi.mock('../../electron/window-manager.js', () => ({
   setActiveDisplayId: vi.fn(),
   setDrawingModeChangedListener: vi.fn(),
   setBarHiddenChangedListener: vi.fn(),
+  setCoreWindowQuitHooks: vi.fn(),
   applyLinuxWindowPositioning: vi.fn(),
   destroyAllWindowsForUpdate: vi.fn(),
 }));
