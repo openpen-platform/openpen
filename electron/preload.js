@@ -409,6 +409,8 @@ contextBridge.exposeInMainWorld('openPenApi', {
   regenerateMcpKey: () => ipcRenderer.invoke('mcp:regenerate-key'),
   /** Start the server again after a failed enable (port was busy, etc.); resolves to the status. */
   retryMcpStart: () => ipcRenderer.invoke('mcp:retry-start'),
+  /** Open the bundled OpenPen.mcpb with Claude Desktop; resolves to `{ ok }` or `{ ok: false, error, message? }`. */
+  installClaudeDesktopExtension: () => ipcRenderer.invoke('mcp:install-claude-desktop'),
   onMcpStatusChanged: (callback) => {
     const handler = (_, status) => callback(status);
     ipcRenderer.on('mcp:status-changed', handler);

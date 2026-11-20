@@ -346,6 +346,8 @@ interface OpenPenApi {
   regenerateMcpKey(): Promise<string>
   /** Start the server again after a failed enable; resolves to the new status. */
   retryMcpStart(): Promise<McpServerStatus>
+  /** Open the bundled OpenPen.mcpb with Claude Desktop so its installer starts. */
+  installClaudeDesktopExtension(): Promise<{ ok: true } | { ok: false; error: 'missing' | 'open-failed'; message?: string }>
   onMcpStatusChanged(cb: (status: McpServerStatus) => void): () => void
   /** Overlay only. The resolved value (or a thrown error) is reported back to the MCP tool call. */
   onMcpCommand(handler: (command: Record<string, unknown>) => unknown | Promise<unknown>): () => void

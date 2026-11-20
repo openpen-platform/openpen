@@ -77,6 +77,8 @@ export const MCP = {
   REGENERATE_KEY: 'mcp:regenerate-key',
   /** renderer → main (invoke): try again to start a server whose enabling failed. Resolves to the status. */
   RETRY_START: 'mcp:retry-start',
+  /** renderer → main (invoke): open the bundled OpenPen.mcpb with Claude Desktop. Resolves to `{ ok }` or `{ ok: false, error, message? }`. */
+  INSTALL_CLAUDE_DESKTOP: 'mcp:install-claude-desktop',
   /** main → renderer (send): server status changed. */
   STATUS_CHANGED: 'mcp:status-changed',
   /** main → overlay (send): run a canvas command. Payload `{ requestId, command }`. */

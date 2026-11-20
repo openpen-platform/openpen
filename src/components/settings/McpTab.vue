@@ -74,11 +74,6 @@ const maskedKey = computed(() => {
 })
 const shownKey = computed(() => (revealed.value && apiKey.value ? apiKey.value : maskedKey.value))
 
-const client = ref<'claude' | 'codex'>('claude')
-const clientOptions = computed(() => [
-  { value: 'claude', label: t('mcpCmdClaude'), testid: 'mcp-client-claude' },
-  { value: 'codex', label: t('mcpCmdCodex'), testid: 'mcp-client-codex' },
-])
 
 function snippetFor(c: 'claude' | 'codex', key: string): string {
   const url = endpoint.value
@@ -87,7 +82,20 @@ function snippetFor(c: 'claude' | 'codex', key: string): string {
   }
   return `# ~/.codex/config.toml\n[mcp_servers.openpen]\nurl = "${url}"\nbearer_token_env_var = "OPENPEN_MCP_KEY"\n\n# shell\nexport OPENPEN_MCP_KEY="${key}"`
 }
-const snippetShown = computed(() => snippetFor(client.value, apiKey.value ? maskedKey.value : '…'))
+const client = ref<'claude' | 'codex'>('claude')
+const clientOptions = computed(() => [
+  { value: 'claude', label: t('mcpTabClaude'), testid: 'mcp-client-claude' },
+  { value: 'codex', label: t('mcpCmdCodex'), testid: 'mcp-client-codex' },
+])
+const snippetShown = (c: 'claude' | 'codex') => snippetFor(c, apiKey.value ? maskedKey.value : '…')
+
+// ── Claude Desktop: hand the bundled installer to the OS ─────────────────────
+const installFailed = ref(false)
+async function installClaudeDesktop() {
+  installFailed.value = false
+  const result = await api()?.installClaudeDesktopExtension()
+  installFailed.value = !result?.ok
+}
 
 // Brief "Copied" flash per button, keyed by what was copied.
 const copied = ref<string | null>(null)
@@ -277,11 +285,32 @@ onUnmounted(() => {
               :aria-label="t('mcpAgent')"
               @update:model-value="client = $event as 'claude' | 'codex'"
             />
-            <button type="button" class="btn-md" :class="{ 'is-done': copied === 'setup' }" :disabled="!apiKey" data-testid="mcp-copy-setup" @click="copy('setup', snippetFor(client, apiKey))">
-              {{ copied === 'setup' ? t('mcpCopied') : t('mcpCopySetup') }}
+            <button v-if="client === 'codex'" type="button" class="btn-md" :class="{ 'is-done': copied === 'setup-codex' }" :disabled="!apiKey" data-testid="mcp-copy-setup-codex" @click="copy('setup-codex', snippetFor('codex', apiKey))">
+              {{ copied === 'setup-codex' ? t('mcpCopied') : t('mcpCopySetup') }}
             </button>
           </div>
-          <pre class="snippet" :aria-label="t('mcpSetupSnippet')" data-testid="mcp-snippet">{{ snippetShown }}</pre>
+          <template v-if="client === 'codex'">
+            <pre class="snippet" :aria-label="t('mcpSetupSnippet')" data-testid="mcp-snippet-codex">{{ snippetShown('codex') }}</pre>
+          </template>
+          <template v-else>
+            <!-- Claude: Claude Code or Claude Desktop, either one -->
+            <div class="b-card-head">
+              <span class="b-card-label">{{ t('mcpCmdClaude') }}</span>
+              <button type="button" class="btn-md" :class="{ 'is-done': copied === 'setup-claude' }" :disabled="!apiKey" data-testid="mcp-copy-setup-claude" @click="copy('setup-claude', snippetFor('claude', apiKey))">
+                {{ copied === 'setup-claude' ? t('mcpCopied') : t('mcpCopySetup') }}
+              </button>
+            </div>
+            <pre class="snippet" :aria-label="t('mcpSetupSnippet')" data-testid="mcp-snippet-claude">{{ snippetShown('claude') }}</pre>
+            <div class="b-divider" />
+            <div class="b-card-head">
+              <span class="b-card-label">{{ t('mcpClaudeDesktop') }}</span>
+              <button type="button" class="btn-md" data-testid="mcp-install-claude-desktop" @click="installClaudeDesktop">
+                {{ t('mcpInstallClaudeDesktop') }}
+              </button>
+            </div>
+            <p class="muted-note" data-testid="mcp-install-claude-desktop-note">{{ installFailed ? t('mcpInstallClaudeDesktopFailed') : t('mcpInstallClaudeDesktopHint') }}</p>
+            <div class="b-divider" />
+          </template>
           <div class="b-card-head">
             <p class="muted-note">{{ t('mcpCopiedIncludesKey') }}</p>
             <button type="button" class="btn-sm btn-danger-text" :disabled="!apiKey" data-testid="mcp-regenerate-btn" @click="confirmOpen = true">{{ t('mcpRegenerate') }}</button>

@@ -13,7 +13,7 @@
  */
 
 import crypto from 'node:crypto';
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, shell } from 'electron';
 import { z } from 'zod';
 import { MCP, OVERLAY } from './ipc-channels.js';
 import { log } from './logger.js';
@@ -33,6 +33,7 @@ import { createMcpHttpServer } from './mcp/http-server.js';
 import { createBuiltinTools, filterTools } from './mcp/tools.js';
 import { buildPluginTools, sanitizePluginReport, pluginToolPrefix } from './mcp/plugin-tools.js';
 import { generateApiKey } from './mcp/api-key.js';
+import { installClaudeDesktopBundle } from './mcp/claude-desktop-bundle.js';
 
 /** How long a command may wait for the overlay (including its creation on Wayland). */
 const OVERLAY_READY_TIMEOUT_MS = 8000;
@@ -426,6 +427,15 @@ export function initMcpServerManager({ captureDisplayImage }) {
     broadcastStatus();
     return fullStatus();
   }));
+
+  ipcMain.handle(MCP.INSTALL_CLAUDE_DESKTOP, async () => {
+    const result = await installClaudeDesktopBundle(
+      { isPackaged: app.isPackaged, resourcesPath: process.resourcesPath, appPath: app.getAppPath() },
+      { openPath: (p) => shell.openPath(p) },
+    );
+    if (!result.ok) log.warn('[mcp] Claude Desktop install did not start:', result.error, result.message ?? '');
+    return result;
+  });
 
   ipcMain.handle(MCP.REGENERATE_KEY, () => serialize(async () => {
     const apiKey = generateApiKey();

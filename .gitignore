@@ -25,3 +25,5 @@ pnpm-debug.log*
 .opencode/
 # Bundled plugins fetched at build time (npm run bundled:fetch)
 build/bundled-plugins/
+# Claude Desktop extension packed at build time (npm run build:mcpb)
+build/claude-desktop/

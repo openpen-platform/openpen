@@ -12,7 +12,8 @@
     "dev": "node scripts/dev.mjs",
     "type-check": "vue-tsc --noEmit && vue-tsc -p packages/module-api/tsconfig.json --noEmit",
     "build:runtime": "node scripts/build-runtime.mjs",
-    "build": "npm run type-check && npm run build -w @openpen/module-api && vite build && npm run build:runtime",
+    "build:mcpb": "node scripts/build-mcpb.mjs",
+    "build": "npm run type-check && npm run build -w @openpen/module-api && vite build && npm run build:runtime && npm run build:mcpb",
     "test:prod-smoke": "npx playwright test --project=prod-smoke",
     "test:e2e": "npm run test:e2e:standard && npm run test:e2e:wayland",
     "test:e2e:standard": "XDG_SESSION_TYPE=x11 ELECTRON_OZONE_PLATFORM_HINT=x11 npx playwright test --project=functional",
@@ -48,6 +49,10 @@
       {
         "from": "build/bundled-plugins",
         "to": "bundled-plugins"
+      },
+      {
+        "from": "build/claude-desktop/OpenPen.mcpb",
+        "to": "claude-desktop/OpenPen.mcpb"
       },
       {
         "from": "THIRD_PARTY_NOTICES.md",
@@ -149,6 +154,7 @@
     "@xmldom/xmldom": "~0.8.10"
   },
   "devDependencies": {
+    "@anthropic-ai/mcpb": "2.1.2",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "~1.64.1",
     "@rollup/plugin-commonjs": "^29.0.3",
