@@ -26,6 +26,8 @@ cd my-plugin
 npm install
 ```
 
+Open `plugin.json` and replace the placeholder `description` ("A short description of what your plugin does.") with one real sentence. Agents see this line in the plugin list returned by `openpen__get_guide`.
+
 The starter ships a small read-only demo tool in `src/mcp-demo-tool.ts` with a unit test next to it. This is the whole file:
 
 ```ts
@@ -110,15 +112,17 @@ Your `inputSchema` is converted to JSON Schema for the agent. OpenPen adds one o
 
 ### Arguments are checked before your handler runs
 
-Before the handler is called, the arguments from the agent are validated against `inputSchema`. When they do not match, the agent gets an `invalid_params` error that names the offending parameter and says to resend following the tool's `inputSchema`, and **your handler is not called**. You do not need to re-check types inside the handler. The handler receives the parsed value, so zod defaults and transforms are already applied.
+Before the handler is called, the arguments from the agent are validated against `inputSchema`. When they do not match, the agent gets an `invalid_params` error that names the offending parameter and says to resend following the tool's `inputSchema`, and **your handler is not called**. When several parameters are wrong, the error lists the problems zod reports for that call, one `parameter: message` entry each, separated by semicolons. You do not need to re-check types inside the handler. The handler receives the parsed value, so zod defaults and transforms are already applied.
 
 ### Tool names
 
-The name the agent sees is `<plugin prefix>__<tool name>`:
+The name OpenPen registers is `<plugin prefix>__<tool name>`:
 
 - The prefix is the plugin id with the leading `@` removed and `/` replaced by `.`. `@openpen/arrow` becomes `openpen.arrow`, so the tool `draw` is listed as `openpen.arrow__draw`.
 - Allowed characters are `A-Za-z0-9_-.`, and the full name is at most 128 characters.
 - A tool whose full name has other characters, is too long, or has the same name as a tool that is already exposed (built-in tools included) is **not exposed**. The built-in tools and, among plugins, the plugin whose id sorts first keep the name. The reason is shown on that plugin's row in **Settings → MCP**, and a line is written to the log.
+
+What the agent displays can differ by client, because some clients add their own prefix or rewrite characters. Claude Code, for example, shows the tool as `mcp__openpen__<plugin>__<tool>` and turns each `.` in the plugin prefix into `_`: `dogfood.greeter__greet` appears as `mcp__openpen__dogfood_greeter__greet`. MCP Inspector and the other tools in this guide use the registered name.
 
 The SDK has the same checks, so you can run them yourself:
 
@@ -260,11 +264,13 @@ The SDK exports the constant `MCP_TOOLS_MIN_APP_VERSION` with this value. `npx o
 
    ```bash
    npm run build
-   npx openpen-cli plugin add .
+   npx openpen-cli plugin add . --yes
    ```
 
-   Plugin code is loaded when the app starts, so a newly installed or rebuilt plugin appears only after a restart. Plugins are loaded only by the packaged app, not by the host's Vite dev server (see the [Quick-start](./plugin-quickstart.md#step-4--test-in-the-app)).
-2. In OpenPen, open **Settings → MCP**, turn on **Enable MCP server** and save. Copy the **Endpoint** (it looks like `http://127.0.0.1:<port>/mcp`) and the **API key**.
+   Without `--yes`, `plugin add` asks you to confirm the install; in a non-interactive shell (a script, CI, an agent's terminal) there is no one to answer, so pass `--yes` there. Plugin code is loaded when the app starts, so a newly installed or rebuilt plugin appears only after a restart. Plugins are loaded only by the packaged app, not by the host's Vite dev server (see the [Quick-start](./plugin-quickstart.md#step-4--test-in-the-app)).
+2. In OpenPen, open the settings: click the OpenPen icon in the system tray (menu bar on macOS) and choose **Preferences…**. Select the **MCP** tab. If the tab bar is too narrow to show every tab, the **MCP** tab sits behind the overflow arrow at the right end of the bar; click the arrow to scroll it into view. Turn on **Enable MCP server** and click **Save**. Copy the **Endpoint** (it looks like `http://127.0.0.1:<port>/mcp`) and the **API key**.
+
+   If you start OpenPen with the `OPENPEN_MCP_PORT` environment variable to use a different port, click **Save** and then close and reopen the settings window; the **Endpoint** shows the new port only after that.
 3. Start Inspector:
 
    ```bash
@@ -276,11 +282,28 @@ The SDK exports the constant `MCP_TOOLS_MIN_APP_VERSION` with this value. `npx o
 5. Open the **Tools** tab and click **List Tools**. Your tool is listed under its full name, for example `yourscope.my-plugin__echo_note`.
 6. Select it, fill in the arguments and click **Run Tool**. Run it once with correct arguments and once with a wrong type (for example a number where text is expected): the second call must come back as an error that names the parameter and starts a `Next step:`, and your handler must not have run.
 
+### Without the Inspector window: CLI mode
+
+Inspector can also run a single call from the command line, which suits scripts and agents. Use the endpoint and key from step 2 (replace `<port>` and `<KEY>`):
+
+```bash
+# list the tools
+npx -y @modelcontextprotocol/inspector --cli http://127.0.0.1:<port>/mcp --transport http \
+  --header "Authorization: Bearer <KEY>" --method tools/list
+
+# call one tool (full name; repeat --tool-arg for each argument)
+npx -y @modelcontextprotocol/inspector --cli http://127.0.0.1:<port>/mcp --transport http \
+  --header "Authorization: Bearer <KEY>" --method tools/call \
+  --tool-name yourscope.my-plugin__echo_note --tool-arg text=hello
+```
+
+`--tool-arg name=value` turns a value that looks like a number into a number, so `--tool-arg text=42` sends the number `42`. That is useful here: it is the easy way to send a wrong type to a text parameter and check that the call comes back as `invalid_params` without running your handler.
+
 If the tool is not listed, check in this order: the plugin is enabled in **Settings → Modules**; **Settings → MCP → Plugin tools** lets this plugin through; the server is not in read-only mode, or the tool has `readOnly: true`; the plugin row in **Settings → MCP** shows no "not exposed" reason (name problem); OpenPen was restarted after the install.
 
 ## Try it with an agent
 
-Connect your agent as described in **Settings → MCP** (the **Agent** picker's **Copy setup** button gives a ready-made command). The agent then sees your tools under their full names, and calls them like any other tool. Ask it to use the tool by describing the goal; for the demo tool, "use the echo_note tool to send the note 'hello'".
+Connect your agent as described in **Settings → MCP** (the **Agent** picker's **Copy setup** button gives a ready-made command). The agent then sees your tools under their full names, and calls them like any other tool. The name shown depends on the client: Claude Code lists `yourscope.my-plugin__echo_note` as `mcp__openpen__yourscope_my-plugin__echo_note` (client prefix added, `.` in the plugin prefix turned into `_`), so look for the tool by the tool part of the name. Ask it to use the tool by describing the goal; for the demo tool, "use the echo_note tool to send the note 'hello'".
 
 The server announces tool-list changes (a plugin enabled or disabled in Settings) with `notifications/tools/list_changed`. Whether an agent refreshes its list when it gets this varies between clients; if the list looks stale, reconnect the agent.
 
