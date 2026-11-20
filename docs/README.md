@@ -4,6 +4,7 @@ Where to start, depending on what you want to do.
 
 ## Writing a plugin
 - **New?** → [guides/plugin-quickstart.md](./guides/plugin-quickstart.md) — from zero to running plugin
+- **Let AI agents call your plugin?** → [guides/mcp-tools.md](./guides/mcp-tools.md) — MCP tools (experimental)
 - **Publishing?** → [guides/publishing.md](./guides/publishing.md) — build, install, distribute
 - **API lookup** → [uikit/](./uikit/index.md) (UI components) ·
   [slots/](./slots/index.md) (contribution slots) ·

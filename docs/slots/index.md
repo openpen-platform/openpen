@@ -1,15 +1,16 @@
 ---
 title: Slot catalog
-description: All 25 contribution slots OpenPen exposes — 17 stable today, 8 reserved for v1.1+.
+description: All 26 contribution slots OpenPen exposes — 18 available today (1 experimental), 8 reserved for v1.1+.
 ---
 
 # Slot catalog
 
-OpenPen exposes 25 contribution slots organized by domain. Stable slots take effect at runtime today; reserved slots pass validation but have no active adapter yet (forward-compatible — modules can ship against them now).
+OpenPen exposes 26 contribution slots organized by domain. Stable slots take effect at runtime today; reserved slots pass validation but have no active adapter yet (forward-compatible — modules can ship against them now).
 
 ## Status
 
 - ✅ **available** — wired to runtime adapter
+- 🧪 **experimental** — wired to runtime adapter, but the API may still change; breaking changes are announced first
 - ⏳ **reserved** — no adapter yet, ships in v1.1+
 
 ## Contribution key vs. slot id
@@ -43,8 +44,9 @@ Modules use ergonomic camelCase keys on `contributes` (`historyCommands`, `theme
 | [`system.main.handlers`](./system#system-main-handlers) | System | ✅ | Node-side IPC handlers for main process capabilities |
 | [`system.events`](./system#system-events) | System | ✅ | Subscribe to domain events (stroke-added, tool-changed, …) |
 | [`system.lifecycle`](./system#system-lifecycle) | System | ✅ | App lifecycle hooks (onReady, onSuspend, onQuit) |
+| [`system.mcp.tools`](./system#system-mcp-tools) | System | 🧪 | Tools AI agents can call through the local MCP server — see [Plugin MCP tools](../guides/mcp-tools.md) |
 | [`system.storage`](./system#system-storage) | System | ⏳ | Isolated data directory at `~/.openpen/plugins/<id>/data/` |
 | [`system.file.drop`](./system#system-file-drop) | System | ⏳ | Handlers for files dropped onto the canvas |
 
-**Total**: 17 available · 8 reserved · 25 total
-(Canvas: 6 available / 2 reserved · UI: 6 available / 3 reserved · System: 5 available / 3 reserved)
+**Total**: 18 available (1 experimental) · 8 reserved · 26 total
+(Canvas: 6 available / 2 reserved · UI: 6 available / 3 reserved · System: 6 available, 1 of them experimental / 3 reserved)

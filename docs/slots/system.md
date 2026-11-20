@@ -1,13 +1,13 @@
 ---
 title: System slots
-description: 8 contribution slots for keyboard shortcuts, window behavior, i18n, IPC handlers, events, lifecycle hooks, storage, and file drop.
+description: 9 contribution slots for keyboard shortcuts, window behavior, i18n, IPC handlers, events, lifecycle hooks, MCP tools, storage, and file drop.
 ---
 
 # System slots
 
 System slots cover cross-cutting infrastructure: keyboard shortcuts, window
 behaviour modifiers, i18n dictionaries, main-process IPC handlers, domain event
-subscriptions, app lifecycle hooks, isolated storage, and file-drop handlers.
+subscriptions, app lifecycle hooks, MCP tools for AI agents, isolated storage, and file-drop handlers.
 
 ## `system.shortcuts` — ✅ available {#system-shortcuts}
 
@@ -62,6 +62,46 @@ interface ShortcutContribution {
 - **Contribution key**: `lifecycle`
 - **Type**: `LifecycleContribution`
 - **Purpose**: App lifecycle hooks (`onReady`, `onSuspend`, `onQuit`). Required by autosave / cloud-sync style plugins.
+
+## `system.mcp.tools` — 🧪 experimental {#system-mcp-tools}
+
+- **Contribution key**: `mcpTools`
+- **Type**: `McpToolDefinition[]` (build each one with `defineMcpTool`)
+- **Purpose**: Tools that AI agents can call through OpenPen's local MCP server. An enabled plugin's tools are listed as `<plugin prefix>__<tool name>`, for example `openpen.arrow__draw`.
+- **Status**: Experimental. Breaking changes are announced first in the docs and the `@openpen/module-api` CHANGELOG, with a transition period. Requires `@openpen/module-api` 1.6.0+ and OpenPen 1.7.0+ (`minAppVersion` in `plugin.json`).
+- **Related field**: `mcpGuide?: string` on the module — a longer usage guide for the model, returned only when an agent asks for it through `get_guide`.
+
+### `McpToolDefinition` type
+
+```ts
+interface McpToolDefinition<S extends z.ZodObject = z.ZodObject> {
+  name: string                    // without the plugin prefix; A-Za-z0-9_-.
+  title?: string                  // for people; a key in this module's system.locales, else shown as written
+  description: string             // for the model; English, at most 2048 characters
+  inputSchema: S                  // zod 4 object; .describe() becomes the parameter description
+  outputSchema?: z.ZodObject
+  annotations?: {
+    readOnly?: boolean            // default false
+    destructive?: boolean         // default true
+    idempotent?: boolean          // default false
+    openWorld?: boolean           // default true
+  }
+  handler(args: z.infer<S>, ctx: McpToolContext): McpToolReturn | Promise<McpToolReturn>
+}
+
+interface McpToolContext {
+  displayId: number               // display the call targets
+  signal: AbortSignal             // aborted when the AI app cancels the call
+  reportProgress(progress: number, total?: number, message?: string): void
+  log(level: 'info' | 'warn' | 'error', message: string): void
+}
+```
+
+- Arguments are validated against `inputSchema` before the handler runs; a mismatch returns an `invalid_params` error and the handler is not called.
+- Throw `InvalidParamsError`, `NotFoundError`, `UserActionRequiredError` or `UnavailableError` (each takes a message and a required next step) to give the agent a classified error. Any other exception is returned as a generic error and written to the log.
+- Annotations left out are assumed to be the worst case (changes state, destructive, not idempotent, open world). In read-only mode only tools with `readOnly: true` are exposed.
+- A tool whose full name has invalid characters, exceeds 128 characters, or duplicates an exposed name is not exposed; the reason is shown on the plugin's row in **Settings → MCP**.
+- Full walkthrough: [Plugin MCP tools](../guides/mcp-tools.md).
 
 ## `system.storage` — ⏳ reserved {#system-storage}
 

@@ -54,6 +54,21 @@ Bundle your plugin into a distributable zip file. Run this in the directory that
 
 `npx openpen-cli pack` **never runs a build for you** — call your build tool first.
 
+**MCP tool check:** after the zip prerequisites pass and before anything is written, `pack` loads `dist/renderer.js` in a separate Node process (with `vue` and `@openpen/module-api` replaced by inert stand-ins, so the plugin's dependencies need not be installed) and reads `contributes.mcpTools`. It reports each tool that breaks one of these rules:
+
+| Rule | Message (example) |
+|---|---|
+| Full name (`<plugin prefix>__<tool>`) has characters other than `A-Za-z0-9_-.` | `Tool "bad!tool": the full name "alice.todo-app__bad!tool" has invalid characters (allowed: A-Z a-z 0-9 _ - .).` |
+| Full name is longer than 128 characters | `Tool "…": the full name "…" is too long (129 characters; the maximum is 128).` |
+| `description` is missing or empty | `Tool "draw": description is missing. Describe what the tool does for the model.` |
+| `description` is longer than 2,048 characters | `Tool "draw": description is too long (2100 characters; the maximum is 2048).` |
+| `minAppVersion` in `plugin.json` is lower than `1.7.0` | `Tool "draw": plugin.json minAppVersion is "1.0.0"; plugins with MCP tools need 1.7.0 or higher.` |
+| `minAppVersion` is missing | `Tool "draw": plugin.json has no minAppVersion; plugins with MCP tools need 1.7.0 or higher.` |
+
+Any failure prints `Error: MCP tool check failed; no zip was written.` followed by one `-` line per problem, exits with a non-zero code and writes no zip. Fix the listed items, rebuild and run `pack` again.
+
+If the bundle cannot be imported (for example top-level code that needs a browser) and its text contains `mcpTools`, `pack` stops with `Could not check the MCP tools: importing dist/renderer.js failed (<reason>)…` instead of skipping the check. A bundle that cannot be imported and does not mention `mcpTools` is packed as before. See [Plugin MCP tools](../guides/mcp-tools.md).
+
 ---
 
 ### `npx openpen-cli publish`

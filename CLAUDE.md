@@ -122,7 +122,7 @@ OpenPen is built as a slot-driven module system: built-in features and third-par
 *v1 active* — wired to runtime adapters, contributions take effect immediately:
 - Canvas: `canvas.tools`, `canvas.shapes`, `canvas.stroke.style`, `canvas.layers.background`, `canvas.layers.overlay`, `canvas.html.overlay`
 - UI: `ui.control-bar`, `ui.settings.tabs`, `ui.settings.panels`, `ui.cursors`, `ui.status`, `ui.modals`
-- System: `system.shortcuts`, `system.locales`, `system.main.handlers`, `system.events`, `system.lifecycle`
+- System: `system.shortcuts`, `system.locales`, `system.main.handlers`, `system.events`, `system.lifecycle`, `system.mcp.tools` (experimental — plugin MCP tools, see `docs/guides/mcp-tools.md`)
 
 *v1 reserved* — registration passes validation but no runtime adapter is active yet (forward-compatible, modules can ship against these now):
 - Canvas: `canvas.history.commands`, `canvas.stroke.transformers`
