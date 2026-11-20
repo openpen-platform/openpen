@@ -82,7 +82,7 @@ describe('MCP evaluation questions (#1, #2)', () => {
         case 9: return String(getAllStrokes().filter((s) => s.style.color.toLowerCase() === '#ff0000').length)
         case 10: return String(Math.max(...list.map(right)))
         case 11: return String(kinds('highlighter').length)
-        case 12: return /not filled/.test(describe('draw_rect')) && /tint an area, highlight it/.test(guide) ? '不可以；draw_highlighter' : ''
+        case 12: return /not filled/.test(describe('draw_rect')) && /fills regions with colour/.test(describe('draw_rect')) && /colour a large area, use \S*fill_regions/.test(guide) ? '不可以；fill_regions' : ''
         default: return `no derivation for question ${q.id}`
       }
     }
@@ -151,8 +151,8 @@ describe('grading a run (#3)', () => {
     expect(grade(3, '120,100')).toBe(false)
     expect(grade(3, '左上角是 (100, 120)')).toBe(true)
     expect(grade(8, '只有 stroke-eraser')).toBe(false)
-    expect(grade(12, '可以填滿，用 draw_highlighter')).toBe(false)
-    expect(grade(12, '不可以，改用 openpen__draw_highlighter')).toBe(true)
+    expect(grade(12, '可以填滿，用 fill_regions')).toBe(false)
+    expect(grade(12, '不可以，改用 openpen__fill_regions')).toBe(true)
   })
 
   // Review regression: a pretty-printed record from another client.

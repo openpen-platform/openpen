@@ -33,6 +33,10 @@ describe('AC-22 get_guide states tool limits and what each tool is for', () => {
         `${tool} outline-only`,
       ).toBe(true)
     }
+    // rect: large colour areas go to fill_regions, not to the translucent highlighter
+    const rectLine = lines.find((s) => s.includes('draw_rect {'))
+    expect(rectLine, 'guide draw_rect entry points to fill_regions').toMatch(/fill_regions/)
+    expect(rectLine, 'guide draw_rect entry no longer sends tinting to a highlight').not.toMatch(/highlight/i)
     // round line ends
     expect(text).toMatch(/\bround\b[^\n.]*\b(cap|caps|end|ends)\b|\b(cap|caps|end|ends)\b[^\n.]*\bround\b/i)
     // translucent notations spelled out with alpha: rgba, hsla and 8-digit hex
@@ -101,5 +105,9 @@ describe('AC-22 get_guide states tool limits and what each tool is for', () => {
       expect(desc(n), `${n} round ends`).toMatch(/\bround\b[^.]*\b(cap|caps|end|ends)\b|\b(cap|caps|end|ends)\b[^.]*\bround\b/i)
     }
     expect(desc('draw_highlighter')).toMatch(/translucent|semi-transparent/i)
+
+    // draw_rect sends large colour areas to the fill tool, not to the translucent highlighter
+    expect(desc('draw_rect'), 'draw_rect points to the fill tool').toMatch(/fills? regions with colour/i)
+    expect(desc('draw_rect'), 'draw_rect no longer sends tinting to a highlight').not.toMatch(/highlight/i)
   })
 })

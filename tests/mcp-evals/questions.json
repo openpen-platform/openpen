@@ -140,7 +140,7 @@
     {
       "id": 12,
       "question": "我想把畫面上一塊區域整片染上顏色，openpen 的框可以填滿嗎？請先回答「可以」或「不可以」；如果不可以，要改用哪個工具（給工具名）？",
-      "answer": "不可以；draw_highlighter",
+      "answer": "不可以；fill_regions",
       "needs": [],
       "scene": { "annotations": [] }
     }
