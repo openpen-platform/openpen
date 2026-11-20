@@ -87,6 +87,9 @@ export class CanvasEngine {
    */
   private strokeCache: HTMLCanvasElement | null = null
   private strokeCacheCtx: CanvasRenderingContext2D | null = null
+  /** Scratch canvas for repaints that add a preview or fading strokes on top of the cache. */
+  private strokeLayer: HTMLCanvasElement | null = null
+  private strokeLayerCtx: CanvasRenderingContext2D | null = null
   private cacheValid = false
   private cacheCount = 0
   private cacheVersion = -1
@@ -222,8 +225,7 @@ export class CanvasEngine {
   private redrawDuringFade(): void {
     const tool = this.activeTool
     if (this.drawing && tool && !tool.needsPreviewRedraw) return
-    this.redrawAllInternal()
-    if (this.drawing && tool?.renderPreview) tool.renderPreview(this.ctx)
+    this.redrawAllInternal(this.drawing ? tool : null)
   }
 
   setActiveTool(tool: Tool): void {
@@ -241,21 +243,23 @@ export class CanvasEngine {
     if (!this.activeTool) return
     this.drawing = true
     this.activeTool.onPointerDown(this.ctx, point, style)
-    if (this.activeTool.needsPreviewRedraw) {
-      this.redrawAllInternal()
-      this.activeTool.renderPreview?.(this.ctx)
-    }
+    if (this.activeTool.needsPreviewRedraw) this.redrawAllInternal(this.activeTool)
   }
 
   handlePointerMove(point: { x: number; y: number }, modifiers: PointerModifiers = {}): void {
     if (!this.activeTool || !this.drawing) return
-    // Tools that preview-redraw (line / shape) need a full redraw of committed strokes first.
-    if (this.activeTool.needsPreviewRedraw) this.redrawAllInternal()
-    const changed = this.activeTool.onPointerMove(this.ctx, point, modifiers)
-    if (this.activeTool.needsPreviewRedraw && this.activeTool.renderPreview) {
-      this.activeTool.renderPreview(this.ctx)
+    const tool = this.activeTool
+    // Tools with renderPreview (brush eraser, highlighter) get it painted into
+    // the stroke layer, so an eraser preview cuts strokes, not the background.
+    if (tool.needsPreviewRedraw && tool.renderPreview) {
+      tool.onPointerMove(this.ctx, point, modifiers)
+      this.redrawAllInternal(tool)
       return
     }
+    // Tools that preview-redraw (line / shape) need a full redraw of committed
+    // strokes first, then paint their preview during onPointerMove.
+    if (tool.needsPreviewRedraw) this.redrawAllInternal()
+    const changed = tool.onPointerMove(this.ctx, point, modifiers)
     // Stroke-eraser removes strokes during move; a full redraw is required immediately.
     if (changed === true) {
       this.syncFades()
@@ -282,32 +286,76 @@ export class CanvasEngine {
     this.repaintAfterStroke = false
   }
 
-  private redrawAllInternal(): void {
+  /**
+   * Repaint the canvas: background layers, then the strokes, then overlay
+   * layers. Strokes (and the active tool's renderPreview, when given) are
+   * composed offscreen first, so eraser strokes cut only into strokes and
+   * never into a background layer.
+   */
+  private redrawAllInternal(preview: Tool | null = null): void {
     const { canvas: canvas, ctx: ctx, dpr: dpr } = this
     ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr)
     // Layer order: background → strokes → overlay. Modules wire grids,
     // watermarks, rulers, snap guides into the relevant slot.
-    const hasBackground = sortedLayers('canvas.layers.background').length > 0
     renderLayers(ctx, 'canvas.layers.background')
     const now = this.now()
-    // The cache holds strokes only, so it is used when drawing it gives the
-    // same pixels as drawing each stroke: no background layer for an eraser
-    // stroke to cut into, and no stroke part-way through fading out.
-    const cache = !hasBackground && !this.fader.isFading(now) ? this.syncStrokeCache() : null
-    if (cache) {
+    // A fading stroke changes every frame, so the cache is skipped and rebuilt
+    // once fading is over.
+    const fading = this.fader.isFading(now)
+    if (fading) this.cacheValid = false
+    const cache = fading ? null : this.syncStrokeCache()
+    const previewTool = preview?.renderPreview ? preview : null
+    const layer = cache && !previewTool ? cache : this.composeStrokeLayer(cache, now, previewTool)
+    if (layer) {
       ctx.save()
       ctx.setTransform(1, 0, 0, 1, 0, 0)
-      ctx.drawImage(cache, 0, 0)
+      ctx.drawImage(layer, 0, 0)
       ctx.restore()
     } else {
-      this.cacheValid = false
+      // No offscreen 2D context available: paint straight onto the canvas.
       for (const stroke of getAllStrokes()) {
         const alpha = this.fader.alpha(stroke.id, now)
-        if (alpha < 1) this.renderFaded(stroke, alpha)
+        if (alpha < 1) this.renderFaded(stroke, alpha, ctx)
         else renderStroke(ctx, stroke)
       }
+      previewTool?.renderPreview?.(ctx)
     }
     renderLayers(ctx, 'canvas.layers.overlay')
+  }
+
+  /**
+   * Compose the strokes for one repaint on a scratch canvas: the cache (or,
+   * while strokes fade, every stroke at its current opacity), plus the active
+   * tool's preview. Returns null when no offscreen 2D context is available.
+   */
+  private composeStrokeLayer(cache: HTMLCanvasElement | null, now: number, preview: Tool | null): HTMLCanvasElement | null {
+    const { canvas, dpr } = this
+    if (!this.strokeLayer) {
+      this.strokeLayer = document.createElement('canvas')
+      this.strokeLayerCtx = this.strokeLayer.getContext('2d')
+    }
+    const layer = this.strokeLayer
+    const lctx = this.strokeLayerCtx
+    if (!lctx) return null
+    if (layer.width !== canvas.width) layer.width = canvas.width
+    if (layer.height !== canvas.height) layer.height = canvas.height
+    lctx.setTransform(1, 0, 0, 1, 0, 0)
+    lctx.clearRect(0, 0, layer.width, layer.height)
+    if (cache) {
+      lctx.drawImage(cache, 0, 0)
+    } else {
+      lctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      for (const stroke of getAllStrokes()) {
+        const alpha = this.fader.alpha(stroke.id, now)
+        if (alpha < 1) this.renderFaded(stroke, alpha, lctx)
+        else renderStroke(lctx, stroke)
+      }
+    }
+    if (preview?.renderPreview) {
+      lctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      preview.renderPreview(lctx)
+    }
+    return layer
   }
 
   /**
@@ -376,8 +424,7 @@ export class CanvasEngine {
         this.repaintAfterStroke = true
         return
       }
-      this.redrawAllInternal()
-      if (this.drawing && tool?.renderPreview) tool.renderPreview(this.ctx)
+      this.redrawAllInternal(this.drawing ? tool : null)
     }
     if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(run)
     this.redrawFallback = setTimeout(run, 100)
@@ -387,8 +434,8 @@ export class CanvasEngine {
    * Draw a fading stroke through a scratch canvas so the fade multiplies
    * whatever opacity the stroke's own renderer applies.
    */
-  private renderFaded(stroke: Stroke, alpha: number): void {
-    const { canvas, ctx, dpr } = this
+  private renderFaded(stroke: Stroke, alpha: number, ctx: CanvasRenderingContext2D): void {
+    const { canvas, dpr } = this
     const scratch = this.fadeScratch ?? (this.fadeScratch = document.createElement('canvas'))
     const sctx = scratch.getContext('2d')
     if (!sctx) {

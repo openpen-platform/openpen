@@ -7,30 +7,39 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CanvasEngine } from '../../src/services/canvas-engine'
 import { addStroke, clearAll, pushCommand, resetHistory, undo } from '../../src/services/stroke-store'
-import { resetContributionStore } from '../../src/core/runtime/contribution-store'
+import { registerContribution, resetContributionStore } from '../../src/core/runtime/contribution-store'
+import { createEraserTool, renderEraserStroke } from '../../src/core/modules/eraser/eraser-tool'
 import type { Stroke } from '@openpen/module-api'
 
 /** Every 2D context records the x of each stroked path's first point. */
 const contexts = new WeakMap<HTMLCanvasElement, ReturnType<typeof makeCtx>>()
 const strokedX: number[] = []
 let mainClears = 0
+/** Composite operation in effect each time something is painted on the visible canvas. */
+const mainPaintOps: string[] = []
 
 function makeCtx(canvas: HTMLCanvasElement) {
   let firstX = 0
-  return {
+  const stack: string[] = []
+  const paint = () => { if (canvas.dataset.main) mainPaintOps.push(ctx.globalCompositeOperation) }
+  const ctx = {
     canvas,
     globalAlpha: 1,
     globalCompositeOperation: 'source-over',
-    save: vi.fn(),
-    restore: vi.fn(),
+    save: vi.fn(() => { stack.push(ctx.globalCompositeOperation) }),
+    restore: vi.fn(() => { ctx.globalCompositeOperation = stack.pop() ?? 'source-over' }),
+    arc: vi.fn(),
+    fill: vi.fn(paint),
+    fillRect: vi.fn(paint),
     setTransform: vi.fn(),
     clearRect: vi.fn(() => { if (canvas.dataset.main) mainClears++ }),
     beginPath: vi.fn(),
     moveTo: vi.fn((x: number) => { firstX = x }),
     lineTo: vi.fn(),
-    stroke: vi.fn(() => { strokedX.push(firstX) }),
-    drawImage: vi.fn(),
+    stroke: vi.fn(() => { strokedX.push(firstX); paint() }),
+    drawImage: vi.fn(paint),
   }
+  return ctx
 }
 
 function stroke(i: number): Stroke {
@@ -75,6 +84,7 @@ beforeEach(() => {
   resetContributionStore()
   strokedX.length = 0
   mainClears = 0
+  mainPaintOps.length = 0
   rafQueue = []
 })
 
@@ -148,5 +158,47 @@ describe('canvas-engine committed-stroke cache (TASK-241)', () => {
     canvas.dispatchEvent(new Event('contextrestored'))
     runFrame()
     expect(strokedX).toEqual([0, 1, 2])
+  })
+
+  it('erases only strokes, never a background layer, for committed eraser strokes and while erasing', () => {
+    registerContribution('canvas.tools', 'eraser-mod', { id: 'eraser', renderStroke: renderEraserStroke })
+    const background = vi.fn((ctx: CanvasRenderingContext2D) => ctx.fillRect(0, 0, 100, 100))
+    registerContribution('canvas.layers.background', 'grid-mod', { id: 'grid', render: background })
+    const { engine } = makeEngine()
+    add(1)
+    const eraser = createEraserTool()
+    engine.setActiveTool(eraser)
+    const style = { color: '#000', lineWidth: 4, lineCap: 'round' as const, lineJoin: 'round' as const }
+
+    engine.handlePointerDown({ x: 0, y: 0 }, style)
+    engine.handlePointerMove({ x: 20, y: 20 })
+    engine.handlePointerUp({ x: 30, y: 30 })
+    engine.redrawAll()
+
+    expect(background).toHaveBeenCalled()
+    expect(mainPaintOps.length).toBeGreaterThan(0)
+    expect(mainPaintOps).not.toContain('destination-out')
+  })
+
+  it('keeps the background intact while a stroke fades out', () => {
+    const background = vi.fn((ctx: CanvasRenderingContext2D) => ctx.fillRect(0, 0, 100, 100))
+    registerContribution('canvas.layers.background', 'grid-mod', { id: 'grid', render: background })
+    registerContribution('canvas.tools', 'eraser-mod', { id: 'eraser', renderStroke: renderEraserStroke })
+    const { engine } = makeEngine()
+    let now = 0
+    engine.setClock(() => now)
+    engine.setFadeSeconds(1)
+    const pen = { id: 'pen', onPointerDown: vi.fn(), onPointerMove: vi.fn(), onPointerUp: vi.fn(() => stroke(5)) }
+    engine.setActiveTool(pen as never)
+    const style = { color: '#000', lineWidth: 4, lineCap: 'round' as const, lineJoin: 'round' as const }
+    engine.handlePointerDown({ x: 0, y: 0 }, style)
+    engine.handlePointerUp({ x: 1, y: 1 })
+    const e = { id: 'e1', tool: 'eraser', points: [{ x: 5, y: 5 }, { x: 9, y: 9 }], style: { ...style, lineWidth: 8 } }
+    addStroke(e as Stroke)
+    now = 1200 // stroke 5 is part-way through fading
+    mainPaintOps.length = 0
+
+    engine.redrawAll()
+    expect(mainPaintOps).not.toContain('destination-out')
   })
 })

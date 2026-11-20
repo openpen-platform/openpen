@@ -212,3 +212,55 @@ test('probe: strokes after GPU process restart', async () => {
     await app.close();
   }
 });
+
+// TASK-241 #6 probe: the brush eraser cuts strokes only, never a background
+// layer, both while dragging and after pointer-up.
+test('probe: eraser keeps background layer', async () => {
+  test.skip(process.env.T241_PROBE !== 'eraser', 'set T241_PROBE=eraser');
+  const app = await launchElectronApp();
+  const out = {};
+  try {
+    const main = await app.firstWindow();
+    let overlay = null;
+    for (let i = 0; i < 50 && !overlay; i++) {
+      overlay = app.windows().find((w) => w.url().includes('window=overlay')) ?? null;
+      if (!overlay) await new Promise((r) => setTimeout(r, 200));
+    }
+    await overlay.waitForSelector('[data-testid="canvas-overlay"]');
+    await overlay.waitForTimeout(1500);
+    await overlay.evaluate(async () => {
+      const slots = await import('/src/core/runtime/contribution-store.ts');
+      const store = await import('/src/services/stroke-store.ts');
+      const bus = await import('/src/core/runtime/event-bus.ts');
+      slots.registerContribution('canvas.layers.background', 't241-probe', {
+        id: 't241-bg',
+        render: (ctx) => { ctx.save(); ctx.fillStyle = 'rgb(0,255,0)'; ctx.fillRect(50, 150, 400, 100); ctx.restore(); },
+      });
+      const s = { id: 'probe-red', tool: 'freehand', points: [{ x: 80, y: 200 }, { x: 420, y: 200 }], style: { color: 'rgb(255,0,0)', lineWidth: 20, lineCap: 'butt', lineJoin: 'round' } };
+      store.addStroke(s); store.pushCommand({ type: 'ADD_STROKE', stroke: s });
+      bus.emit('canvas-redraw-requested');
+    });
+    await main.evaluate(() => { window.openPenApi?.setDrawingMode(true); window.openPenApi?.setActiveTool({ tool: 'eraser' }); });
+    await overlay.waitForTimeout(800);
+    const px = (x, y) => overlay.evaluate(([x, y]) => {
+      const c = document.querySelector('[data-testid="canvas-overlay"]');
+      const d = c.getContext('2d').getImageData(x * devicePixelRatio, y * devicePixelRatio, 1, 1).data;
+      return [d[0], d[1], d[2], d[3]];
+    }, [x, y]);
+    out.before = { erasedSpot: await px(250, 200), keptStroke: await px(100, 200), bgOnly: await px(250, 170) };
+    await overlay.mouse.move(200, 200);
+    await overlay.mouse.down();
+    for (let x = 200; x <= 300; x += 10) { await overlay.mouse.move(x, 200); await overlay.waitForTimeout(20); }
+    await overlay.waitForTimeout(100);
+    out.dragging = { erasedSpot: await px(250, 200), keptStroke: await px(100, 200), bgOnly: await px(250, 170) };
+    await overlay.mouse.up();
+    await overlay.waitForTimeout(300);
+    out.afterUp = { erasedSpot: await px(250, 200), keptStroke: await px(100, 200), bgOnly: await px(250, 170) };
+    out.activeToolStrokes = await overlay.evaluate(async () => (await import('/src/services/stroke-store.ts')).getAllStrokes().map((s) => s.tool));
+    await main.evaluate(() => window.openPenApi?.setDrawingMode(false));
+  } finally {
+    console.log('[t241-eraser]', JSON.stringify(out));
+    if (process.env.T241_OUT) fs.writeFileSync(process.env.T241_OUT, JSON.stringify(out, null, 2));
+    await app.close();
+  }
+});
