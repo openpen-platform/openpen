@@ -24,10 +24,24 @@ buttons landed on the control bar.
 ## What's inside
 
 - `src/index.ts` — your plugin entry, exports `defineModule({ ... })`
+- `src/mcp-demo-tool.ts` — a read-only `echo_note` MCP tool that AI agents can call
+  (experimental), with its unit test `src/mcp-demo-tool.test.ts`; run `npm test`
 - `src/locales/` — i18n locale files (`en.json`, `zh-Hant.json`, ...)
 - `package.json` — dependency on `@openpen/module-api` (required) and
   `@openpen/build` (devDependency, the bundler CLI)
 - `tsconfig.json` — TypeScript config aligned with OpenPen's host
+
+## Let AI agents call your plugin (experimental)
+
+The starter declares one MCP tool, `echo_note`, in `src/mcp-demo-tool.ts` and
+attaches it through `contributes.mcpTools` in `src/index.ts`. With OpenPen's
+MCP server turned on (Settings → MCP), an agent sees it as
+`yourscope.my-plugin__echo_note`. `npm test` runs the tool through the SDK's
+`callMcpTool` helper, including a wrong-argument call that is rejected before
+the handler runs. Plugins with tools need `minAppVersion` 1.7.0 or higher in
+`plugin.json`; the starter already sets it. Read
+[Plugin MCP tools](https://github.com/openpen-platform/openpen/blob/main/docs/guides/mcp-tools.md)
+for the full guide, including how to write descriptions the model reads.
 
 ## Next steps
 

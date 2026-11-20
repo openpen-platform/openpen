@@ -8,6 +8,7 @@
     "build": "openpen-build",
     "dev": "openpen-build --watch",
     "check": "openpen-build --check",
+    "test": "vitest run",
     "pack": "npx openpen-cli pack",
     "prepublishOnly": "npm run build"
   },
@@ -17,6 +18,7 @@
     "openpen-cli": "*",
     "typescript": "^6.0.3",
     "vue": "^3.5.44",
+    "vitest": "~3.2.4",
     "vue-tsc": "~3.3.0"
   },
   "license": "MIT"

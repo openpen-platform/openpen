@@ -34,6 +34,7 @@ import {
 } from '@openpen/plugin-manager'
 import { promptInstallConfirm, extractYesFlag } from '../lib/confirm.js'
 import { parseOwnerInfo } from '../lib/owner-info.js'
+import { checkMcpTools } from '../lib/mcp-pack-check.js'
 
 const PLUGINS_DIR = path.join(os.homedir(), '.openpen', 'plugins')
 
@@ -341,6 +342,13 @@ async function cmdPack() {
   }
   if (!fs.existsSync(path.join(cwd, 'dist', 'renderer.js'))) {
     console.error('Error: dist/renderer.js not found. Run your build first (e.g. npx @openpen/build).')
+    process.exit(1)
+  }
+
+  const { problems } = checkMcpTools(cwd, manifest)
+  if (problems.length > 0) {
+    console.error('Error: MCP tool check failed; no zip was written.')
+    for (const problem of problems) console.error(`  - ${problem}`)
     process.exit(1)
   }
 

@@ -6,6 +6,8 @@
  *   - Inside the popup, an `AppSlider` controls a `size` value.
  *   - Uses `setup(ctx)` to show a toast notification when the plugin loads,
  *     demonstrating `ctx.notify()` as a lightweight feedback mechanism.
+ *   - Contributes an `echo_note` MCP tool (`system.mcp.tools`, experimental) that
+ *     AI agents can call; see src/mcp-demo-tool.ts.
  *   - Contributes a "demo" drawing tool (`canvas.tools`) that draws with
  *     semi-transparent strokes, demonstrating the full Tool contract including
  *     extra Stroke state (opacity) that survives into renderStroke.
@@ -28,6 +30,7 @@ import PopoverDemo from './PopoverDemo.vue'
 import HelloButton from './HelloButton.vue'
 import MyNumberSpinner from './MyNumberSpinner.vue'
 import { createDemoTool, renderDemoStroke } from './demo-tool'
+import { echoNoteTool } from './mcp-demo-tool'
 import en from './locales/en.json'
 import zhHant from './locales/zh-Hant.json'
 import zhHans from './locales/zh-Hans.json'
@@ -111,6 +114,9 @@ export default defineModule({
         component: MyNumberSpinner,
       },
     ],
+    // Experimental: lets AI agents call this plugin over MCP.
+    // See docs/guides/mcp-tools.md and src/mcp-demo-tool.ts.
+    mcpTools: [echoNoteTool],
     locales: {
       en,
       'zh-Hant': zhHant,
