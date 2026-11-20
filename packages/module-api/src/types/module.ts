@@ -65,6 +65,13 @@ export interface OpenPenModule {
   contributes?: ModuleContributions
 
   /**
+   * Usage guide for this plugin's MCP tools, written for the model. Served
+   * on demand through the app's `get_guide` tool (not included in the tool
+   * list). Only meaningful when `contributes.mcpTools` is set.
+   */
+  mcpGuide?: string
+
+  /**
    * Zod schema for this module's user-facing settings. The host renders
    * the settings form from this schema and persists the parsed value
    * under `config.json.modules[id]`. The same schema validates writes

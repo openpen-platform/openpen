@@ -122,6 +122,34 @@ export type {
   CursorSanitizeResult,
 } from './cursors'
 
+// MCP tools (experimental): contribute via `contributes.mcpTools`
+export {
+  defineMcpTool,
+  runMcpTool,
+  image,
+  McpToolError,
+  InvalidParamsError,
+  NotFoundError,
+  UserActionRequiredError,
+  UnavailableError,
+  pluginToolPrefix,
+  validateMcpToolName,
+  MCP_TOOL_NAME_MAX,
+  MCP_TOOL_DESCRIPTION_MAX,
+  MCP_TOOLS_MIN_APP_VERSION,
+} from './mcp'
+export type {
+  McpToolAnnotations,
+  McpToolContext,
+  McpToolDefinition,
+  McpToolReturn,
+  McpToolErrorKind,
+  McpImage,
+  McpCallResult,
+  McpContentItem,
+  McpErrorKind,
+} from './mcp'
+
 // Re-export zod so modules don't need a separate import path.
 export { z } from 'zod'
 

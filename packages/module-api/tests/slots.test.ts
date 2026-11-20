@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   ALL_SLOTS,
+  CONTRIBUTION_KEY_TO_SLOT_ID,
   V1_ACTIVE_SLOTS,
   V1_RESERVED_SLOTS,
   isKnownSlot,
@@ -8,10 +9,15 @@ import {
 } from '../src/slots'
 
 describe('Slot catalog', () => {
-  it('exposes 25 total slots (17 active + 8 reserved)', () => {
-    expect(ALL_SLOTS).toHaveLength(25)
-    expect(V1_ACTIVE_SLOTS).toHaveLength(17)
+  it('exposes 26 total slots (18 active + 8 reserved)', () => {
+    expect(ALL_SLOTS).toHaveLength(26)
+    expect(V1_ACTIVE_SLOTS).toHaveLength(18)
     expect(V1_RESERVED_SLOTS).toHaveLength(8)
+  })
+
+  it('maps mcpTools to the active MCP tool slot', () => {
+    expect(CONTRIBUTION_KEY_TO_SLOT_ID.mcpTools).toBe('system.mcp.tools')
+    expect(getSlot('system.mcp.tools')).toMatchObject({ status: 'v1', category: 'system' })
   })
 
   it('active and reserved slot lists are disjoint', () => {

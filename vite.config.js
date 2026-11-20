@@ -82,6 +82,7 @@ export default defineConfig({
       { find: /^@openpen\/module-api\/uikit\/internal$/, replacement: moduleApiSrc('uikit/internal.ts') },
       { find: /^@openpen\/module-api\/uikit$/,           replacement: moduleApiSrc('uikit/index.ts') },
       { find: /^@openpen\/module-api\/host\/registry$/,  replacement: moduleApiSrc('host/registry.ts') },
+      { find: /^@openpen\/module-api\/testing$/,        replacement: moduleApiSrc('testing/index.ts') },
       { find: /^@openpen\/module-api\/host$/,            replacement: moduleApiSrc('host/index.ts') },
       { find: /^@openpen\/module-api$/,                  replacement: moduleApiSrc('index.ts') },
     ],

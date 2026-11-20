@@ -1,6 +1,6 @@
 {
   "name": "@openpen/module-api",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "OpenPen Module API — public contract for built-in modules and third-party plugins",
   "author": "navishachiku <navishachiku@gmail.com>",
   "homepage": "https://github.com/openpen-platform/openpen#readme",
@@ -33,6 +33,10 @@
     "./uikit/internal": {
       "types": "./dist/uikit/internal.d.ts",
       "import": "./dist/uikit/internal.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js"
     },
     "./host": {
       "types": "./dist/host/index.d.ts",

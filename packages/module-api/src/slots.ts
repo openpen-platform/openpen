@@ -28,7 +28,7 @@ export interface SlotDefinition {
 }
 
 /**
- * v1 active slots (16). Wired through to runtime adapters.
+ * v1 active slots (18). Wired through to runtime adapters.
  */
 export const V1_ACTIVE_SLOTS: readonly SlotDefinition[] = [
   // Canvas
@@ -51,6 +51,7 @@ export const V1_ACTIVE_SLOTS: readonly SlotDefinition[] = [
   { id: 'system.main.handlers', status: 'v1', category: 'system', description: 'Node-side IPC handlers for main process capabilities.' },
   { id: 'system.events', status: 'v1', category: 'system', description: 'Subscribers and emitters on the domain event bus.' },
   { id: 'system.lifecycle', status: 'v1', category: 'system', description: 'App lifecycle hooks (onReady / onSuspend / onQuit).' },
+  { id: 'system.mcp.tools', status: 'v1', category: 'system', description: 'MCP tools exposed to AI apps through the local MCP endpoint (experimental).' },
 ] as const
 
 /**
@@ -132,4 +133,5 @@ export const CONTRIBUTION_KEY_TO_SLOT_ID: Record<string, string> = {
   storage: 'system.storage',
   mainHandlers: 'system.main.handlers',
   fileDrop: 'system.file.drop',
+  mcpTools: 'system.mcp.tools',
 }

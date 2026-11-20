@@ -2,6 +2,7 @@ import type { Component } from 'vue'
 import type { LocaleMap } from '../locale'
 import type { Stroke, Tool } from './tool'
 import type { ControlBarContribution } from './control-bar-layout'
+import type { McpToolDefinition } from '../mcp/define-tool'
 
 export type { ControlBarContribution }
 
@@ -49,6 +50,8 @@ export interface ModuleContributions {
   mainHandlers?: MainHandlerContribution
   /** ⏳ Reserved slot — accepts registrations, adapter not yet wired. */
   fileDrop?: FileDropContribution[]
+  /** Experimental. MCP tools served to AI apps; see `defineMcpTool`. */
+  mcpTools?: McpToolDefinition[]
 }
 
 // ════════════════════════════════════════════════════════════════════════
