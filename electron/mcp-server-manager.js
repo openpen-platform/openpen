@@ -30,7 +30,7 @@ import {
 } from './window-manager.js';
 import { MCP_PORT } from '../shared/mcp-constants.js';
 import { createMcpHttpServer } from './mcp/http-server.js';
-import { createBuiltinTools, filterTools } from './mcp/tools.js';
+import { createBuiltinTools, ensureDrawingVisible, filterTools } from './mcp/tools.js';
 import { buildPluginTools, sanitizePluginReport, pluginToolPrefix } from './mcp/plugin-tools.js';
 import { generateApiKey } from './mcp/api-key.js';
 import { installClaudeDesktopBundle } from './mcp/claude-desktop-bundle.js';
@@ -310,6 +310,11 @@ export function initMcpServerManager({ captureDisplayImage }) {
       return failResult('invalid_params', `Unknown displayId ${requested}.`, 'call openpen__get_state to see the display ids, then retry.');
     }
     const targetId = requested ?? cursorDisplayId();
+    // A plugin tool not annotated read-only may draw, so it gets the same
+    // "make it visible" step as the built-in draw tools. Done before waiting for
+    // the overlay: on Wayland the overlay only exists while drawing.
+    const draws = !tool.readOnly;
+    if (draws) ensureDrawingVisible(host);
     let wc;
     try {
       wc = (await waitForOverlayReady(targetId, Date.now() + OVERLAY_READY_TIMEOUT_MS, ctx.signal)).webContents;
@@ -320,6 +325,9 @@ export function initMcpServerManager({ captureDisplayImage }) {
     // Cancelled while waiting for the overlay: never dispatch, so a cancel can
     // not reach the overlay before the call it belongs to.
     if (ctx.signal?.aborted) return cancelledResult(tool);
+    // Same reason as in runOnOverlay: a drawing-mode broadcast sent before the
+    // renderer listened is lost, and the canvas stays hidden (opacity 0).
+    if (draws) wc.send(OVERLAY.DRAWING_MODE_CHANGED, getDrawingMode());
     const callId = crypto.randomUUID();
     pluginCalls.set(callId, { sender: wc, onProgress: (p, total, message) => ctx.reportProgress?.(p, total, message) });
     const cancel = () => {

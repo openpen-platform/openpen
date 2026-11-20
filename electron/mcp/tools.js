@@ -261,6 +261,19 @@ function pluginIndex(exposed) {
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 
 /**
+ * The one place that makes sure what a tool is about to draw will be visible:
+ * the built-in draw and paint tools and every plugin tool not annotated as
+ * read-only call it before they dispatch. The overlay hides its canvas outside
+ * drawing mode, so today this switches drawing mode on. A later decision on
+ * whether drawing should switch modes is changed here only.
+ *
+ * @param {{ getState: () => { drawingMode: boolean }, setDrawingMode: (enabled: boolean) => void }} host
+ */
+export function ensureDrawingVisible(host) {
+  if (!host.getState().drawingMode) host.setDrawingMode(true);
+}
+
+/**
  * @param {{
  *   getState: () => { drawingMode: boolean, tool: string, displays: Array<{ id: number, pixelWidth: number, pixelHeight: number, scaleFactor: number, isCursorDisplay: boolean }> },
  *   setDrawingMode: (enabled: boolean) => void,
@@ -322,11 +335,11 @@ export function createBuiltinTools(host) {
     }
   }
 
-  /** Draw tools switch into drawing mode first so the stroke is visible (AC-8). */
+  /** Draw tools make the canvas visible first so the stroke shows (AC-8). */
   async function drawOn(name, args, display, command) {
     const bad = styleProblem(name, args);
     if (bad) return fail(bad);
-    if (!host.getState().drawingMode) host.setDrawingMode(true);
+    ensureDrawingVisible(host);
     const { result, failure } = await dispatch(display, { type: 'draw', ...command, ...commonStyle(args) });
     if (failure) return failure;
     return json({ id: result?.id, displayId: display.id });
@@ -531,7 +544,7 @@ export function createBuiltinTools(host) {
         if (built.problem) return invalid(name, `${built.problem} Nothing was drawn.`, d);
         items.push(built.item);
       }
-      if (!host.getState().drawingMode) host.setDrawingMode(true);
+      ensureDrawingVisible(host);
       // Count before sending so concurrent calls cannot both slip under the limit.
       paintedSinceScreenshot += items.length;
       const epoch = screenshotEpoch;

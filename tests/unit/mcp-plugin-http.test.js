@@ -26,6 +26,8 @@ const electron = vi.hoisted(() => ({
   })),
   userData: '',
   cursorDisplayIndex: 0,
+  drawingMode: false,
+  sent: [],
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
@@ -56,9 +58,12 @@ vi.mock('../../electron/tray-manager.js', () => ({ refreshTrayLocale() {} }))
 vi.mock('../../electron/window-manager.js', () => ({
   applyToolConfigFromMain() {},
   getActiveToolConfig: () => ({ tool: 'freehand' }),
-  getDrawingMode: () => false,
+  getDrawingMode: () => electron.drawingMode,
   getOverlayWindowForDisplay: id => electron.overlays.get(id),
-  setDrawingMode() {},
+  setDrawingMode: vi.fn((on) => {
+    electron.drawingMode = on
+    electron.sent.push({ channel: 'set-drawing-mode', on })
+  }),
 }))
 vi.mock('../../electron/plugin-meta-manager.js', () => ({
   ensurePluginInstalledAt: vi.fn(),
@@ -142,6 +147,7 @@ async function start({
       isDestroyed: () => false,
       isLoading: () => false,
       send(channel, payload) {
+        electron.sent.push({ channel, displayId: id, payload })
         if (channel !== 'mcp:command') return
         const { requestId, command } = payload
         if (command.type === 'plugin-tool-cancel') cancel(id, command)
@@ -208,6 +214,8 @@ afterEach(async () => {
     if (electron.userData) await rm(electron.userData, { recursive: true, force: true })
     electron.userData = ''
     electron.cursorDisplayIndex = 0
+    electron.drawingMode = false
+    electron.sent = []
     server = client = transport = undefined
     electron.handlers.clear()
     electron.listeners.clear()
@@ -382,6 +390,30 @@ describe('plugin tools over Streamable HTTP', () => {
     })
     await invoke('settings:set', { mcp: { ...settings, readOnly: true } })
     expect(await listed()).toEqual([...READ_ONLY_TOOL_NAMES, measure].sort())
+  })
+
+  it('T264 AC-1 a non-read-only plugin tool turns drawing mode on and shows the canvas before the call', async () => {
+    await start()
+    register([arrowTool, rulerTool])
+    electron.sent = []
+
+    expect((await call(draw)).isError).toBeFalsy()
+
+    const order = electron.sent
+      .filter(e => e.channel !== 'mcp:command' || e.payload.command.type === 'plugin-tool-call')
+      .map(e => e.channel === 'mcp:command' ? 'call' : e.channel === 'set-drawing-mode' ? `set:${e.on}` : `${e.channel}:${e.payload}`)
+    expect(order).toEqual(['set:true', 'overlay:drawing-mode-changed:true', 'call'])
+  })
+
+  it('T264 AC-2 a read-only plugin tool leaves drawing mode alone', async () => {
+    await start()
+    register([arrowTool, rulerTool])
+    electron.sent = []
+
+    expect((await call(measure)).isError).toBeFalsy()
+
+    expect(electron.drawingMode).toBe(false)
+    expect(electron.sent.filter(e => e.channel !== 'mcp:command')).toEqual([])
   })
 
   it('AC-8 exposes newly installed plugin tools on the next boot registration', async () => {
