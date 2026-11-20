@@ -1,0 +1,148 @@
+{
+  "description": "Read-only evaluation questions for the OpenPen MCP tool descriptions and usage guide. For each question: run seed.js with its id to lay out the scene on the display under the mouse cursor, then hand only the `question` text to a fresh agent that is connected to the OpenPen MCP server and nothing else. The agent under test must never read this file (the answers would leak). Grade the run with grade.js, which records the answer, whether it is correct and which tools the agent called. A question is correct when every keyword of `answer` (separated by '；') appears in the reply as a whole number or a whole id, not inside a longer one. `needs` lists the read-only tools the reference path uses; an empty list means the answer is in the tool descriptions themselves. Scene coordinates are screenshot pixels and stay inside 1200x700, so any display at least that large works; keep the mouse on one display between seeding and grading. Questions 1-5, 10 and 11 read the annotation list, 6-8 the app state, 9 needs the screenshot (the list carries no colours), 12 asks which tool to choose.",
+  "questions": [
+    {
+      "id": 1,
+      "question": "螢幕上現在一共有幾個標註？",
+      "answer": "5",
+      "needs": ["list_annotations"],
+      "scene": {
+        "annotations": [
+          { "tool": "draw_rect", "args": { "x": 100, "y": 100, "width": 200, "height": 120 } },
+          { "tool": "draw_rect", "args": { "x": 400, "y": 100, "width": 200, "height": 120 } },
+          { "tool": "draw_rect", "args": { "x": 700, "y": 100, "width": 200, "height": 120 } },
+          { "tool": "draw_line", "args": { "x1": 100, "y1": 400, "x2": 500, "y2": 400 } },
+          { "tool": "draw_line", "args": { "x1": 600, "y1": 400, "x2": 1000, "y2": 450 } }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "question": "我在畫面上圈了幾個圈？請回答數字。",
+      "answer": "2",
+      "needs": ["list_annotations"],
+      "scene": {
+        "annotations": [
+          { "tool": "draw_ellipse", "args": { "x": 100, "y": 100, "width": 200, "height": 200 } },
+          { "tool": "draw_ellipse", "args": { "x": 400, "y": 100, "width": 150, "height": 150 } },
+          { "tool": "draw_rect", "args": { "x": 700, "y": 100, "width": 300, "height": 200 } },
+          { "tool": "draw_freehand", "args": { "points": [{ "x": 100, "y": 500 }, { "x": 200, "y": 450 }, { "x": 300, "y": 520 }, { "x": 400, "y": 470 }] } }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "question": "畫面上最左邊那個標註，它的左上角在截圖的哪個座標？請以「x,y」回答。",
+      "answer": "100,120",
+      "needs": ["list_annotations"],
+      "scene": {
+        "annotations": [
+          { "tool": "draw_ellipse", "args": { "x": 700, "y": 300, "width": 200, "height": 150 } },
+          { "tool": "draw_line", "args": { "x1": 400, "y1": 200, "x2": 600, "y2": 500 } },
+          { "tool": "draw_rect", "args": { "x": 100, "y": 120, "width": 200, "height": 100 } }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "question": "我框起來的那塊區域有多寬、多高（以螢幕截圖的像素計）？請以「寬×高」回答。",
+      "answer": "400×300",
+      "needs": ["list_annotations"],
+      "scene": {
+        "annotations": [
+          { "tool": "draw_rect", "args": { "x": 200, "y": 150, "width": 400, "height": 300 } }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "question": "畫面上有幾個長方形框？其中最寬的那個有多寬（截圖像素）？請以「個數,寬度」回答。",
+      "answer": "2；600",
+      "needs": ["list_annotations"],
+      "scene": {
+        "annotations": [
+          { "tool": "draw_rect", "args": { "x": 100, "y": 100, "width": 600, "height": 200 } },
+          { "tool": "draw_rect", "args": { "x": 100, "y": 380, "width": 300, "height": 300 } },
+          { "tool": "draw_ellipse", "args": { "x": 450, "y": 400, "width": 700, "height": 150 } }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "question": "我剛剛畫的標註都不見了，是被刪掉了嗎？先不要動任何東西，告訴我它們還剩幾個，以及要用哪個工具讓它們重新顯示（給工具名）。",
+      "answer": "2；set_drawing_mode",
+      "needs": ["get_state", "list_annotations"],
+      "scene": {
+        "annotations": [
+          { "tool": "draw_rect", "args": { "x": 200, "y": 200, "width": 300, "height": 200 } },
+          { "tool": "draw_ellipse", "args": { "x": 600, "y": 200, "width": 200, "height": 200 } }
+        ],
+        "drawingMode": false
+      }
+    },
+    {
+      "id": 7,
+      "question": "控制列上現在選的是哪個畫筆工具？請回答工具 id。",
+      "answer": "highlighter-pen",
+      "needs": ["get_state"],
+      "scene": { "annotations": [], "tool": "highlighter-pen" }
+    },
+    {
+      "id": 8,
+      "question": "openpen 有哪幾種橡皮擦？請回答它們的工具 id。",
+      "answer": "eraser；stroke-eraser",
+      "needs": ["get_state"],
+      "scene": { "annotations": [] }
+    },
+    {
+      "id": 9,
+      "question": "畫面上紅色的標註有幾個？請回答數字。",
+      "answer": "3",
+      "needs": ["screenshot"],
+      "scene": {
+        "annotations": [
+          { "tool": "draw_rect", "args": { "x": 100, "y": 100, "width": 200, "height": 150, "color": "#FF0000", "lineWidth": 8 } },
+          { "tool": "draw_rect", "args": { "x": 400, "y": 100, "width": 200, "height": 150, "color": "#FF0000", "lineWidth": 8 } },
+          { "tool": "draw_rect", "args": { "x": 700, "y": 100, "width": 200, "height": 150, "color": "#0000FF", "lineWidth": 8 } },
+          { "tool": "draw_line", "args": { "x1": 100, "y1": 400, "x2": 600, "y2": 400, "color": "#FF0000", "lineWidth": 8 } },
+          { "tool": "draw_ellipse", "args": { "x": 700, "y": 350, "width": 200, "height": 200, "color": "#0000FF", "lineWidth": 8 } }
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "question": "最右邊那個標註的右邊緣在截圖的 x 多少像素？請回答數字。",
+      "answer": "1100",
+      "needs": ["list_annotations"],
+      "scene": {
+        "annotations": [
+          { "tool": "draw_rect", "args": { "x": 100, "y": 100, "width": 200, "height": 200 } },
+          { "tool": "draw_ellipse", "args": { "x": 900, "y": 300, "width": 200, "height": 100 } },
+          { "tool": "draw_line", "args": { "x1": 300, "y1": 500, "x2": 800, "y2": 550 } }
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "question": "我剛剛用螢光筆劃了幾行重點？請回答數字。",
+      "answer": "3",
+      "needs": ["list_annotations"],
+      "scene": {
+        "annotations": [
+          { "tool": "draw_highlighter", "args": { "points": [{ "x": 100, "y": 200 }, { "x": 900, "y": 200 }] } },
+          { "tool": "draw_highlighter", "args": { "points": [{ "x": 100, "y": 300 }, { "x": 900, "y": 300 }] } },
+          { "tool": "draw_highlighter", "args": { "points": [{ "x": 100, "y": 400 }, { "x": 900, "y": 400 }] } },
+          { "tool": "draw_freehand", "args": { "points": [{ "x": 100, "y": 550 }, { "x": 300, "y": 500 }, { "x": 500, "y": 560 }] } },
+          { "tool": "draw_freehand", "args": { "points": [{ "x": 600, "y": 550 }, { "x": 800, "y": 500 }, { "x": 1000, "y": 560 }] } }
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "question": "我想把畫面上一塊區域整片染上顏色，openpen 的框可以填滿嗎？請先回答「可以」或「不可以」；如果不可以，要改用哪個工具（給工具名）？",
+      "answer": "不可以；draw_highlighter",
+      "needs": [],
+      "scene": { "annotations": [] }
+    }
+  ]
+}
