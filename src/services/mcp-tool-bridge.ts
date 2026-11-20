@@ -9,7 +9,12 @@
  * Coordinate spaces: commands and replies use screenshot pixels of the display.
  * The overlay works in CSS pixels, so overlay = pixel / devicePixelRatio.
  */
-import type { Point, Stroke } from '@openpen/module-api'
+import { toRaw } from 'vue'
+import { z } from 'zod'
+import { runMcpTool, sanitizeIdForI18n } from '@openpen/module-api'
+import type { McpCallResult, McpToolContext, McpToolDefinition, Point, Stroke } from '@openpen/module-api'
+import { i18n } from '../i18n/index'
+import { getModule } from '../core/runtime/module-registry'
 import { addStroke, clearAll, getAllStrokes, pushCommand, purgeStroke, undo as storeUndo, redo as storeRedo } from './stroke-store'
 import { emit, hasListeners } from '../core/runtime/event-bus'
 import { getSlotEntries } from '../core/runtime/contribution-store'
@@ -40,6 +45,8 @@ export type McpCommand =
   | { type: 'clear' }
   | { type: 'undo' }
   | { type: 'redo' }
+  | { type: 'plugin-tool-call'; callId: string; pluginId: string; name: string; args?: unknown }
+  | { type: 'plugin-tool-cancel'; callId: string }
 
 export interface McpAnnotation {
   id: string
@@ -54,6 +61,7 @@ export type McpCommandResult =
   | { deleted: boolean }
   | { ok: boolean }
   | { ready: true }
+  | McpCallResult
 
 const DEFAULT_COLOR = '#818cf8'
 const DEFAULT_LINE_WIDTH = 4
@@ -170,8 +178,91 @@ function boundsOf(stroke: Stroke, offset: McpOffset): McpAnnotation['bounds'] {
   return { x: minX, y: minY, width: Math.max(...xs) - minX, height: Math.max(...ys) - minY }
 }
 
+/** Plugin tool calls running in this overlay, so a cancel can reach the right handler. */
+const inFlightCalls = new Map<string, AbortController>()
+
+function overlayDisplayId(): number {
+  const raw = new URLSearchParams(window.location.search).get('displayId')
+  const id = raw === null ? NaN : Number(raw)
+  return Number.isInteger(id) ? id : -1
+}
+
+// The slot store hands out readonly reactive proxies. A zod schema behind such a
+// proxy cannot parse (its frozen internals break the proxy invariants), so tools
+// are always unwrapped to the plain objects the plugin registered.
+function pluginTools(): Array<{ pluginId: string; tool: McpToolDefinition }> {
+  return getSlotEntries<McpToolDefinition>('system.mcp.tools').value
+    .map((e) => ({ pluginId: e.moduleId, tool: toRaw(e.contribution) }))
+}
+
+function findPluginTool(pluginId: string, name: string): McpToolDefinition | undefined {
+  return pluginTools().find((e) => e.pluginId === pluginId && e.tool?.name === name)?.tool
+}
+
+function pluginToolLogger(pluginId: string): McpToolContext['log'] {
+  return (level, message) => {
+    const text = `[mcp] plugin ${pluginId}: ${message}`
+    if (level === 'info') console.info(text)
+    else {
+      console.error(text)
+      window.openPenApi?.recordError?.({ level, message: text, source: 'mcp-plugin-tool' })
+    }
+  }
+}
+
+function declaresDisplayId(tool: McpToolDefinition): boolean {
+  const shape = (tool.inputSchema as { shape?: Record<string, unknown> } | undefined)?.shape
+  return !!shape && Object.prototype.hasOwnProperty.call(shape, 'displayId')
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+async function runPluginToolCall(command: Extract<McpCommand, { type: 'plugin-tool-call' }>): Promise<McpCallResult> {
+  const tool = findPluginTool(command.pluginId, command.name)
+  if (!tool) {
+    return {
+      isError: true,
+      errorKind: 'not_found',
+      content: [{ type: 'text', text: `Tool ${command.name} of plugin ${command.pluginId} is not loaded. Next step: call tools/list for the tools that are available.` }],
+    }
+  }
+  const controller = new AbortController()
+  inFlightCalls.set(command.callId, controller)
+  const ctx: McpToolContext = {
+    displayId: overlayDisplayId(),
+    signal: controller.signal,
+    reportProgress: (progress, total, message) => {
+      window.openPenApi?.mcpSendToolProgress({
+        callId: command.callId,
+        progress,
+        ...(total !== undefined ? { total } : {}),
+        ...(message !== undefined ? { message } : {}),
+      })
+    },
+    log: pluginToolLogger(command.pluginId),
+  }
+  // The host strips `displayId` from the arguments (it picks the overlay). A plugin
+  // schema that declares `displayId` itself would then fail its own validation, so
+  // hand it the real value of this overlay.
+  const args = declaresDisplayId(tool) && isPlainRecord(command.args)
+    ? { ...command.args, displayId: ctx.displayId }
+    : command.args
+  try {
+    return await runMcpTool(tool, args, ctx)
+  } finally {
+    inFlightCalls.delete(command.callId)
+  }
+}
+
 export async function executeMcpCommand(command: McpCommand): Promise<McpCommandResult> {
   switch (command.type) {
+    case 'plugin-tool-call':
+      return runPluginToolCall(command)
+    case 'plugin-tool-cancel':
+      inFlightCalls.get(command.callId)?.abort()
+      return { ok: true }
     case 'ping':
       // Readiness probe from main: answered only once this bridge is subscribed
       // (after the modules loaded). Repaint whatever the store already holds.
@@ -229,4 +320,50 @@ export async function executeMcpCommand(command: McpCommand): Promise<McpCommand
 export function initMcpToolBridge(): () => void {
   const unsub = window.openPenApi?.onMcpCommand((command) => executeMcpCommand(command as unknown as McpCommand))
   return unsub ?? (() => {})
+}
+
+/** Title shown to people: a key in the plugin's own locales for the current language, else as written. */
+function resolveToolTitle(pluginId: string, title: string): string {
+  const key = `${sanitizeIdForI18n(pluginId)}.${title}`
+  return i18n.global.te(key) ? String(i18n.global.t(key)) : title
+}
+
+function toJsonSchema(schema: z.ZodType): Record<string, unknown> {
+  const converted = { ...(z.toJSONSchema(schema) as Record<string, unknown>) }
+  delete converted.$schema
+  return converted
+}
+
+/**
+ * Describe every plugin MCP tool this overlay's modules declare, as plain data
+ * for the main process (plugin code never runs there). Every overlay reports;
+ * main keeps the one from the primary display. Call once the module runtime has
+ * loaded all modules.
+ */
+export function reportPluginTools(): void {
+  const tools: McpPluginToolReport[] = []
+  const guides: Record<string, string> = {}
+  for (const { pluginId, tool } of pluginTools()) {
+    let inputJsonSchema: Record<string, unknown>
+    let outputJsonSchema: Record<string, unknown> | undefined
+    try {
+      inputJsonSchema = toJsonSchema(tool.inputSchema)
+      outputJsonSchema = tool.outputSchema ? toJsonSchema(tool.outputSchema) : undefined
+    } catch (err) {
+      pluginToolLogger(pluginId)('error', `tool "${tool.name}" was not reported: its schema cannot be converted to JSON Schema (${String(err)})`)
+      continue
+    }
+    tools.push({
+      pluginId,
+      name: tool.name,
+      ...(tool.title ? { title: resolveToolTitle(pluginId, tool.title) } : {}),
+      description: tool.description,
+      ...(tool.annotations ? { annotations: tool.annotations } : {}),
+      inputJsonSchema,
+      ...(outputJsonSchema ? { outputJsonSchema } : {}),
+    })
+    const guide = getModule(pluginId)?.mcpGuide
+    if (typeof guide === 'string' && guide !== '') guides[pluginId] = guide
+  }
+  window.openPenApi?.mcpReportPluginTools({ displayId: overlayDisplayId(), tools, guides })
 }

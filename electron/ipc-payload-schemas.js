@@ -77,6 +77,55 @@ const mcpSettings = z.object({
   enabledPlugins: z.array(id),
 });
 
+// ── MCP plugin tools ─────────────────────────────────────────────────────────
+
+/** Plugins are third-party code: bound every reported string and the tool count. */
+export const MAX_MCP_TOOLS = 200;
+const MAX_MCP_TEXT_LENGTH = 16 * 1024;
+
+const mcpToolAnnotations = z.object({
+  readOnly: z.boolean().optional(),
+  destructive: z.boolean().optional(),
+  idempotent: z.boolean().optional(),
+  openWorld: z.boolean().optional(),
+});
+
+/** One reported plugin tool (JSON Schema, not zod). Checked per item in `sanitizePluginReport`. */
+export const mcpPluginToolItemSchema = z.object({
+  pluginId: id,
+  name: z.string().min(1).max(MAX_ID_LENGTH),
+  title: z.string().max(MAX_ID_LENGTH).optional(),
+  description: z.string().max(MAX_MCP_TEXT_LENGTH),
+  inputJsonSchema: plainObject,
+  outputJsonSchema: plainObject.optional(),
+  annotations: mcpToolAnnotations.optional(),
+});
+
+/** One reported plugin guide. */
+export const mcpPluginGuideSchema = z.object({
+  pluginId: id,
+  guide: z.string().max(MAX_MCP_TEXT_LENGTH),
+});
+
+/**
+ * overlay → main: plugin tool descriptions plus per-plugin guides. Only the
+ * envelope is validated here; each tool and guide is checked on its own so one
+ * oversized item cannot discard the others (see `sanitizePluginReport`).
+ */
+export const mcpPluginToolsSchema = z.object({
+  displayId: z.number().int(),
+  tools: z.array(z.unknown()),
+  guides: z.record(z.string(), z.unknown()),
+});
+
+/** overlay → main: progress of one plugin tool call. */
+export const mcpToolProgressSchema = z.object({
+  callId: z.string().min(1).max(100),
+  progress: z.number().finite(),
+  total: z.number().finite().optional(),
+  message: z.string().max(MAX_MCP_TEXT_LENGTH).optional(),
+});
+
 /**
  * Value schema per user-settings key. Keys mirror `DEFAULT_SETTINGS`.
  */

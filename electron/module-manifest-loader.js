@@ -82,6 +82,15 @@ export function getInstalledPluginIds() {
   return manifests.map((m) => m.id)
 }
 
+/**
+ * One-line description of an installed plugin (its manifest `description`).
+ * @param {string} pluginId
+ * @returns {string | undefined}
+ */
+export function getInstalledPluginSummary(pluginId) {
+  return manifests.find((m) => m.id === pluginId)?.description
+}
+
 /** Initialise: scan disk and register IPC handlers. */
 export async function initModuleManifestLoader() {
   await scanPlugins()

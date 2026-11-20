@@ -1,13 +1,19 @@
 /**
- * Local MCP endpoint: stateless Streamable HTTP on loopback.
+ * Local MCP endpoint: Streamable HTTP on loopback.
  *
  * Request gate, in order: path -> Origin / Host -> bearer key -> method -> body.
  * - any `Origin` header is refused (a browser page must never reach this);
  * - `Host` must be 127.0.0.1:<port> or localhost:<port> (DNS-rebinding guard);
  * - the key is read from `getConfig()` on every request, so regenerating it
- *   kills the old one immediately.
- * A fresh SDK server + transport serves each request, so no session state
- * outlives it. Pure Node (no Electron imports) so it runs under vitest.
+ *   kills the old one immediately. The gate runs on every request, session or not.
+ *
+ * Sessions: an `initialize` request opens a session (id in the `mcp-session-id`
+ * header). Later requests that carry the id reach the same server, which is what
+ * lets the endpoint push `notifications/tools/list_changed` over the GET stream
+ * and receive cancellations. A request without a session id (a client that
+ * ignores the header) is still served by a throwaway server, as before.
+ * Sessions are capped and all closed when the endpoint stops.
+ * Pure Node (no Electron imports) so it runs under vitest.
  */
 
 import http from 'node:http';
@@ -15,11 +21,13 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema, isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { MCP_HOST, MCP_PATH, MCP_MAX_BODY_BYTES } from '../../shared/mcp-constants.js';
-import { filterTools, SERVER_INSTRUCTIONS } from './tools.js';
+import { filterTools, SERVER_INSTRUCTIONS, PLUGIN_INSTRUCTIONS } from './tools.js';
 
 const WARN_INTERVAL_MS = 60_000;
+/** Open sessions kept at once; the least recently used one is closed past this. */
+const MAX_SESSIONS = 32;
 
 function safeEqual(a, b) {
   const ba = Buffer.from(String(a));
@@ -33,16 +41,29 @@ function toInputJsonSchema(schema) {
   return { ...rest, type: 'object' };
 }
 
+function describeIssues(error) {
+  return error.issues.map((i) => `${i.path.join('.') || 'arguments'}: ${i.message}`).join('; ');
+}
+
+/**
+ * A plugin tool carries a JSON Schema (its zod schema lives in the overlay, which
+ * validates the arguments) and a `handler(args, ctx)` that resolves to a ready
+ * MCP result. Built-in tools carry a zod schema and are validated here.
+ */
+const isPluginTool = (tool) => typeof tool.pluginId === 'string';
+
 /**
  * @param {{
  *   port: number,
  *   getConfig: () => { apiKey: string, readOnly?: boolean, exposeAll?: boolean, enabledPlugins?: string[] },
  *   getTools: () => Array<any>,
+ *   getDisabledModules?: () => string[],
+ *   findDisabledPluginForTool?: (toolName: string) => string | undefined,
  *   logger?: { warn: Function, info: Function, error: Function },
  *   serverVersion?: string,
  * }} opts
  */
-export function createMcpHttpServer({ port, getConfig, getTools, logger, serverVersion = '0.0.0' }) {
+export function createMcpHttpServer({ port, getConfig, getTools, getDisabledModules, findDisabledPluginForTool, logger, serverVersion = '0.0.0' }) {
   /** @type {http.Server | null} */
   let httpServer = null;
   /** @type {{ running: boolean, url: string | null, error: null | 'port_in_use' | 'failed', message?: string }} */
@@ -50,6 +71,8 @@ export function createMcpHttpServer({ port, getConfig, getTools, logger, serverV
   let queue = Promise.resolve();
   /** @type {Map<string, number>} */
   const lastWarn = new Map();
+  /** @type {Map<string, { server: Server, transport: StreamableHTTPServerTransport, lastUsed: number }>} */
+  const sessions = new Map();
 
   function warnThrottled(reason, detail) {
     const now = Date.now();
@@ -82,36 +105,99 @@ export function createMcpHttpServer({ port, getConfig, getTools, logger, serverV
     });
   }
 
-  function buildServer(config) {
+  /** What a client may see right now: the saved settings plus the plugins the user disabled. */
+  const currentView = () => ({ ...getConfig(), disabledModules: getDisabledModules?.() ?? [] });
+
+  /** One line per plugin tool call: plugin, local tool name, duration, outcome. */
+  function logPluginCall(tool, startedAt, result) {
+    const ms = Math.round(Date.now() - startedAt);
+    const outcome = result?.isError ? `error:${result.errorKind ?? 'internal'}` : 'ok';
+    const line = `[mcp] plugin-tool ${tool.pluginId} ${tool.localName} ${ms}ms ${outcome}`;
+    if (!result?.isError) logger?.info?.(line);
+    else if (result.errorKind === 'internal' || result.errorKind === undefined) logger?.error?.(line);
+    else logger?.warn?.(line);
+  }
+
+  async function callPluginTool(tool, rawArgs, extra) {
+    const startedAt = Date.now();
+    const progressToken = extra?._meta?.progressToken;
+    const ctx = {
+      signal: extra?.signal,
+      reportProgress(progress, total, message) {
+        // A request without a progressToken did not ask for progress: drop it.
+        if (progressToken === undefined || !extra?.sendNotification) return;
+        void extra.sendNotification({
+          method: 'notifications/progress',
+          params: { progressToken, progress, ...(total !== undefined ? { total } : {}), ...(message ? { message } : {}) },
+        }).catch(() => {});
+      },
+    };
+    let result;
+    try {
+      result = await tool.handler(rawArgs ?? {}, ctx);
+    } catch (err) {
+      logger?.error?.('[mcp] plugin tool handler threw:', err);
+      result = {
+        isError: true,
+        errorKind: 'unavailable',
+        content: [{ type: 'text', text: `${tool.name} is temporarily unavailable. Next step: retry in a moment.` }],
+      };
+    }
+    logPluginCall(tool, startedAt, result);
+    return result;
+  }
+
+  function buildServer() {
     const server = new Server(
       { name: 'openpen', version: serverVersion },
-      { capabilities: { tools: {} }, instructions: SERVER_INSTRUCTIONS },
+      { capabilities: { tools: { listChanged: true } }, instructions: `${SERVER_INSTRUCTIONS} ${PLUGIN_INSTRUCTIONS}` },
     );
-    const exposed = () => filterTools(getTools(), config);
+    const exposed = () => filterTools(getTools(), currentView());
 
     server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: exposed().map((t) => ({
-        name: t.name,
-        description: t.description,
-        inputSchema: toInputJsonSchema(t.inputSchema),
-      })),
+      tools: exposed().map((t) => {
+        if (!isPluginTool(t)) {
+          return { name: t.name, description: t.description, inputSchema: toInputJsonSchema(t.inputSchema) };
+        }
+        return {
+          name: t.name,
+          ...(t.title ? { title: t.title } : {}),
+          description: t.description,
+          inputSchema: t.inputJsonSchema,
+          ...(t.outputJsonSchema ? { outputSchema: t.outputJsonSchema } : {}),
+          annotations: t.annotations,
+        };
+      }),
     }));
 
-    server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       const { name, arguments: rawArgs } = request.params;
-      const tool = exposed().find((t) => t.name === name);
+      const view = currentView();
+      const tool = filterTools(getTools(), view).find((t) => t.name === name);
       if (!tool) {
-        const hint = config.readOnly
+        const known = getTools().find((t) => t.name === name);
+        // A tool registered by a plugin that is now disabled, or a name that only the
+        // prefix identifies (the plugin was disabled before the app started).
+        const disabledOwner = known?.pluginId && view.disabledModules.includes(known.pluginId)
+          ? known.pluginId
+          : findDisabledPluginForTool?.(name);
+        if (disabledOwner) {
+          return {
+            isError: true,
+            content: [{ type: 'text', text: `Plugin is disabled: ${disabledOwner} is turned off in OpenPen, so ${name} cannot run. Next step: call tools/list for the tools that are available.` }],
+          };
+        }
+        const hint = view.readOnly
           ? 'OpenPen is in read-only mode, so only read tools are available. Call tools/list to see them.'
           : 'Call tools/list to see the available tools.';
         return { isError: true, content: [{ type: 'text', text: `Tool "${name}" is not available. ${hint}` }] };
       }
+      if (isPluginTool(tool)) return callPluginTool(tool, rawArgs, extra);
       const parsed = tool.inputSchema.safeParse(rawArgs ?? {});
       if (!parsed.success) {
-        const detail = parsed.error.issues.map((i) => `${i.path.join('.') || 'arguments'}: ${i.message}`).join('; ');
         return {
           isError: true,
-          content: [{ type: 'text', text: `Invalid arguments for ${name}: ${detail}. Call openpen__get_guide for the expected arguments.` }],
+          content: [{ type: 'text', text: `Invalid arguments for ${name}: ${describeIssues(parsed.error)}. Call openpen__get_guide for the expected arguments.` }],
         };
       }
       try {
@@ -122,6 +208,46 @@ export function createMcpHttpServer({ port, getConfig, getTools, logger, serverV
       }
     });
     return server;
+  }
+
+  function closeSession(id) {
+    const entry = sessions.get(id);
+    if (!entry) return;
+    sessions.delete(id);
+    void entry.transport.close().catch(() => {});
+    void entry.server.close().catch(() => {});
+  }
+
+  function openSession() {
+    const server = buildServer();
+    /** @type {{ server: Server, transport: StreamableHTTPServerTransport, lastUsed: number }} */
+    const entry = { server, transport: /** @type {any} */ (null), lastUsed: Date.now() };
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => crypto.randomUUID(),
+      onsessioninitialized: (id) => {
+        sessions.set(id, entry);
+        while (sessions.size > MAX_SESSIONS) {
+          let oldest = null;
+          for (const [sid, e] of sessions) {
+            if (sid !== id && (oldest === null || e.lastUsed < sessions.get(oldest).lastUsed)) oldest = sid;
+          }
+          if (oldest === null) break;
+          closeSession(oldest);
+        }
+      },
+    });
+    entry.transport = transport;
+    server.onclose = () => {
+      if (transport.sessionId) sessions.delete(transport.sessionId);
+    };
+    return { server, transport, entry };
+  }
+
+  /** Tell every open session the tool list changed (the clients that listen re-fetch it). */
+  function notifyToolListChanged() {
+    for (const { server } of sessions.values()) {
+      void server.sendToolListChanged().catch(() => {});
+    }
   }
 
   async function onRequest(req, res) {
@@ -148,7 +274,41 @@ export function createMcpHttpServer({ port, getConfig, getTools, logger, serverV
       return reply(res, 401, 'Missing or wrong API key');
     }
 
-    if (req.method !== 'POST') {
+    const method = req.method ?? '';
+    if (method !== 'POST' && method !== 'GET' && method !== 'DELETE') {
+      res.setHeader('allow', 'POST, GET, DELETE');
+      return reply(res, 405, 'Method not allowed');
+    }
+
+    // Requests that belong to a session (the event stream, termination and every
+    // call after initialize) go to that session's transport.
+    const sessionHeader = req.headers['mcp-session-id'];
+    const sessionId = Array.isArray(sessionHeader) ? sessionHeader[0] : sessionHeader;
+    if (sessionId !== undefined) {
+      const entry = sessions.get(sessionId);
+      if (!entry) return reply(res, 404, 'Unknown or expired session; initialize again');
+      entry.lastUsed = Date.now();
+      try {
+        if (method === 'POST') {
+          let body;
+          try {
+            body = JSON.parse(await readBody(req));
+          } catch (err) {
+            if (err?.code === 'TOO_LARGE') return reply(res, 413, 'Request body too large');
+            return reply(res, 400, 'Invalid JSON');
+          }
+          await entry.transport.handleRequest(req, res, body);
+        } else {
+          await entry.transport.handleRequest(req, res);
+        }
+      } catch (err) {
+        logger?.error?.('[mcp] session request failed:', err);
+        reply(res, 500, 'Internal error');
+      }
+      return;
+    }
+
+    if (method !== 'POST') {
       res.setHeader('allow', 'POST');
       return reply(res, 405, 'Method not allowed');
     }
@@ -161,7 +321,20 @@ export function createMcpHttpServer({ port, getConfig, getTools, logger, serverV
       return reply(res, 400, 'Invalid JSON');
     }
 
-    const server = buildServer(config);
+    // `initialize` opens a session; anything else without one is served statelessly.
+    if (isInitializeRequest(body)) {
+      const { server, transport } = openSession();
+      try {
+        await server.connect(transport);
+        await transport.handleRequest(req, res, body);
+      } catch (err) {
+        logger?.error?.('[mcp] initialize failed:', err);
+        reply(res, 500, 'Internal error');
+      }
+      return;
+    }
+
+    const server = buildServer();
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     res.on('close', () => {
       void transport.close();
@@ -206,6 +379,7 @@ export function createMcpHttpServer({ port, getConfig, getTools, logger, serverV
     const srv = httpServer;
     httpServer = null;
     currentStatus = { running: false, url: null, error: null };
+    for (const id of [...sessions.keys()]) closeSession(id);
     if (!srv) return Promise.resolve();
     return new Promise((resolve) => {
       srv.close(() => resolve());
@@ -225,6 +399,8 @@ export function createMcpHttpServer({ port, getConfig, getTools, logger, serverV
     start: () => enqueue(doStart),
     stop: () => enqueue(doStop),
     status: () => ({ ...currentStatus }),
+    notifyToolListChanged,
+    sessionCount: () => sessions.size,
     boundAddress: () => (httpServer ? /** @type {import('node:net').AddressInfo} */ (httpServer.address()).address : null),
   };
 }

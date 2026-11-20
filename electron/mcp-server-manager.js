@@ -18,7 +18,9 @@ import { z } from 'zod';
 import { MCP, OVERLAY } from './ipc-channels.js';
 import { log } from './logger.js';
 import { onValidated } from './ipc-validation.js';
-import { getSetting, updateSettings, setMcpSettingsApplier } from './settings-store.js';
+import { getSetting, updateSettings, setMcpSettingsApplier, onSettingsChanged } from './settings-store.js';
+import { mcpPluginToolsSchema, mcpToolProgressSchema } from './ipc-payload-schemas.js';
+import { getInstalledPluginSummary, getInstalledPluginIds } from './module-manifest-loader.js';
 import {
   applyToolConfigFromMain,
   getActiveToolConfig,
@@ -28,12 +30,17 @@ import {
 } from './window-manager.js';
 import { MCP_PORT } from '../shared/mcp-constants.js';
 import { createMcpHttpServer } from './mcp/http-server.js';
-import { createBuiltinTools } from './mcp/tools.js';
+import { createBuiltinTools, filterTools } from './mcp/tools.js';
+import { buildPluginTools, sanitizePluginReport, pluginToolPrefix } from './mcp/plugin-tools.js';
 import { generateApiKey } from './mcp/api-key.js';
 
 /** How long a command may wait for the overlay (including its creation on Wayland). */
 const OVERLAY_READY_TIMEOUT_MS = 8000;
 const COMMAND_TIMEOUT_MS = 10_000;
+/** A plugin tool may run for a while (it can draw, wait for the user, ...); the AI app can cancel earlier. */
+const PLUGIN_TOOL_TIMEOUT_MS = 120_000;
+/** Delivering a cancellation to the overlay. */
+const CANCEL_TIMEOUT_MS = 2000;
 const POLL_MS = 50;
 /** One readiness ping: a renderer that has not subscribed yet never answers. */
 const PING_TIMEOUT_MS = 300;
@@ -119,8 +126,9 @@ export function initMcpServerManager({ captureDisplayImage }) {
    * command bridge is subscribed and the canvas and tool renderers are set up.
    * Rejects at `deadline` so the tool reports an error instead of hanging.
    */
-  async function waitForOverlayReady(targetId, deadline) {
+  async function waitForOverlayReady(targetId, deadline, signal) {
     for (;;) {
+      signal?.throwIfAborted();
       const win = getOverlayWindowForDisplay(targetId);
       if (win && !win.isDestroyed() && !win.webContents.isLoading()) {
         const wc = win.webContents;
@@ -131,7 +139,7 @@ export function initMcpServerManager({ captureDisplayImage }) {
           wc.once('did-start-loading', () => readyOverlays.delete(wc));
           return win;
         } catch {
-          // Not subscribed yet; try again until the deadline.
+          // Not subscribed yet (or the call was cancelled meanwhile); try again until the deadline.
         }
       } else {
         await sleep(POLL_MS);
@@ -207,20 +215,145 @@ export function initMcpServerManager({ captureDisplayImage }) {
     },
   };
 
-  const tools = createBuiltinTools(host);
+  // ── Plugin tools ───────────────────────────────────────────────────────────
+  // Plugin code only runs in overlay renderers. The primary display's overlay
+  // reports what its modules declare; main names, validates and filters them.
+  const builtinTools = createBuiltinTools({
+    ...host,
+    // Exposed plugins for get_guide: id, manifest summary, own guide, full tool names.
+    getPluginGuides: () => exposedPlugins(),
+  });
+  const builtinNames = builtinTools.map((t) => t.name);
+
+  /** @type {{ tools: any[], issues: Record<string, any[]>, guides: Record<string, string> }} */
+  let pluginState = { tools: [], issues: {}, guides: {} };
+  /** Calls in flight: where they run (for cancellation) and how to forward their progress. */
+  /** @type {Map<string, { sender: Electron.WebContents, onProgress: (p: number, total?: number, message?: string) => void }>} */
+  const pluginCalls = new Map();
+
+  const disabledModules = () => getSetting('disabledModules') ?? [];
+  const view = () => ({ ...current, disabledModules: disabledModules() });
+  const allTools = () => [...builtinTools, ...pluginState.tools];
+
+  function exposedPlugins() {
+    const byPlugin = new Map();
+    for (const tool of filterTools(pluginState.tools, view())) {
+      const list = byPlugin.get(tool.pluginId) ?? [];
+      list.push(tool.name);
+      byPlugin.set(tool.pluginId, list);
+    }
+    return [...byPlugin].map(([pluginId, toolNames]) => ({
+      pluginId,
+      summary: getInstalledPluginSummary(pluginId),
+      guide: pluginState.guides[pluginId] || undefined,
+      tools: toolNames,
+    }));
+  }
+
+  /** Names a client sees now; compared to the last published list to decide on `list_changed`. */
+  let lastListSignature = null;
+  function refreshExposure() {
+    const signature = JSON.stringify(filterTools(allTools(), view()).map((t) => t.name).sort());
+    if (lastListSignature !== null && signature !== lastListSignature) server.notifyToolListChanged();
+    lastListSignature = signature;
+  }
+
+  function failResult(kind, message, nextStep) {
+    return { isError: true, errorKind: kind, content: [{ type: 'text', text: `${message} Next step: ${nextStep}` }] };
+  }
+
+  function cancelledResult(tool) {
+    return failResult('unavailable', `The call to ${tool.name} was cancelled before it started.`, 'call it again if it is still needed.');
+  }
+
+  /**
+   * The plugin whose tool prefix `name` carries, when that plugin is installed
+   * and disabled. Works without a registration record: a plugin disabled before
+   * the app started never loaded, so it never reported its tools.
+   */
+  function disabledPluginForTool(name) {
+    const disabled = disabledModules();
+    return getInstalledPluginIds().find((pluginId) => disabled.includes(pluginId) && name.startsWith(`${pluginToolPrefix(pluginId)}__`));
+  }
+
+  /** Run one plugin tool call on the overlay of the target display. */
+  async function runPluginTool(tool, rawArgs, ctx) {
+    const { displayId: requested, ...pluginArgs } = rawArgs ?? {};
+    if (requested !== undefined && !Number.isInteger(requested)) {
+      return failResult('invalid_params', 'displayId must be an integer.', 'resend the call with a displayId from openpen__get_state, or omit it.');
+    }
+    if (requested !== undefined && !screen.getAllDisplays().some((d) => d.id === requested)) {
+      return failResult('invalid_params', `Unknown displayId ${requested}.`, 'call openpen__get_state to see the display ids, then retry.');
+    }
+    const targetId = requested ?? cursorDisplayId();
+    let wc;
+    try {
+      wc = (await waitForOverlayReady(targetId, Date.now() + OVERLAY_READY_TIMEOUT_MS, ctx.signal)).webContents;
+    } catch (err) {
+      if (ctx.signal?.aborted) return cancelledResult(tool);
+      return failResult('unavailable', `The overlay of display ${targetId} is not ready (${err?.message ?? err}).`, 'retry in a moment.');
+    }
+    // Cancelled while waiting for the overlay: never dispatch, so a cancel can
+    // not reach the overlay before the call it belongs to.
+    if (ctx.signal?.aborted) return cancelledResult(tool);
+    const callId = crypto.randomUUID();
+    pluginCalls.set(callId, { sender: wc, onProgress: (p, total, message) => ctx.reportProgress?.(p, total, message) });
+    const cancel = () => {
+      // Best effort: the overlay aborts the handler's signal; the handler decides how to stop.
+      sendOverlayCommand(wc, { type: 'plugin-tool-cancel', callId }, CANCEL_TIMEOUT_MS).catch(() => {});
+    };
+    ctx.signal?.addEventListener('abort', cancel, { once: true });
+    try {
+      const result = await sendOverlayCommand(
+        wc,
+        { type: 'plugin-tool-call', callId, pluginId: tool.pluginId, name: tool.localName, args: pluginArgs },
+        PLUGIN_TOOL_TIMEOUT_MS,
+      );
+      if (!result || typeof result !== 'object' || !Array.isArray(result.content)) {
+        log.error(`[mcp] plugin ${tool.pluginId} returned a malformed result for ${tool.localName}`);
+        return failResult('internal', 'The tool failed unexpectedly.', 'retry once; if it keeps failing, tell the user.');
+      }
+      return result;
+    } catch (err) {
+      return failResult('unavailable', `${tool.name} could not run (${err?.message ?? err}).`, 'retry in a moment.');
+    } finally {
+      pluginCalls.delete(callId);
+      ctx.signal?.removeEventListener('abort', cancel);
+    }
+  }
+
+  /** Replace the registered plugin tools with what the primary overlay reported. */
+  function registerPluginTools(reports, guides) {
+    const { tools, issues } = buildPluginTools(reports, { builtinNames, logger: log });
+    for (const tool of tools) {
+      tool.handler = (args, ctx) => runPluginTool(tool, args, ctx);
+    }
+    for (const [pluginId, list] of Object.entries(issues)) {
+      for (const issue of list) {
+        log.warn(`[mcp] plugin tool not exposed: ${pluginId} ${issue.tool} (${issue.reason})`);
+      }
+    }
+    pluginState = { tools, issues, guides };
+    refreshExposure();
+    broadcastStatus();
+  }
 
   const server = createMcpHttpServer({
     port,
     getConfig: () => current,
-    getTools: () => tools,
+    getTools: allTools,
+    getDisabledModules: disabledModules,
+    findDisabledPluginForTool: disabledPluginForTool,
     logger: log,
     serverVersion: app.getVersion(),
   });
+  // Seed the list signature so the first plugin registration counts as a change.
+  refreshExposure();
 
   /** Settings the user tried to save with the switch on while starting failed; Retry reuses them. */
   let pendingEnable = null;
 
-  const fullStatus = () => ({ ...server.status(), pendingEnable: pendingEnable !== null });
+  const fullStatus = () => ({ ...server.status(), pendingEnable: pendingEnable !== null, pluginToolIssues: pluginState.issues });
 
   function broadcastStatus() {
     const status = fullStatus();
@@ -267,6 +400,7 @@ export function initMcpServerManager({ captureDisplayImage }) {
         await server.stop();
       }
       if (effective.enabled) pendingEnable = null;
+      refreshExposure();
       broadcastStatus();
       return effective;
     });
@@ -308,6 +442,25 @@ export function initMcpServerManager({ captureDisplayImage }) {
     clearTimeout(entry.timer);
     if (payload.ok) entry.resolve(payload.result ?? null);
     else entry.reject(new Error(payload.error ?? 'the overlay reported an error'));
+  });
+
+  // Disabling a plugin (or re-enabling it) changes the tool list.
+  onSettingsChanged(() => refreshExposure());
+
+  // The primary display's overlay is the one source of plugin tools; reports from
+  // other overlays are ignored, and only the window that owns the display may report.
+  onValidated(ipcMain, MCP.PLUGIN_TOOLS, mcpPluginToolsSchema, (event, payload) => {
+    if (payload.displayId !== screen.getPrimaryDisplay().id) return;
+    const overlay = getOverlayWindowForDisplay(payload.displayId);
+    if (!overlay || overlay.isDestroyed() || overlay.webContents !== event.sender) return;
+    const { tools, guides } = sanitizePluginReport(payload, { logger: log });
+    registerPluginTools(tools, guides);
+  });
+
+  onValidated(ipcMain, MCP.TOOL_PROGRESS, mcpToolProgressSchema, (event, payload) => {
+    const call = pluginCalls.get(payload.callId);
+    if (!call || call.sender !== event.sender) return;
+    call.onProgress(payload.progress, payload.total, payload.message);
   });
 
   app.on('will-quit', () => { void server.stop(); });

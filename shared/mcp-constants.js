@@ -10,3 +10,9 @@ export const MCP_PATH = '/mcp'
 /** Request body cap; larger bodies get 413. */
 export const MCP_MAX_BODY_BYTES = 1048576
 export const MCP_TOOL_PREFIX = 'openpen__'
+/** Full plugin tool names (`<prefix>__<tool>`) may be at most this long. Mirrors `MCP_TOOL_NAME_MAX` in `@openpen/module-api` (main never imports the SDK). */
+export const MCP_PLUGIN_TOOL_NAME_MAX = 128
+/** Characters MCP clients accept in a tool name. Mirrors `validateMcpToolName` in `@openpen/module-api`. */
+export const MCP_PLUGIN_TOOL_NAME_RE = /^[A-Za-z0-9_.-]+$/
+/** Separator between a plugin's prefix and its tool name. */
+export const MCP_PLUGIN_TOOL_SEPARATOR = '__'

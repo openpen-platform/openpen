@@ -8,7 +8,7 @@ import OverlayView from './views/OverlayView.vue';
 import NotificationLayer from './components/NotificationLayer.vue';
 import { initNotificationService, cleanupNotificationService } from './services/notification-service';
 import { notifyDrawingMode } from './services/drawing-mode-notify';
-import { initMcpToolBridge } from './services/mcp-tool-bridge';
+import { initMcpToolBridge, reportPluginTools } from './services/mcp-tool-bridge';
 import SettingsView from './views/SettingsView.vue';
 import { setLanguage } from './i18n/index';
 import { initModuleRuntime, cleanupModuleRuntime, usePluginConflicts } from './core/runtime/bootstrap';
@@ -133,7 +133,11 @@ onMounted(async () => {
   // Agent commands from the MCP server land on this display's overlay. Subscribe only
   // now: main holds commands until the bridge answers, and the tool renderers (shape,
   // highlighter...) are registered by the module runtime.
-  if (isOverlayWindow) unsubMcp = initMcpToolBridge();
+  if (isOverlayWindow) {
+    unsubMcp = initMcpToolBridge();
+    // Tell main which plugin MCP tools the loaded modules declare (once per overlay load).
+    reportPluginTools();
+  }
 });
 
 onUnmounted(() => {

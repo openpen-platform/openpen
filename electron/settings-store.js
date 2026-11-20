@@ -899,6 +899,27 @@ function broadcastSettings() {
     if (win.isDestroyed()) return;
     safeSend(win, SETTINGS.UPDATED, getSettingsFor(win.webContents));
   });
+  for (const listener of [...settingsListeners]) {
+    try {
+      listener(cache);
+    } catch (err) {
+      log.warn('[settings] listener threw:', err?.message ?? err);
+    }
+  }
+}
+
+/** @type {Set<(settings: typeof DEFAULT_SETTINGS) => void>} */
+const settingsListeners = new Set();
+
+/**
+ * Main-process subscribers (for example the MCP endpoint, which re-evaluates
+ * its tool list when a plugin is disabled). Called after every settings
+ * broadcast. Returns an unsubscribe function.
+ * @param {(settings: typeof DEFAULT_SETTINGS) => void} listener
+ */
+export function onSettingsChanged(listener) {
+  settingsListeners.add(listener);
+  return () => settingsListeners.delete(listener);
 }
 
 /**

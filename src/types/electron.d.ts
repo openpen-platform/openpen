@@ -158,6 +158,27 @@ interface McpServerStatus {
   message?: string
   /** The user turned the switch on but starting failed; `enabled` was not saved. */
   pendingEnable?: boolean
+  /** Plugin tools that are not exposed, per plugin id (shown in the settings plugin row). */
+  pluginToolIssues?: Record<string, McpPluginToolIssue[]>
+}
+
+interface McpPluginToolIssue {
+  /** Tool name inside the plugin (no prefix). */
+  tool: string
+  /** Full name the tool would have had, prefix included. */
+  fullName: string
+  reason: 'invalid_chars' | 'too_long' | 'duplicate'
+}
+
+/** One plugin tool as the overlay reports it to main (JSON Schema, not zod). */
+interface McpPluginToolReport {
+  pluginId: string
+  name: string
+  title?: string
+  description: string
+  inputJsonSchema: Record<string, unknown>
+  outputJsonSchema?: Record<string, unknown>
+  annotations?: { readOnly?: boolean; destructive?: boolean; idempotent?: boolean; openWorld?: boolean }
 }
 
 interface OpenPenApi {
@@ -328,6 +349,10 @@ interface OpenPenApi {
   onMcpStatusChanged(cb: (status: McpServerStatus) => void): () => void
   /** Overlay only. The resolved value (or a thrown error) is reported back to the MCP tool call. */
   onMcpCommand(handler: (command: Record<string, unknown>) => unknown | Promise<unknown>): () => void
+  /** Overlay only. Main uses the report of the primary display's overlay and ignores the others. */
+  mcpReportPluginTools(payload: { displayId: number; tools: McpPluginToolReport[]; guides: Record<string, string> }): void
+  /** Overlay only. Progress of a running plugin tool call, forwarded to the AI app. */
+  mcpSendToolProgress(payload: { callId: string; progress: number; total?: number; message?: string }): void
 }
 
 interface Window {

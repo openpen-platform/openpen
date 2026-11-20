@@ -433,6 +433,18 @@ contextBridge.exposeInMainWorld('openPenApi', {
     return () => ipcRenderer.removeListener('mcp:command', listener);
   },
 
+  /**
+   * Overlay only: report the plugin MCP tools and guides this overlay's modules
+   * declare. Main uses the report of the primary display's overlay only.
+   * @param {{ displayId: number, tools: object[], guides: Record<string, string> }} payload
+   */
+  mcpReportPluginTools: (payload) => ipcRenderer.send('mcp:plugin-tools', payload),
+  /**
+   * Overlay only: progress of a running plugin tool call, forwarded to the AI app.
+   * @param {{ callId: string, progress: number, total?: number, message?: string }} payload
+   */
+  mcpSendToolProgress: (payload) => ipcRenderer.send('mcp:tool-progress', payload),
+
   // ── Audit log (read-only) ────────────────────────────────────────────
   /**
    * Fetch structured audit-log entries from the main-process ring buffer.

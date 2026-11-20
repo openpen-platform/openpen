@@ -83,6 +83,10 @@ export const MCP = {
   COMMAND: 'mcp:command',
   /** overlay → main (send): outcome of a command. Payload `{ requestId, ok, result?, error? }`. */
   COMMAND_RESULT: 'mcp:command-result',
+  /** overlay → main (send): the plugin tools and guides this overlay's modules declare. Payload `{ displayId, tools, guides }`. */
+  PLUGIN_TOOLS: 'mcp:plugin-tools',
+  /** overlay → main (send): progress of a running plugin tool call. Payload `{ callId, progress, total?, message? }`. */
+  TOOL_PROGRESS: 'mcp:tool-progress',
 }
 
 /** User preferences. */

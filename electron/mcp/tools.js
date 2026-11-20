@@ -29,6 +29,10 @@ export const SERVER_INSTRUCTIONS =
   'The usual loop is to take a screenshot, draw, then take another screenshot to check the result. ' +
   'The guide covers the coordinate system, colour formats, the limits and best use of each tool, a worked example and common mistakes.';
 
+/** Appended to the instructions the endpoint serves: how plugin tools are named and where their usage is read. */
+export const PLUGIN_INSTRUCTIONS =
+  `Plugin tools are named <plugin>__<tool>; read how to use one with ${P}get_guide and its "plugin" parameter.`;
+
 /** Built-in drawing tool ids, used when the host does not report its own list. */
 export const BUILTIN_DRAWING_TOOL_IDS = Object.freeze(['freehand', 'line', 'shape', 'highlighter-pen', 'eraser', 'stroke-eraser']);
 
@@ -148,7 +152,9 @@ const point = z.object({ x: z.number(), y: z.number() });
 // validate and answer with a message that names the valid range and the next
 // step, which the protocol-level "invalid params" error cannot do.
 const SCHEMAS = {
-  get_guide: z.object({}),
+  get_guide: z.object({
+    plugin: z.string().optional().describe('Id of a plugin from the Plugins index of this guide (for example "@scope/name"). Returns only that plugin\'s usage guide. Omit it for the general guide.'),
+  }),
   get_state: z.object({}),
   set_drawing_mode: z.object({ enabled: z.boolean().optional() }),
   set_tool: z.object({ tool: z.string().optional() }),
@@ -171,6 +177,15 @@ const SCHEMAS = {
   screenshot: z.object({ displayId }),
 };
 
+/**
+ * Plugin section of the guide: id and one-line summary of each exposed plugin,
+ * never the plugins' own guide text (that is read per plugin on demand).
+ */
+function pluginIndex(exposed) {
+  const lines = exposed.map((p) => `- ${p.pluginId}${p.summary ? `: ${p.summary}` : ''}`);
+  return `Plugins\nThese plugins add tools named <plugin>__<tool>. Call ${P}get_guide with "plugin" set to one of these ids to read how to use its tools.\n${lines.join('\n')}`;
+}
+
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
 
 /**
@@ -180,6 +195,7 @@ const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
  *   setTool: (id: string) => void,
  *   runOnOverlay: (displayId: number | undefined, command: object) => Promise<any>,
  *   screenshot: (displayId: number | undefined) => Promise<{ data: string, mimeType: string, width: number, height: number, displayId: number }>,
+ *   getPluginGuides?: () => Array<{ pluginId: string, summary?: string, guide?: string, tools: string[] }>,
  * }} host
  */
 export function createBuiltinTools(host) {
@@ -305,8 +321,19 @@ export function createBuiltinTools(host) {
   }
 
   const defs = [
-    ['get_guide', 'Returns the OpenPen usage guide as text. Suited to reading once before the first drawing, or whenever a limit or format is unclear. Not for inspecting the live screen; it never changes anything. Takes no parameters; the guide covers coordinates, colour formats, each tool and a worked example.', true,
-      async () => text(GUIDE_TEXT)],
+    ['get_guide', 'Returns the OpenPen usage guide as text. Suited to reading once before the first drawing, or whenever a limit or format is unclear. Not for inspecting the live screen; it never changes anything. Without arguments the guide covers coordinates, colour formats, each tool and a worked example, and, when add-ons that provide further tools are installed, ends with an index of them, each with a one-line summary. With the optional argument it returns only the usage guide of that one add-on.', true,
+      async ({ plugin } = {}) => {
+        const exposed = host.getPluginGuides?.() ?? [];
+        if (plugin === undefined) return text(exposed.length ? `${GUIDE_TEXT}\n\n${pluginIndex(exposed)}` : GUIDE_TEXT);
+        const entry = exposed.find((p) => p.pluginId === plugin);
+        if (!entry) {
+          return fail(`Plugin ${plugin} is not exposed. Next step: call ${P}get_guide without "plugin" to list the exposed plugins.`);
+        }
+        if (!entry.guide) {
+          return fail(`Plugin ${plugin} provides no guide. Next step: rely on the tool descriptions in the tool list, or call ${P}get_guide without "plugin" for the plugin summary.`);
+        }
+        return text(`Guide from plugin ${plugin} (tools: ${entry.tools.join(', ')})\n\n${entry.guide}`);
+      }],
     ['get_state', 'Reports the current drawing mode, the active tool, the tool ids that can be selected and the connected displays with their id, pixel size, scale factor and whether the mouse cursor is on them. Suited to finding a display id before drawing on a multi-monitor setup, or to checking whether drawing mode is on. It does not list annotations and changes nothing. Takes no parameters.', true,
       async () => json(host.getState())],
     ['set_drawing_mode', 'Turns OpenPen drawing mode on or off. Suited to hiding the annotations from the screen or showing them again. Turning it off hides every annotation (they stay saved and reappear when it is turned on); while it is on, the overlay takes the mouse, so the user cannot click through to the apps below. The draw tools switch it on by themselves. It does not draw anything or change the selected tool. Parameter: enabled, true or false.', false, async ({ enabled }) => {
@@ -374,14 +401,16 @@ export function createBuiltinTools(host) {
 /**
  * Pick the tools a client may see. Built-in tools are always eligible; a tool
  * that carries a `pluginId` is dropped unless every plugin is exposed or its id
- * is listed. Read-only mode keeps only tools that cannot change the canvas.
+ * is listed, and always when the plugin is disabled. Read-only mode keeps only
+ * tools that cannot change the canvas.
  *
  * @param {Array<{ name: string, readOnly?: boolean, pluginId?: string }>} tools
- * @param {{ readOnly?: boolean, exposeAll?: boolean, enabledPlugins?: string[] }} config
+ * @param {{ readOnly?: boolean, exposeAll?: boolean, enabledPlugins?: string[], disabledModules?: string[] }} config
  */
 export function filterTools(tools, config = {}) {
-  const { readOnly = false, exposeAll = true, enabledPlugins = [] } = config;
+  const { readOnly = false, exposeAll = true, enabledPlugins = [], disabledModules = [] } = config;
   return tools.filter((t) => {
+    if (t.pluginId && disabledModules.includes(t.pluginId)) return false;
     if (readOnly && !t.readOnly) return false;
     if (t.pluginId && !exposeAll && !enabledPlugins.includes(t.pluginId)) return false;
     return true;
