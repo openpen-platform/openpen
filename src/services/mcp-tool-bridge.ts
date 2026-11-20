@@ -15,6 +15,7 @@ import { runMcpTool, sanitizeIdForI18n } from '@openpen/module-api'
 import type { McpCallResult, McpToolContext, McpToolDefinition, Point, Stroke } from '@openpen/module-api'
 import { i18n } from '../i18n/index'
 import { getModule } from '../core/runtime/module-registry'
+import { PAINT_BRUSH_TOOL_ID, PAINT_FILL_TOOL_ID } from './paint-render'
 import { addStroke, clearAll, getAllStrokes, pushCommand, purgeStroke, undo as storeUndo, redo as storeRedo } from './stroke-store'
 import { emit, hasListeners } from '../core/runtime/event-bus'
 import { getSlotEntries } from '../core/runtime/contribution-store'
@@ -23,6 +24,35 @@ type DrawShape = 'freehand' | 'line' | 'rect' | 'ellipse' | 'highlighter'
 
 /** Top-left of the target display in screenshot pixels (absent = 0,0). */
 export interface McpOffset { x: number; y: number }
+
+/** A value that is either fixed or ramps from the start of a stroke to its end. */
+export type PaintRamp = number | { start: number; end: number }
+
+export interface PaintBrushItem {
+  kind: 'brush'
+  points: Point[]
+  smooth?: boolean
+  color?: string
+  width?: PaintRamp
+  opacity?: PaintRamp
+  hardness?: number
+}
+
+interface PaintHoleItem { points: Point[]; smooth?: boolean }
+
+interface PaintFillCommon {
+  kind: 'fill'
+  holes?: PaintHoleItem[]
+  color?: string
+  opacity?: number
+  hardness?: number
+}
+
+export type PaintFillItem =
+  | (PaintFillCommon & { shape: 'polygon'; points: Point[]; smooth?: boolean })
+  | (PaintFillCommon & { shape: 'rect' | 'ellipse'; x: number; y: number; width: number; height: number })
+
+export type PaintItem = PaintBrushItem | PaintFillItem
 
 export type McpCommand =
   | {
@@ -39,6 +69,7 @@ export type McpCommand =
       color?: string
       lineWidth?: number
     }
+  | { type: 'paint'; offset?: McpOffset; items: PaintItem[] }
   | { type: 'ping' }
   | { type: 'list'; offset?: McpOffset }
   | { type: 'delete'; id: string }
@@ -57,6 +88,7 @@ export interface McpAnnotation {
 
 export type McpCommandResult =
   | { id: string }
+  | { ids: string[] }
   | { annotations: McpAnnotation[] }
   | { deleted: boolean }
   | { ok: boolean }
@@ -155,13 +187,148 @@ function buildStroke(cmd: Extract<McpCommand, { type: 'draw' }>): Stroke {
   }
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
+function isPoint(value: unknown): value is Point {
+  return !!value && isFiniteNumber((value as Point).x) && isFiniteNumber((value as Point).y)
+}
+
+function paintError(index: number, kind: string, problem: string, nextStep: string): Error {
+  return new Error(`Paint item ${index + 1} (${kind}): ${problem}. Next step: ${nextStep}. Nothing was drawn.`)
+}
+
+function checkPointList(points: unknown, min: number, index: number, kind: string, label: string): Point[] {
+  if (!Array.isArray(points) || points.length < min) {
+    throw paintError(index, kind, `${label} needs at least ${min} points`, `send ${label} with ${min} or more points of {x, y}`)
+  }
+  if (!points.every(isPoint)) {
+    throw paintError(index, kind, `${label} has a point whose x or y is not a finite number`, 'send every point as {x, y} with finite numbers')
+  }
+  return points
+}
+
+/** A fixed number or a {start, end} pair whose numbers all satisfy `valid`. */
+function checkRamp(
+  value: PaintRamp | undefined,
+  name: string,
+  valid: (v: number) => boolean,
+  rule: string,
+  index: number,
+  kind: string,
+): PaintRamp | undefined {
+  if (value === undefined) return undefined
+  const ok = typeof value === 'object' && value !== null
+    ? isFiniteNumber(value.start) && valid(value.start) && isFiniteNumber(value.end) && valid(value.end)
+    : isFiniteNumber(value) && valid(value)
+  if (!ok) throw paintError(index, kind, `${name} must be a number or {start, end} ${rule}`, `change ${name} to a value ${rule}`)
+  return value
+}
+
+function checkUnit(value: number | undefined, name: string, index: number, kind: string): number | undefined {
+  if (value === undefined) return undefined
+  if (!isFiniteNumber(value) || value < 0 || value > 1) {
+    throw paintError(index, kind, `${name} must be a number from 0 to 1`, `change ${name} to a value from 0 to 1`)
+  }
+  return value
+}
+
+function buildPaintHoles(holes: PaintHoleItem[] | undefined, index: number, toO: (p: Point) => Point): PaintHoleItem[] | undefined {
+  if (holes === undefined) return undefined
+  if (!Array.isArray(holes)) throw paintError(index, 'fill', 'holes must be an array', 'send holes as a list of {points}')
+  return holes.map((hole, h) => {
+    const pts = checkPointList(hole?.points, 3, index, 'fill', `hole ${h + 1}`)
+    return { points: pts.map(toO), ...(hole.smooth === true ? { smooth: true } : {}) }
+  })
+}
+
+function buildPaintStroke(item: PaintItem, index: number, offset: McpOffset): Stroke {
+  const toO = (p: Point) => toOverlay(p, offset)
+  const id = crypto.randomUUID()
+  const kind = (item as { kind?: unknown })?.kind
+  if (kind === 'brush') {
+    const brush = item as PaintBrushItem
+    const points = checkPointList(brush.points, 2, index, 'brush', 'a brush stroke')
+    const width = checkRamp(brush.width, 'width', (v) => v > 0, 'above zero', index, 'brush') ?? DEFAULT_LINE_WIDTH
+    const opacity = checkRamp(brush.opacity, 'opacity', (v) => v >= 0 && v <= 1, 'from 0 to 1', index, 'brush')
+    const hardness = checkUnit(brush.hardness, 'hardness', index, 'brush')
+    const stroke: Stroke = {
+      id,
+      tool: PAINT_BRUSH_TOOL_ID,
+      points: points.map(toO),
+      style: {
+        color: brush.color ?? DEFAULT_COLOR,
+        lineWidth: typeof width === 'number' ? width : Math.max(width.start, width.end),
+        lineCap: 'round',
+        lineJoin: 'round',
+      },
+      smooth: brush.smooth === true,
+      width,
+    }
+    if (typeof opacity === 'number') stroke.opacity = opacity
+    else if (opacity) stroke.opacityRange = { start: opacity.start, end: opacity.end }
+    if (hardness !== undefined) stroke.hardness = hardness
+    return stroke
+  }
+  if (kind === 'fill') {
+    const fill = item as PaintFillItem
+    const opacity = checkUnit(fill.opacity, 'opacity', index, 'fill')
+    const hardness = checkUnit(fill.hardness, 'hardness', index, 'fill')
+    const holes = buildPaintHoles(fill.holes, index, toO)
+    let points: Point[]
+    let shapeType: 'polygon' | 'rect' | 'ellipse'
+    let smooth = false
+    if (fill.shape === 'polygon') {
+      points = checkPointList(fill.points, 3, index, 'fill', 'a polygon').map(toO)
+      shapeType = 'polygon'
+      smooth = fill.smooth === true
+    } else if (fill.shape === 'rect' || fill.shape === 'ellipse') {
+      const { x, y, width, height } = fill
+      if (![x, y, width, height].every(isFiniteNumber) || width <= 0 || height <= 0) {
+        throw paintError(index, 'fill', `a ${fill.shape} needs finite x, y and a width and height above zero`, 'send x, y, width and height as numbers')
+      }
+      points = [toO({ x, y }), toO({ x: x + width, y: y + height })]
+      shapeType = fill.shape
+    } else {
+      throw paintError(index, 'fill', 'shape must be polygon, rect or ellipse', 'set shape to one of those')
+    }
+    const stroke: Stroke = {
+      id,
+      tool: PAINT_FILL_TOOL_ID,
+      points,
+      style: { color: fill.color ?? DEFAULT_COLOR, lineWidth: 1, lineCap: 'round', lineJoin: 'round' },
+      shapeType,
+      smooth,
+    }
+    if (holes && holes.length > 0) stroke.holes = holes
+    if (opacity !== undefined) stroke.opacity = opacity
+    if (hardness !== undefined) stroke.hardness = hardness
+    return stroke
+  }
+  throw paintError(index, String(kind), 'kind must be brush or fill', 'set kind to brush or fill')
+}
+
+/** Build every stroke of a batch first, so a bad item rejects the whole batch before anything is added. */
+function buildPaintStrokes(command: Extract<McpCommand, { type: 'paint' }>): Stroke[] {
+  const items = command.items
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error('A paint command needs at least one item. Next step: send items with one or more brush or fill entries. Nothing was drawn.')
+  }
+  const offset = command.offset ?? { x: 0, y: 0 }
+  return items.map((item, i) => buildPaintStroke(item, i, offset))
+}
+
 function kindOf(stroke: Stroke): string {
+  if (stroke.tool === PAINT_BRUSH_TOOL_ID) return 'brush'
+  if (stroke.tool === PAINT_FILL_TOOL_ID) return 'fill'
   if (stroke.tool === HIGHLIGHTER_TOOL_ID) return 'highlighter'
   if (stroke.tool === 'shape') return typeof stroke.shapeType === 'string' ? stroke.shapeType : 'rect'
   return stroke.tool
 }
 
 function sourceOf(stroke: Stroke): string {
+  if (stroke.tool === PAINT_BRUSH_TOOL_ID || stroke.tool === PAINT_FILL_TOOL_ID) return 'openpen'
   const builtin = BUILTIN_SOURCES[stroke.tool]
   if (builtin) return builtin
   const owner = getSlotEntries<{ id: string }>('canvas.tools').value.find((e) => e.contribution.id === stroke.tool)
@@ -275,6 +442,15 @@ export async function executeMcpCommand(command: McpCommand): Promise<McpCommand
       pushCommand({ type: 'ADD_STROKE', stroke })
       await requestRedraw()
       return { id: stroke.id }
+    }
+    case 'paint': {
+      const strokes = buildPaintStrokes(command)
+      // One history entry for the whole batch: a single undo removes all of it,
+      // and a large batch cannot push the user's earlier history out of the limit.
+      for (const stroke of strokes) addStroke(stroke)
+      pushCommand({ type: 'ADD_STROKES', strokes: [...strokes] })
+      await requestRedraw()
+      return { ids: strokes.map((s) => s.id) }
     }
     case 'list':
       return {

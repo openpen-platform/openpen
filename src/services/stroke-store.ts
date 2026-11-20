@@ -3,7 +3,9 @@ import type { Stroke } from '../types/tool-types'
 type AddStrokeCommand = { type: 'ADD_STROKE'; stroke: Stroke }
 type RemoveStrokeCommand = { type: 'REMOVE_STROKE'; stroke: Stroke }
 type ClearAllCommand = { type: 'CLEAR_ALL'; strokes: Stroke[] }
-type Command = AddStrokeCommand | RemoveStrokeCommand | ClearAllCommand
+/** One history entry for a batch of strokes added together (one undo step). */
+type AddStrokesCommand = { type: 'ADD_STROKES'; strokes: Stroke[] }
+type Command = AddStrokeCommand | RemoveStrokeCommand | ClearAllCommand | AddStrokesCommand
 
 let strokes: Stroke[] = []
 
@@ -46,12 +48,12 @@ export function removeStrokeById(id: string): boolean {
 /**
  * Remove a stroke for good: from the drawing and from every history entry that
  * would bring it back, so neither undo nor redo can make it reappear.
- * A clear-all entry keeps its other strokes and is dropped once it holds none.
+ * A clear-all or batch entry keeps its other strokes and is dropped once it holds none.
  */
 export function purgeStroke(id: string): boolean {
   const removed = removeStrokeById(id)
   const keep = (command: Command): boolean => {
-    if (command.type === 'CLEAR_ALL') {
+    if (command.type === 'CLEAR_ALL' || command.type === 'ADD_STROKES') {
       command.strokes = command.strokes.filter((s) => s.id !== id)
       return command.strokes.length > 0
     }
@@ -129,6 +131,10 @@ export function hydrateState(snapshot: DrawingSnapshot): void {
 function applyUndo(command: Command): void {
   if (command.type === 'ADD_STROKE') {
     removeStrokeById(command.stroke.id)
+  } else if (command.type === 'ADD_STROKES') {
+    const ids = new Set(command.strokes.map((s) => s.id))
+    strokes = strokes.filter((s) => !ids.has(s.id))
+    rewriteVersion++
   } else if (command.type === 'REMOVE_STROKE') {
     strokes.push(command.stroke)
   } else if (command.type === 'CLEAR_ALL') {
@@ -140,6 +146,8 @@ function applyUndo(command: Command): void {
 function applyRedo(command: Command): void {
   if (command.type === 'ADD_STROKE') {
     strokes.push(command.stroke)
+  } else if (command.type === 'ADD_STROKES') {
+    strokes.push(...command.strokes)
   } else if (command.type === 'REMOVE_STROKE') {
     removeStrokeById(command.stroke.id)
   } else if (command.type === 'CLEAR_ALL') {

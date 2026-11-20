@@ -2,6 +2,7 @@ import type { Tool, StrokeStyle, Stroke, PointerModifiers } from '../types/tool-
 import { addStroke, getAllStrokes, getRewriteVersion, clearAll, pushCommand, purgeStroke, undo as storeUndo, redo as storeRedo } from './stroke-store'
 import { StrokeFader } from './stroke-fade'
 import { resolveColorStyle } from './color-utils'
+import { PAINT_BRUSH_TOOL_ID, PAINT_FILL_TOOL_ID, renderPaintBrush, renderPaintFill } from './paint-render'
 import { getSlotEntries } from '../core/runtime/contribution-store'
 import type { CanvasLayerContribution, ToolContribution } from '@openpen/module-api'
 
@@ -19,7 +20,19 @@ type CustomRenderer = (ctx: CanvasRenderingContext2D, stroke: Stroke) => void
 let rendererMapSource: unknown = null
 let rendererMap = new Map<string, CustomRenderer>()
 
+/**
+ * Renderers the host owns for the strokes its MCP painting tools create. They
+ * are looked up before module renderers, so a plugin that registers the same
+ * tool id cannot replace them, and they keep working when no module is loaded.
+ */
+const HOST_RENDERERS = new Map<string, CustomRenderer>([
+  [PAINT_BRUSH_TOOL_ID, renderPaintBrush],
+  [PAINT_FILL_TOOL_ID, renderPaintFill],
+])
+
 function findCustomRenderer(toolId: string): CustomRenderer | undefined {
+  const builtin = HOST_RENDERERS.get(toolId)
+  if (builtin) return builtin
   const entries = getSlotEntries<ToolContribution>('canvas.tools').value
   if (entries !== rendererMapSource) {
     const map = new Map<string, CustomRenderer>()
