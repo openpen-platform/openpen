@@ -33,11 +33,18 @@ import os from 'node:os';
 import path from 'node:path';
 import { createServer } from 'vite';
 import { assertElectronBinary } from './launch.js';
-import { enterRunTmpRoot } from './run-tmp.js';
+import { enterRunTmpRoot, sweepStaleRunRoots } from './run-tmp.js';
 
 export default async function globalSetup() {
   // Before booting Vite, so a missing binary fails the whole run in seconds.
   assertElectronBinary();
+
+  // A previous run killed from outside (test queue cap) leaves its root behind;
+  // clear those before this run creates its own. Only marker-proven, dead-owner roots.
+  const swept = sweepStaleRunRoots();
+  if (swept.removed.length) {
+    console.log(`[e2e:globalSetup] Removed ${swept.removed.length} stale run temp root(s) from aborted runs`);
+  }
 
   const runTmp = enterRunTmpRoot();
   console.log(`[e2e:globalSetup] Run temp root at ${runTmp.root}`);
