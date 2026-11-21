@@ -121,7 +121,7 @@ rollupOptions.external: ['vue', '@openpen/module-api', '@openpen/module-api/uiki
 
 ### plugin のローカルテスト
 
-plugin の読み込みには OpenPen のプロダクションビルドが必要です (importmap は `dist/index.html` にのみ存在します)。そのため、パッケージ化された OpenPen リリースでテストしてください。`npx openpen-cli create` で作成した plugin プロジェクトで次を実行します。
+plugin は、パッケージ化された OpenPen リリースでも、ソースから実行した OpenPen (OpenPen リポジトリのチェックアウトでの `npm run dev`) でも読み込まれ、どちらも `~/.openpen/plugins/` を読みます。`npx openpen-cli create` で作成した plugin プロジェクトで次を実行します。
 
 ```bash
 npm run build                  # Build the plugin (outputs dist/renderer.js)
@@ -131,7 +131,7 @@ npx openpen-cli plugin add .   # Copy it into ~/.openpen/plugins/
 
 `plugin add` がコピーする内容と確認プロンプトについては、[plugin クイックスタート](../guides/plugin-quickstart.md)のステップ 3 を参照してください。
 
-Vite dev サーバー (OpenPen ホストリポジトリの `npm run dev`) は plugin を読み込みません。dev ミドルウェアはランタイムシム URL を提供しますが、`~/.openpen/plugins/` にインストールされた plugin は dev モードでスキャンされません。
+ソースから実行した場合は Vite の dev ミドルウェアがランタイムシム URL を提供するため、`@openpen/build` でビルドした plugin はそこでも `vue`、`@openpen/module-api`、`@openpen/module-api/uikit` をパッケージ版と同じように解決します。チェックアウトのバージョンより `minAppVersion` が高い plugin はスキップされます。MCP ツールガイドの [OpenPen run from source](../../../guides/mcp-tools.md#try-it-in-mcp-inspector) を参照してください。
 
 ---
 

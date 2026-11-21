@@ -97,11 +97,7 @@ cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
 重启 OpenPen，在控制栏中查找你的 contribution。
 
 > [!IMPORTANT]
-> Plugin 加载需要 OpenPen 的**正式构建版本**
-> （`npm run build` 的输出 / 打包后的发行版）。Vite 开发服务器（在宿主 repo 中运行 `npm run dev`）
-> **不会**加载 plugin——安装在
-> `~/.openpen/plugins/` 中的 plugin 在开发模式下会被跳过。在排查「plugin 未加载」问题前，
-> 请确认你运行的是已打包的 OpenPen。
+> 从源码运行的 OpenPen 也会加载 plugin。在 OpenPen repo 的 checkout 中运行 `npm install` 和 `npm run dev`，会扫描与打包版相同的 `~/.openpen/plugins/` 文件夹，所以测试 plugin 不必先把 OpenPen 打包。从源码运行时，app 版本取自 checkout 的 `package.json`，`minAppVersion` 比它高的 plugin 会被跳过；运行 `npm run dev` 的终端会显示 `Plugin <your plugin id> requires app >= <minAppVersion> (have <version>), skipping`。解决办法写在 MCP 工具指南的 [OpenPen run from source](../../../guides/mcp-tools.md#try-it-in-mcp-inspector)。Plugin 代码在 app 启动时加载，所以每次 `plugin add` 之后都要重新启动。
 
 ---
 

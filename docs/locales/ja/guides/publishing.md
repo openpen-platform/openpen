@@ -42,7 +42,7 @@ npx openpen-cli plugin add .
 
 `plugin add` はインストール前に確認を求めます。非対話型シェルでは `--yes` (または `-y`) を付けてください。
 
-Plugin の読み込みにはパッケージ化された (プロダクション) OpenPen のビルドが必要です。ホストの開発サーバーは plugin を読み込まないため、パッケージ化された OpenPen を再起動して plugin を確認してください。
+OpenPen を再起動すると plugin を確認できます。パッケージ版も、ソースから実行した OpenPen (OpenPen リポジトリのチェックアウトでの `npm run dev`) も、`~/.openpen/plugins/` から plugin を読み込みます。ソースから実行した場合、チェックアウトのバージョンより `minAppVersion` が高い plugin はスキップされます。MCP ツールガイドの [OpenPen run from source](../../../guides/mcp-tools.md#try-it-in-mcp-inspector) を参照してください。
 
 ---
 

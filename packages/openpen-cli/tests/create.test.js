@@ -118,6 +118,9 @@ describe('openpen create @scope/name', () => {
       // the project already exists: its Quickstart must not tell the author to run create again
       expect(readme).not.toMatch(/openpen-cli create/)
       expect(readme).toMatch(/npm run pack/)
+      // OpenPen run from source loads installed plugins, so the README must not say it does not
+      expect(readme).not.toMatch(/dev server does not load/)
+      expect(readme).toMatch(/OpenPen run from source/)
       expect(result.stdout).toMatch(/npm run pack/)
       expect(fs.readFileSync(path.join(dir, '.gitignore'), 'utf-8')).toMatch(/^\*\.zip$/m)
       const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'))

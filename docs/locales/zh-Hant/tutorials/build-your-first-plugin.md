@@ -66,7 +66,7 @@ CLI 僅寫入檔案；`plugin-meta.json` 是 host 的責任，會在下次啟動
 重新啟動 OpenPen。你的 plugin 會自動載入，其 contribution 也會出現在控制列中。
 
 > [!IMPORTANT]
-> Plugin 載入需要 OpenPen 的**正式版本**（`npm run build` 產出的 / 已打包的 release）。Vite 開發伺服器（在 host repo 中執行的 `npm run dev`）**不會**載入 plugin。在排查「plugin 無法載入」的問題之前，請先確認你執行的是已打包的 OpenPen。
+> 從原始碼執行的 OpenPen 也會載入 plugin。在 OpenPen repo 的 checkout 中執行 `npm install` 與 `npm run dev`，會掃描與打包版相同的 `~/.openpen/plugins/` 資料夾，所以測試 plugin 不必先把 OpenPen 打包。從原始碼執行時，app 版本取自 checkout 的 `package.json`，`minAppVersion` 比它高的 plugin 會被略過；執行 `npm run dev` 的終端機會顯示 `Plugin <your plugin id> requires app >= <minAppVersion> (have <version>), skipping`。解法寫在 MCP 工具指南的 [OpenPen run from source](../../../guides/mcp-tools.md#try-it-in-mcp-inspector)。Plugin 程式碼在 app 啟動時載入，所以每次 `plugin add` 之後都要重新啟動。
 
 ### 手動安裝（替代方式）
 

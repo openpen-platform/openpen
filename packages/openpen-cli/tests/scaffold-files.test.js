@@ -107,7 +107,8 @@ describe('scaffolded project files', () => {
     expect(targets.length).toBeGreaterThan(0)
     for (const target of targets) {
       expect(target.startsWith(GITHUB_BASE)).toBe(true)
-      const repoPath = target.slice(GITHUB_BASE.length).replace(/^(blob|tree)\/main\//, '')
+      // A `#fragment` points inside the file; only the file itself has to exist
+      const repoPath = target.slice(GITHUB_BASE.length).replace(/^(blob|tree)\/main\//, '').replace(/#.*$/, '')
       expect(fs.existsSync(path.join(REPO_ROOT, repoPath))).toBe(true)
     }
     expect(readme).not.toMatch(/degit/)

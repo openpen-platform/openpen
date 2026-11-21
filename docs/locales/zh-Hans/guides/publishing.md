@@ -45,7 +45,7 @@ npx openpen-cli plugin add .
 
 `plugin add` 在安装前会要求你确认；在非交互式 shell 中请传入 `--yes`（或 `-y`）。
 
-Plugin 加载需要打包后的（生产）OpenPen 构建。宿主的开发服务器不会加载 plugin，因此请重启打包版 OpenPen 来查看你的 plugin。
+重启 OpenPen 即可看到你的 plugin。打包版与从源码运行的 OpenPen（在 OpenPen repo 的 checkout 中运行 `npm run dev`）都会从 `~/.openpen/plugins/` 加载 plugin。从源码运行时，`minAppVersion` 比 checkout 版本高的 plugin 会被跳过；见 MCP 工具指南的 [OpenPen run from source](../../../guides/mcp-tools.md#try-it-in-mcp-inspector)。
 
 ---
 

@@ -44,8 +44,7 @@ npx openpen-cli plugin add .
 `plugin add` asks you to confirm before it installs; pass `--yes` (or `-y`) in a
 non-interactive shell.
 
-Plugin loading requires a packaged (production) build of OpenPen. The host's dev
-server does not load plugins, so restart a packaged OpenPen to see your plugin.
+Restart OpenPen to see your plugin. A packaged release and OpenPen run from source (`npm run dev` in a checkout of the OpenPen repository) both load plugins from `~/.openpen/plugins/`. A source run skips a plugin whose `minAppVersion` is higher than the checkout's version; see [OpenPen run from source](mcp-tools.md#try-it-in-mcp-inspector) in the MCP tools guide.
 
 ---
 

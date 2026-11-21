@@ -96,11 +96,7 @@ cp -R plugin.json dist ~/.openpen/plugins/@yourscope/my-plugin/
 Restart OpenPen and look for your contribution in the control bar.
 
 > [!IMPORTANT]
-> Plugin loading requires the **production build** of OpenPen
-> (`npm run build` output / a packaged release). The Vite dev server (`npm run dev`
-> in the host repo) does **not** load plugins — plugins installed in
-> `~/.openpen/plugins/` are skipped in dev mode. Confirm you are running a
-> packaged OpenPen before debugging "plugin not loading" issues.
+> OpenPen run from source loads plugins too. A checkout of the OpenPen repository started with `npm install` and `npm run dev` scans the same `~/.openpen/plugins/` folder as a packaged release, so you do not need to package OpenPen to test your plugin. It reports the version in the checkout's `package.json` as the app version and skips a plugin whose `minAppVersion` is higher; the terminal then shows `Plugin <your plugin id> requires app >= <minAppVersion> (have <version>), skipping`. The workaround is in [OpenPen run from source](mcp-tools.md#try-it-in-mcp-inspector) in the MCP tools guide. Plugin code is loaded when the app starts, so restart after each `plugin add`.
 
 ---
 

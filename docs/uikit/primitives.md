@@ -138,7 +138,7 @@ correctly.
 
 ### Testing plugins locally
 
-Plugin loading requires the production build of OpenPen (importmap is only in `dist/index.html`), so test against a packaged OpenPen release. Run these from your plugin project, the one `npx openpen-cli create` made:
+Plugins load in a packaged OpenPen release and in OpenPen run from source (`npm run dev` in a checkout of the OpenPen repository); both read `~/.openpen/plugins/`. Run these from your plugin project, the one `npx openpen-cli create` made:
 
 ```bash
 npm run build                  # Build the plugin (outputs dist/renderer.js)
@@ -148,9 +148,7 @@ npx openpen-cli plugin add .   # Copy it into ~/.openpen/plugins/
 
 See Step 3 of the [plugin quickstart](../guides/plugin-quickstart.md) for what `plugin add` copies and the confirmation prompt.
 
-The Vite dev server (`npm run dev` in the OpenPen host repo) does NOT load plugins — the dev middleware
-serves the runtime shim URLs but plugins installed in `~/.openpen/plugins/` are
-not scanned in dev mode.
+A source run serves the runtime shim URLs through the Vite dev middleware, so a plugin built with `@openpen/build` resolves `vue`, `@openpen/module-api` and `@openpen/module-api/uikit` there the same way as in a packaged release. It skips a plugin whose `minAppVersion` is higher than the checkout's version; see [OpenPen run from source](../guides/mcp-tools.md#try-it-in-mcp-inspector) in the MCP tools guide.
 
 ---
 

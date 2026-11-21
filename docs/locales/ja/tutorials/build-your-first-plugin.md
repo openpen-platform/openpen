@@ -62,10 +62,7 @@ CLI はファイルの書き込みのみを行います。`plugin-meta.json` は
 OpenPen を再起動すると、plugin が自動的に読み込まれ、その contribution がコントロールバーに表示されます。
 
 > [!IMPORTANT]
-> plugin の読み込みには OpenPen の**プロダクションビルド**
-> (`npm run build` の出力 / パッケージ済みリリース) が必要です。Vite の開発サーバー (ホストリポジトリの `npm run dev`)
-> では plugin を読み込み**ません**。「plugin が読み込まれない」問題をデバッグする前に、パッケージ済みの
-> OpenPen が実行されていることを確認してください。
+> ソースから実行した OpenPen も plugin を読み込みます。OpenPen リポジトリのチェックアウトで `npm install` と `npm run dev` を実行すると、パッケージ版と同じ `~/.openpen/plugins/` フォルダーをスキャンするため、plugin のテストにパッケージ化は不要です。ソースから実行した場合、アプリのバージョンにはチェックアウトの `package.json` の値が使われ、それより `minAppVersion` が高い plugin はスキップされます。`npm run dev` を実行したターミナルには `Plugin <your plugin id> requires app >= <minAppVersion> (have <version>), skipping` と表示されます。回避方法は MCP ツールガイドの [OpenPen run from source](../../../guides/mcp-tools.md#try-it-in-mcp-inspector) にあります。Plugin のコードはアプリの起動時に読み込まれるため、`plugin add` のたびに再起動してください。
 
 ### 手動インストール (代替手段)
 

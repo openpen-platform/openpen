@@ -17,9 +17,12 @@ Replace `yourscope` with your GitHub username or org name (lowercase).
 `plugin add` copies `plugin.json`, `dist/` and `locales/` into
 `~/.openpen/plugins/@yourscope/my-plugin/`.
 
-Restart OpenPen (a packaged build; the host's dev server does not load
-plugins). The plugin loads automatically, and a toast tells you where its
-buttons landed on the control bar.
+Restart OpenPen. A packaged release works, and so does OpenPen run from
+source (`npm run dev` in a checkout of the OpenPen repository), which loads
+the same `~/.openpen/plugins/` folder. The plugin loads automatically, and a
+toast tells you where its buttons landed on the control bar. A source run
+skips a plugin whose `minAppVersion` is higher than the checkout's version;
+see [OpenPen run from source](https://github.com/openpen-platform/openpen/blob/main/docs/guides/mcp-tools.md#try-it-in-mcp-inspector).
 
 ## What's inside
 

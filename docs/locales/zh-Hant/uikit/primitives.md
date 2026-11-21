@@ -121,7 +121,7 @@ rollupOptions.external: ['vue', '@openpen/module-api', '@openpen/module-api/uiki
 
 ### 在本機測試 plugin
 
-載入 plugin 需要 OpenPen 的正式建置（importmap 僅存在於 `dist/index.html`），請用已打包的 OpenPen 發行版測試。在用 `npx openpen-cli create` 建立的 plugin 專案裡執行：
+打包版 OpenPen 與從原始碼執行的 OpenPen（在 OpenPen repo 的 checkout 中執行 `npm run dev`）都會載入 plugin，兩者都讀取 `~/.openpen/plugins/`。在用 `npx openpen-cli create` 建立的 plugin 專案裡執行：
 
 ```bash
 npm run build                  # Build the plugin (outputs dist/renderer.js)
@@ -131,7 +131,7 @@ npx openpen-cli plugin add .   # Copy it into ~/.openpen/plugins/
 
 `plugin add` 會複製哪些檔案與確認提示，見 [plugin 快速上手](../guides/plugin-quickstart.md)的第 3 步。
 
-Vite 開發伺服器（OpenPen 主程式 repo 的 `npm run dev`）**不會**載入 plugin——開發中介軟體雖然服務 runtime shim URL，但在開發模式下不會掃描安裝於 `~/.openpen/plugins/` 的 plugin。
+從原始碼執行時，Vite 開發中介軟體會服務 runtime shim URL，所以用 `@openpen/build` 建置的 plugin 在那裡解析 `vue`、`@openpen/module-api` 與 `@openpen/module-api/uikit` 的方式與打包版相同。`minAppVersion` 比 checkout 版本高的 plugin 會被略過；見 MCP 工具指南的 [OpenPen run from source](../../../guides/mcp-tools.md#try-it-in-mcp-inspector)。
 
 ---
 
