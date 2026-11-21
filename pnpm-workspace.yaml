@@ -1,2 +1,6 @@
+packages:
+  - packages/*
 onlyBuiltDependencies:
   - electron
+nodeLinker: hoisted
+linkWorkspacePackages: true
