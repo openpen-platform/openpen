@@ -113,7 +113,7 @@ my-plugin/
     └── *.vue / *.ts        ← Your plugin's components & helpers
 ```
 
-`src/module-id.ts` exports a single `MODULE_ID` constant that both `defineModule({ id })` in `index.ts` and any other code paths that need to refer to the plugin's id import from. Keeping the id in one place is the convention the gotcha callout above warns about — see the worked example in [tutorials/build-your-first-plugin.md](../tutorials/build-your-first-plugin.md) for the full pattern.
+`src/module-id.ts` exports a single `MODULE_ID` constant that both `defineModule({ id })` in `index.ts` and any other code paths that need to refer to the plugin's id import from. Keeping the id in one place is the convention the gotcha callout above warns about — see the worked example in [tutorials/build-your-first-plugin.md](../tutorials/build-your-first-plugin.md) for the full pattern. It also exports `ID_PREFIX` (`acme.notes` for `@acme/notes`, written by `create`). Every control-bar item, tool, cursor and popover id in the starter is built from it: the host skips plugins whose control-bar item ids collide, and tool, cursor and popover ids share one namespace across plugins too. Start your own ids with `` `${ID_PREFIX}.` `` as well. To create a second plugin, run `create` again with a different name: the ids differ automatically and you do not edit anything by hand.
 
 ---
 

@@ -129,4 +129,64 @@ describe('openpen create @scope/name', () => {
       fs.rmSync(tmpdir, { recursive: true, force: true })
     }
   })
+
+  it('derives control-bar item, tool and cursor ids from the plugin name so two scaffolds never share one', () => {
+    const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-create-test-'))
+    try {
+      for (const id of ['@demo/alpha', '@demo/beta']) {
+        const result = spawnSync(process.execPath, [CLI_BIN, 'create', id], {
+          encoding: 'utf-8',
+          cwd: tmpdir,
+          env: { ...process.env, HOME: tmpdir },
+        })
+        expect(result.status).toBe(0)
+      }
+
+      // module-id.ts is two plain constants (no imports, no types), so the generated file itself can be evaluated.
+      const prefixOf = (name) => {
+        const src = fs.readFileSync(path.join(tmpdir, name, 'src/module-id.ts'), 'utf-8')
+        return new Function(`${src.replace(/export const /g, 'const ')}\nreturn ID_PREFIX`)()
+      }
+      expect(prefixOf('alpha')).toBe('demo.alpha')
+      expect(prefixOf('beta')).toBe('demo.beta')
+
+      // every id the starter hands to the host goes through ID_PREFIX; none is a fixed string shared by all scaffolds
+      for (const name of ['alpha', 'beta']) {
+        const srcDir = path.join(tmpdir, name, 'src')
+        for (const file of fs.readdirSync(srcDir).filter((f) => /\.(ts|vue)$/.test(f) && !f.endsWith('.test.ts'))) {
+          const text = fs.readFileSync(path.join(srcDir, file), 'utf-8')
+          expect(text, `${name}/src/${file}`).not.toMatch(/['"]starter-|openpen-plugin-starter/)
+        }
+        const index = fs.readFileSync(path.join(srcDir, 'index.ts'), 'utf-8')
+        // tool and cursor ids must match each other and the Stroke.tool written by the tool
+        expect(index.match(/id: `\$\{ID_PREFIX\}\.demo`/g)).toHaveLength(2)
+        for (const item of ['popover', 'hello', 'spinner']) {
+          expect(index).toContain('id: `${ID_PREFIX}.' + item + '`')
+        }
+        expect(fs.readFileSync(path.join(srcDir, 'demo-tool.ts'), 'utf-8')).toContain('tool: `${ID_PREFIX}.demo`')
+        expect(fs.readFileSync(path.join(srcDir, 'PopoverDemo.vue'), 'utf-8')).toContain(':popover-id="`${ID_PREFIX}.size`"')
+      }
+    } finally {
+      fs.rmSync(tmpdir, { recursive: true, force: true })
+    }
+  })
+
+  it('keeps a plugin name that contains a template placeholder intact instead of rewriting it', () => {
+    const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-create-test-'))
+    try {
+      for (const id of ['@demo/your-github-username', '@demo/your-scope']) {
+        const result = spawnSync(process.execPath, [CLI_BIN, 'create', id], {
+          encoding: 'utf-8',
+          cwd: tmpdir,
+          env: { ...process.env, HOME: tmpdir },
+        })
+        expect(result.status).toBe(0)
+        const dir = path.join(tmpdir, id.split('/')[1])
+        expect(JSON.parse(fs.readFileSync(path.join(dir, 'plugin.json'), 'utf-8')).id).toBe(id)
+        expect(fs.readFileSync(path.join(dir, 'src/module-id.ts'), 'utf-8')).toContain(`MODULE_ID = '${id}'`)
+      }
+    } finally {
+      fs.rmSync(tmpdir, { recursive: true, force: true })
+    }
+  })
 })

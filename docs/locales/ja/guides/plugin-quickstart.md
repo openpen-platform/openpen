@@ -115,7 +115,7 @@ my-plugin/
     └── *.vue / *.ts        ← Your plugin's components & helpers
 ```
 
-`src/module-id.ts` は単一の `MODULE_ID` 定数をエクスポートします。`index.ts` 内の `defineModule({ id })` と、plugin の id を参照する他のコードパスがここからインポートします。id を1箇所に集約するのは、上記の注意点で説明している規則です。詳細なパターンは [tutorials/build-your-first-plugin.md](../tutorials/build-your-first-plugin.md) のサンプルを参照してください。
+`src/module-id.ts` は単一の `MODULE_ID` 定数をエクスポートします。`index.ts` 内の `defineModule({ id })` と、plugin の id を参照する他のコードパスがここからインポートします。id を1箇所に集約するのは、上記の注意点で説明している規則です。詳細なパターンは [tutorials/build-your-first-plugin.md](../tutorials/build-your-first-plugin.md) のサンプルを参照してください。あわせて `ID_PREFIX` もエクスポートします (`@acme/notes` なら `acme.notes`。`create` が書き込みます)。テンプレート内のコントロールバー項目・ツール・カーソル・popover の id はすべてこれから作られます。コントロールバー項目の id が他の plugin と重なると host はそれらの plugin を読み込まず、ツール・カーソル・popover の id も全 plugin で同じ名前空間を共有します。自分で追加する id も `` `${ID_PREFIX}.` `` で始めてください。2つ目の plugin は、別の名前でもう一度 `create` を実行するだけです。id は自動的に別の値になり、手作業で直す必要はありません。
 
 ---
 

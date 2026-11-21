@@ -114,7 +114,7 @@ my-plugin/
     └── *.vue / *.ts        ← Your plugin's components & helpers
 ```
 
-`src/module-id.ts` 匯出單一 `MODULE_ID` 常數，`index.ts` 中的 `defineModule({ id })` 以及任何需要參照 plugin id 的其他程式路徑都從此處匯入。將 id 集中在一處是上方注意事項所強調的慣例 — 完整模式請參閱 [tutorials/build-your-first-plugin.md](../tutorials/build-your-first-plugin.md) 中的實作範例。
+`src/module-id.ts` 匯出單一 `MODULE_ID` 常數，`index.ts` 中的 `defineModule({ id })` 以及任何需要參照 plugin id 的其他程式路徑都從此處匯入。將 id 集中在一處是上方注意事項所強調的慣例 — 完整模式請參閱 [tutorials/build-your-first-plugin.md](../tutorials/build-your-first-plugin.md) 中的實作範例。它同時匯出 `ID_PREFIX`（`@acme/notes` 會是 `acme.notes`，由 `create` 寫入）。範本裡每個控制列項目、工具、游標與 popover 的 id 都由它組成：控制列項目 id 與其他 plugin 相同時 host 會略過這些 plugin，工具、游標與 popover 的 id 在所有 plugin 之間也共用同一個命名空間。你自己加的 id 也請以 `` `${ID_PREFIX}.` `` 開頭。要建第二個 plugin，只要用不同的名稱再跑一次 `create`：id 會自動不同，不必手動修改。
 
 ---
 

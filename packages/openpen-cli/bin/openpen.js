@@ -138,6 +138,24 @@ function findStarterDir() {
 function copyStarterTo(starterDir, destDir, pluginId, scope, name) {
   fs.mkdirSync(destDir, { recursive: true })
 
+  const replacements = {
+    '@your-scope/your-plugin-name': pluginId,
+    'your-scope': scope,
+    'your-plugin-name': name,
+    'Your Plugin Name': toTitleCase(name),
+    'your-github-username': scope,
+    '{{year}}': String(new Date().getFullYear()),
+    '"openpen-plugin-starter"': JSON.stringify(pluginId),
+  }
+  // Longest placeholder first so `@your-scope/your-plugin-name` wins over its parts.
+  const PLACEHOLDER_RE = new RegExp(
+    Object.keys(replacements)
+      .sort((a, b) => b.length - a.length)
+      .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|'),
+    'g',
+  )
+
   const skip = new Set(['node_modules', 'dist', '.git'])
   function copyDir(src, dest) {
     fs.mkdirSync(dest, { recursive: true })
@@ -151,16 +169,10 @@ function copyStarterTo(starterDir, destDir, pluginId, scope, name) {
       if (entry.isDirectory()) {
         copyDir(srcPath, destPath)
       } else {
-        let content = fs.readFileSync(srcPath, 'utf-8')
-        // Replace placeholders in all text files
-        content = content
-          .replace(/@your-scope\/your-plugin-name/g, pluginId)
-          .replace(/your-scope/g, scope)
-          .replace(/your-plugin-name/g, name)
-          .replace(/Your Plugin Name/g, toTitleCase(name))
-          .replace(/your-github-username/g, scope)
-          .replace(/\{\{year\}\}/g, String(new Date().getFullYear()))
-          .replace(/"openpen-plugin-starter"/g, JSON.stringify(pluginId))
+        // Replace placeholders in all text files. One pass over the original text: a
+        // sequence of replaces would rewrite a name that itself contains a later
+        // placeholder (`@demo/your-github-username` must not turn into `@demo/demo`).
+        const content = fs.readFileSync(srcPath, 'utf-8').replace(PLACEHOLDER_RE, (match) => replacements[match])
         fs.writeFileSync(destPath, content)
       }
     }

@@ -25,7 +25,7 @@
  */
 import { defineModule, z } from '@openpen/module-api'
 export { MODULE_ID } from './module-id'
-import { MODULE_ID } from './module-id'
+import { MODULE_ID, ID_PREFIX } from './module-id'
 import PopoverDemo from './PopoverDemo.vue'
 import HelloButton from './HelloButton.vue'
 import MyNumberSpinner from './MyNumberSpinner.vue'
@@ -70,7 +70,7 @@ export default defineModule({
   contributes: {
     tools: [
       {
-        id: 'openpen-plugin-starter.demo',
+        id: `${ID_PREFIX}.demo`,
         label: { en: 'Demo', 'zh-Hant': '示範' },
         // SVG string rendered via v-html in the host control-bar button.
         icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>',
@@ -84,7 +84,7 @@ export default defineModule({
     // refs are stripped before any markup reaches v-html.
     cursors: [
       {
-        id: 'openpen-plugin-starter.demo',
+        id: `${ID_PREFIX}.demo`,
         cursor: {
           svg:
             '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">' +
@@ -98,19 +98,19 @@ export default defineModule({
     ],
     controlBar: [
       {
-        id: 'starter-popover',
+        id: `${ID_PREFIX}.popover`,
         component: PopoverDemo,
       },
       {
         // HelloButton reads / writes settings via useModuleContext() —
         // the pattern every plugin component should follow.
-        id: 'starter-hello',
+        id: `${ID_PREFIX}.hello`,
         component: HelloButton,
       },
       {
         // MyNumberSpinner demonstrates building a custom component from Reka UI
         // primitives and OpenPen design tokens — see docs/uikit/custom-components.md.
-        id: 'starter-spinner',
+        id: `${ID_PREFIX}.spinner`,
         component: MyNumberSpinner,
       },
     ],

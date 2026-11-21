@@ -14,6 +14,7 @@
  *   docs/slots/index.md → `canvas.tools` section.
  */
 import { resolveStrokeColor } from '@openpen/module-api'
+import { ID_PREFIX } from './module-id'
 import type { Point, Stroke, StrokeStyle, Tool } from '@openpen/module-api'
 
 // Fixed demo opacity — replace with a settings value in a real tool.
@@ -62,7 +63,8 @@ export function createDemoTool(): Tool {
       // we read it back without any host involvement.
       const stroke: Stroke = {
         id: crypto.randomUUID(),
-        tool: 'openpen-plugin-starter.demo',
+        // Must equal the tool contribution id in index.ts.
+        tool: `${ID_PREFIX}.demo`,
         points: [...points],
         style: { ...style },
         opacity: DEMO_OPACITY,
