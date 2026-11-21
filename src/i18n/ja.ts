@@ -209,6 +209,7 @@ export default {
   pluginUpdateTo: '{version} にアップデート',
   pluginUpgradeNoChangelog: 'このバージョンには変更履歴がありません。',
   pluginScreenshot: 'スクリーンショット',
+  pluginOtherScreenshots: 'その他のスクリーンショット',
   // Plugin detail dialog
   pluginRemoveTitle: 'プラグインを削除しますか？',
   pluginRemoveBody: '「{name}」を削除',

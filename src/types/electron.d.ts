@@ -103,7 +103,15 @@ interface CatalogEntry {
   tier?: 'official' | 'community'
   /** False on community entries: not reviewed by the marketplace maintainers. */
   reviewed?: boolean
+  /** Icon URL, already checked by main. The renderer loads it only through getPluginListingImage. */
+  icon?: string
+  /** Screenshots, first one is the still cover; URLs are loaded only through getPluginListingImage. */
+  screenshots?: readonly { readonly src: string; readonly alt: string }[]
+  /** Plain-text Chinese descriptions. */
+  descriptionLocalized?: { 'zh-Hant'?: string; 'zh-Hans'?: string }
 }
+
+type ListingImageSlot = 'icon' | number
 
 /** A locally installed plugin entry returned from plugin-manager operations. */
 interface PluginEntry {
@@ -312,6 +320,7 @@ interface OpenPenApi {
   // Plugin marketplace
   fetchPluginCatalog(): Promise<{ ok: true; plugins: CatalogEntry[] } | { ok: false; error: string }>
   fetchCommunityPluginCatalog(): Promise<{ ok: true; plugins: CatalogEntry[] } | { ok: false; error: string }>
+  getPluginListingImage(id: string, slot: ListingImageSlot): Promise<{ ok: true; mime: string; data: Uint8Array } | { ok: false; error: string }>
   installCommunityPlugin(id: string): Promise<{ ok: true; entry: PluginEntry } | { ok: false; error: string }>
   installPlugin(id: string): Promise<{ ok: true; entry: PluginEntry } | { ok: false; error: string }>
   removePlugin(id: string): Promise<{ ok: true } | { ok: false; error: string }>

@@ -208,6 +208,7 @@ export default {
   pluginUpdateTo: 'Update to {version}',
   pluginUpgradeNoChangelog: 'No changelog provided.',
   pluginScreenshot: 'Screenshot',
+  pluginOtherScreenshots: 'More screenshots',
   // Plugin detail dialog
   pluginRemoveTitle: 'Remove plugin?',
   pluginRemoveBody: 'Remove "{name}"',

@@ -259,6 +259,8 @@ contextBridge.exposeInMainWorld('openPenApi', {
   fetchPluginCatalog: () => ipcRenderer.invoke('plugin:fetch-catalog'),
   /** Fetch the community catalog (empty failure while the community setting is off). */
   fetchCommunityPluginCatalog: () => ipcRenderer.invoke('plugin:fetch-community-catalog'),
+  /** Icon or screenshot bytes of a listed catalog entry; main picks and checks the URL. */
+  getPluginListingImage: (id, slot) => ipcRenderer.invoke('plugin:listing-image', { id, slot }),
   /** Install a community plugin by id, after the user confirmed the unreviewed notice. */
   installCommunityPlugin: (id) => ipcRenderer.invoke('plugin:install-community', { id, acknowledgedUnreviewed: true }),
   /** Install a plugin by id from the catalog. */

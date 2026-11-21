@@ -208,6 +208,7 @@ export default {
   pluginUpdateTo: '更新至 {version}',
   pluginUpgradeNoChangelog: '此版本未提供變更記錄。',
   pluginScreenshot: '截圖',
+  pluginOtherScreenshots: '其他截圖',
   // Plugin detail dialog
   pluginRemoveTitle: '移除插件？',
   pluginRemoveBody: '移除「{name}」',

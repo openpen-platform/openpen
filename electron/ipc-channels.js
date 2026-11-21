@@ -247,6 +247,8 @@ export const PLUGIN = {
   FETCH_CATALOG: 'plugin:fetch-catalog',
   /** renderer -> main (invoke): fetch community/plugins.json; refused while the community setting is off. */
   FETCH_COMMUNITY_CATALOG: 'plugin:fetch-community-catalog',
+  /** renderer -> main (invoke): bytes of a listed entry's icon or screenshot ({ id, slot: 'icon' | index }), checked by main. */
+  LISTING_IMAGE: 'plugin:listing-image',
   /** renderer → main (invoke): install @scope/name from catalog. */
   INSTALL: 'plugin:install',
   /** renderer -> main (invoke): install @scope/name from the community catalog ({ id, acknowledgedUnreviewed }). */

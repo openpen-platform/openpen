@@ -7,6 +7,7 @@
  */
 
 import { parseCommunityCatalog, withoutOfficialIds } from '@openpen/plugin-manager'
+import { withListings } from './marketplace-listing.js'
 
 export const COMMUNITY_OFF_ERROR = 'Community plugins are turned off.'
 
@@ -32,7 +33,9 @@ export async function loadCommunityPlugins(deps) {
     deps.fetchJson(deps.communityUrl),
   ])
   const official = Array.isArray(officialDoc?.plugins) ? officialDoc.plugins : []
-  const plugins = withoutOfficialIds(parseCommunityCatalog(communityDoc), official)
+  const parsed = withoutOfficialIds(parseCommunityCatalog(communityDoc), official)
+  // The parser keeps only install fields; listing fields come from the raw rows, re-checked.
+  const plugins = withListings(parsed, communityDoc?.plugins)
   return { ok: true, plugins }
 }
 

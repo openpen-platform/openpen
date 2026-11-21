@@ -222,6 +222,12 @@ export const moduleShortcutRegisterSchema = z.object({ id, keys: accelerator, sc
 
 export const pluginIdPayloadSchema = z.object({ id });
 
+/** A listing image request names the entry and the slot, never a URL. */
+export const listingImagePayloadSchema = z.object({
+  id,
+  slot: z.union([z.literal('icon'), z.number().int().min(0).max(4)]),
+});
+
 /** Community installs must carry the user's confirmation of the unreviewed notice. */
 export const communityInstallPayloadSchema = z.object({
   id,

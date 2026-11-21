@@ -33,6 +33,8 @@ import { getSetting } from './settings-store.js'
 import { loadCommunityPlugins, checkCommunityInstallAllowed } from './community-catalog.js'
 import { log } from './logger.js'
 import { registerMarketplaceLinkHandlers } from './marketplace-links.js'
+import { withListing, createListingImageLoader, RAW_ORIGIN } from './marketplace-listing.js'
+import { listingImagePayloadSchema } from './ipc-payload-schemas.js'
 
 /**
  * @typedef {{ ok: true, plugins: import('@openpen/plugin-manager').CatalogEntry[] }} CatalogOk
@@ -88,6 +90,62 @@ function fetchJson(url) {
   })
 }
 
+/**
+ * Download one listing image. Only the raw.githubusercontent.com URL that
+ * marketplace-listing.js accepted reaches here. Redirects are refused and the
+ * body is cut off past `maxBytes`. OPENPEN_LISTING_MEDIA_ORIGIN swaps the
+ * origin for a local fixture server in e2e runs (same idea as
+ * OPENPEN_CATALOG_URL); the path stays the checked one.
+ *
+ * @param {string} url
+ * @param {number} maxBytes
+ * @returns {Promise<Uint8Array>}
+ */
+function downloadListingImage(url, maxBytes) {
+  const override = process.env.OPENPEN_LISTING_MEDIA_ORIGIN
+  const target = override && url.startsWith(`${RAW_ORIGIN}/`) ? override + url.slice(RAW_ORIGIN.length) : url
+  const transport = target.startsWith('http://') ? http : https
+  return new Promise((resolve, reject) => {
+    const req = transport.get(target, { headers: { 'User-Agent': 'openpen-marketplace' } }, (res) => {
+      if (res.statusCode !== 200) {
+        res.resume()
+        reject(new Error(`HTTP ${res.statusCode} fetching image`))
+        return
+      }
+      const declared = Number(res.headers['content-length'])
+      if (declared > maxBytes) {
+        req.destroy(new Error('image too large'))
+        return
+      }
+      const chunks = []
+      let size = 0
+      res.on('data', (c) => {
+        size += c.length
+        if (size > maxBytes) { req.destroy(new Error('image too large')); return }
+        chunks.push(c)
+      })
+      res.on('end', () => resolve(new Uint8Array(Buffer.concat(chunks))))
+      res.on('error', reject)
+    })
+    req.on('error', reject)
+    req.setTimeout(15000, () => { req.destroy(new Error('Image fetch timed out')) })
+  })
+}
+
+// The entries the renderer was last given, so an image request names an entry
+// and a slot and the URL always comes from main's own copy.
+const officialListed = new Map()
+const communityListed = new Map()
+const loadListingImage = createListingImageLoader({
+  lookup: (id) => officialListed.get(id) ?? communityListed.get(id),
+  download: downloadListingImage,
+})
+
+function remember(map, plugins) {
+  map.clear()
+  for (const p of plugins) if (p && typeof p.id === 'string') map.set(p.id, p)
+}
+
 /** Failure value returned to the renderer when a marketplace payload is invalid. */
 const INVALID_RESULT = { onInvalid: () => ({ ok: false, error: 'Invalid payload' }) }
 
@@ -108,7 +166,8 @@ export function initPluginManagerBridge() {
     try {
       const { CATALOG_URL_DEFAULT } = await import('@openpen/plugin-manager')
       const url = process.env.OPENPEN_CATALOG_URL ?? CATALOG_URL_DEFAULT
-      const plugins = await fetchCatalogJson(url)
+      const plugins = (await fetchCatalogJson(url)).filter((p) => p && typeof p === 'object').map((p) => withListing(p))
+      remember(officialListed, plugins)
       return { ok: true, plugins }
     } catch (err) {
       log.error('[PluginBridge] fetch-catalog failed:', err?.message)
@@ -119,12 +178,22 @@ export function initPluginManagerBridge() {
   // Fetch community catalog (only while the setting is on)
   ipcMain.handle(PLUGIN.FETCH_COMMUNITY_CATALOG, async () => {
     try {
-      return await loadCommunityPlugins(await communityDeps())
+      const result = await loadCommunityPlugins(await communityDeps())
+      remember(communityListed, result.ok ? result.plugins : [])
+      return result
     } catch (err) {
+      remember(communityListed, [])
       log.error('[PluginBridge] fetch-community-catalog failed:', err?.message)
       return { ok: false, error: err?.message ?? 'Unknown error fetching community catalog' }
     }
   })
+
+  // Listing image (icon or screenshot) of a listed entry, checked, as bytes
+  handleValidated(ipcMain, PLUGIN.LISTING_IMAGE, listingImagePayloadSchema, async (_event, { id, slot }) => {
+    const result = await loadListingImage(id, slot)
+    if (!result.ok) log.warn(`[PluginBridge] listing image ${id} ${slot} refused: ${result.error}`)
+    return result
+  }, INVALID_RESULT)
 
   // Install from community catalog
   handleValidated(ipcMain, PLUGIN.INSTALL_COMMUNITY, communityInstallPayloadSchema, async (event, { id }) => {
