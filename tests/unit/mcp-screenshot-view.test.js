@@ -1,5 +1,5 @@
 /**
- * Unit tests for T240 screenshot view pure helpers (electron/mcp/screenshot-view.js).
+ * Unit tests for the screenshot view pure helpers (electron/mcp/screenshot-view.js).
  *
  * Expected exported API of electron/mcp/screenshot-view.js (per build-plan.md):
  *
@@ -49,8 +49,8 @@ function pixelAt(buf, width, x, y) {
   return [buf[idx], buf[idx + 1], buf[idx + 2], buf[idx + 3]]
 }
 
-describe('T240 AC-6 screenshot-view pure helpers', () => {
-  it('T240 AC-6: computeRegionView scales small regions toward 1600px long side capped at 8x, and downscales regions larger than 1600px', () => {
+describe('AC-6 screenshot-view pure helpers', () => {
+  it('AC-6: computeRegionView scales small regions toward 1600px long side capped at 8x, and downscales regions larger than 1600px', () => {
     // 400x200 -> long side 400 -> 1600 / 400 = 4x -> 1600x800
     const zoomed = computeRegionView(
       { x: 100, y: 200, width: 400, height: 200 },
@@ -81,7 +81,7 @@ describe('T240 AC-6 screenshot-view pure helpers', () => {
     expect(downscaled.outputHeight).toBe(800)
   })
 
-  it('T240 AC-6: drawCoordinateGrid draws grid lines at scaled screenshot coordinates with R===B pixels and full-screenshot coordinate labels', () => {
+  it('AC-6: drawCoordinateGrid draws grid lines at scaled screenshot coordinates with R===B pixels and full-screenshot coordinate labels', () => {
     const width = 400
     const height = 400
     const bg = [128, 128, 128, 255]

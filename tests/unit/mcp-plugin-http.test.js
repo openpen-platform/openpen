@@ -392,7 +392,7 @@ describe('plugin tools over Streamable HTTP', () => {
     expect(await listed()).toEqual([...READ_ONLY_TOOL_NAMES, measure].sort())
   })
 
-  it('T264 AC-1 a non-read-only plugin tool turns drawing mode on and shows the canvas before the call', async () => {
+  it('AC-1 a non-read-only plugin tool turns drawing mode on and shows the canvas before the call', async () => {
     await start()
     register([arrowTool, rulerTool])
     electron.sent = []
@@ -405,7 +405,7 @@ describe('plugin tools over Streamable HTTP', () => {
     expect(order).toEqual(['set:true', 'overlay:drawing-mode-changed:true', 'call'])
   })
 
-  it('T264 AC-2 a read-only plugin tool leaves drawing mode alone', async () => {
+  it('AC-2 a read-only plugin tool leaves drawing mode alone', async () => {
     await start()
     register([arrowTool, rulerTool])
     electron.sent = []

@@ -1,5 +1,5 @@
 /**
- * Unit tests for T240 main-process MCP painting tools, limits, screenshot view
+ * Unit tests for the main-process MCP painting tools, limits, screenshot view
  * forwarding, screenshot guard, and updated usage guide (electron/mcp/tools.js).
  *
  * Expected contract additions to electron/mcp/tools.js (per build-plan.md):
@@ -73,8 +73,8 @@ function makePolygonRegion(offset = 0, extra = {}) {
   }
 }
 
-describe('T240 AC-4 batch painting tools (main side)', () => {
-  it('T240 AC-4: paint_strokes and fill_regions forward valid multi-item batches in order as one paint command and return ids and guard counters', async () => {
+describe('AC-4 batch painting tools (main side)', () => {
+  it('AC-4: paint_strokes and fill_regions forward valid multi-item batches in order as one paint command and return ids and guard counters', async () => {
     expect(BUILTIN_TOOL_NAMES).toContain('openpen__paint_strokes')
     expect(BUILTIN_TOOL_NAMES).toContain('openpen__fill_regions')
     expect(READ_ONLY_TOOL_NAMES).not.toContain('openpen__paint_strokes')
@@ -173,7 +173,7 @@ describe('T240 AC-4 batch painting tools (main side)', () => {
     expect(fillBody.guardLimit).toBe(STROKES_BEFORE_SCREENSHOT)
   })
 
-  it('T240 AC-4: a batch with any invalid item is rejected as a whole and leaves the canvas untouched', async () => {
+  it('AC-4: a batch with any invalid item is rejected as a whole and leaves the canvas untouched', async () => {
     const host = makeHost()
     const tools = createBuiltinTools(host)
     const paintStrokes = byName(tools, 'openpen__paint_strokes')
@@ -204,8 +204,8 @@ describe('T240 AC-4 batch painting tools (main side)', () => {
   })
 })
 
-describe('T240 AC-5 per-call item and point caps', () => {
-  it('T240 AC-5: paint_strokes and fill_regions reject batches exceeding MAX_ITEMS_PER_CALL, state the limit, and leave the canvas untouched', async () => {
+describe('AC-5 per-call item and point caps', () => {
+  it('AC-5: paint_strokes and fill_regions reject batches exceeding MAX_ITEMS_PER_CALL, state the limit, and leave the canvas untouched', async () => {
     expect(MAX_ITEMS_PER_CALL).toBeTypeOf('number')
     expect(Number.isInteger(MAX_ITEMS_PER_CALL) && MAX_ITEMS_PER_CALL > 0).toBe(true)
 
@@ -233,7 +233,7 @@ describe('T240 AC-5 per-call item and point caps', () => {
     expect(host.runOnOverlay).not.toHaveBeenCalled()
   })
 
-  it('T240 AC-5: paint_strokes and fill_regions reject an item exceeding MAX_POINTS_PER_ITEM, state the limit, and leave the canvas untouched', async () => {
+  it('AC-5: paint_strokes and fill_regions reject an item exceeding MAX_POINTS_PER_ITEM, state the limit, and leave the canvas untouched', async () => {
     expect(MAX_POINTS_PER_ITEM).toBeTypeOf('number')
     expect(Number.isInteger(MAX_POINTS_PER_ITEM) && MAX_POINTS_PER_ITEM > 0).toBe(true)
 
@@ -274,8 +274,8 @@ describe('T240 AC-5 per-call item and point caps', () => {
   })
 })
 
-describe('T240 AC-6 screenshot region and grid options (main side)', () => {
-  it('T240 AC-6: screenshot forwards valid region and grid options to host and returns region, scale, and grid metadata with the image', async () => {
+describe('AC-6 screenshot region and grid options (main side)', () => {
+  it('AC-6: screenshot forwards valid region and grid options to host and returns region, scale, and grid metadata with the image', async () => {
     expect(READ_ONLY_TOOL_NAMES).toContain('openpen__screenshot')
     const host = makeHost()
     const screenshot = byName(createBuiltinTools(host), 'openpen__screenshot')
@@ -302,7 +302,7 @@ describe('T240 AC-6 screenshot region and grid options (main side)', () => {
     })
   })
 
-  it('T240 AC-6: screenshot rejects out-of-bounds or non-positive region and non-positive grid without calling host.screenshot', async () => {
+  it('AC-6: screenshot rejects out-of-bounds or non-positive region and non-positive grid without calling host.screenshot', async () => {
     const host = makeHost()
     const screenshot = byName(createBuiltinTools(host), 'openpen__screenshot')
     expect(screenshot).toBeDefined()
@@ -322,7 +322,7 @@ describe('T240 AC-6 screenshot region and grid options (main side)', () => {
   })
 })
 
-describe('T240 AC-7 screenshot guard for consecutive painting writes', () => {
+describe('AC-7 screenshot guard for consecutive painting writes', () => {
   async function paintCount(tools, total) {
     const paintStrokes = byName(tools, 'openpen__paint_strokes')
     const fillRegions = byName(tools, 'openpen__fill_regions')
@@ -344,7 +344,7 @@ describe('T240 AC-7 screenshot guard for consecutive painting writes', () => {
     return lastRes
   }
 
-  it('T240 AC-7: reaching STROKES_BEFORE_SCREENSHOT blocks the next paint/fill call with a screenshot prompt while draw_* remains allowed', async () => {
+  it('AC-7: reaching STROKES_BEFORE_SCREENSHOT blocks the next paint/fill call with a screenshot prompt while draw_* remains allowed', async () => {
     expect(STROKES_BEFORE_SCREENSHOT).toBeTypeOf('number')
     expect(Number.isInteger(STROKES_BEFORE_SCREENSHOT) && STROKES_BEFORE_SCREENSHOT > 0).toBe(true)
     expect(MAX_ITEMS_PER_CALL).toBeTypeOf('number')
@@ -381,7 +381,7 @@ describe('T240 AC-7 screenshot guard for consecutive painting writes', () => {
     expect(host.runOnOverlay).toHaveBeenCalledTimes(overlayCallsAtCap + 1)
   })
 
-  it('T240 AC-7: a failed screenshot keeps the guard blocked, while a successful screenshot (including region) resets the counter', async () => {
+  it('AC-7: a failed screenshot keeps the guard blocked, while a successful screenshot (including region) resets the counter', async () => {
     expect(STROKES_BEFORE_SCREENSHOT).toBeTypeOf('number')
     expect(MAX_ITEMS_PER_CALL).toBeTypeOf('number')
 
@@ -430,7 +430,7 @@ describe('T240 AC-7 screenshot guard for consecutive painting writes', () => {
     expect(jsonOf(secondAfterReset).strokesSinceScreenshot).toBe(2)
   })
 
-  it('T240 AC-7 regression: a failed paint that overlapped with a successful screenshot does not drive strokesSinceScreenshot below zero', async () => {
+  it('AC-7 regression: a failed paint that overlapped with a successful screenshot does not drive strokesSinceScreenshot below zero', async () => {
     let rejectPendingPaint
     let pending = true
     const host = makeHost({
@@ -468,8 +468,8 @@ describe('T240 AC-7 screenshot guard for consecutive painting writes', () => {
   })
 })
 
-describe('T240 AC-8 usage guide Painting section and updated descriptions', () => {
-  it('T240 AC-8: get_guide includes a Painting section with workflow, tool mapping, and reference-image rules (observe only; no pasting, tracing, or pixel-to-stroke scripts)', async () => {
+describe('AC-8 usage guide Painting section and updated descriptions', () => {
+  it('AC-8: get_guide includes a Painting section with workflow, tool mapping, and reference-image rules (observe only; no pasting, tracing, or pixel-to-stroke scripts)', async () => {
     const tools = createBuiltinTools(makeHost())
     const res = await byName(tools, 'openpen__get_guide').handler({})
     expect(res.isError).not.toBe(true)
@@ -534,7 +534,7 @@ describe('T240 AC-8 usage guide Painting section and updated descriptions', () =
     )
   })
 
-  it('T240 AC-8: guide and tool descriptions remove obsolete "no curve / no opacity" claims and obey length and isolation limits', async () => {
+  it('AC-8: guide and tool descriptions remove obsolete "no curve / no opacity" claims and obey length and isolation limits', async () => {
     expect(SERVER_INSTRUCTIONS.length).toBeLessThanOrEqual(1000)
 
     const tools = createBuiltinTools(makeHost())

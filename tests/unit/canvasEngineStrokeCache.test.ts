@@ -1,5 +1,5 @@
 /**
- * TASK-241: committed strokes are kept in an offscreen cache, so adding a
+ * Committed strokes are kept in an offscreen cache, so adding a
  * stroke draws only that stroke instead of every stroke on screen; external
  * redraw requests are merged into one per frame; a restored GPU context
  * repaints from the stroke store.
@@ -93,7 +93,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('canvas-engine committed-stroke cache (TASK-241)', () => {
+describe('canvas-engine committed-stroke cache', () => {
   it('draws only the new stroke when one is added on top of many', () => {
     const { engine } = makeEngine()
     for (let i = 0; i < 200; i++) add(i)

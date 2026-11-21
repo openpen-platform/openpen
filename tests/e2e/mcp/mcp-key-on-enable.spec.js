@@ -1,6 +1,6 @@
 /**
  * E2E: the MCP endpoint URL and key appear as soon as the switch is turned on,
- * without pressing Save or reopening settings (TASK-233, AC-20 and usage flow).
+ * without pressing Save or reopening settings.
  *
  * The tests run serially and own one app at a time. This file keeps the app on
  * the default port: the URL shown before Save is built from that port, and the

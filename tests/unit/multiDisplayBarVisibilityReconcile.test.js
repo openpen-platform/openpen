@@ -1,6 +1,6 @@
 /**
  * Verifies that bar visibility is a per-display derived state of the single
- * global `barHidden` flag (issue #50). Each display owns its own transparent
+ * global `barHidden` flag. Each display owns its own transparent
  * fullscreen control-bar window; they MUST hide/show together so toggling the
  * bar, switching the active display, or hot-plugging a monitor never lets one
  * display drift out of sync with the others.

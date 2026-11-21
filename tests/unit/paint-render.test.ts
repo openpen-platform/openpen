@@ -1,5 +1,5 @@
 /**
- * Unit tests for T240 overlay paint renderer (src/services/paint-render.ts)
+ * Unit tests for the overlay paint renderer (src/services/paint-render.ts)
  * and host built-in renderer precedence in CanvasEngine.
  *
  * Expected exported API of src/services/paint-render.ts (per build-plan.md):
@@ -188,8 +188,8 @@ beforeEach(() => {
   resetContributionStore()
 })
 
-describe('T240 AC-1 smooth curve brush rendering', () => {
-  it('T240 AC-1: smooth brush stroke draws cubic curves passing through every control point with continuous tangents at interior points', () => {
+describe('AC-1 smooth curve brush rendering', () => {
+  it('AC-1: smooth brush stroke draws cubic curves passing through every control point with continuous tangents at interior points', () => {
     const pts: Point[] = [
       { x: 0, y: 0 },
       { x: 100, y: 0 },
@@ -242,7 +242,7 @@ describe('T240 AC-1 smooth curve brush rendering', () => {
     expect(Math.abs(uP1.y)).toBeGreaterThan(0.1)
   })
 
-  it('T240 AC-1: brush stroke with smooth false draws straight polyline segments without Bezier smoothing', () => {
+  it('AC-1: brush stroke with smooth false draws straight polyline segments without Bezier smoothing', () => {
     const pts: Point[] = [
       { x: 0, y: 0 },
       { x: 100, y: 0 },
@@ -264,7 +264,7 @@ describe('T240 AC-1 smooth curve brush rendering', () => {
     ])
   })
 
-  it('T240 AC-1 regression: smooth brush with adjacent duplicate points and smooth closed fill with repeated endpoint keep continuous tangents without corners', () => {
+  it('AC-1 regression: smooth brush with adjacent duplicate points and smooth closed fill with repeated endpoint keep continuous tangents without corners', () => {
     // Open smooth brush with adjacent duplicate point at the turn B=(100, 0).
     const openPts: Point[] = [
       { x: 0, y: 0 },
@@ -320,8 +320,8 @@ describe('T240 AC-1 smooth curve brush rendering', () => {
   })
 })
 
-describe('T240 AC-2 brush color, width/opacity taper, and soft edge (hardness)', () => {
-  it('T240 AC-2: brush stroke applies color and tapers lineWidth and globalAlpha monotonically from start to end', () => {
+describe('AC-2 brush color, width/opacity taper, and soft edge (hardness)', () => {
+  it('AC-2: brush stroke applies color and tapers lineWidth and globalAlpha monotonically from start to end', () => {
     const pts: Point[] = [
       { x: 0, y: 0 },
       { x: 100, y: 0 },
@@ -363,7 +363,7 @@ describe('T240 AC-2 brush color, width/opacity taper, and soft edge (hardness)',
     expect(raw.globalAlpha).toBe(1)
   })
 
-  it('T240 AC-2: hardness below 1 produces a soft-edge effect without leaking ctx state, and CanvasEngine resolves mcp-paint-brush ahead of plugin renderers', () => {
+  it('AC-2: hardness below 1 produces a soft-edge effect without leaking ctx state, and CanvasEngine resolves mcp-paint-brush ahead of plugin renderers', () => {
     const pts: Point[] = [{ x: 0, y: 0 }, { x: 120, y: 0 }]
 
     const hard = makeRecordingCtx()
@@ -423,8 +423,8 @@ describe('T240 AC-2 brush color, width/opacity taper, and soft edge (hardness)',
   })
 })
 
-describe('T240 AC-3 closed-contour fill rendering with holes', () => {
-  it('T240 AC-3: renderPaintFill fills polygon, smooth closed polygon, rect, and ellipse contours with the specified color and opacity', () => {
+describe('AC-3 closed-contour fill rendering with holes', () => {
+  it('AC-3: renderPaintFill fills polygon, smooth closed polygon, rect, and ellipse contours with the specified color and opacity', () => {
     const square: Point[] = [
       { x: 0, y: 0 },
       { x: 100, y: 0 },
@@ -487,7 +487,7 @@ describe('T240 AC-3 closed-contour fill rendering with holes', () => {
     expect(drewEllipse).toBe(true)
   })
 
-  it('T240 AC-3: renderPaintFill with holes traces outer contour and every hole subpath and fills with the evenodd rule', () => {
+  it('AC-3: renderPaintFill with holes traces outer contour and every hole subpath and fills with the evenodd rule', () => {
     const outer: Point[] = [
       { x: 0, y: 0 },
       { x: 200, y: 0 },

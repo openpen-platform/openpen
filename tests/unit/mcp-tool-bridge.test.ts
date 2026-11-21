@@ -150,7 +150,7 @@ describe('mcp-tool-bridge', () => {
   })
 
 
-  describe('TASK-241 the canvas shows the stroke when draw returns', () => {
+  describe('the canvas shows the stroke when draw returns', () => {
     it('draw resolves only after the overlay reports the repaint done', async () => {
       let painted: (() => void) | null = null
       const off = on('canvas-redraw-requested', (payload) => {

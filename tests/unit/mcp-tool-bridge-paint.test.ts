@@ -1,5 +1,5 @@
 /**
- * Unit tests for T240 overlay `paint` command in mcp-tool-bridge.ts and
+ * Unit tests for the overlay `paint` command in mcp-tool-bridge.ts and
  * batch undo/redo/purge behavior (ADD_STROKES) in stroke-store.ts.
  *
  * Expected overlay command wire shape (per build-plan.md <Interfaces>):
@@ -40,8 +40,8 @@ afterEach(() => {
   resetHistory()
 })
 
-describe('T240 AC-4 overlay paint batch command', () => {
-  it('T240 AC-4: paint adds all items in order with CSS-pixel coords, triggers one redraw, lists kind/source, and undoes/redoes the whole batch in one step', async () => {
+describe('AC-4 overlay paint batch command', () => {
+  it('AC-4: paint adds all items in order with CSS-pixel coords, triggers one redraw, lists kind/source, and undoes/redoes the whole batch in one step', async () => {
     // Seed one earlier annotation to prove batch undo leaves prior strokes intact.
     const earlier = (await executeMcpCommand({
       type: 'draw',
@@ -173,7 +173,7 @@ describe('T240 AC-4 overlay paint batch command', () => {
     }
   })
 
-  it('T240 AC-4: if any item in a paint batch fails to build, no strokes are added and existing strokes remain unchanged', async () => {
+  it('AC-4: if any item in a paint batch fails to build, no strokes are added and existing strokes remain unchanged', async () => {
     await executeMcpCommand({ type: 'draw', shape: 'rect', x: 10, y: 10, width: 40, height: 40 })
     const before = JSON.stringify(getAllStrokes())
 

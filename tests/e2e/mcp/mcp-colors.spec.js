@@ -1,5 +1,5 @@
 /**
- * E2E: colour notations (rgb / hsl / rgba) drawn through the MCP endpoint (TASK-233, AC-21).
+ * E2E: colour notations (rgb / hsl / rgba) drawn through the MCP endpoint.
  * This file owns its own app, which listens on a free port picked for this file
  * (see mcp-port.js), and runs serially.
  */

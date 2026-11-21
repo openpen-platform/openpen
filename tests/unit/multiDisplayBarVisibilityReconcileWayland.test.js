@@ -1,5 +1,5 @@
 /**
- * Verifies invariant #4 of issue #50: on a native Wayland session,
+ * Verifies that on a native Wayland session,
  * reconcileStandardBarWindows() MUST early-return so it never mutates windows —
  * visibility is owned solely by reconcileLinuxWindows(), which shows ONLY the
  * active display's bar (per deriveLinuxWindowState). If the standard reconcile

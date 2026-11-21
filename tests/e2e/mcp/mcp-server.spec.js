@@ -1,5 +1,5 @@
 /**
- * E2E: OpenPen's local MCP entry on real Electron (TASK-233).
+ * E2E: OpenPen's local MCP entry on real Electron.
  *
  * The describes run serially, each owning at most one app at a time. The apps
  * listen on a free port picked for this file (see mcp-port.js).
