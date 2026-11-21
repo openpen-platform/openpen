@@ -14,8 +14,13 @@
 import { test, expect } from '@playwright/test';
 import { attachElectronErrorDetection } from '../electron-errors.js';
 import { launchElectronApp } from '../launch.js';
+import { failed, getControlBarWindow, printHudDiagnostics } from './hud-helpers.js';
 
 let electronApp;
+// The app / window a test is using, for the failure diagnostics. Tests on the
+// shared app leave it as is; the notify-off test points it at its own app.
+let current = null;
+let lastWindow = null;
 
 attachElectronErrorDetection(() => electronApp);
 
@@ -27,10 +32,24 @@ test.afterAll(async () => {
   await electronApp?.close();
 });
 
+test.afterEach(async ({}, testInfo) => {
+  try {
+    if (failed(testInfo)) {
+      const target = current ?? { app: electronApp, usedWindow: lastWindow };
+      await printHudDiagnostics(testInfo, target.app, target);
+    }
+  } finally {
+    // A test-owned app is closed here, after the diagnostics had a chance to read it.
+    await current?.app?.close();
+    current = null;
+  }
+});
+
+// The control-bar (main) window hosts the toast; find it by its UI rather than
+// relying on firstWindow() order.
 async function getMainWindow() {
-  const win = await electronApp.firstWindow();
-  await win.waitForLoadState('domcontentloaded');
-  return win;
+  lastWindow = await getControlBarWindow(electronApp);
+  return lastWindow;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,34 +124,32 @@ test('notifyOnDrawingMode=true: recent() records correct variant and source', as
 
 test('notifyOnDrawingMode=false: toggling drawing mode does not push a notification', async () => {
   // Disable notifications via seedConfig.
+  current = { app: null, usedWindow: null };
   const noNotifyApp = await launchElectronApp({
     seedConfig: { language: 'en', notifyOnDrawingMode: false },
   });
+  current.app = noNotifyApp;
 
-  try {
-    const mainWin = await noNotifyApp.firstWindow();
-    await mainWin.waitForLoadState('domcontentloaded');
+  const mainWin = await getControlBarWindow(noNotifyApp);
+  current.usedWindow = mainWin;
 
-    await mainWin.waitForTimeout(800);
+  await mainWin.waitForTimeout(800);
 
-    const before = await mainWin.evaluate(() =>
-      window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
-    );
+  const before = await mainWin.evaluate(() =>
+    window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
+  );
 
-    await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
-    await mainWin.waitForTimeout(500);
+  await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(true));
+  await mainWin.waitForTimeout(500);
 
-    const after = await mainWin.evaluate(() =>
-      window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
-    );
+  const after = await mainWin.evaluate(() =>
+    window.__OPENPEN_DEBUG__?.notifications?.count() ?? 0
+  );
 
-    // count must not increase when notifyOnDrawingMode=false.
-    expect(after).toBe(before);
+  // count must not increase when notifyOnDrawingMode=false.
+  expect(after).toBe(before);
 
-    await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));
-  } finally {
-    await noNotifyApp.close();
-  }
+  await mainWin.evaluate(() => window.openPenApi?.setDrawingMode(false));
 });
 
 test('notificationPosition defaults to top-center — notification-stack has top:8% style', async () => {
