@@ -1,11 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
 import { join } from 'node:path'
+import { createRequire } from 'node:module'
+
+// Launching Electron with a file path (as the e2e harness does) makes
+// app.getVersion() report Electron's own version, so the mock does the same:
+// the loader must compare against openpen's package.json version instead.
+const { version: openpenVersion } = createRequire(import.meta.url)('../../package.json')
+const nextMajor = `${Number(openpenVersion.split('.')[0]) + 1}.0.0`
 
 const handlers = new Map()
 const virtualHome = '/virtual-openpen-test-home'
 
 vi.mock('electron', () => ({
-  app: { getVersion: () => '1.6.0', getPath: () => virtualHome },
+  app: { getVersion: () => '42.11.18', getPath: () => virtualHome },
   ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) },
 }))
 vi.mock('../../electron/plugin-meta-manager.js', () => ({
@@ -34,8 +41,8 @@ vi.mock('node:fs', () => ({
 
 const root = join(process.env.HOME ?? virtualHome, '.openpen', 'plugins')
 const manifests = new Map([
-  ['future', '1.7.0'],
-  ['compatible', '1.6.0'],
+  ['future', nextMajor],
+  ['compatible', openpenVersion],
 ].map(([name, minAppVersion]) => [join(root, '@vendor', name, 'plugin.json'), {
   id: `@vendor/${name}`, name, version: '1.0.0', renderer: 'renderer.js', minAppVersion,
 }]))

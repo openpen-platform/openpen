@@ -111,7 +111,7 @@ export const APP_CONFIG = {
 
 /** Host (app) metadata. */
 export const APP = {
-  /** renderer → main: read package.json version (= app.getVersion()). */
+  /** renderer → main: read openpen's package.json version (see app-version.js). */
   GET_VERSION: 'app:get-version',
   /** renderer → main (one-way): relaunch the app (used after plugin install / module toggle). */
   RELAUNCH: 'app:relaunch',

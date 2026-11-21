@@ -34,8 +34,9 @@ import { createRendererReadyWatchdog, resolveTimeoutMs } from './renderer-ready-
 import { createQuitCoordinator } from './quit-coordinator.js';
 import { isShortcutRegistered, registerDesktopShortcut, unregisterDesktopShortcut, suspendDesktopShortcut, resumeDesktopShortcut, electronToGtkAccelerator, buildCliCommand, detectWaylandShortcutBackend, shouldRegisterBuiltinDesktopShortcuts, clearPluginDesktopShortcuts, PLUGIN_SHORTCUT_FLAG, DESKTOP_ENTRY_NAME, DRAWING_MODE_BINDING_ID, TOGGLE_DRAWING_MODE_FLAG, BAR_BINDING_ID, TOGGLE_BAR_FLAG, SUMMON_BINDING_ID } from './linux-shortcut.js';
 import { IS_WAYLAND_SESSION } from './is-wayland-session.js';
+import { getAppVersion } from './app-version.js';
 
-ipcMain.handle(APP.GET_VERSION, () => app.getVersion());
+ipcMain.handle(APP.GET_VERSION, () => getAppVersion());
 
 ipcMain.on(APP.RELAUNCH, () => {
   app.relaunch();

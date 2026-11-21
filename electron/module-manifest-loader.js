@@ -20,6 +20,7 @@ import { moduleCallSchema } from './ipc-payload-schemas.js'
 import { ensurePluginInstalledAt, getPluginInstalledAt } from './plugin-meta-manager.js'
 import { MODULE_ID_RE } from './plugin-id-validator.js'
 import { getSettings } from './settings-store.js'
+import { getAppVersion } from './app-version.js'
 
 /**
  * Plugin install directory.
@@ -153,7 +154,7 @@ async function scanPlugins() {
         const manifest = { ...json, dir: pluginDir }
 
         if (manifest.minAppVersion) {
-          const appVer = app.getVersion()
+          const appVer = getAppVersion()
           if (compareVersions(appVer, manifest.minAppVersion) < 0) {
             console.warn(`[ModuleManifestLoader] Plugin ${json.id} requires app >= ${manifest.minAppVersion} (have ${appVer}), skipping`)
             continue
