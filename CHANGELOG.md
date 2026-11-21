@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.8.0](https://github.com/openpen-platform/openpen/compare/v1.7.0...v1.8.0) (2026-11-21)
+
+
+### Features
+
+* **drawing:** hold a key to draw without entering drawing mode ([de31a87](https://github.com/openpen-platform/openpen/commit/de31a87c80035e372c08271c01b73ca56b586818))
+* **drawing:** persist shape and eraser panel choices across restarts ([5ca2b04](https://github.com/openpen-platform/openpen/commit/5ca2b0439553ca2fa08d46b08c5e4b194ace43b0))
+* **settings:** let users change the MCP port ([01bcdb2](https://github.com/openpen-platform/openpen/commit/01bcdb2a827838f541969fe42ba5156a3908b580))
+* **settings:** match Chinese descriptions in marketplace search ([1f6ba08](https://github.com/openpen-platform/openpen/commit/1f6ba086d4ebaf70a9e9bfcb5f02ada3b2288a40))
+
+
+### Bug Fixes
+
+* **mcp:** count the screenshot guard per MCP session and refuse over-limit batches ([e727a12](https://github.com/openpen-platform/openpen/commit/e727a12d29e91eed151817208f3a1384c2967008))
+* **mcp:** scale MCP stroke widths by the display scale ([9c05f38](https://github.com/openpen-platform/openpen/commit/9c05f38e40ab0bd0153805e1c5b6be45f0c968e8))
+* **overlay:** report the physical display size at 125% and 150% scaling ([cc99b14](https://github.com/openpen-platform/openpen/commit/cc99b14b7690cf26f37aabdf2f56aba4d99cd9b0))
+* **tests:** judge log isolation against the real log directory ([0527910](https://github.com/openpen-platform/openpen/commit/0527910ef53a5faec1a34fddd8cd333c13c3490e))
+
 ## [1.7.0](https://github.com/openpen-platform/openpen/compare/v1.6.0...v1.7.0) (2026-11-21)
 
 
