@@ -12,6 +12,7 @@
  */
 
 import { z } from 'zod';
+import { MCP_PORT_MIN, MCP_PORT_MAX } from '../shared/mcp-constants.js';
 
 // ── Shared limits ────────────────────────────────────────────────────────────
 
@@ -75,6 +76,7 @@ const mcpSettings = z.object({
   readOnly: z.boolean(),
   exposeAll: z.boolean(),
   enabledPlugins: z.array(id),
+  port: z.number().int().min(MCP_PORT_MIN).max(MCP_PORT_MAX).optional(),
 });
 
 // ── MCP plugin tools ─────────────────────────────────────────────────────────

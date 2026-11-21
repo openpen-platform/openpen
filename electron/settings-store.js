@@ -17,6 +17,7 @@ import { setLocale as setMainLocale } from './i18n/index.js';
 import { refreshTrayLocale } from './tray-manager.js';
 import { handleValidated, logRejected, onValidated } from './ipc-validation.js';
 import { generateApiKey } from './mcp/api-key.js';
+import { isValidMcpPort } from '../shared/mcp-constants.js';
 import { CURRENT_CONFIG_VERSION, migrateConfig, getConfigVersion } from './settings-migrations.js';
 import {
   knownIdsSchema,
@@ -567,6 +568,7 @@ function coerceMcpSettings(raw) {
   if (typeof r.readOnly === 'boolean') out.readOnly = r.readOnly;
   if (typeof r.exposeAll === 'boolean') out.exposeAll = r.exposeAll;
   if (Array.isArray(r.enabledPlugins)) out.enabledPlugins = r.enabledPlugins.filter((v) => typeof v === 'string');
+  if (isValidMcpPort(r.port)) out.port = r.port;
   return out;
 }
 

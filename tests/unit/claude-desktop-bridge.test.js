@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import net from 'node:net'
+import { spawn } from 'node:child_process'
 import { PassThrough } from 'node:stream'
 import { createMcpHttpServer } from '../../electron/mcp/http-server.js'
 import { createBuiltinTools } from '../../electron/mcp/tools.js'
@@ -95,6 +96,8 @@ describe('AC-1/AC-2 the .mcpb connects Claude Desktop to the local OpenPen', () 
     expect(manifest.user_config.api_key).toMatchObject({ type: 'string', sensitive: true, required: true })
     expect(manifest.compatibility.platforms).toEqual(expect.arrayContaining(['darwin', 'win32']))
     expect(DEFAULT_URL).toBe(`http://${MCP_HOST}:${MCP_PORT}${MCP_PATH}`)
+    expect(manifest.server.mcp_config.env.OPENPEN_PORT).toBe('${user_config.port}')
+    expect(manifest.user_config.port).toMatchObject({ type: 'number', default: MCP_PORT, min: 1024, max: 65535, required: false })
   })
 
   // Regression (review): the key must only ever be sent to OpenPen on this computer.
@@ -169,5 +172,36 @@ describe('AC-7 the settings button hands the bundled installer to Claude Desktop
     expect(await installClaudeDesktopBundle(env, { exists: () => false, openPath: async () => '' })).toEqual({ ok: false, error: 'missing' })
     expect(await installClaudeDesktopBundle(env, { exists: () => true, openPath: async () => 'No application knows how to open' }))
       .toEqual({ ok: false, error: 'open-failed', message: 'No application knows how to open' })
+  })
+})
+
+describe('a custom port entered at install time', () => {
+  it('reaches the OpenPen listening on that port when Claude Desktop runs the entry with the manifest env', async () => {
+    const srv = await startOpenPen(await freePort())
+    const port = Number(new URL(srv.status().url).port)
+    expect(port).not.toBe(MCP_PORT)
+    // Fill the manifest's env the way Claude Desktop does from the user's answers.
+    const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'claude-desktop/manifest.json'), 'utf8'))
+    const answers = { api_key: KEY, port }
+    const env = Object.fromEntries(
+      Object.entries(manifest.server.mcp_config.env).map(([k, v]) => [k, String(v).replace(/\$\{user_config\.(\w+)\}/g, (_, name) => String(answers[name]))]),
+    )
+    const child = spawn(process.execPath, [path.join(ROOT, 'claude-desktop', manifest.server.entry_point)], {
+      env: { PATH: process.env.PATH, ...env },
+      stdio: ['pipe', 'pipe', 'pipe'],
+    })
+    const lines = []
+    child.stdout.on('data', (c) => lines.push(...String(c).split('\n').filter(Boolean)))
+    try {
+      child.stdin.write(JSON.stringify(initialize) + '\n')
+      child.stdin.write(JSON.stringify(list) + '\n')
+      await expect.poll(() => lines.length, { timeout: 10000 }).toBe(2)
+      const byId = Object.fromEntries(lines.map((l) => JSON.parse(l)).map((m) => [m.id, m]))
+      const names = byId[2].result.tools.map((t) => t.name)
+      expect(names).toContain('openpen__get_state')
+      expect(names).not.toContain(CHECK_TOOL)
+    } finally {
+      child.kill()
+    }
   })
 })

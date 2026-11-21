@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
  * Entry point Claude Desktop runs from the OpenPen .mcpb (see ../manifest.json).
- * The API key arrives as OPENPEN_API_KEY from the extension's user_config.
+ * The API key arrives as OPENPEN_API_KEY and the port as OPENPEN_PORT from the
+ * extension's user_config.
  * Logs go to stderr, which Claude Desktop keeps in its MCP log for this extension.
  */
 
 import fs from 'node:fs';
-import { createBridge, attachStdio } from './bridge.mjs';
+import { createBridge, attachStdio, urlForPort } from './bridge.mjs';
 
 let version = '0.0.0';
 try {
@@ -17,6 +18,7 @@ try {
 
 const write = (msg) => process.stdout.write(JSON.stringify(msg) + '\n');
 const bridge = createBridge({
+  url: urlForPort(process.env.OPENPEN_PORT),
   apiKey: (process.env.OPENPEN_API_KEY ?? '').trim(),
   version,
   logger: { error: (...args) => console.error(...args) },

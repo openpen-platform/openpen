@@ -4,8 +4,16 @@
  */
 
 export const MCP_HOST = '127.0.0.1'
-/** Fixed port, no auto-pick: AI apps store the URL, so it must not drift. */
+/** Default port, no auto-pick: AI apps store the URL, so it must not drift. Users may pick another one in settings. */
 export const MCP_PORT = 17639
+/** Ports the user may pick: below 1024 needs admin rights on some systems. */
+export const MCP_PORT_MIN = 1024
+export const MCP_PORT_MAX = 65535
+
+/** Whether `value` is a port the user may save. */
+export function isValidMcpPort(value) {
+  return Number.isInteger(value) && value >= MCP_PORT_MIN && value <= MCP_PORT_MAX
+}
 export const MCP_PATH = '/mcp'
 /** Request body cap; larger bodies get 413. */
 export const MCP_MAX_BODY_BYTES = 1048576

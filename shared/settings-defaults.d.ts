@@ -30,6 +30,8 @@ export interface McpSettings {
   /** true = every plugin tool is exposed; false = only `enabledPlugins`. */
   exposeAll: boolean
   enabledPlugins: string[]
+  /** Port the server listens on (127.0.0.1 only), 1024–65535. */
+  port: number
 }
 
 export interface AppSettings {

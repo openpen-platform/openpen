@@ -6,6 +6,8 @@
  * remain free of Node.js and Electron imports.
  */
 
+import { MCP_PORT } from './mcp-constants.js'
+
 /** @type {import('./settings-defaults').UserShortcuts} */
 export const DEFAULT_SHORTCUTS = Object.freeze({
   toggleDrawingMode: 'CommandOrControl+Shift+A',
@@ -44,5 +46,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     readOnly: false,
     exposeAll: true,
     enabledPlugins: /** @type {string[]} */ ([]),
+    /** Port the server listens on (127.0.0.1 only). */
+    port: MCP_PORT,
   },
 })

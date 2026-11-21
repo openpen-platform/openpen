@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AppBanner, AppDialog, AppSegmented, AppToggle } from '@openpen/module-api/uikit'
 import type { AppSettings } from '../../types/settings'
-import { MCP_PORT } from '../../../shared/mcp-constants.js'
+import { MCP_PORT, MCP_PORT_MAX, MCP_PORT_MIN, isValidMcpPort } from '../../../shared/mcp-constants.js'
 
 const { t } = useI18n()
 
@@ -50,16 +50,59 @@ const chip = computed(() => {
   return { cls: 'chip-on', text: t('mcpChipRunning'), id: 'running' }
 })
 
+// ── Port (draft; main listens on it after Save) ─────────────────────────────
+const draftPort = computed(() => mcp.value.port ?? MCP_PORT)
+// The field keeps what the user typed; only a valid port reaches the draft, so
+// Save (shared by the whole window) never writes an invalid one.
+const portText = ref<string | null>(null)
+const portShown = computed(() => portText.value ?? String(draftPort.value))
+const portValid = computed(() => /^\d{1,5}$/.test(portShown.value.trim()) && isValidMcpPort(Number(portShown.value.trim())))
+const portTouched = ref(false)
+const portInvalidShown = computed(() => portTouched.value && !portValid.value)
+/** The port before this window's edits; an invalid field puts it back so no half-typed value is saved. */
+let portBefore: number | null = null
+function onPortInput(e: Event) {
+  if (portBefore === null) portBefore = draftPort.value
+  portText.value = (e.target as HTMLInputElement).value
+  if (portValid.value) {
+    props.draft.mcp.port = Number(portText.value.trim())
+    portTouched.value = true
+  } else {
+    props.draft.mcp.port = portBefore
+  }
+}
+const runningPort = computed(() => (status.value.url ? Number(new URL(status.value.url).port) : null))
+// Edited in this window: the address shows the port Save will apply.
+const portEdited = computed(() => portText.value !== null)
+const portPending = computed(() => portEdited.value && portValid.value && status.value.running && runningPort.value !== draftPort.value)
+const portInUse = computed(() => status.value.error === 'port_in_use')
+
+// Turning the switch on failed, so `enabled` was never saved. The banner says
+// to pick another port and save: show the switch on again, so that Save starts
+// the server on the new port. Done once per loaded draft, so the user can still
+// turn it off.
+let adoptedPendingFor: object | null = null
+watch(
+  () => [props.draft.mcp, status.value.pendingEnable, status.value.error] as const,
+  ([draftMcp, pendingEnable, error]) => {
+    if (!pendingEnable || !error || draftMcp.enabled || adoptedPendingFor === draftMcp) return
+    adoptedPendingFor = draftMcp
+    props.draft.mcp.enabled = true
+  },
+)
+
 const errorText = computed(() => {
   const s = status.value
-  if (s.error === 'port_in_use') return t('mcpErrPortInUse', { port: MCP_PORT })
+  if (s.error === 'port_in_use') return t('mcpErrPortInUse', { port: s.port ?? draftPort.value })
   return s.message ? t('mcpErrFailed', { message: s.message }) : t('mcpErrFailedNoMessage')
 })
 
-const endpoint = computed(() => status.value.url ?? `http://127.0.0.1:${MCP_PORT}/mcp`)
+const endpoint = computed(() =>
+  portEdited.value || !status.value.url ? `http://127.0.0.1:${draftPort.value}/mcp` : status.value.url,
+)
 const heroText = computed(() =>
   status.value.running && !showError.value
-    ? t('mcpHeroListening', { url: endpoint.value })
+    ? t('mcpHeroListening', { url: status.value.url })
     : t('mcpHeroIntro'),
 )
 
@@ -235,7 +278,7 @@ onUnmounted(() => {
 
       <div v-if="showError" data-testid="mcp-error-banner">
         <AppBanner variant="error">
-          {{ errorText }}
+          <span id="mcp-error-text">{{ errorText }}</span>
           <template #actions>
             <button type="button" class="btn-sm" data-testid="mcp-retry-btn" @click="retryStart">{{ t('mcpRetry') }}</button>
           </template>
@@ -249,7 +292,8 @@ onUnmounted(() => {
       </ul>
     </section>
 
-    <template v-if="enabled">
+    <!-- Also shown while the port is taken, so the field to fix it is at hand. -->
+    <template v-if="enabled || portInUse">
       <!-- Connection card -->
       <section class="cw-section" aria-labelledby="mcp-sec-conn">
         <h2 id="mcp-sec-conn" class="cw-section-title">{{ t('mcpSectionConnection') }}</h2>
@@ -258,6 +302,29 @@ onUnmounted(() => {
         </div>
         <div class="b-card">
           <div class="b-fields">
+            <span id="mcp-lbl-port" class="field-label">{{ t('mcpPort') }}</span>
+            <input
+              id="mcp-port"
+              class="field-value field-input"
+              :class="{ 'is-invalid': portInvalidShown || portInUse }"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              spellcheck="false"
+              maxlength="5"
+              aria-labelledby="mcp-lbl-port"
+              :aria-invalid="portInvalidShown || portInUse"
+              :aria-describedby="portInvalidShown ? 'mcp-port-msg' : portInUse ? 'mcp-error-text' : portPending ? 'mcp-port-note' : undefined"
+              data-testid="mcp-port-input"
+              :value="portShown"
+              @input="onPortInput"
+              @blur="portTouched = true"
+            />
+            <span class="b-fieldbtns"><span v-if="draftPort !== MCP_PORT" class="muted-note b-port-default" data-testid="mcp-port-default">{{ t('mcpPortDefault', { port: MCP_PORT }) }}</span></span>
+            <div v-if="portInvalidShown" id="mcp-port-msg" class="b-port-msg" data-testid="mcp-port-invalid">
+              <AppBanner variant="error" inline>{{ t('mcpPortInvalid', { min: MCP_PORT_MIN, max: MCP_PORT_MAX }) }}</AppBanner>
+            </div>
+            <p v-else-if="portPending" id="mcp-port-note" class="muted-note b-port-msg" data-testid="mcp-port-pending">{{ t('mcpPortPending', { port: draftPort }) }}</p>
             <span id="mcp-lbl-url" class="field-label">{{ t('mcpEndpoint') }}</span>
             <code class="field-value" aria-labelledby="mcp-lbl-url" data-testid="mcp-endpoint">{{ endpoint }}</code>
             <span class="b-fieldbtns">
@@ -308,7 +375,7 @@ onUnmounted(() => {
                 {{ t('mcpInstallClaudeDesktop') }}
               </button>
             </div>
-            <p class="muted-note" data-testid="mcp-install-claude-desktop-note">{{ installFailed ? t('mcpInstallClaudeDesktopFailed') : t('mcpInstallClaudeDesktopHint') }}</p>
+            <p class="muted-note" data-testid="mcp-install-claude-desktop-note">{{ installFailed ? t('mcpInstallClaudeDesktopFailed') : t('mcpInstallClaudeDesktopHint', { port: draftPort }) }}</p>
             <div class="b-divider" />
           </template>
           <div class="b-card-head">
@@ -506,6 +573,12 @@ onUnmounted(() => {
 .b-issue-name { font-family: var(--mono, 'SF Mono', Consolas, monospace); font-size: 11.5px; font-weight: 600; flex: 0 1 auto; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .b-plug-d { display: block; font-weight: 400; font-size: 12px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .empty { padding: 8px 0; font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
+.field-input { width: 100%; box-sizing: border-box; outline: none; }
+.field-input:hover { border-color: var(--accent); }
+.field-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.field-input.is-invalid { border-color: var(--op-state-error-border); }
+.b-port-default { white-space: nowrap; }
+.b-port-msg { grid-column: 2 / -1; margin-bottom: 4px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .dialog-body-text { font-size: 13px; line-height: 1.55; color: var(--text-primary); margin: 0 0 8px; }

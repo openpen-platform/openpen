@@ -174,6 +174,8 @@ interface McpServerStatus {
   running: boolean
   url: string | null
   error: null | 'port_in_use' | 'failed'
+  /** With `error`: the port the server tried to listen on. */
+  port?: number
   message?: string
   /** The user turned the switch on but starting failed; `enabled` was not saved. */
   pendingEnable?: boolean

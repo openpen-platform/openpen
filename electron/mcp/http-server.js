@@ -54,7 +54,7 @@ const isPluginTool = (tool) => typeof tool.pluginId === 'string';
 
 /**
  * @param {{
- *   port: number,
+ *   port: number | (() => number),
  *   getConfig: () => { apiKey: string, readOnly?: boolean, exposeAll?: boolean, enabledPlugins?: string[] },
  *   getTools: () => Array<any>,
  *   getDisabledModules?: () => string[],
@@ -66,7 +66,7 @@ const isPluginTool = (tool) => typeof tool.pluginId === 'string';
 export function createMcpHttpServer({ port, getConfig, getTools, getDisabledModules, findDisabledPluginForTool, logger, serverVersion = '0.0.0' }) {
   /** @type {http.Server | null} */
   let httpServer = null;
-  /** @type {{ running: boolean, url: string | null, error: null | 'port_in_use' | 'failed', message?: string }} */
+  /** @type {{ running: boolean, url: string | null, error: null | 'port_in_use' | 'failed', port?: number, message?: string }} */
   let currentStatus = { running: false, url: null, error: null };
   let queue = Promise.resolve();
   /** @type {Map<string, number>} */
@@ -352,6 +352,8 @@ export function createMcpHttpServer({ port, getConfig, getTools, getDisabledModu
   function doStart() {
     if (httpServer) return Promise.resolve(currentStatus);
     return new Promise((resolve) => {
+      // Read on every start: a Save may have picked another port since the last one.
+      const wanted = typeof port === 'function' ? port() : port;
       const srv = http.createServer((req, res) => { void onRequest(req, res); });
       srv.once('error', (err) => {
         const inUse = err?.code === 'EADDRINUSE';
@@ -359,12 +361,14 @@ export function createMcpHttpServer({ port, getConfig, getTools, getDisabledModu
           running: false,
           url: null,
           error: inUse ? 'port_in_use' : 'failed',
+          // The port that failed, so the settings page names it instead of the default.
+          port: wanted,
           ...(inUse ? {} : { message: err?.message ?? String(err) }),
         };
         logger?.error?.('[mcp] listen failed:', err?.message ?? err);
         resolve(currentStatus);
       });
-      srv.listen(port, MCP_HOST, () => {
+      srv.listen(wanted, MCP_HOST, () => {
         srv.removeAllListeners('error');
         srv.on('error', (err) => logger?.error?.('[mcp] server error:', err));
         httpServer = srv;

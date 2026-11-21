@@ -29,7 +29,7 @@ import {
   getOverlayWindowForDisplay,
   setDrawingMode,
 } from './window-manager.js';
-import { MCP_PORT } from '../shared/mcp-constants.js';
+import { MCP_PORT, isValidMcpPort } from '../shared/mcp-constants.js';
 import { createMcpHttpServer } from './mcp/http-server.js';
 import { IS_WAYLAND_SESSION } from './is-wayland-session.js';
 import { createBuiltinTools, ensureDrawingVisible, filterTools } from './mcp/tools.js';
@@ -94,12 +94,16 @@ const pixelSize = displayPixelSize;
  * @param {{ captureDisplayImage: (opts?: { includeAnnotations?: boolean, displayId?: number }) => Promise<any> }} deps
  */
 export function initMcpServerManager({ captureDisplayImage }) {
-  // `OPENPEN_MCP_PORT` lets parallel e2e runs avoid the fixed port (0 = any free port).
+  // `OPENPEN_MCP_PORT` lets parallel e2e runs avoid the default port (0 = any free port).
+  // When set it wins over the port saved in settings.
   const envPort = process.env.OPENPEN_MCP_PORT;
-  const port = envPort !== undefined && envPort !== '' && Number.isInteger(Number(envPort)) ? Number(envPort) : MCP_PORT;
+  const envPortValue = envPort !== undefined && envPort !== '' && Number.isInteger(Number(envPort)) ? Number(envPort) : null;
 
   /** The persisted `mcp` settings; the HTTP server reads this on every request. */
   let current = { ...getSetting('mcp'), enabledPlugins: [...getSetting('mcp').enabledPlugins] };
+
+  /** Port to listen on for the given settings. */
+  const portFor = (settings) => envPortValue ?? (isValidMcpPort(settings?.port) ? settings.port : MCP_PORT);
 
   /** @type {Map<string, { resolve: (v: any) => void, reject: (e: Error) => void, sender: Electron.WebContents, timer: NodeJS.Timeout }>} */
   const pending = new Map();
@@ -381,7 +385,7 @@ export function initMcpServerManager({ captureDisplayImage }) {
   }
 
   const server = createMcpHttpServer({
-    port,
+    port: () => portFor(current),
     getConfig: () => current,
     getTools: allTools,
     getDisabledModules: disabledModules,
@@ -423,6 +427,9 @@ export function initMcpServerManager({ captureDisplayImage }) {
       if (effective.enabled && !effective.apiKey) effective.apiKey = generateApiKey();
 
       if (effective.enabled) {
+        // A new port needs a fresh listen; the old one is released first. A port
+        // that turns out to be taken is reported, never swapped for another one.
+        if (server.status().running && portFor(prev) !== portFor(effective)) await server.stop();
         current = effective;
         const status = await server.start();
         if (!status.running) {

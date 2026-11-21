@@ -4,7 +4,7 @@
   "display_name": "OpenPen",
   "version": "0.0.0",
   "description": "Let Claude draw annotations on your screen and take screenshots through OpenPen.",
-  "long_description": "Connects Claude Desktop to the OpenPen app running on this computer. Turn on the MCP server in OpenPen Settings > MCP, copy the API key shown there, and paste it here. Only OpenPen on this computer is reached; nothing is sent over the network.",
+  "long_description": "Connects Claude Desktop to the OpenPen app running on this computer. Turn on the MCP server in OpenPen Settings > MCP, copy the API key shown there, and paste it here. If you changed the port in OpenPen, enter the same port here. Only OpenPen on this computer is reached; nothing is sent over the network.",
   "author": {
     "name": "OpenPen",
     "url": "https://github.com/openpen-platform/openpen"
@@ -19,7 +19,8 @@
       "command": "node",
       "args": ["${__dirname}/server/index.mjs"],
       "env": {
-        "OPENPEN_API_KEY": "${user_config.api_key}"
+        "OPENPEN_API_KEY": "${user_config.api_key}",
+        "OPENPEN_PORT": "${user_config.port}"
       }
     }
   },
@@ -30,6 +31,15 @@
       "description": "Copy it from OpenPen Settings > MCP after turning on the MCP server.",
       "sensitive": true,
       "required": true
+    },
+    "port": {
+      "type": "number",
+      "title": "OpenPen port",
+      "description": "Leave 17639 unless you changed the port in OpenPen Settings > MCP; then enter the same number.",
+      "default": 17639,
+      "min": 1024,
+      "max": 65535,
+      "required": false
     }
   },
   "compatibility": {

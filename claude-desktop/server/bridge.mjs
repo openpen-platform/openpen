@@ -20,6 +20,16 @@ import http from 'node:http';
 
 /** Must match shared/mcp-constants.js (a unit test checks it). */
 export const DEFAULT_URL = 'http://127.0.0.1:17639/mcp';
+
+/**
+ * The endpoint for the port the user entered at install time (`user_config.port`).
+ * Anything that is not a port OpenPen accepts (1024-65535) falls back to the default.
+ */
+export function urlForPort(value) {
+  const port = Number(String(value ?? '').trim());
+  if (!Number.isInteger(port) || port < 1024 || port > 65535) return DEFAULT_URL;
+  return `http://127.0.0.1:${port}/mcp`;
+}
 export const CHECK_TOOL = 'openpen__check_connection';
 /** The key must never leave this computer: only loopback targets are accepted. */
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost']);
@@ -32,7 +42,8 @@ const MESSAGES = {
     'then paste it into the OpenPen extension settings in Claude Desktop (Settings > Extensions > OpenPen) and save.',
   notRunning:
     'Cannot reach OpenPen on this computer. Make sure OpenPen is running, ' +
-    'then open OpenPen Settings > MCP, turn on "Enable MCP server" and click Save.',
+    'then open OpenPen Settings > MCP, turn on "Enable MCP server" and click Save. ' +
+    'If you changed the port there, enter the same port in the OpenPen extension settings in Claude Desktop.',
   timeout: 'OpenPen did not answer within 60 seconds. Check that OpenPen is responding, then try again.',
   unexpected: (status) =>
     `Something other than the OpenPen MCP server answered (HTTP ${status}). ` +
