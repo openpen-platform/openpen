@@ -15,9 +15,11 @@
  */
 import { computed, inject, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { lastEraserMode } from './eraser-state'
 import {
   SNAP_EDGE_KEY,
   MODAL_MANAGER_KEY,
+  useModuleContext,
 } from '@openpen/module-api'
 import { AppButtonDropdown } from '@openpen/module-api/uikit'
 import { emit as eventBusEmit, on as eventBusOn } from '@openpen/module-api/host'
@@ -35,21 +37,29 @@ const isActive = computed(() =>
 
 // Remembers the last selected eraser mode so switching to another tool and
 // back restores the user's chosen mode instead of defaulting to brush erase.
-const lastEraserMode = ref<'eraser' | 'stroke-eraser'>('eraser')
-
+// State lives in eraser-state so the module's setup() can hydrate and persist it.
 const unsub = eventBusOn('tool-changed', (payload) => {
   const p = payload as { tool?: string }
   activeToolId.value = p?.tool ?? null
-  if (p?.tool === 'eraser' || p?.tool === 'stroke-eraser') {
-    lastEraserMode.value = p.tool
-  }
 })
 onUnmounted(() => unsub())
 
 // Close popup on snap edge change (stale anchor positions).
 watch(() => snapEdge?.value, () => { modalManager?.close('eraser-mode') })
 
+// Remember the panel choice for the next launch (only explicit panel picks).
+function persistMode(mode: 'eraser' | 'stroke-eraser') {
+  try {
+    void useModuleContext('@openpen/eraser')
+      .updateSettings({ mode })
+      .catch((err) => console.error('[eraser] failed to persist mode:', err))
+  } catch (err) {
+    console.error('[eraser] module context unavailable:', err)
+  }
+}
+
 function activateBrushErase() {
+  persistMode('eraser')
   eventBusEmit('tool-changed', { tool: 'eraser' })
   window.openPenApi?.setActiveTool({ tool: 'eraser' })
   modalManager?.close('eraser-mode')
@@ -62,6 +72,7 @@ function activateCurrentMode() {
 }
 
 function activateStrokeErase() {
+  persistMode('stroke-eraser')
   eventBusEmit('tool-changed', { tool: 'stroke-eraser' })
   window.openPenApi?.setActiveTool({ tool: 'stroke-eraser' })
   modalManager?.close('eraser-mode')

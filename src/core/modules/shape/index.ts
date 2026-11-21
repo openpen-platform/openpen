@@ -18,6 +18,7 @@
  */
 import {
   defineModule,
+  z,
   type ShapeContribution,
   type Stroke,
   type StrokeStyle,
@@ -89,7 +90,20 @@ export default defineModule({
     name: { en: 'Shape', 'zh-Hant': '形狀', 'zh-Hans': '形状', ja: '図形' },
     description: { en: 'Geometric shape tool with 10 built-in shapes.', 'zh-Hant': '幾何形狀工具，內建 10 種形狀。', 'zh-Hans': '几何形状工具，内置 10 种形状。', ja: '10 種類の内蔵図形を持つジオメトリツール。' },
   },
-  setup() {
+  // The last shape kind + fill choice survive a restart. They are written only
+  // when the user picks them in the shape panel (ShapePopover), never from
+  // tool-changed relays, so several windows cannot overwrite each other.
+  settingsSchema: z.object({
+    shapeType: z.string().default('rect'),
+    filled: z.boolean().default(false),
+  }),
+  setup(ctx) {
+    const saved = ctx.getSettings<{ shapeType?: string; filled?: boolean }>()
+    if (saved.shapeType && builtInShapes.some((s) => s.id === saved.shapeType)) {
+      currentShape.value = saved.shapeType as ShapeKind
+    }
+    if (typeof saved.filled === 'boolean') filled.value = saved.filled
+
     unsubToolChanged?.()
     unsubToolChanged = eventBusOn('tool-changed', (payload) => {
       const p = payload as { tool?: string; shapeType?: ShapeKind; filled?: boolean }

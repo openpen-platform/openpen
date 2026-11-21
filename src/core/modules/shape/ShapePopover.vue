@@ -15,7 +15,7 @@
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ShapeContribution } from '@openpen/module-api'
-import { SNAP_EDGE_KEY, MODAL_MANAGER_KEY } from '@openpen/module-api'
+import { SNAP_EDGE_KEY, MODAL_MANAGER_KEY, useModuleContext } from '@openpen/module-api'
 import { AppToggle } from '@openpen/module-api/uikit'
 import { emit as eventBusEmit, getSlotEntries } from '@openpen/module-api/host'
 import { currentShape, filled } from './shape-state'
@@ -62,6 +62,7 @@ function selectShape(id: string) {
   eventBusEmit('tool-changed', config)
   // Notify main process so IPC-dependent features (cursor, overlay mode) stay in sync.
   window.openPenApi?.setActiveTool(config)
+  persistSelection()
   // Auto-close the popover after selecting a shape (fill toggle does NOT close).
   modalManager?.close('shape')
 }
@@ -71,6 +72,18 @@ function toggleFilled(val: boolean) {
   const config = { tool: 'shape', shapeType: currentShape.value, filled: filled.value }
   eventBusEmit('tool-changed', config)
   window.openPenApi?.setActiveTool(config)
+  persistSelection()
+}
+
+// Remember the panel choice for the next launch (only explicit panel picks).
+function persistSelection() {
+  try {
+    void useModuleContext('@openpen/shape')
+      .updateSettings({ shapeType: currentShape.value, filled: filled.value })
+      .catch((err) => console.error('[shape] failed to persist selection:', err))
+  } catch (err) {
+    console.error('[shape] module context unavailable:', err)
+  }
 }
 </script>
 
