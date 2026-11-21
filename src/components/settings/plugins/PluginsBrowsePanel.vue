@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AppBanner } from '@openpen/module-api/uikit'
 import { usePluginMarketplace } from '../../../composables/usePluginMarketplace'
+import { listingMatchesQuery } from '../../../services/marketplace-listing'
 import PluginCard from './PluginCard.vue'
 import PluginActionConfirmDialog from './PluginActionConfirmDialog.vue'
 import PluginDetailDialog from './PluginDetailDialog.vue'
@@ -27,17 +28,10 @@ const communityConfirmOpen = ref(false)
 const communityConfirmEntry = ref<CatalogEntry | null>(null)
 
 const filteredCatalog = computed(() => {
-  const q = props.searchQuery.toLowerCase().trim()
   return marketplace.listing.value.filter((entry) => {
     if (entry.state === 'tombstoned') return false
     if (activeFilter.value !== 'all' && entry.category !== activeFilter.value) return false
-    if (!q) return true
-    return (
-      entry.name.toLowerCase().includes(q) ||
-      entry.description.toLowerCase().includes(q) ||
-      entry.ownerLogin.toLowerCase().includes(q) ||
-      entry.id.toLowerCase().includes(q)
-    )
+    return listingMatchesQuery(entry, props.searchQuery, locale.value)
   })
 })
 

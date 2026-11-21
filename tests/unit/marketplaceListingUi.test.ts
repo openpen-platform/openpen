@@ -10,7 +10,7 @@ import zhHant from '../../src/i18n/zh-Hant'
 import zhHans from '../../src/i18n/zh-Hans'
 import PluginCard from '../../src/components/settings/plugins/PluginCard.vue'
 import PluginDetailDialog from '../../src/components/settings/plugins/PluginDetailDialog.vue'
-import { resetListingImagesForTest } from '../../src/services/marketplace-listing'
+import { resetListingImagesForTest, listingMatchesQuery } from '../../src/services/marketplace-listing'
 
 const RAW = 'https://raw.githubusercontent.com/openpen-platform/openpen-arrow/v1.2.0'
 
@@ -151,5 +151,23 @@ describe('marketplace detail dialog', () => {
     const still = gifThumb.get('[data-testid="plugin-listing-shot"]')
     expect(still.element.tagName).toBe('CANVAS')
     expect(still.attributes('data-still')).toBe('true')
+  })
+})
+
+describe('listingMatchesQuery (marketplace search)', () => {
+  const e = entry({ descriptionLocalized: { 'zh-Hant': '畫直線箭頭。', 'zh-Hans': '画直线箭头。' } })
+  it('matches Chinese description text in the matching UI language', () => {
+    expect(listingMatchesQuery(e, '直線', 'zh-Hant')).toBe(true)
+    expect(listingMatchesQuery(e, '直线', 'zh-Hans')).toBe(true)
+  })
+  it('does not match the other Chinese script or Chinese text in English UI', () => {
+    expect(listingMatchesQuery(e, '直线', 'zh-Hant')).toBe(false)
+    expect(listingMatchesQuery(e, '直線', 'en')).toBe(false)
+  })
+  it('still matches the English description in a Chinese UI', () => {
+    expect(listingMatchesQuery(e, 'straight', 'zh-Hant')).toBe(true)
+  })
+  it('falls back to English when the entry has no localized text', () => {
+    expect(listingMatchesQuery(entry({ descriptionLocalized: undefined }), '直線', 'zh-Hant')).toBe(false)
   })
 })

@@ -57,6 +57,19 @@ export function listingDescription(entry: CatalogEntry, locale: string): string 
   return entry.description
 }
 
+/** Search match: name, owner, id and the English description, plus the description shown in the UI language. */
+export function listingMatchesQuery(entry: CatalogEntry, query: string, locale: string): boolean {
+  const q = query.toLowerCase().trim()
+  if (!q) return true
+  return (
+    entry.name.toLowerCase().includes(q) ||
+    entry.description.toLowerCase().includes(q) ||
+    listingDescription(entry, locale).toLowerCase().includes(q) ||
+    entry.ownerLogin.toLowerCase().includes(q) ||
+    entry.id.toLowerCase().includes(q)
+  )
+}
+
 /** Index of the GIF screenshot, if any: the demo the detail dialog plays first. */
 export function demoScreenshotIndex(entry: CatalogEntry): number {
   const shots = entry.screenshots ?? []
