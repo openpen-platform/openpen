@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.0](https://github.com/openpen-platform/openpen/compare/module-api@1.5.0...module-api@1.6.0) (2026-11-21)
+
+
+### Features
+
+* **module-api:** let plugin MCP tools convert screenshot points to canvas ([569a316](https://github.com/openpen-platform/openpen/commit/569a316f54e57d56028ae7b430cd9e45be08fb7b))
+* **module-api:** let plugins declare MCP tools ([b236a31](https://github.com/openpen-platform/openpen/commit/b236a31cadb102869a8763cef8b0453188b379f8))
+
 ## [1.5.0](https://github.com/openpen-platform/openpen/compare/module-api@1.4.0...module-api@1.5.0) (2026-11-14)
 
 
