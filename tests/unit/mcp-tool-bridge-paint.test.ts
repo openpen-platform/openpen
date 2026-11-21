@@ -105,7 +105,8 @@ describe('AC-4 overlay paint batch command', () => {
       expect(strokes[1].tool).toBe('mcp-paint-brush')
       expect(strokes[1].points).toEqual([{ x: 50, y: 100 }, { x: 150, y: 200 }])
       expect(brushStroke.smooth).toBe(true)
-      expect(brushStroke.width).toEqual({ start: 4, end: 12 })
+      // Widths are screenshot px too: 4 and 12 at DPR 2 are 2 and 6 CSS px.
+      expect(brushStroke.width).toEqual({ start: 2, end: 6 })
       expect(brushStroke.hardness).toBe(0.5)
       expect(brushStroke.opacityRange).toEqual({ start: 0.3, end: 0.9 })
       expect(strokes[1].opacity).toBeUndefined()

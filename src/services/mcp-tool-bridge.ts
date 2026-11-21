@@ -114,6 +114,19 @@ function dpr(): number {
   return Number.isFinite(v) && v > 0 ? v : 1
 }
 
+/**
+ * Widths arrive in screenshot pixels like the coordinates, so they scale to CSS
+ * pixels the same way. Without this a 4 px line is 4 CSS px = 6 screen px at
+ * 150% scaling and looks 1.5x thicker than the same request at 100%.
+ */
+function toOverlayWidth(w: number): number {
+  return w / dpr()
+}
+
+function toOverlayRamp(w: PaintRamp): PaintRamp {
+  return typeof w === 'number' ? toOverlayWidth(w) : { start: toOverlayWidth(w.start), end: toOverlayWidth(w.end) }
+}
+
 function toOverlay(p: Point, offset: McpOffset = { x: 0, y: 0 }): Point {
   const r = dpr()
   return { x: (p.x - offset.x) / r, y: (p.y - offset.y) / r }
@@ -153,7 +166,7 @@ function buildStroke(cmd: Extract<McpCommand, { type: 'draw' }>): Stroke {
   const toO = (p: Point) => toOverlay(p, off)
   const style = {
     color: cmd.color ?? DEFAULT_COLOR,
-    lineWidth: cmd.lineWidth ?? (cmd.shape === 'highlighter' ? HIGHLIGHTER_LINE_WIDTH : DEFAULT_LINE_WIDTH),
+    lineWidth: toOverlayWidth(cmd.lineWidth ?? (cmd.shape === 'highlighter' ? HIGHLIGHTER_LINE_WIDTH : DEFAULT_LINE_WIDTH)),
     lineCap: 'round' as CanvasLineCap,
     lineJoin: 'round' as CanvasLineJoin,
   }
@@ -250,7 +263,7 @@ function buildPaintStroke(item: PaintItem, index: number, offset: McpOffset): St
   if (kind === 'brush') {
     const brush = item as PaintBrushItem
     const points = checkPointList(brush.points, 2, index, 'brush', 'a brush stroke')
-    const width = checkRamp(brush.width, 'width', (v) => v > 0, 'above zero', index, 'brush') ?? DEFAULT_LINE_WIDTH
+    const width = toOverlayRamp(checkRamp(brush.width, 'width', (v) => v > 0, 'above zero', index, 'brush') ?? DEFAULT_LINE_WIDTH)
     const opacity = checkRamp(brush.opacity, 'opacity', (v) => v >= 0 && v <= 1, 'from 0 to 1', index, 'brush')
     const hardness = checkUnit(brush.hardness, 'hardness', index, 'brush')
     const stroke: Stroke = {
