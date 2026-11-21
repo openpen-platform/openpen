@@ -8,15 +8,15 @@
  * sending the same `module:shortcut-triggered` message a real global shortcut
  * produces; physical key presses are verified separately by QA.
  *
- * The fixture plugin is written under the sandbox HOME created by globalSetup,
- * never the developer's real home.
+ * The fixture plugin is written under a HOME of this spec's own inside the e2e
+ * sandbox (see fixture-home.js), never the developer's real home.
  */
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { attachElectronErrorDetection } from '../electron-errors.js';
 import { launchElectronApp } from '../launch.js';
+import { createFixtureHome, fixtureHomeEnv, fixturePluginDir } from '../fixture-home.js';
 
 const PLUGIN_SCOPE = '@e2efix';
 const PLUGIN_NAME = 'tool-sync';
@@ -63,17 +63,15 @@ export default {
 `;
 
 let electronApp;
-let pluginRoot;
+let fixtureHome;
 
 attachElectronErrorDetection(() => electronApp);
 
 test.beforeAll(async () => {
-  // Refuse to write a fixture plugin anywhere but the run-wide sandbox HOME.
-  if (!process.env.OPENPEN_E2E_HOME) {
-    throw new Error('OPENPEN_E2E_HOME is not set; refusing to seed a plugin into the real home directory');
-  }
-  pluginRoot = path.join(os.homedir(), '.openpen', 'plugins', PLUGIN_SCOPE);
-  const dir = path.join(pluginRoot, PLUGIN_NAME);
+  // createFixtureHome refuses to run outside the e2e sandbox, so the plugin
+  // never lands in the developer's real home directory.
+  fixtureHome = createFixtureHome();
+  const dir = fixturePluginDir(fixtureHome, PLUGIN_ID);
   fs.mkdirSync(path.join(dir, 'dist'), { recursive: true });
   fs.writeFileSync(
     path.join(dir, 'plugin.json'),
@@ -88,12 +86,13 @@ test.beforeAll(async () => {
     }),
   );
   fs.writeFileSync(path.join(dir, 'dist', 'renderer.js'), RENDERER_SOURCE);
-  electronApp = await launchElectronApp();
+  electronApp = await launchElectronApp({ env: fixtureHomeEnv(fixtureHome) });
 });
 
 test.afterAll(async () => {
   await electronApp?.close();
-  if (pluginRoot) fs.rmSync(pluginRoot, { recursive: true, force: true });
+  // Only this instance's HOME: parallel specs and repeats each have their own.
+  if (fixtureHome) fs.rmSync(fixtureHome, { recursive: true, force: true });
 });
 
 async function findWindow(predicate, readySelector) {

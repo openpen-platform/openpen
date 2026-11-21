@@ -5,23 +5,23 @@
  * import (no built-in coverage exercises this path — built-ins are bundled).
  *
  * The spec installs a dependency-free fixture plugin into ~/.openpen/plugins
- * (the manifest loader scans it regardless of userData; globalSetup points HOME
- * at a per-run sandbox), then asserts the renderer imported it without a
+ * of a HOME of its own (the manifest loader scans it regardless of userData;
+ * see fixture-home.js), then asserts the renderer imported it without a
  * bootstrap import error.
  */
 import { test, expect } from '@playwright/test';
 import { launchElectronApp } from '../launch.js';
+import { createFixtureHome, fixtureHomeEnv, fixturePluginDir } from '../fixture-home.js';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 
-const FIXTURE_ID_SCOPE = '@e2efix';
-const FIXTURE_DIR = path.join(os.homedir(), '.openpen', 'plugins', FIXTURE_ID_SCOPE, 'import-probe');
-
 let electronApp;
+let fixtureHome;
 const consoleLines = [];
 
 test.beforeAll(async () => {
+  fixtureHome = createFixtureHome();
+  const FIXTURE_DIR = fixturePluginDir(fixtureHome, '@e2efix/import-probe');
   fs.mkdirSync(path.join(FIXTURE_DIR, 'dist'), { recursive: true });
   fs.writeFileSync(
     path.join(FIXTURE_DIR, 'plugin.json'),
@@ -39,12 +39,13 @@ test.beforeAll(async () => {
     path.join(FIXTURE_DIR, 'dist', 'renderer.js'),
     'export default { id: "@e2efix/import-probe", version: "1.0.0", contributes: {} }\n',
   );
-  electronApp = await launchElectronApp();
+  electronApp = await launchElectronApp({ env: fixtureHomeEnv(fixtureHome) });
 });
 
 test.afterAll(async () => {
   await electronApp?.close();
-  fs.rmSync(path.join(os.homedir(), '.openpen', 'plugins', FIXTURE_ID_SCOPE), { recursive: true, force: true });
+  // Only this instance's HOME: parallel specs and repeats each have their own.
+  if (fixtureHome) fs.rmSync(fixtureHome, { recursive: true, force: true });
 });
 
 test('a disk plugin renderer bundle imports over openpen-plugin:// without a CORS failure', async () => {

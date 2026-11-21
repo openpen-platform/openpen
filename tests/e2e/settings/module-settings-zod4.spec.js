@@ -13,13 +13,13 @@
  */
 import { test, expect } from '@playwright/test';
 import { launchElectronApp } from '../launch.js';
+import { createFixtureHome, fixtureHomeEnv, fixturePluginDir } from '../fixture-home.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const FIXTURE_SCOPE = '@e2efix';
 const FIXTURE_ID = '@e2efix/zod4-settings';
-const FIXTURE_DIR = path.join(os.homedir(), '.openpen', 'plugins', FIXTURE_SCOPE, 'zod4-settings');
+let fixtureHome;
 
 const FIXTURE_RENDERER = `import { defineModule, z } from '@openpen/module-api'
 
@@ -72,7 +72,12 @@ async function waitForProbeWindow(electronApp) {
   throw new Error('fixture plugin setup() did not run within 20s');
 }
 
+/** Launch with this spec's own HOME so the app finds the fixture plugin. */
+const launch = (opts) => launchElectronApp({ ...opts, env: fixtureHomeEnv(fixtureHome) });
+
 test.beforeAll(() => {
+  fixtureHome = createFixtureHome();
+  const FIXTURE_DIR = fixturePluginDir(fixtureHome, FIXTURE_ID);
   fs.mkdirSync(path.join(FIXTURE_DIR, 'dist'), { recursive: true });
   fs.writeFileSync(
     path.join(FIXTURE_DIR, 'plugin.json'),
@@ -90,7 +95,8 @@ test.beforeAll(() => {
 });
 
 test.afterAll(() => {
-  fs.rmSync(path.join(os.homedir(), '.openpen', 'plugins', FIXTURE_SCOPE), { recursive: true, force: true });
+  // Only this instance's HOME: parallel specs and repeats each have their own.
+  if (fixtureHome) fs.rmSync(fixtureHome, { recursive: true, force: true });
 });
 
 test('built-in module settings written by a 1.x host are kept, not reset', async () => {
@@ -98,7 +104,7 @@ test('built-in module settings written by a 1.x host are kept, not reset', async
     modules: LEGACY_MODULE_SETTINGS,
     moduleMeta: { '@openpen/color': { schemaVersion: 1 }, '@openpen/stroke-width': { schemaVersion: 1 } },
   });
-  const electronApp = await launchElectronApp({ userDataDir });
+  const electronApp = await launch({ userDataDir });
   try {
     const win = await waitForProbeWindow(electronApp);
     expect(await win.evaluate(() => globalThis.__zod4Probe.hasPrefault), 'plugins must receive zod 4').toBe(true);
@@ -116,7 +122,7 @@ test('built-in module settings written by a 1.x host are kept, not reset', async
 test('a disk plugin loads schema defaults and keeps an update across restart', async () => {
   const userDataDir = mkUserDataDir({});
 
-  let electronApp = await launchElectronApp({ userDataDir });
+  let electronApp = await launch({ userDataDir });
   try {
     const win = await waitForProbeWindow(electronApp);
     expect(await win.evaluate(() => globalThis.__zod4Probe.hasPrefault), 'plugins must receive zod 4').toBe(true);
@@ -131,7 +137,7 @@ test('a disk plugin loads schema defaults and keeps an update across restart', a
     await electronApp.close();
   }
 
-  electronApp = await launchElectronApp({ userDataDir });
+  electronApp = await launch({ userDataDir });
   try {
     const win = await waitForProbeWindow(electronApp);
     expect(await win.evaluate(() => globalThis.__zod4Probe.getSettings())).toEqual({
