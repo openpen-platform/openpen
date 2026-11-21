@@ -124,6 +124,67 @@ test('a crashed drawing window reloads itself and can draw again', async () => {
   await expectReloadedAndDrawable();
 });
 
+test('a stroke drawn the moment the reloaded window is in drawing mode is kept', async () => {
+  app = await launchElectronApp();
+  await enterDrawingModeAndGetOverlay();
+
+  // As soon as the reloaded page exists, watch for the canvas to take drawing
+  // mode and draw one stroke at that exact moment, the earliest a user could.
+  await app.evaluate(({ BrowserWindow }, part) => {
+    const win = BrowserWindow.getAllWindows().find(
+      (w) => !w.isDestroyed() && w.webContents.getURL().includes(part),
+    );
+    win.webContents.once('dom-ready', () => {
+      win.webContents.executeJavaScript(`(() => {
+        const state = window.__earlyStroke = { fired: false, paintedAtOnce: null };
+        const painted = (c) => {
+          const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+          for (let i = 3; i < d.length; i += 4) if (d[i] > 0) return true;
+          return false;
+        };
+        const tryStroke = () => {
+          const c = document.querySelector('[data-testid="canvas-overlay"]');
+          if (state.fired || !c?.classList.contains('drawing-mode')) return;
+          state.fired = true;
+          observer.disconnect();
+          const fire = (type, x, y) => c.dispatchEvent(new PointerEvent(type, {
+            clientX: x, clientY: y, pointerId: 1, buttons: type === 'pointerup' ? 0 : 1, bubbles: true }));
+          fire('pointerdown', 60, 60);
+          fire('pointermove', 140, 100);
+          fire('pointerup', 220, 156);
+          state.paintedAtOnce = painted(c);
+        };
+        const observer = new MutationObserver(tryStroke);
+        observer.observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+        tryStroke();
+      })(); true`).catch(() => {});
+    });
+  }, OVERLAY_URL_PART);
+
+  await crashOverlay();
+
+  await expect
+    .poll(async () => (await inOverlay('window.__earlyStroke?.fired ?? false')) === true, {
+      timeout: 20000,
+      message: 'the reloaded overlay entered drawing mode and the stroke was drawn',
+    })
+    .toBe(true);
+  const paintedAtOnce = await inOverlay('window.__earlyStroke.paintedAtOnce');
+  test.info().annotations.push({
+    type: 'boot-gap',
+    description: paintedAtOnce ? 'tool was already registered' : 'stroke landed in the tool-registration gap',
+  });
+
+  await expect
+    .poll(() => inOverlay(`(() => {
+      const c = document.querySelector('[data-testid="canvas-overlay"]');
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      for (let i = 3; i < d.length; i += 4) if (d[i] > 0) return true;
+      return false;
+    })()`), { timeout: 10000, message: 'the early stroke is on the canvas' })
+    .toBe(true);
+});
+
 test('a second crash stops the reloading; "disable plugins" keeps the plugin files and turns them off', async () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-e2e-recovery-home-'));
   tempDirs.push(home);

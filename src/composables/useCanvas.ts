@@ -38,6 +38,26 @@ export function useCanvas() {
   const isDrawingMode = ref(false)
   let engine: CanvasEngine | null = null
   let pointerDown = false
+  // The tool last handed to the engine; null until the active tool's module
+  // has registered it in `canvas.tools`.
+  let engineTool: ToolContribution | null = null
+
+  // After a renderer (re)load the canvas mounts and takes drawing mode before
+  // the module runtime registers the tools, so input arriving in that gap has
+  // no tool to draw with. It is kept here and replayed once the tool exists.
+  type BufferedInput =
+    | { kind: 'down'; point: { x: number; y: number } }
+    | { kind: 'move' | 'up'; point: { x: number; y: number }; modifiers: { shiftKey: boolean } }
+  // Only moves are dropped past this cap: a down or up is always kept, since
+  // a stroke without its up is never committed.
+  const MAX_BUFFERED_MOVES = 10_000
+  let bufferedMoves = 0
+  const bufferedInput: BufferedInput[] = []
+  // A stroke finished in the gap is not committed until it is replayed, so the
+  // Wayland "stroke in progress" hold stays on until then; bounded so a tool
+  // that never registers cannot keep drawing mode from being exited.
+  const BUFFERED_STROKE_HOLD_MS = 5_000
+  let bufferedStrokeHold: ReturnType<typeof setTimeout> | null = null
 
   const unsubs: Array<() => void> = []
 
@@ -79,7 +99,52 @@ export function useCanvas() {
     if (!engine) return
     if (!activeToolId.value) return
     const tool = findToolById(activeToolId.value)
-    if (tool) engine.setActiveTool(tool)
+    // Setting a tool aborts the stroke in flight, so a re-sync caused by an
+    // unrelated tool registering must not hand the same tool over again.
+    if (!tool || tool === engineTool) return
+    engineTool = tool
+    engine.setActiveTool(tool)
+    replayBufferedInput()
+  }
+
+  function bufferInput(input: BufferedInput): void {
+    if (input.kind === 'move') {
+      if (bufferedMoves >= MAX_BUFFERED_MOVES) return
+      bufferedMoves++
+    }
+    bufferedInput.push(input)
+  }
+
+  function holdBufferedStroke(): void {
+    if (bufferedStrokeHold) clearTimeout(bufferedStrokeHold)
+    bufferedStrokeHold = setTimeout(releaseBufferedStrokeHold, BUFFERED_STROKE_HOLD_MS)
+  }
+
+  function releaseBufferedStrokeHold(): void {
+    if (!bufferedStrokeHold) return
+    clearTimeout(bufferedStrokeHold)
+    bufferedStrokeHold = null
+    // A stroke still held down (replayed without its up) keeps the hold.
+    if (!pointerDown) notifyStroke(false)
+  }
+
+  function replayBufferedInput(): void {
+    if (!engine || bufferedInput.length === 0) return
+    const inputs = bufferedInput.splice(0)
+    bufferedMoves = 0
+    let committed = false
+    for (const input of inputs) {
+      if (input.kind === 'down') {
+        engine.handlePointerDown(input.point, { ...currentStyle })
+      } else if (input.kind === 'move') {
+        engine.handlePointerMove(input.point, input.modifiers)
+      } else {
+        engine.handlePointerUp(input.point, input.modifiers)
+        committed = true
+      }
+    }
+    if (committed) reportHistoryState()
+    releaseBufferedStrokeHold()
   }
 
   // Linux only: the Wayland overlay window is destroyed on drawing-exit and
@@ -158,12 +223,17 @@ export function useCanvas() {
         /* setPointerCapture not supported */
       }
     }
-    engine.handlePointerDown(toPoint(e), { ...currentStyle })
+    if (engineTool) engine.handlePointerDown(toPoint(e), { ...currentStyle })
+    else bufferInput({ kind: 'down', point: toPoint(e) })
     notifyStroke(true)
   }
 
   function onPointerMove(e: PointerEvent): void {
     if (!engine || !pointerDown) return
+    if (!engineTool) {
+      bufferInput({ kind: 'move', point: toPoint(e), modifiers: { shiftKey: e.shiftKey } })
+      return
+    }
     pendingPointer = { point: toPoint(e), modifiers: { shiftKey: e.shiftKey } }
     if (rafPending) return
     rafPending = true
@@ -181,6 +251,11 @@ export function useCanvas() {
     if (!engine) return
     pointerDown = false
     pendingPointer = null
+    if (!engineTool) {
+      bufferInput({ kind: 'up', point: toPoint(e), modifiers: { shiftKey: e.shiftKey } })
+      holdBufferedStroke()
+      return
+    }
     engine.handlePointerUp(toPoint(e), { shiftKey: e.shiftKey })
     notifyStroke(false)
     reportHistoryState()
@@ -323,10 +398,15 @@ export function useCanvas() {
     }
     rafPending = false
     pendingPointer = null
+    bufferedInput.length = 0
+    bufferedMoves = 0
+    if (bufferedStrokeHold) clearTimeout(bufferedStrokeHold)
+    bufferedStrokeHold = null
     for (const u of unsubs) u()
     unsubs.length = 0
     engine?.destroy()
     engine = null
+    engineTool = null
   }
 
   onUnmounted(cleanup)
