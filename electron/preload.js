@@ -346,7 +346,7 @@ contextBridge.exposeInMainWorld('openPenApi', {
   // ── Crash / error reporting ─────────────────────────────────────────
   /**
    * Forward a renderer-side error to the main-process file logger.
-   * @param {{ level?: 'error'|'warn', message: string, stack?: string, source?: string, line?: number, column?: number }} payload
+   * @param {{ level?: 'error'|'warn'|'info', message: string, stack?: string, source?: string, line?: number, column?: number }} payload
    */
   recordError: (payload) => ipcRenderer.send('log:record-error', payload),
 

@@ -366,14 +366,19 @@ function findPluginTool(pluginId: string, name: string): McpToolDefinition | und
   return pluginTools().find((e) => e.pluginId === pluginId && e.tool?.name === name)?.tool
 }
 
+// Main drops a whole record when its message is over 64 KiB (the IPC payload
+// limit), which would lose the line together with its plugin prefix. Cut the
+// plugin's text well below that so the prefixed line always arrives.
+const MAX_PLUGIN_LOG_MESSAGE = 60_000
+
 function pluginToolLogger(pluginId: string): McpToolContext['log'] {
   return (level, message) => {
-    const text = `[mcp] plugin ${pluginId}: ${message}`
+    const text = `[mcp] plugin ${pluginId}: ${String(message).slice(0, MAX_PLUGIN_LOG_MESSAGE)}`
+    // Every level goes to main so the line lands in main.log, where the docs
+    // tell plugin authors to look; the renderer console alone is never persisted.
     if (level === 'info') console.info(text)
-    else {
-      console.error(text)
-      window.openPenApi?.recordError?.({ level, message: text, source: 'mcp-plugin-tool' })
-    }
+    else console.error(text)
+    window.openPenApi?.recordError?.({ level, message: text, source: 'mcp-plugin-tool' })
   }
 }
 

@@ -302,7 +302,7 @@ export const auditQuerySchema = z.object({
 }).optional();
 
 export const rendererErrorSchema = z.object({
-  level: z.enum(['error', 'warn']).optional(),
+  level: z.enum(['error', 'warn', 'info']).optional(),
   message: z.string().max(MAX_LOG_TEXT_LENGTH),
   stack: z.string().max(MAX_LOG_TEXT_LENGTH).nullish(),
   source: z.string().max(MAX_PATH_LENGTH).nullish(),

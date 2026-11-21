@@ -78,6 +78,7 @@ const VALID = [
   ['auditQuerySchema', { limit: 50, pluginId: null }],
   ['rendererErrorSchema', { level: 'error', message: 'boom', stack: undefined, source: 'app.js', line: 3, column: 9 }],
   ['rendererErrorSchema', { level: 'error', message: 'unhandledrejection: x', stack: undefined }],
+  ['rendererErrorSchema', { level: 'info', message: '[mcp] plugin @a/b: hello', source: 'mcp-plugin-tool' }],
 ];
 
 /** Wrong types and out-of-range values that must never reach a handler. */

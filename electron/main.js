@@ -27,6 +27,7 @@ import { initLogger, log } from './logger.js';
 import { handleUncaughtException } from './fatal-error-handler.js';
 import { showOsCursor } from './cursor-os.js';
 import { handleValidated, onValidated } from './ipc-validation.js';
+import { logRendererRecord } from './renderer-log.js';
 import { auditQuerySchema, positioningIntentSchema, rendererErrorSchema } from './ipc-payload-schemas.js';
 import { initPositioningEngine, processIntent, getState as getPositioningState } from './positioning-engine.js';
 import { probeTransparentRendering } from './transparent-render-probe.js';
@@ -250,7 +251,7 @@ app.on('child-process-gone', (_event, details) => {
 
 // Renderer-side errors piped to the main-process log via IPC.
 onValidated(ipcMain, LOG.RECORD_ERROR, rendererErrorSchema, (_event, payload) => {
-  log.error('renderer:', payload);
+  logRendererRecord(log, payload);
 });
 
 app.whenReady().then(async () => {

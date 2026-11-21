@@ -167,7 +167,7 @@ export const AUDIT = {
 
 /** Crash / error reporting from renderer to main-process logger. */
 export const LOG = {
-  /** renderer → main (one-way): forward a renderer-side error to the file log. */
+  /** renderer → main (one-way): forward a renderer-side record (error, warn or info) to the file log. */
   RECORD_ERROR: 'log:record-error',
 }
 

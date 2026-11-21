@@ -274,7 +274,7 @@ interface OpenPenApi {
 
   // Crash / error reporting
   recordError(payload: {
-    level?: 'error' | 'warn'
+    level?: 'error' | 'warn' | 'info'
     message: string
     stack?: string
     source?: string

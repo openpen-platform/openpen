@@ -112,6 +112,44 @@ describe('overlay plugin tool bridge', () => {
     }
   })
 
+  it('forwards ctx.log info lines to the main-process log with the plugin prefix', async () => {
+    const recordError = vi.fn()
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    const { receive, disconnect } = connectBridge((_args, ctx) => {
+      (ctx as unknown as { log(level: string, message: string): void }).log('info', 'hello from the tool')
+      return 'ok'
+    })
+    vi.stubGlobal('openPenApi', { ...(window as unknown as { openPenApi: object }).openPenApi, recordError })
+    try {
+      await receive(command('arrow'))
+      expect(recordError).toHaveBeenCalledWith({
+        level: 'info',
+        message: `[mcp] plugin ${pluginId}: hello from the tool`,
+        source: 'mcp-plugin-tool',
+      })
+    } finally {
+      disconnect()
+      info.mockRestore()
+    }
+  })
+
+  it('cuts an oversized ctx.log message so main still receives the prefixed line', async () => {
+    const recordError = vi.fn()
+    const { receive, disconnect } = connectBridge((_args, ctx) => {
+      (ctx as unknown as { log(level: string, message: string): void }).log('info', 'x'.repeat(200_000))
+      return 'ok'
+    })
+    vi.stubGlobal('openPenApi', { ...(window as unknown as { openPenApi: object }).openPenApi, recordError })
+    try {
+      await receive(command('arrow'))
+      const sent = recordError.mock.calls[0]![0] as { message: string }
+      expect(sent.message.startsWith(`[mcp] plugin ${pluginId}: xxx`)).toBe(true)
+      expect(sent.message.length).toBeLessThan(65_536)
+    } finally {
+      disconnect()
+    }
+  })
+
   it('converts screenshot pixels to canvas points with the offset main sent and the device pixel ratio', async () => {
     vi.stubGlobal('devicePixelRatio', 2)
     const { receive, disconnect } = connectBridge((_args, ctx) =>
