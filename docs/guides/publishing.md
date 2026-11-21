@@ -140,6 +140,9 @@ be listed:
    `openpen` package on npm is an unrelated tool. The release must be published,
    not a draft or a prerelease. The scanner uses the latest release and its first
    `.zip` asset, which must have `plugin.json` at the zip root.
+   If `plugin.json` lists marketplace images, commit and push them before you
+   create the release (see Marketplace icon, screenshots and Chinese descriptions
+   below).
 5. Add the `openpen-plugin` topic to the repository: on the repository page, the gear
    next to About, Topics; or with the GitHub CLI,
    `gh repo edit --add-topic openpen-plugin`.
@@ -175,6 +178,117 @@ submission is reviewed by a maintainer before it is merged. See section 7 of
 [Build your first plugin](../tutorials/build-your-first-plugin.md)
 for the full walkthrough and [`reference/openpen-cli.md`](../reference/openpen-cli.md)
 for what each step does.
+
+### Marketplace icon, screenshots and Chinese descriptions
+
+Three optional `plugin.json` fields give your plugin an icon, screenshots and
+Chinese descriptions in the Marketplace: `icon`, `screenshots` and
+`descriptionLocalized`. The community scanner copies them from the `plugin.json`
+inside your release zip into your entry; for the official catalog they have to be in
+the submitted manifest (see below). They are optional for third-party plugins;
+`@openpen/*` plugins must have all three (see the official plugin requirements below).
+
+```json
+{
+  "id": "@alice/todo-app",
+  "name": "Todo App",
+  "version": "1.1.0",
+  "author": "alice",
+  "description": "Keeps a short to-do list on top of the screen you are sharing.",
+  "descriptionLocalized": {
+    "zh-Hant": "在分享中的畫面上放一份簡短的待辦清單。",
+    "zh-Hans": "在共享中的画面上放一份简短的待办清单。"
+  },
+  "icon": ".github/marketplace/icon.png",
+  "screenshots": [
+    {
+      "src": ".github/marketplace/cover.png",
+      "alt": "A to-do list with three items floats over a slide deck."
+    },
+    {
+      "src": ".github/readme-demo.gif",
+      "alt": "An item is added, ticked off and dragged to the bottom of the list."
+    }
+  ],
+  "minAppVersion": "1.0.0",
+  "renderer": "dist/renderer.js"
+}
+```
+
+| Field | Format and limits |
+| --- | --- |
+| `icon` | Path to a `.png` file in your repository. The image is 256×256 pixels and at most 256 KB. |
+| `screenshots` | Array of 1–5 items, each with only `src` and `alt`. The first item is the cover on the Marketplace card and must be a still `.png`, `.jpg` or `.jpeg`; the others may also be `.gif`. All screenshots of one plugin have aspect ratios within 1% of each other, are at least 960 px wide, and are at most 5 MB each. |
+| `src` (and `icon`) | Relative path in your repository, with `/` between segments. It must not start with `/`, contain a `..` segment, be a URL or start with a scheme such as `https:`, or contain backslashes or control characters. The file must be in the repository at the release tag. |
+| `alt` | English plain text, 1–200 characters, saying what the screenshot shows. The catalog counts it as English when it has at least one Latin letter and no letters from another script. |
+| `descriptionLocalized` | Object with only the keys `zh-Hant` (Traditional Chinese) and `zh-Hans` (Simplified Chinese). Each value is plain text of 1–80 characters; a Chinese character counts as one. Other keys are ignored. |
+| Any text value | A value that contains control characters or bidirectional override or isolate characters (U+202A–U+202E, U+2066–U+2069 and similar) breaks the rules. |
+
+**Where the image files go.** The release zip holds only `plugin.json`, `dist/` and
+`locales/`, so an image elsewhere in your repository, such as `.github/marketplace/`,
+is not packed, while an image you put under `dist/` or `locales/` is packed with the
+plugin. Either way the catalog does not read images from the zip. The catalog links each image to your
+repository at the release tag, as
+`https://raw.githubusercontent.com/<owner>/<repo>/<tag>/<src>` (the same for
+`icon`), where `<tag>` is the tag of the release it read. Put the images in
+`.github/marketplace/`; a README demo GIF can be listed where it is, for example
+`.github/readme-demo.gif`. Commit and push the image files before you create the
+release. If the tag does not exist yet, `gh release create v<version> <zip>` creates
+it from the latest commit on the default branch, and an image pushed after that is
+not on the tag, so its link fails until your next release. To check, run
+`git fetch --tags` and then `git ls-tree -r --name-only v<version>`, and look for
+each image path in the list, or open each image URL from your catalog entry in a
+browser.
+
+**What the catalog does with the fields.**
+
+- Community list: the scanner copies the fields that meet the rules into your entry
+  in `community/plugins.json` and leaves out the ones that do not; your plugin is
+  still listed. If any screenshot item breaks a rule, the whole `screenshots` field
+  is left out, so the second screenshot never becomes the cover. Each field left out
+  is logged in the `Update community index` workflow run as
+  `drop listing field of <owner>/<repo>: <reason>`. The scanner checks only the
+  values in `plugin.json`; it does not download the images, so it does not catch an
+  image that is missing from the tag or breaks the size limits. To confirm, find
+  your plugin id in `community/plugins.json`: `icon` and each `screenshots[].src`
+  are URLs that point at your release tag.
+- Official catalog: nothing copies the fields automatically. `npx openpen-cli publish`
+  does not write them into the manifest it submits, so the entry has no icon,
+  screenshots or Chinese descriptions until they are added to the manifest, for
+  example with the catalog repository's `scripts/sync-listing.mjs`, which writes them
+  from the release `plugin.json`. The catalog bot compares the manifest with the
+  `plugin.json` in your release: fields the manifest carries must match what your
+  `plugin.json` yields under the rules above. For a third-party plugin, a manifest
+  that leaves them out only gets a note in the bot's comment; for an `@openpen/*`
+  plugin, a field that is in `plugin.json` but missing from the manifest fails the
+  check.
+
+**Official plugin requirements.** An `@openpen/*` plugin must meet all of the
+following when it is first listed and in every update. Other scopes are encouraged
+to follow them, and the catalog does not reject other scopes for missing them. This
+includes item 4: the catalog does not check how other scopes write `description`.
+
+1. An `icon`: a 256×256 PNG that is clear on both light and dark backgrounds.
+2. 1–5 `screenshots` with matching aspect ratios, at least 960 px wide, including at
+   least one animated recording of the plugin in use on the overlay. They show only
+   what the plugin really does, with no personal data and no other brands'
+   trademarks.
+3. An `alt` on every screenshot that says what it shows.
+4. A `description` that is one English sentence of 50–155 characters, starting
+   with a verb and ending with a period.
+5. `descriptionLocalized` with both `zh-Hant` and `zh-Hans`.
+6. The icon, screenshots and descriptions are declared in `plugin.json`, and the
+   image files are in the repository and published with the release tag. A
+   screenshot may be the same file as the README demo image.
+
+The catalog's pull request check (`scripts/validate-pr.mjs`) rejects an
+`@openpen/*` submission that lacks `icon`, `screenshots`, `zh-Hant` or `zh-Hans`,
+breaks any rule in the table above, or has an image that is not on the tag, whose
+bytes do not match its file extension, an animated cover, an icon that is not
+256×256 or is over 256 KB, or a screenshot that is over 5 MB, narrower than 960 px,
+or more than 1% off the cover's aspect ratio. Maintainers review the rest by hand:
+whether the icon is clear, whether a screenshot shows the plugin on the overlay,
+personal data and trademarks, and how the `description` is written.
 
 ### Removing a plugin
 

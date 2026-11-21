@@ -92,7 +92,7 @@ OpenPen 有兩份獨立的清單，依需求擇一，兩者不是同一流程的
 1. 建立 plugin。執行 `npx openpen-cli create @scope/name` 產生專案，再執行 `npm install` 與 `npm run build` 產生 `dist/renderer.js`。專案內附範例翻譯（`src/locales/`：`en`、`ja`、`zh-Hans`、`zh-Hant`），它們會被打包進 `renderer.js`，可保留、修改或刪除。開發流程請見[快速入門](./plugin-quickstart.md)。
 2. 確認 `plugin.json` 有 `id`、`name`、`version`、`description`、`minAppVersion`。請把專案範本預設的 `description`（「A short description of what your plugin does.」）改成真實的描述，它就是清單中顯示在你 plugin 上的文字。`version` 須為 semver，`id` 的 scope 須等於擁有該 repository 的 GitHub 帳號或組織名稱（小寫），例如 `github.com/alice/todo-app` 對應 `@alice/todo-app`。掃描器只比對 scope 與 repository 擁有者，不會檢查你目前登入哪個帳號；組織只要 repository 在該組織底下即可。`create` 會拿 scope 與你個人的登入名稱比對，組織 scope 可能出現警告，這不會影響社群清單。`@openpen` scope 與官方目錄已有的 id 會被拒絕。
 3. 把專案放進公開的 GitHub repository。執行 `git init`，然後在 plugin id 的 scope 所指的帳號或組織底下建立 repository（`@alice/todo-app` 就建在 `alice` 底下）並 push，例如 `gh repo create alice/todo-app --public --source . --push`。repository 名稱不必與 plugin 名稱相同，只有擁有者會拿來與 scope 比對。私有、fork 與已封存的 repository 會被略過。第一次 commit 之前，確認專案有 `.gitignore`，並列出 `node_modules/`、`dist/` 與 `*.zip`，讓建置產物與打包的 zip 不進 repository。目前 `create` 產生的專案已附這個檔案；只有舊版 CLI 產生的專案可能沒有，此時請自行建立並寫入這三行。同樣地，僅在舊版 CLI 產生的專案中，若產生的 README 含有以 `../../docs` 開頭的連結，請改成文件站的完整網址 `https://openpen.pages.dev/docs/`（例如 `https://openpen.pages.dev/docs/guides/publishing`），因為相對連結只在 OpenPen repository 內有效。專案 `package.json` 內的 `"private": true` 只會阻止 `npm publish`，不影響 release 與掃描。
-4. 在由 `create` 產生的專案中執行 `npm run pack`（它會執行 `npx openpen-cli pack`），再建立 `v<version>` 的 GitHub Release 並附上 zip，例如 `gh release create v<version> ./<scope>-<name>-<version>.zip`。zip 內有 `plugin.json`、`dist/`，以及（若資料夾存在的話）`locales/`。`pack` 結尾會印出要你執行 `publish` 的提示，那一步屬於官方目錄，走社群清單可以略過。部分舊版 CLI 印出的提示用了縮短的指令名稱：指令名稱一律是 `npx openpen-cli`，因為 npm 上裸名的 `openpen` 套件是無關的工具。release 必須已發布，不能是草稿或預發布。掃描器取最新 release 的第一個 `.zip` 附件，zip 根目錄須有 `plugin.json`。
+4. 在由 `create` 產生的專案中執行 `npm run pack`（它會執行 `npx openpen-cli pack`），再建立 `v<version>` 的 GitHub Release 並附上 zip，例如 `gh release create v<version> ./<scope>-<name>-<version>.zip`。zip 內有 `plugin.json`、`dist/`，以及（若資料夾存在的話）`locales/`。`pack` 結尾會印出要你執行 `publish` 的提示，那一步屬於官方目錄，走社群清單可以略過。部分舊版 CLI 印出的提示用了縮短的指令名稱：指令名稱一律是 `npx openpen-cli`，因為 npm 上裸名的 `openpen` 套件是無關的工具。release 必須已發布，不能是草稿或預發布。掃描器取最新 release 的第一個 `.zip` 附件，zip 根目錄須有 `plugin.json`。`plugin.json` 若列了市集圖片，請在建立 release 之前先 commit 並 push 圖檔（見下方〈市集圖示、截圖與中文說明〉）。
 5. 在 repository 加上 `openpen-plugin` topic：repository 頁面 About 旁的齒輪，Topics；或用 GitHub CLI：`gh repo edit --add-topic openpen-plugin`。
 6. 等待下一次掃描。掃描器自行下載 zip、讀取 `plugin.json` 並計算 sha256，你不需要提交雜湊值或 pull request。掃描每 30 分鐘一次，你無法自行觸發，請預留最多約 30 分鐘。要確認是否已列入，請打開目錄 repository 的 [`community/plugins.json`](https://raw.githubusercontent.com/openpen-platform/OpenPen-plugins/main/community/plugins.json)，找你的 plugin id；`latestVersion` 欄位顯示已收錄的版本。
 
@@ -105,6 +105,64 @@ plugin 沒出現時，掃描器會在目錄 repository 的 `Update community ind
 官方目錄中的 plugin 可用 id 安裝：`npx openpen-cli plugin install @scope/name`，並會顯示在應用程式的 Marketplace 分頁中。
 
 若要列入官方目錄，請在把 zip 附到 GitHub Release 之後執行 `npx openpen-cli publish`。它會檢查該 release、確認你的 GitHub 登入帳號與 plugin id 的 scope 相符，並對目錄開啟一個 pull request：首次提交為 Registration PR，新版本則為 Update PR。 組織 scope 不支援透過 `publish` 提交；官方 `@openpen` scope 由組織成員直接提交到目錄儲存庫。首次提交在合併前會由維護者審閱。完整流程請見[建立你的第一個 plugin](../tutorials/build-your-first-plugin.md) 的第 7 節，各步驟的細節請見 [`reference/openpen-cli.md`](../reference/openpen-cli.md)。 plugin 的儲存庫也必須位於你的個人帳號下，並以 plugin 名稱命名（`publish` 會記錄為 `https://github.com/<your-login>/<plugin-name>`）；目錄機器人會將儲存庫擁有者與註冊帳號比對，位於組織或其他帳號下的儲存庫會被拒絕。
+
+### 市集圖示、截圖與中文說明
+
+`plugin.json` 有三個選填欄位，讓你的 plugin 在 Marketplace 有圖示、截圖與中文說明：`icon`、`screenshots`、`descriptionLocalized`。社群掃描器會從 release zip 內的 `plugin.json` 把它們複製到你的條目；官方目錄則要寫在提交的 manifest 裡（見下方）。第三方 plugin 可不填；`@openpen/*` plugin 三項都必須有（見下方的官方 plugin 上架必備）。
+
+```json
+{
+  "id": "@alice/todo-app",
+  "name": "Todo App",
+  "version": "1.1.0",
+  "author": "alice",
+  "description": "Keeps a short to-do list on top of the screen you are sharing.",
+  "descriptionLocalized": {
+    "zh-Hant": "在分享中的畫面上放一份簡短的待辦清單。",
+    "zh-Hans": "在共享中的画面上放一份简短的待办清单。"
+  },
+  "icon": ".github/marketplace/icon.png",
+  "screenshots": [
+    {
+      "src": ".github/marketplace/cover.png",
+      "alt": "A to-do list with three items floats over a slide deck."
+    },
+    {
+      "src": ".github/readme-demo.gif",
+      "alt": "An item is added, ticked off and dragged to the bottom of the list."
+    }
+  ],
+  "minAppVersion": "1.0.0",
+  "renderer": "dist/renderer.js"
+}
+```
+
+| 欄位 | 格式與限制 |
+| --- | --- |
+| `icon` | repository 內 `.png` 檔的路徑。圖檔 256×256 像素，不超過 256 KB。 |
+| `screenshots` | 陣列 1–5 項，每項只有 `src` 與 `alt`。第 1 項是 Marketplace 卡片的封面，必須是靜態的 `.png`、`.jpg` 或 `.jpeg`；其餘另可為 `.gif`。同一 plugin 的各張截圖寬高比相差不超過 1%、寬至少 960 px，單檔不超過 5 MB。 |
+| `src`（與 `icon`） | repository 內的相對路徑，以 `/` 分隔。不得以 `/` 開頭、含 `..` 路徑段、是網址或以 `https:` 之類的 scheme 開頭、含反斜線或控制字元。檔案必須存在於該 release tag 的 repository 中。 |
+| `alt` | 英文純文字，1–200 字元，寫截圖畫面在做什麼。目錄以「至少一個拉丁字母、沒有其他文字系統的字母」判定是否為英文。 |
+| `descriptionLocalized` | 物件，只收 `zh-Hant`（繁體中文）與 `zh-Hans`（簡體中文）兩鍵。每個值是 1–80 字元的純文字，一個中文字算一個字元。其他鍵會被忽略。 |
+| 所有文字值 | 含控制字元或雙向覆寫、雙向隔離字元（U+202A–U+202E、U+2066–U+2069 等）的值視為不合規則。 |
+
+**圖檔放哪裡。** release zip 只含 `plugin.json`、`dist/` 與 `locales/`：放在 repository 其他位置（例如 `.github/marketplace/`）的圖不會打包，放在 `dist/` 或 `locales/` 底下的圖會隨 plugin 一起打包。不論哪種，目錄都不從 zip 讀圖。目錄會把每張圖連到你的 repository 在該 release tag 的檔案，網址為 `https://raw.githubusercontent.com/<owner>/<repo>/<tag>/<src>`（`icon` 同規則），`<tag>` 是目錄讀取的那個 release 的 tag。圖檔請放 `.github/marketplace/`；README 的示範動圖可直接引用原位置，例如 `.github/readme-demo.gif`。建立 release 之前先 commit 並 push 圖檔。tag 還不存在時，`gh release create v<version> <zip>` 會從預設分支的最新 commit 建立 tag，之後才 push 的圖不在該 tag 上，連結會失效，直到下一個 release。要確認圖檔在 tag 上，先執行 `git fetch --tags`，再執行 `git ls-tree -r --name-only v<version>`，在清單中找每張圖的路徑；或用瀏覽器打開目錄條目裡的每個圖片網址。
+
+**目錄怎麼處理這些欄位。**
+
+- 社群清單：掃描器把符合規則的欄位複製到你在 `community/plugins.json` 的條目，不符合的不寫入，plugin 照常列入。任一張截圖不合規則時整個 `screenshots` 欄位不寫入，避免第 2 張頂替封面。每個不寫入的欄位會記在 `Update community index` workflow 的執行紀錄，格式為 `drop listing field of <owner>/<repo>: <原因>`。掃描器只檢查 `plugin.json` 裡的值，不下載圖片，所以圖檔不在 tag 上或超過大小限制時它不會發現。要確認結果，在 `community/plugins.json` 找你的 plugin id：`icon` 與每個 `screenshots[].src` 都是指向你 release tag 的網址。
+- 官方目錄：沒有任何步驟會自動複製這些欄位。`npx openpen-cli publish` 不會把它們寫進提交的 manifest，所以在補進 manifest 之前，條目沒有圖示、截圖與中文說明；可用目錄 repository 的 `scripts/sync-listing.mjs` 從 release 的 `plugin.json` 寫入。目錄機器人會拿 manifest 與 release 內的 `plugin.json` 比對：manifest 帶的欄位必須與你的 `plugin.json` 依上表規則產生的結果一致。第三方 plugin 的 manifest 沒帶這些欄位只會在機器人留言中提示；`@openpen/*` plugin 的欄位在 `plugin.json` 有、manifest 沒有時，檢查不通過。
+
+**官方 plugin 上架必備。** `@openpen/*` plugin 首次上架與每次更新都必須同時滿足下列各項。其他 scope 建議照做，目錄不會因缺這些項目拒絕其他 scope；第 4 項也一樣，目錄不檢查其他 scope 的 `description` 寫法。
+
+1. 有 `icon`：256×256 PNG，深淺兩種背景都看得清楚。
+2. 有 1–5 張 `screenshots`，比例一致、寬至少 960 px，至少 1 張是在 overlay 上實際操作的動圖。只呈現 plugin 的真實行為，不含個資與他牌商標。
+3. 每張截圖都有 `alt`，寫畫面在做什麼。
+4. `description` 是一句英文，50–155 字元，以動詞開頭、句點結尾。
+5. `descriptionLocalized` 同時有 `zh-Hant` 與 `zh-Hans`。
+6. 圖示、截圖與多語說明寫在 `plugin.json`，圖檔放進 repository 並隨 release tag 發布。截圖可與 README 示範圖共用同一檔。
+
+目錄的 pull request 檢查（`scripts/validate-pr.mjs`）會擋下下列 `@openpen/*` 提交：缺 `icon`、`screenshots`、`zh-Hant` 或 `zh-Hans`，違反上表任一規則，或有圖檔不在 tag 上、檔頭與副檔名不符、封面是動圖、圖示不是 256×256 或超過 256 KB、截圖超過 5 MB、寬不到 960 px、寬高比與封面相差超過 1%。其餘項目由維護者人工審核：圖示是否看得清楚、截圖是否呈現 plugin 在 overlay 上的操作、個資與商標，以及 `description` 的寫法。
 
 ### 下架 plugin
 
