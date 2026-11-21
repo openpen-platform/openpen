@@ -42,7 +42,7 @@ export const BUILTIN_DRAWING_TOOL_IDS = Object.freeze(['freehand', 'line', 'shap
 export const MAX_ITEMS_PER_CALL = 250;
 /** Most points one outline may have: a stroke's path, a fill's outline, or one hole. */
 export const MAX_POINTS_PER_ITEM = 1000;
-/** Painting items allowed since the last screenshot; once reached, painting is refused until a screenshot succeeds. */
+/** Painting items a client may add between successful screenshots; a call that would pass it is refused whole until a screenshot succeeds. */
 export const STROKES_BEFORE_SCREENSHOT = 250;
 /** Finest grid spacing the screenshot tool accepts, in screenshot pixels. */
 const MIN_GRID = 4;
@@ -127,7 +127,7 @@ Draw from background to foreground: large areas and outlines first, details last
 
 ## Painting
 
-Use painting when the goal is a picture rather than a mark-up. Each call takes at most ${MAX_ITEMS_PER_CALL} strokes or regions and ${MAX_POINTS_PER_ITEM} points per outline (a stroke's path, a fill's outline, each hole). After ${STROKES_BEFORE_SCREENSHOT} strokes or regions without a successful screenshot, the next painting call is refused until you take one. The draw tools are neither counted nor refused.
+Use painting when the goal is a picture rather than a mark-up. Each call takes at most ${MAX_ITEMS_PER_CALL} strokes or regions and ${MAX_POINTS_PER_ITEM} points per outline (a stroke's path, a fill's outline, each hole). Each client may paint at most ${STROKES_BEFORE_SCREENSHOT} strokes or regions between successful screenshots: a painting call that would take the total past that is refused whole (nothing is drawn) until you take a screenshot, and the refusal says how many items still fit. The draw tools are neither counted nor refused.
 
 Work in stages. For each stage write down its goal and a stroke budget first, paint, then take a screenshot and compare it with the goal before the next stage:
 1. Composition and palette: place the main masses, set proportions and pick 4 to 6 colours. No strokes yet; a screenshot of the target area is enough.
@@ -155,7 +155,7 @@ Assume ${P}screenshot reported a 1920x1080 display. Mark a button with a frame, 
 
 ## Checking your work
 
-After composing several strokes, take one screenshot and compare it with what you intended; after a correction, take one more. A single simple action, such as one line or one undo, does not need a screenshot. While painting, a screenshot is required after every ${STROKES_BEFORE_SCREENSHOT} strokes or regions.
+After composing several strokes, take one screenshot and compare it with what you intended; after a correction, take one more. A single simple action, such as one line or one undo, does not need a screenshot. While painting, a screenshot is required after every ${STROKES_BEFORE_SCREENSHOT} strokes or regions (counted per client, and a single batch may not carry you past that number).
 
 ## Common mistakes
 
@@ -412,17 +412,30 @@ export function createBuiltinTools(host) {
 
   // ── Painting ──────────────────────────────────────────────────────────────
   // Painting items (strokes and regions) written since the last successful
-  // screenshot. One counter for the whole server: not per display, not per client.
-  let paintedSinceScreenshot = 0;
-  // Bumped by every successful screenshot. A paint that fails after one must not
-  // roll back a count the screenshot already cleared.
-  let screenshotEpoch = 0;
+  // screenshot, counted per client: each MCP session has its own quota, and a
+  // screenshot only clears the quota of the session that took it. Calls that
+  // carry no session (stateless requests, direct handler calls) share one bucket.
+  const NO_CLIENT = Symbol('no-client');
+  /** @type {Map<unknown, { painted: number, epoch: number }>} */
+  const quotas = new Map();
+  const quotaOf = (ctx) => {
+    const key = ctx?.clientId ?? NO_CLIENT;
+    let q = quotas.get(key);
+    if (!q) {
+      q = { painted: 0, epoch: 0 };
+      quotas.set(key, q);
+    }
+    return q;
+  };
 
-  /** Message for the call that finds the screenshot guard closed, else null. */
-  function guardProblem(name) {
-    if (paintedSinceScreenshot < STROKES_BEFORE_SCREENSHOT) return null;
-    return `${P}${name}: ${paintedSinceScreenshot} strokes or regions were painted since the last screenshot, and the limit is ${STROKES_BEFORE_SCREENSHOT}, so this call was refused and nothing was drawn. ` +
-      `Call ${P}screenshot (a region view counts too), look at the result, then paint again.`;
+  /** Message for a call that would take the client past the screenshot limit, else null. */
+  function guardProblem(name, quota, incoming) {
+    if (quota.painted + incoming <= STROKES_BEFORE_SCREENSHOT) return null;
+    const left = Math.max(0, STROKES_BEFORE_SCREENSHOT - quota.painted);
+    return `${P}${name}: ${quota.painted} strokes or regions were painted since the last screenshot and this call adds ${incoming}, which would pass the limit of ${STROKES_BEFORE_SCREENSHOT}, so this call was refused and nothing was drawn. ` +
+      (left > 0
+        ? `Send at most ${left} now, or call ${P}screenshot (a region view counts too), look at the result, then paint again.`
+        : `Call ${P}screenshot (a region view counts too), look at the result, then paint again.`);
   }
 
   /** Check a list of points. Returns an error message or null. */
@@ -530,12 +543,11 @@ export function createBuiltinTools(host) {
 
   /** One painting call: validate the whole batch, then send it to the overlay as one command. */
   function paintTool(name, listKey, noun, build) {
-    return async (args) => {
+    return async (args, ctx) => {
       const r = resolveDisplay(args.displayId);
       if (r.error) return fail(r.error);
       const d = r.display;
-      const guard = guardProblem(name);
-      if (guard) return fail(guard);
+      const quota = quotaOf(ctx);
       const list = args[listKey];
       if (!Array.isArray(list) || list.length === 0) {
         return invalid(name, `${listKey} must be an array with at least 1 ${noun}.`, d);
@@ -543,6 +555,8 @@ export function createBuiltinTools(host) {
       if (list.length > MAX_ITEMS_PER_CALL) {
         return fail(`${P}${name}: ${list.length} ${listKey} were sent and the limit is ${MAX_ITEMS_PER_CALL} per call, so nothing was drawn. Split the batch into multiple smaller calls of at most ${MAX_ITEMS_PER_CALL}.`);
       }
+      const guard = guardProblem(name, quota, list.length);
+      if (guard) return fail(guard);
       const items = [];
       for (const [i, entry] of list.entries()) {
         const built = build(`${listKey}[${i}]`, entry, d);
@@ -551,17 +565,17 @@ export function createBuiltinTools(host) {
       }
       ensureDrawingVisible(host);
       // Count before sending so concurrent calls cannot both slip under the limit.
-      paintedSinceScreenshot += items.length;
-      const epoch = screenshotEpoch;
+      quota.painted += items.length;
+      const epoch = quota.epoch;
       const { result, failure } = await dispatch(d, { type: 'paint', items });
       if (failure) {
-        if (epoch === screenshotEpoch) paintedSinceScreenshot -= items.length;
+        if (epoch === quota.epoch) quota.painted -= items.length;
         return failure;
       }
       return json({
         ids: result?.ids ?? [],
         displayId: d.id,
-        strokesSinceScreenshot: paintedSinceScreenshot,
+        strokesSinceScreenshot: quota.painted,
         guardLimit: STROKES_BEFORE_SCREENSHOT,
       });
     };
@@ -625,9 +639,9 @@ export function createBuiltinTools(host) {
     ['draw_rect', 'Draws a rectangle outline. Suited to framing a button, a region or a block of text so the user can see it. The rectangle is an outline only and is not filled, so it does not hide or tint what is inside; to colour a large area, use the tool that fills regions with colour. Parameters: x and y of the top-left corner, width and height, all in pixels of the display screenshot, with width and height greater than 0 and the whole box inside the display; optional color (hex with 3, 4, 6 or 8 digits, rgb(), rgba(), hsl(), hsla() or a CSS name; default #818CF8), lineWidth in pixels greater than 0 (default 4) and displayId.', false, boxTool('draw_rect', 'rect')],
     ['draw_ellipse', 'Draws an ellipse outline inscribed in a box. Suited to circling an item, a face or a number; a square box gives a circle. The ellipse is an outline only and is not filled, so it does not hide or tint what is inside. Parameters: x and y of the top-left corner of the box, width and height, all in pixels of the display screenshot, with width and height greater than 0 and the whole box inside the display; optional color (hex with 3, 4, 6 or 8 digits, rgb(), rgba(), hsl(), hsla() or a CSS name; default #818CF8), lineWidth in pixels greater than 0 (default 4) and displayId.', false, boxTool('draw_ellipse', 'ellipse')],
     ['draw_highlighter', 'Draws a wide translucent highlighter stroke through a list of points, with round line ends. Suited to marking a line of text or a band of the screen while keeping the content underneath readable. The stroke is always semi-transparent, so it is not suited to hiding anything, and it cannot be made opaque. Parameters: points, at least two {x, y} items in pixels of the display screenshot; optional color (hex with 3, 4, 6 or 8 digits, rgb(), rgba(), hsl(), hsla() or a CSS name; default #818CF8), lineWidth in pixels greater than 0 (default 16) and displayId.', false, strokeTool('draw_highlighter', 'highlighter')],
-    ['paint_strokes', `Draws a batch of brush strokes in one call, in order, as a single undoable step. Suited to painting: smooth curves that pass through every point, strokes whose width and opacity change along their length, soft edges for shading and blending, and many strokes at once. Not suited to filled areas or to a quick mark-up of the screen. A call takes at most ${MAX_ITEMS_PER_CALL} strokes of at most ${MAX_POINTS_PER_ITEM} points each, and once ${STROKES_BEFORE_SCREENSHOT} strokes or regions have been painted without a screenshot, further calls are refused until one is taken. If any stroke is invalid the whole batch is rejected and nothing is drawn. Parameters: strokes, a list where each item has points (at least two {x, y} items in pixels of the display screenshot) and optional smooth (true gives a curve through every point; default false gives straight segments), color (hex with 3, 4, 6 or 8 digits, rgb(), rgba(), hsl(), hsla() or a CSS name; default #818CF8), width (pixels greater than 0, or {start, end} to change along the stroke; default 4), opacity (0 to 1, or {start, end}; default 1) and hardness (0 to 1, where 1 is a hard edge and lower is softer; default 1); plus optional displayId.`, false,
+    ['paint_strokes', `Draws a batch of brush strokes in one call, in order, as a single undoable step. Suited to painting: smooth curves that pass through every point, strokes whose width and opacity change along their length, soft edges for shading and blending, and many strokes at once. Not suited to filled areas or to a quick mark-up of the screen. A call takes at most ${MAX_ITEMS_PER_CALL} strokes of at most ${MAX_POINTS_PER_ITEM} points each, and a call that would take the total painted since your last screenshot past ${STROKES_BEFORE_SCREENSHOT} strokes or regions is refused whole until one is taken. If any stroke is invalid the whole batch is rejected and nothing is drawn. Parameters: strokes, a list where each item has points (at least two {x, y} items in pixels of the display screenshot) and optional smooth (true gives a curve through every point; default false gives straight segments), color (hex with 3, 4, 6 or 8 digits, rgb(), rgba(), hsl(), hsla() or a CSS name; default #818CF8), width (pixels greater than 0, or {start, end} to change along the stroke; default 4), opacity (0 to 1, or {start, end}; default 1) and hardness (0 to 1, where 1 is a hard edge and lower is softer; default 1); plus optional displayId.`, false,
       paintTool('paint_strokes', 'strokes', 'stroke', buildBrush)],
-    ['fill_regions', `Fills a batch of areas with colour in one call, in order, as a single undoable step. Suited to laying down large colour masses, backgrounds and shapes, with holes cut out of them, and with optional soft edges. Not suited to outlines or lines. A call takes at most ${MAX_ITEMS_PER_CALL} regions of at most ${MAX_POINTS_PER_ITEM} points per outline, and once ${STROKES_BEFORE_SCREENSHOT} strokes or regions have been painted without a screenshot, further calls are refused until one is taken. If any region is invalid the whole batch is rejected and nothing is drawn. Parameters: regions, a list where each item has shape "polygon" with points (at least three {x, y} items in pixels of the display screenshot, closed automatically, and optional smooth for a curved outline), or shape "rect" or "ellipse" with x, y, width and height of its box; each may have holes (a list of {points, smooth?} with at least three points each; holes must not overlap each other), color (hex with 3, 4, 6 or 8 digits, rgb(), rgba(), hsl(), hsla() or a CSS name; default #818CF8), opacity (0 to 1; default 1) and hardness (0 to 1, where 1 is a hard edge and lower is softer; default 1); plus optional displayId.`, false,
+    ['fill_regions', `Fills a batch of areas with colour in one call, in order, as a single undoable step. Suited to laying down large colour masses, backgrounds and shapes, with holes cut out of them, and with optional soft edges. Not suited to outlines or lines. A call takes at most ${MAX_ITEMS_PER_CALL} regions of at most ${MAX_POINTS_PER_ITEM} points per outline, and a call that would take the total painted since your last screenshot past ${STROKES_BEFORE_SCREENSHOT} strokes or regions is refused whole until one is taken. If any region is invalid the whole batch is rejected and nothing is drawn. Parameters: regions, a list where each item has shape "polygon" with points (at least three {x, y} items in pixels of the display screenshot, closed automatically, and optional smooth for a curved outline), or shape "rect" or "ellipse" with x, y, width and height of its box; each may have holes (a list of {points, smooth?} with at least three points each; holes must not overlap each other), color (hex with 3, 4, 6 or 8 digits, rgb(), rgba(), hsl(), hsla() or a CSS name; default #818CF8), opacity (0 to 1; default 1) and hardness (0 to 1, where 1 is a hard edge and lower is softer; default 1); plus optional displayId.`, false,
       paintTool('fill_regions', 'regions', 'region', buildFill)],
     ['list_annotations', 'Lists the annotations currently on a display, each with its id, kind (for example freehand, line, rect, ellipse, highlighter, brush or fill; other kinds can appear) and bounds in screenshot pixels. Suited to finding the id of an annotation before removing it, or to checking what is already drawn without taking an image. It does not change anything. Parameter: optional displayId, defaulting to the display under the cursor.', true,
       simpleCommand('list', (result, d) => json({ displayId: d.id, annotations: result?.annotations ?? [] }))],
@@ -646,7 +660,7 @@ export function createBuiltinTools(host) {
       simpleCommand('undo', (_r, d) => json({ undone: true, displayId: d.id }))],
     ['redo', 'Redoes the most recently undone change on a display, exactly as if the user pressed redo. Suited to restoring something an undo removed by mistake. It cannot redo anything that was not undone first. Parameter: optional displayId, defaulting to the display under the cursor.', false,
       simpleCommand('redo', (_r, d) => json({ redone: true, displayId: d.id }))],
-    ['screenshot', `Captures a PNG screenshot of a display, including the annotations already drawn, and returns it with its pixel width and height. Suited to looking at the screen before drawing and to checking the result afterwards. All drawing coordinates are pixels of this image, with the origin at the top-left. It captures one display at a time. With a region it returns just that area enlarged (up to 8 times, long side about 1600 px; a region larger than that comes back smaller), and with a grid it draws labelled lines over the image, the labels being coordinates of the full screenshot; the reply text then also gives the region, the scale (output pixels per screenshot pixel) and the grid so positions can be converted back. Painting is refused after too many strokes without a successful screenshot, and any successful one, region views included, lifts that. Parameters: optional displayId, defaulting to the display under the cursor; optional region {x, y, width, height} inside the display; optional grid, the spacing in screenshot pixels as a whole number, at least ${MIN_GRID}.`, true, async ({ displayId: did, region, grid }) => {
+    ['screenshot', `Captures a PNG screenshot of a display, including the annotations already drawn, and returns it with its pixel width and height. Suited to looking at the screen before drawing and to checking the result afterwards. All drawing coordinates are pixels of this image, with the origin at the top-left. It captures one display at a time. With a region it returns just that area enlarged (up to 8 times, long side about 1600 px; a region larger than that comes back smaller), and with a grid it draws labelled lines over the image, the labels being coordinates of the full screenshot; the reply text then also gives the region, the scale (output pixels per screenshot pixel) and the grid so positions can be converted back. Painting is refused when a call would take a client past the allowed number of strokes since its last successful screenshot, and any successful one by that client, region views included, lifts that. Parameters: optional displayId, defaulting to the display under the cursor; optional region {x, y, width, height} inside the display; optional grid, the spacing in screenshot pixels as a whole number, at least ${MIN_GRID}.`, true, async ({ displayId: did, region, grid }, ctx) => {
       const r = resolveDisplay(did);
       if (r.error) return fail(r.error);
       const opts = screenshotOptions({ region, grid }, r.display);
@@ -655,8 +669,9 @@ export function createBuiltinTools(host) {
         const shot = Object.keys(opts.options).length > 0
           ? await host.screenshot(r.display.id, opts.options)
           : await host.screenshot(r.display.id);
-        paintedSinceScreenshot = 0;
-        screenshotEpoch += 1;
+        const quota = quotaOf(ctx);
+        quota.painted = 0;
+        quota.epoch += 1;
         const info = { displayId: shot.displayId, width: shot.width, height: shot.height };
         for (const key of ['region', 'scale', 'grid']) if (shot[key] !== undefined) info[key] = shot[key];
         return {

@@ -201,7 +201,7 @@ export function createMcpHttpServer({ port, getConfig, getTools, getDisabledModu
         };
       }
       try {
-        return await tool.handler(parsed.data);
+        return await tool.handler(parsed.data, { clientId: extra?.sessionId });
       } catch (err) {
         logger?.error?.('[mcp] tool handler threw:', err);
         return { isError: true, content: [{ type: 'text', text: `${name} failed: ${err?.message ?? err}. The canvas is unchanged.` }] };
