@@ -1,8 +1,8 @@
 /**
  * E2E: OpenPen's local MCP entry on real Electron (TASK-233).
  *
- * The MCP port is fixed (17639), so everything lives in ONE file whose describes
- * run serially, each owning at most one app at a time.
+ * The describes run serially, each owning at most one app at a time. The apps
+ * listen on a free port picked for this file (see mcp-port.js).
  */
 import { test, expect } from '@playwright/test';
 import http from 'node:http';
@@ -11,13 +11,17 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { attachElectronErrorDetection } from '../electron-errors.js';
 import { launchElectronApp } from '../launch.js';
+import { skipIfScreenLocked } from '../screen-lock.js';
+import { mcpPortEnv, reserveMcpPort } from './mcp-port.js';
 
-const PORT = 17639;
-const URL_MCP = `http://127.0.0.1:${PORT}/mcp`;
+let PORT;
+const mcpUrl = () => `http://127.0.0.1:${PORT}/mcp`;
 const KEY = 'opk_e2etestkey0123456789abcdefghijk';
 const MCP_ON = { mcp: { enabled: true, apiKey: KEY, readOnly: false, exposeAll: true, enabledPlugins: [] } };
 
 test.describe.configure({ mode: 'serial' });
+
+test.beforeAll(async () => { PORT = await reserveMcpPort(); });
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -70,7 +74,7 @@ async function openSettingsMcpTab(mainWin) {
 
 async function connect(key = KEY) {
   const client = new Client({ name: 'openpen-e2e', version: '0.0.0' });
-  const transport = new StreamableHTTPClientTransport(new URL(URL_MCP), {
+  const transport = new StreamableHTTPClientTransport(new URL(mcpUrl()), {
     requestInit: { headers: { Authorization: `Bearer ${key}` } },
   });
   await client.connect(transport);
@@ -157,7 +161,7 @@ async function annotationCount(client, args = {}) {
 test.describe('MCP off by default', () => {
   attachElectronErrorDetection(() => electronApp);
 
-  test.beforeAll(async () => { electronApp = await launchElectronApp(); });
+  test.beforeAll(async () => { electronApp = await launchElectronApp(mcpPortEnv(PORT)); });
   test.afterAll(async () => { await electronApp?.close(); electronApp = undefined; });
 
   test('AC-2: with the switch off nothing listens on the MCP port', async () => {
@@ -178,7 +182,7 @@ test.describe('MCP off by default', () => {
 test.describe('MCP on', () => {
   attachElectronErrorDetection(() => electronApp);
 
-  test.beforeAll(async () => { electronApp = await launchElectronApp({ seedConfig: MCP_ON }); });
+  test.beforeAll(async () => { electronApp = await launchElectronApp({ seedConfig: MCP_ON, ...mcpPortEnv(PORT) }); });
   test.afterAll(async () => { await electronApp?.close(); electronApp = undefined; });
 
   test.beforeEach(async () => {
@@ -213,6 +217,7 @@ test.describe('MCP on', () => {
   });
 
   test('AC-6: rect drawn at screenshot pixels shows up there in listing and screenshot', async () => {
+    skipIfScreenLocked(test);
     const main = await getMainWindow();
     const client = await connect();
     const { displays } = await callJson(client, 'get_state');
@@ -261,6 +266,7 @@ test.describe('MCP on', () => {
   });
 
   test('AC-8: outside drawing mode a drawn stroke is visible on the screen', async () => {
+    skipIfScreenLocked(test);
     const main = await getMainWindow();
     const client = await connect();
     const state = await callJson(client, 'get_state');
@@ -347,6 +353,7 @@ test.describe('MCP on', () => {
   });
 
   test('AC-13: the screenshot is a PNG of the display that includes drawn annotations', async () => {
+    skipIfScreenLocked(test);
     const main = await getMainWindow();
     const client = await connect();
     const state = await callJson(client, 'get_state');

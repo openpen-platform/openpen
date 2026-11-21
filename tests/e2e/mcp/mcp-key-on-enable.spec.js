@@ -2,13 +2,17 @@
  * E2E: the MCP endpoint URL and key appear as soon as the switch is turned on,
  * without pressing Save or reopening settings (TASK-233, AC-20 and usage flow).
  *
- * The MCP port is fixed (17639), so the tests run serially and own one app at a time.
+ * The tests run serially and own one app at a time. This file keeps the app on
+ * the default port: the URL shown before Save is built from that port, and the
+ * usage flow connects to exactly what is shown.
  */
 import { test, expect } from '@playwright/test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { attachElectronErrorDetection } from '../electron-errors.js';
 import { launchElectronApp } from '../launch.js';
+import { MCP_PORT } from '../../../shared/mcp-constants.js';
+import { portInUse } from './mcp-port.js';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -16,6 +20,8 @@ let electronApp;
 let settingsWin;
 let endpoint = '';
 let apiKey = '';
+/** Set before launch: whether something else already holds the default port. */
+let defaultPortBusy = false;
 
 async function findWindow(predicate, timeoutMs = 30000) {
   const deadline = Date.now() + timeoutMs;
@@ -55,7 +61,12 @@ test.describe('MCP key shown on enable', () => {
   attachElectronErrorDetection(() => electronApp);
 
   // Fresh install: no mcp seed.
-  test.beforeAll(async () => { electronApp = await launchElectronApp(); });
+  test.beforeAll(async () => {
+    // Checked before this app starts, so its own server can never count as "busy".
+    defaultPortBusy = await portInUse(MCP_PORT);
+    // An inherited OPENPEN_MCP_PORT would move the server off the port the UI shows.
+    electronApp = await launchElectronApp({ env: { OPENPEN_MCP_PORT: '' } });
+  });
   test.afterAll(async () => { await electronApp?.close(); electronApp = undefined; });
 
   test('AC-20: turning the switch on shows the URL and a key on the same page, no Save', async () => {
@@ -85,6 +96,11 @@ test.describe('MCP key shown on enable', () => {
   });
 
   test('usage flow: after Save, a client using the shown key connects and lists tools', async () => {
+    // Only this test needs the server to listen; AC-20 above still runs.
+    test.skip(
+      defaultPortBusy,
+      `Port ${MCP_PORT} on 127.0.0.1 already accepted connections before the app started (another OpenPen with MCP on, or another program), so this app cannot listen there.`,
+    );
     expect(endpoint).toContain('/mcp');
     expect(apiKey).toMatch(/^opk_/);
 

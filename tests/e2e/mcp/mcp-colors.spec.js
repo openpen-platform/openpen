@@ -1,15 +1,18 @@
 /**
  * E2E: colour notations (rgb / hsl / rgba) drawn through the MCP endpoint (TASK-233, AC-21).
- * Port 17639 is fixed, so this file owns its own app and runs serially.
+ * This file owns its own app, which listens on a free port picked for this file
+ * (see mcp-port.js), and runs serially.
  */
 import { test, expect } from '@playwright/test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { attachElectronErrorDetection } from '../electron-errors.js';
 import { launchElectronApp } from '../launch.js';
+import { skipIfScreenLocked } from '../screen-lock.js';
+import { mcpPortEnv, reserveMcpPort } from './mcp-port.js';
 
-const PORT = 17639;
-const URL_MCP = `http://127.0.0.1:${PORT}/mcp`;
+let PORT;
+const mcpUrl = () => `http://127.0.0.1:${PORT}/mcp`;
 const KEY = 'opk_e2ecolorkey0123456789abcdefghi';
 const MCP_ON = { mcp: { enabled: true, apiKey: KEY, readOnly: false, exposeAll: true, enabledPlugins: [] } };
 
@@ -42,7 +45,7 @@ const getMainWindow = () =>
 
 async function connect() {
   const client = new Client({ name: 'openpen-e2e-colors', version: '0.0.0' });
-  const transport = new StreamableHTTPClientTransport(new URL(URL_MCP), {
+  const transport = new StreamableHTTPClientTransport(new URL(mcpUrl()), {
     requestInit: { headers: { Authorization: `Bearer ${KEY}` } },
   });
   await client.connect(transport);
@@ -94,7 +97,10 @@ const maxDiff = (a, b) => Math.max(...a.map((v, i) => Math.abs(v - b[i])));
 test.describe('AC-21 colour notations drawn through MCP', () => {
   attachElectronErrorDetection(() => electronApp);
 
-  test.beforeAll(async () => { electronApp = await launchElectronApp({ seedConfig: MCP_ON }); });
+  test.beforeAll(async () => {
+    PORT = await reserveMcpPort();
+    electronApp = await launchElectronApp({ seedConfig: MCP_ON, ...mcpPortEnv(PORT) });
+  });
   test.afterAll(async () => { await electronApp?.close(); electronApp = undefined; });
 
   test.beforeEach(async () => {
@@ -106,6 +112,7 @@ test.describe('AC-21 colour notations drawn through MCP', () => {
   });
 
   test('AC-21: rgb() and hsl() colours are drawn as the blue / green they name', async () => {
+    skipIfScreenLocked(test);
     const main = await getMainWindow();
     const client = await connect();
     const state = await callJson(client, 'get_state');
@@ -134,6 +141,7 @@ test.describe('AC-21 colour notations drawn through MCP', () => {
   });
 
   test('AC-21: rgba() with alpha is drawn translucent, not as pure red and not as the background', async () => {
+    skipIfScreenLocked(test);
     const main = await getMainWindow();
     const client = await connect();
     const state = await callJson(client, 'get_state');
