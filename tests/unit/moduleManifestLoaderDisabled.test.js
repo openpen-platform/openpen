@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -37,6 +37,10 @@ beforeAll(() => {
   });
   process.env.HOME = home;
   disabled = ['@vendor/thing'];
+});
+
+afterAll(() => {
+  fs.rmSync(home, { recursive: true, force: true });
 });
 
 describe('module manifest loader: disabled plugins', () => {
