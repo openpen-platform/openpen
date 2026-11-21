@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0](https://github.com/openpen-platform/openpen/compare/openpen-cli@1.2.2...openpen-cli@1.3.0) (2026-11-21)
+
+
+### Features
+
+* **cli:** scaffold a demo MCP tool and check tools when packing ([c56349c](https://github.com/openpen-platform/openpen/commit/c56349c9f00bc89b34efb845e2797d4c7fe0d1ea))
+
+
+### Bug Fixes
+
+* **cli:** derive starter button and tool ids from the plugin name ([eb2aebd](https://github.com/openpen-platform/openpen/commit/eb2aebd17d27ee1ca0d14b7f8d158750122951c3))
+
 ## [1.2.2](https://github.com/openpen-platform/openpen/compare/openpen-cli@1.2.1...openpen-cli@1.2.2) (2026-11-15)
 
 
