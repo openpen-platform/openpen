@@ -167,7 +167,7 @@ Modules MUST NOT import `reka-ui` directly inside the host — go through Layer 
 - **Error recovery**: 3 consecutive test failures → stop retries → root-cause analysis → written report → discuss with human.
 
 **Branch / PR workflow (MANDATORY)**
-- **MUST** All code / docs / config changes go through a feature branch + PR + squash merge — **MUST NOT** push directly to `main` (emergency hotfix and release-please-generated commits are the only exceptions, and both require explicit user authorization)
+- External contributors fork the repo, push a feature branch to the fork and open a PR against `main` — see `CONTRIBUTING.md` for the full flow.
 - **MUST** Branch naming: `<type>/<scope-or-description>` — `type` maps to Conventional Commits (`feat` / `fix` / `docs` / `chore` / `build` / `ci` / `refactor` / `test` / `style`), e.g. `feat/laser-pointer-tool`, `fix/settings-dim-click`, `docs/plugin-quickstart-typo`
 - **MUST** PR title in Conventional Commits format — squash merge uses the PR title as the commit message, and release-please reads it to derive version bumps
 - **MUST NOT** Use `--no-verify`, force-push `main`, or toggle branch protection to enable force-push. Nuclear-reset-class operations require explicit user authorization.

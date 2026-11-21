@@ -290,7 +290,7 @@ Effect on the next release:
 
 ### Merge strategy
 
-All PRs are **squash-merged**. `main` stays linear and each commit on `main` corresponds to exactly one merged PR. Commit freely on your feature branch — its commit history is discarded after the squash.
+All PRs are **squash-merged**, so `main` stays linear. Commit freely on your feature branch — its commit history is discarded after the squash.
 
 `main` is configured to require:
 - All CI checks green (lint / type-check / unit tests / E2E prod smoke)
