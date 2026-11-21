@@ -15,11 +15,19 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { resolveRealLogDir } from './helpers/real-log-dir.js';
 
-const HOME_ENV_KEYS = ['HOME', 'USERPROFILE', 'APPDATA', 'XDG_CONFIG_HOME', 'OPENPEN_UNIT_HOME'];
+const HOME_ENV_KEYS = ['HOME', 'USERPROFILE', 'APPDATA', 'XDG_CONFIG_HOME', 'OPENPEN_UNIT_HOME', 'OPENPEN_UNIT_REAL_LOG_DIR'];
 
 export default function setup() {
   const previous = Object.fromEntries(HOME_ENV_KEYS.map((key) => [key, process.env[key]]));
+  // Resolved before the env is redirected: the real log directory is what the
+  // isolation test must prove stays untouched.
+  const realLogDir = resolveRealLogDir({
+    platform: process.platform,
+    home: os.homedir(),
+    env: process.env,
+  });
   const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'openpen-unit-home-'));
 
   process.env.HOME = sandbox;
@@ -27,6 +35,7 @@ export default function setup() {
   process.env.APPDATA = path.join(sandbox, 'AppData', 'Roaming');
   process.env.XDG_CONFIG_HOME = path.join(sandbox, '.config');
   process.env.OPENPEN_UNIT_HOME = sandbox;
+  process.env.OPENPEN_UNIT_REAL_LOG_DIR = realLogDir;
 
   return () => {
     for (const key of HOME_ENV_KEYS) {
