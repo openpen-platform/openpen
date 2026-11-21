@@ -21,6 +21,7 @@ import fsPromises from 'node:fs/promises';
 import { app, BrowserWindow, clipboard, desktopCapturer, ipcMain, screen, shell, systemPreferences } from 'electron';
 import { CAPTURE } from './ipc-channels.js';
 import { log } from './logger.js';
+import { displayPixelSize } from './display-pixel-size.js';
 import { handleValidated } from './ipc-validation.js';
 import { captureTargetSchema } from './ipc-payload-schemas.js';
 
@@ -139,10 +140,8 @@ export function createScreenCapture(deps) {
         ? deps.screen.getDisplayNearestPoint(deps.screen.getCursorScreenPoint())
         : deps.screen.getAllDisplays().find((d) => d.id === displayId);
       if (!display) return { ok: false, error: 'failed' };
-      const size = {
-        width: Math.round(display.size.width * display.scaleFactor),
-        height: Math.round(display.size.height * display.scaleFactor),
-      };
+      const { pixelWidth, pixelHeight } = displayPixelSize(display);
+      const size = { width: pixelWidth, height: pixelHeight };
 
       // macOS refuses to hand over other apps' pixels without the Screen
       // Recording grant. Asking for sources once also registers the app in the

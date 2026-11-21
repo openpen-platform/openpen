@@ -17,6 +17,7 @@ import { app, BrowserWindow, ipcMain, nativeImage, screen, shell } from 'electro
 import { z } from 'zod';
 import { MCP, OVERLAY } from './ipc-channels.js';
 import { log } from './logger.js';
+import { displayPixelSize } from './display-pixel-size.js';
 import { onValidated } from './ipc-validation.js';
 import { getSetting, updateSettings, setMcpSettingsApplier, onSettingsChanged } from './settings-store.js';
 import { mcpPluginToolsSchema, mcpToolProgressSchema } from './ipc-payload-schemas.js';
@@ -87,12 +88,7 @@ function overlayOffset(displayId) {
 }
 
 /** Pixel size of a display as `desktopCapturer` reports it (screenshot size). */
-function pixelSize(display) {
-  return {
-    pixelWidth: Math.round(display.size.width * display.scaleFactor),
-    pixelHeight: Math.round(display.size.height * display.scaleFactor),
-  };
-}
+const pixelSize = displayPixelSize;
 
 /**
  * @param {{ captureDisplayImage: (opts?: { includeAnnotations?: boolean, displayId?: number }) => Promise<any> }} deps
