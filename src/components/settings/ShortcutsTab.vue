@@ -10,6 +10,8 @@ import { sanitizeIdForI18n } from '@openpen/module-api'
 import { getSlotEntries } from '../../core/runtime/contribution-store'
 import { resolveLabel } from '../../services/i18n-utils'
 import { formatAccelerator, type Platform } from '../../utils/format-accelerator'
+import { formatHoldKey } from '../../utils/format-hold-key'
+import { defaultHoldKey, HOLD_KEY_OFF } from '../../../shared/hold-to-draw'
 
 const platform: Platform = (window.openPenApi?.platform ?? 'darwin') as Platform
 
@@ -27,6 +29,23 @@ const pluginShortcutBackend = ref<string | null>(null)
 let unsub: (() => void) | null = null
 let unsubModuleShortcuts: (() => void) | null = null
 let unsubConflicts: (() => void) | null = null
+let unsubHoldToDraw: (() => void) | null = null
+
+// Hold-to-draw: main owns the key and whether this system can read it.
+const holdStatus = ref<HoldToDrawStatus | null>(null)
+const holdDefault = defaultHoldKey(platform) ?? HOLD_KEY_OFF
+/** What the row shows: the key in use, or 'Off'. */
+const holdValue = computed(() => {
+  const s = holdStatus.value
+  if (!s) return holdDefault
+  if (s.stored === HOLD_KEY_OFF) return HOLD_KEY_OFF
+  return s.key ?? holdDefault
+})
+const holdFallbackText = computed(() => {
+  const key = holdStatus.value?.fallback ? holdStatus.value.key : null
+  if (!key) return ''
+  return t('holdKeyFallback', { key: formatHoldKey(key, platform, { left: t('holdKeyLeft'), right: t('holdKeyRight') }) })
+})
 
 onMounted(async () => {
   const current = await window.openPenApi?.getShortcuts()
@@ -52,12 +71,16 @@ onMounted(async () => {
   unsubConflicts = window.openPenApi?.onShortcutConflictsUpdated((c) => {
     shortcutConflicts.value = new Set(c)
   }) ?? null
+
+  holdStatus.value = (await window.openPenApi?.getHoldToDrawStatus?.()) ?? null
+  unsubHoldToDraw = window.openPenApi?.onHoldToDrawStatusChanged?.((st) => { holdStatus.value = st }) ?? null
 })
 
 onUnmounted(() => {
   unsub?.()
   unsubModuleShortcuts?.()
   unsubConflicts?.()
+  unsubHoldToDraw?.()
 })
 
 function updateShortcut(id: keyof UserShortcuts, accel: string) {
@@ -132,21 +155,42 @@ const hasChanges = computed(() => {
     <div class="cw-section">
       <div class="cw-section-title">{{ t('sectionSystem') }}</div>
 
-      <div v-for="row in SYSTEM_ROWS" :key="row.id" class="cw-row">
-        <div>
-          <div class="cw-row-label">{{ t(row.labelKey) }}</div>
-          <div class="cw-row-sub">{{ t(row.subKey) }}</div>
+      <template v-for="row in SYSTEM_ROWS" :key="row.id">
+        <div class="cw-row">
+          <div>
+            <div class="cw-row-label">{{ t(row.labelKey) }}</div>
+            <div class="cw-row-sub">{{ t(row.subKey) }}</div>
+          </div>
+          <HotkeyInput
+            :model-value="shortcuts[row.id]"
+            :default-value="DEFAULT_SHORTCUTS[row.id]"
+            :shortcut-id="row.id"
+            :has-conflict="shortcutConflicts.has(row.id)"
+            conflict-message-key="shortcutConflict"
+            @update:model-value="updateShortcut(row.id, $event)"
+            @shortcut-error="shortcutError = $event"
+          />
         </div>
-        <HotkeyInput
-          :model-value="shortcuts[row.id]"
-          :default-value="DEFAULT_SHORTCUTS[row.id]"
-          :shortcut-id="row.id"
-          :has-conflict="shortcutConflicts.has(row.id)"
-          conflict-message-key="shortcutConflict"
-          @update:model-value="updateShortcut(row.id, $event)"
-          @shortcut-error="shortcutError = $event"
-        />
-      </div>
+        <!-- Hold-to-draw sits under the drawing-mode toggle, with the same recorder. -->
+        <div
+          v-if="row.id === 'toggleDrawingMode' && holdStatus?.supported"
+          class="cw-row"
+          data-testid="hold-to-draw-row"
+        >
+          <div>
+            <div class="cw-row-label">{{ t('shortcutHoldToDraw') }}</div>
+            <div class="cw-row-sub">{{ t('shortcutHoldToDrawSub') }}</div>
+            <div v-if="holdFallbackText" class="cw-row-sub" data-testid="hold-to-draw-fallback">{{ holdFallbackText }}</div>
+          </div>
+          <HotkeyInput
+            :model-value="holdValue"
+            :default-value="holdDefault"
+            shortcut-id="holdToDraw"
+            hold-key
+            @shortcut-error="shortcutError = $event"
+          />
+        </div>
+      </template>
     </div>
 
     <AppBanner

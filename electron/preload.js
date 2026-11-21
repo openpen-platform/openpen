@@ -38,6 +38,12 @@ contextBridge.exposeInMainWorld('openPenApi', {
     ipcRenderer.on('overlay:strokes-hidden-changed', handler);
     return () => ipcRenderer.removeListener('overlay:strokes-hidden-changed', handler);
   },
+  /** Overlay: the hold-to-draw key took (true) or released (false) the mouse. */
+  onHoldToDrawChanged: (callback) => {
+    const handler = (_, active) => callback(active);
+    ipcRenderer.on('overlay:hold-to-draw-changed', handler);
+    return () => ipcRenderer.removeListener('overlay:hold-to-draw-changed', handler);
+  },
   /** Linux: persist the current drawing snapshot so it survives the overlay
    *  window being recreated on the next drawing session. */
   persistDrawingState: (snapshot) => ipcRenderer.send('overlay:persist-drawing-state', snapshot),
@@ -74,6 +80,18 @@ contextBridge.exposeInMainWorld('openPenApi', {
   },
 
   // ── Shortcuts ───────────────────────────────────────────────────────
+  // ── Hold-to-draw key ────────────────────────────────────────────────
+  getHoldToDrawStatus: () => ipcRenderer.invoke('hold-to-draw:get'),
+  /** key: a modifier key name, 'Off', or null for the platform default. */
+  setHoldToDrawKey: (key) => ipcRenderer.invoke('hold-to-draw:set', { key }),
+  /** Resolves to the next modifier key held on its own, or null when cancelled. */
+  recordHoldToDrawKey: () => ipcRenderer.invoke('hold-to-draw:record'),
+  cancelHoldToDrawRecording: () => ipcRenderer.send('hold-to-draw:cancel-record'),
+  onHoldToDrawStatusChanged: (callback) => {
+    const handler = (_, status) => callback(status);
+    ipcRenderer.on('hold-to-draw:updated', handler);
+    return () => ipcRenderer.removeListener('hold-to-draw:updated', handler);
+  },
   setShortcutsSuspended: (suspended) => ipcRenderer.send('shortcuts:set-suspended', suspended),
   getShortcuts: () => ipcRenderer.invoke('shortcuts:get'),
   setShortcut: (id, accelerator) => ipcRenderer.invoke('shortcuts:set', { id, accelerator }),

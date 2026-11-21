@@ -101,6 +101,11 @@ vi.mock('../../electron/cursor-os.js', () => ({
   hideOsCursor: vi.fn(),
   showOsCursor: vi.fn(),
 }));
+// Hold-to-draw polls the real keyboard; not part of this wiring.
+vi.mock('../../electron/hold-to-draw-manager.js', () => ({
+  initHoldToDrawManager: vi.fn(),
+  shutdownHoldToDrawManager: vi.fn(),
+}));
 vi.mock('electron-log/main.js', () => ({
   default: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));

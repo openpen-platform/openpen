@@ -12,6 +12,7 @@ import { recordDiagnosticsEvent } from './diagnostics-manager.js';
 import log from 'electron-log/main.js';
 import { fsyncDir } from './fs-utils.js';
 import { DEFAULT_SETTINGS, DEFAULT_SHORTCUTS } from '../shared/settings-defaults.js';
+import { HOLD_KEYS, HOLD_KEY_OFF } from '../shared/hold-to-draw.js';
 import { setLocale as setMainLocale } from './i18n/index.js';
 import { refreshTrayLocale } from './tray-manager.js';
 import { handleValidated, logRejected, onValidated } from './ipc-validation.js';
@@ -44,6 +45,15 @@ let shortcutsCache = { ...DEFAULT_SHORTCUTS };
 
 /** @type {Record<string, string>} namespacedId → custom accelerator override for module shortcuts. */
 let moduleShortcutsCache = {};
+
+/**
+ * Hold-to-draw key: a HOLD_KEYS name, HOLD_KEY_OFF, or null for the platform
+ * default. Kept out of DEFAULT_SETTINGS on purpose: the shortcuts tab writes it
+ * straight away, and the settings window's Save sends its whole draft, which
+ * would put back the value the draft was opened with.
+ * @type {string | null}
+ */
+let holdToDrawKeyCache = null;
 
 // ── Control bar layout ─────────────────────────────────────────────────────
 
@@ -374,6 +384,7 @@ function readConfig() {
   cache = { ...DEFAULT_SETTINGS };
   layoutCache = structuredClone(DEFAULT_LAYOUT);
   shortcutsCache = { ...DEFAULT_SHORTCUTS };
+  holdToDrawKeyCache = null;
   modulesCache = {};
   moduleMetaCache = {};
   configReadOnly = false;
@@ -465,6 +476,10 @@ function readConfig() {
         shortcutsCache = mergedShortcuts;
       }
 
+      // Hold-to-draw key: a known key name or 'Off'; anything else means the default.
+      const rawHoldKey = parsed['holdToDrawKey'];
+      if (rawHoldKey === HOLD_KEY_OFF || HOLD_KEYS.includes(rawHoldKey)) holdToDrawKeyCache = rawHoldKey;
+
       // Module shortcut overrides: plain Record<string, string>, discard non-strings.
       const rawModuleShortcuts = parsed['moduleShortcuts'];
       if (rawModuleShortcuts && typeof rawModuleShortcuts === 'object' && !Array.isArray(rawModuleShortcuts)) {
@@ -511,6 +526,7 @@ function readConfig() {
     cache = { ...DEFAULT_SETTINGS };
     layoutCache = structuredClone(DEFAULT_LAYOUT);
     shortcutsCache = { ...DEFAULT_SHORTCUTS };
+    holdToDrawKeyCache = null;
     moduleShortcutsCache = {};
     modulesCache = {};
     moduleMetaCache = {};
@@ -677,6 +693,20 @@ function broadcastShortcuts() {
   BrowserWindow.getAllWindows().forEach((win) => safeSend(win, SHORTCUTS.UPDATED, payload));
 }
 
+/** @returns {string | null} the stored hold-to-draw key ('Off', a key name, or null for the default) */
+export function getHoldToDrawKey() {
+  return holdToDrawKeyCache;
+}
+
+/**
+ * Store the hold-to-draw key and persist. Callers broadcast the new status.
+ * @param {string | null} key
+ */
+export function setHoldToDrawKey(key) {
+  holdToDrawKeyCache = key;
+  writeConfig();
+}
+
 /** @returns {Record<string, string>} */
 export function getModuleShortcuts() {
   return { ...moduleShortcutsCache };
@@ -716,6 +746,7 @@ function _serializeConfig() {
     controlBarLayout: structuredClone(layoutCache),
     userShortcuts: { ...shortcutsCache },
     moduleShortcuts: { ...moduleShortcutsCache },
+    ...(holdToDrawKeyCache !== null ? { holdToDrawKey: holdToDrawKeyCache } : {}),
     modules: { ...modulesCache },
     moduleMeta: { ...moduleMetaCache },
   }, null, 2);

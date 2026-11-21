@@ -32,6 +32,9 @@ export const OVERLAY = {
   STROKES_HIDDEN_CHANGED: 'overlay:strokes-hidden-changed',
   /** renderer → main: hide or show the strokes, as the hide/show shortcut does. */
   TOGGLE_STROKES_HIDDEN: 'overlay:toggle-strokes-hidden',
+  /** main → overlay renderer: the hold-to-draw key took (true) or released
+   *  (false) the mouse; sent together with DRAWING_MODE_CHANGED. */
+  HOLD_TO_DRAW_CHANGED: 'overlay:hold-to-draw-changed',
   /** overlay renderer → main (Linux): persist the current drawing snapshot
    *  (strokes + history) so it survives the overlay window being recreated. */
   PERSIST_STATE: 'overlay:persist-drawing-state',
@@ -139,6 +142,20 @@ export const LAYOUT = {
 }
 
 /** User-configurable keyboard shortcuts. */
+/** Hold-to-draw key: held on its own outside drawing mode, the user draws until release. */
+export const HOLD_TO_DRAW = {
+  /** renderer → main (invoke): current key status { stored, key, fallback, supported }. */
+  GET: 'hold-to-draw:get',
+  /** renderer → main (invoke): store a key, 'Off', or null for the platform default. */
+  SET: 'hold-to-draw:set',
+  /** renderer → main (invoke): record the next key held on its own; resolves to it, or null when cancelled. */
+  RECORD: 'hold-to-draw:record',
+  /** renderer → main (one-way): cancel the recording in progress. */
+  CANCEL_RECORD: 'hold-to-draw:cancel-record',
+  /** main → renderer (broadcast): key status changed. */
+  UPDATED: 'hold-to-draw:updated',
+}
+
 export const SHORTCUTS = {
   /** renderer → main (invoke): get current shortcut map. */
   GET: 'shortcuts:get',

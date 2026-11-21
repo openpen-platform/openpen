@@ -79,6 +79,13 @@ let activeDisplayId = -1;
 /** @type {boolean} Whether drawing mode is currently active. */
 let drawingMode = false;
 
+/**
+ * Overlay that the hold-to-draw key has given the mouse to, or null. Drawing
+ * mode itself stays off: the control bar, tray and toast do not change.
+ * @type {BrowserWindow | null}
+ */
+let holdToDrawOverlay = null;
+
 /** @type {boolean} Whether the strokes are hidden (shortcut, or leaving drawing mode with the setting on). */
 let strokesHidden = false;
 
@@ -345,6 +352,10 @@ function _reconcileDisplayWindows() {
   }
   for (const [id, win] of overlayWindowsByDisplayId) {
     if (!currentIds.has(id)) {
+      // The hold-to-draw key had the mouse on this display: end it the normal
+      // way first (OS cursor back, "hide strokes when leaving" applied), or
+      // the cursor it hid stays hidden once the overlay is gone.
+      if (win === holdToDrawOverlay) setHoldToDraw(false);
       if (!win.isDestroyed()) win.destroy();
       overlayWindowsByDisplayId.delete(id);
     }
@@ -897,6 +908,44 @@ function setStrokesHidden(hidden) {
   }
 }
 
+/**
+ * Hold-to-draw: give the mouse to the overlay under the cursor while the key is
+ * held, then make it click-through again. Uses the drawing-mode path of the
+ * overlay renderer (cursor, pointer events, tool) without switching drawing
+ * mode itself. Does nothing in drawing mode or on Wayland, whose overlay only
+ * exists while drawing.
+ * @param {boolean} active
+ */
+export function setHoldToDraw(active) {
+  if (IS_WAYLAND) return;
+  if (active) {
+    if (drawingMode || holdToDrawOverlay) return;
+    const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
+    const overlay = overlayWindowsByDisplayId.get(display.id) ?? overlayWindowsByDisplayId.get(activeDisplayId);
+    if (!overlay || overlay.isDestroyed()) return;
+    holdToDrawOverlay = overlay;
+    // Same as entering drawing mode: never draw on hidden strokes.
+    setStrokesHidden(false);
+    hideOsCursor();
+    overlay.setIgnoreMouseEvents(false);
+    overlay.webContents.send(OVERLAY.HOLD_TO_DRAW_CHANGED, true);
+    overlay.webContents.send(OVERLAY.DRAWING_MODE_CHANGED, true);
+    return;
+  }
+  const overlay = holdToDrawOverlay;
+  if (!overlay) return;
+  holdToDrawOverlay = null;
+  if (overlay.isDestroyed()) return;
+  showOsCursor();
+  platform.setClickThrough(overlay);
+  // Drawing mode off first: the renderer commits a stroke still in flight
+  // with the tool it was drawn with, before the tool swap is undone.
+  overlay.webContents.send(OVERLAY.DRAWING_MODE_CHANGED, false);
+  overlay.webContents.send(OVERLAY.HOLD_TO_DRAW_CHANGED, false);
+  // The strokes then follow the same rule as leaving drawing mode.
+  if (_hideStrokesOnExit?.()) setStrokesHidden(true);
+}
+
 /** Toggle drawing mode (wired to the global shortcut). */
 export function toggleDrawingMode() {
   setDrawingModeState(!drawingMode);
@@ -931,6 +980,10 @@ function setDrawingModeState(enabled) {
   if (!enabled && IS_WAYLAND && _strokeActive) {
     return;
   }
+
+  // Drawing mode taking over from the hold-to-draw key: release the key's
+  // overlay first so it is never left holding the mouse.
+  if (enabled && holdToDrawOverlay) setHoldToDraw(false);
 
   drawingMode = enabled;
 

@@ -18,6 +18,7 @@ import {
 } from '@openpen/module-api'
 import { getSlotEntries } from '../core/runtime/contribution-store'
 import { on as eventBusOn } from '../core/runtime/event-bus'
+import { holdToDrawToolId } from '../../shared/hold-to-draw'
 
 /**
  * Default cursor rendered when the active tool has no cursor
@@ -49,6 +50,10 @@ export function useCustomCursor() {
   const pointerInside = ref(true)
   const interactiveHover = ref(false)
   const activeToolId = ref<string | null>(null)
+  // While the hold-to-draw key has the mouse a typing tool draws with the pen,
+  // so the cursor follows the tool actually drawing.
+  const holdToDraw = ref(false)
+  const cursorToolId = computed(() => holdToDraw.value ? holdToDrawToolId(activeToolId.value) : activeToolId.value)
   const current = ref<CompiledCursor | null>(DEFAULT_HOST_CURSOR)
 
   // interactiveHover hides the DOM cursor while the user interacts with
@@ -97,14 +102,15 @@ export function useCustomCursor() {
 
   let resolveSequence = 0
   async function refreshCurrent(): Promise<void> {
-    if (!activeToolId.value) {
+    const toolId = cursorToolId.value
+    if (!toolId) {
       current.value = DEFAULT_HOST_CURSOR
       return
     }
     // Race guard: rapid tool switches could resolve out of order; the
     // late-finishing resolve must not overwrite a fresher one.
     const seq = ++resolveSequence
-    const compiled = await resolveCursorFor(activeToolId.value)
+    const compiled = await resolveCursorFor(toolId)
     if (seq === resolveSequence) {
       current.value = compiled
     }
@@ -172,6 +178,11 @@ export function useCustomCursor() {
       })
       unsubs.push(offDraw)
 
+      const offHold = window.openPenApi.onHoldToDrawChanged?.((active) => {
+        holdToDraw.value = active
+      })
+      if (offHold) unsubs.push(offHold)
+
       const offHover = window.openPenApi.onInteractiveHoverChanged((hover) => {
         interactiveHover.value = hover
       })
@@ -220,7 +231,7 @@ export function useCustomCursor() {
   })
 
   // Re-resolve when active tool changes.
-  watch(activeToolId, () => {
+  watch(cursorToolId, () => {
     refreshCurrent()
   })
 

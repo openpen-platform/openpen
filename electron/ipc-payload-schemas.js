@@ -217,6 +217,11 @@ export const shortcutSetSchema = z.object({ id, accelerator });
 
 export const shortcutIdSchema = z.object({ id });
 
+/** Hold-to-draw key: a modifier key name, 'Off', or null for the platform default. */
+export const holdToDrawKeySchema = z.object({
+  key: z.enum(['Fn', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight', 'MetaLeft', 'MetaRight', 'Off']).nullable(),
+});
+
 export const moduleShortcutRegisterSchema = z.object({ id, keys: accelerator, scope: z.enum(['global', 'drawing']).optional() });
 
 // ── Plugin marketplace ───────────────────────────────────────────────────────

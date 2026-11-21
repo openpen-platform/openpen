@@ -7,7 +7,8 @@ import { app, BrowserWindow, ipcMain, protocol, net, session, screen } from 'ele
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, toggleStrokesHidden, setHideStrokesOnExitReader, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, setCoreWindowQuitHooks, applyLinuxWindowPositioning, destroyAllWindowsForUpdate } from './window-manager.js';
+import { initWindowManager, createMainWindowForDisplay, createOverlayWindowForDisplay, showMainWindow, hideMainWindow, toggleControlsHidden, createSettingsWindow, toggleDrawingMode, toggleStrokesHidden, setHideStrokesOnExitReader, setHoldToDraw, getDrawingMode, getMainWindow, getOverlayWindow, getAllMainWindows, getAllOverlayWindows, setActiveDisplayId, setDrawingModeChangedListener, setBarHiddenChangedListener, setCoreWindowQuitHooks, applyLinuxWindowPositioning, destroyAllWindowsForUpdate } from './window-manager.js';
+import { initHoldToDrawManager, shutdownHoldToDrawManager } from './hold-to-draw-manager.js';
 import { initTrayManager, setTrayWarning, setTrayDrawingMode, setTrayBarHidden } from './tray-manager.js';
 import { initScreenCaptureManager } from './screen-capture-manager.js';
 import { initMcpServerManager } from './mcp-server-manager.js';
@@ -377,6 +378,8 @@ app.whenReady().then(async () => {
       setTrayWarning(`⚠️ OpenPen: shortcut ${accelerator} is taken by another app`);
     },
   });
+  // After the shortcut manager: the hold key follows its suspension.
+  initHoldToDrawManager({ isDrawingMode: getDrawingMode, setHoldToDraw });
 
   // In-app auto-update over GitHub Releases. Guarded internally by app.isPackaged
   // (dev/test builds ship no app-update.yml). Authoritative update state lives
@@ -639,6 +642,7 @@ app.whenReady().then(async () => {
 app.on('before-quit', (event) => quitCoordinator.handleBeforeQuit(event));
 
 app.on('will-quit', () => {
+  shutdownHoldToDrawManager();
   unregisterAllShortcuts();
 });
 

@@ -33,6 +33,10 @@ vi.mock('electron', () => ({
   screen: { getAllDisplays: vi.fn(() => []), on: vi.fn() },
 }));
 
+vi.mock('../../electron/hold-to-draw-manager.js', () => ({
+  initHoldToDrawManager: vi.fn(),
+  shutdownHoldToDrawManager: vi.fn(),
+}));
 vi.mock('../../electron/window-manager.js', () => ({
   initWindowManager: vi.fn(),
   createMainWindowForDisplay: vi.fn(),
@@ -50,6 +54,8 @@ vi.mock('../../electron/window-manager.js', () => ({
   setActiveDisplayId: vi.fn(),
   setDrawingModeChangedListener: vi.fn(),
   setHideStrokesOnExitReader: vi.fn(),
+  setHoldToDraw: vi.fn(),
+  getDrawingMode: vi.fn(() => false),
   setBarHiddenChangedListener: vi.fn(),
   setCoreWindowQuitHooks: vi.fn(),
   applyLinuxWindowPositioning: vi.fn(),

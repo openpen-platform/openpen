@@ -1,3 +1,14 @@
+/** Hold-to-draw key status from main. `key` is null when off or unsupported. */
+interface HoldToDrawStatus {
+  /** Stored value: a modifier key name, 'Off', or null for the platform default. */
+  stored: string | null
+  key: string | null
+  /** The stored key cannot be read here, so the platform default is used. */
+  fallback: boolean
+  /** False where the system key state cannot be read (hold-to-draw not offered). */
+  supported: boolean
+}
+
 /** Single corruption-recovery event recorded in the diagnostics sidecar. */
 interface DiagnosticsEvent {
   id: string
@@ -211,6 +222,7 @@ interface OpenPenApi {
   setDrawingMode(enabled: boolean): void
   onDrawingModeChanged(cb: (enabled: boolean) => void): () => void
   onStrokesHiddenChanged(cb: (hidden: boolean) => void): () => void
+  onHoldToDrawChanged(cb: (active: boolean) => void): () => void
   onInteractiveHoverChanged(cb: (hover: boolean) => void): () => void
   /** Linux: persist the current drawing snapshot (strokes + history) across overlay recreation. */
   persistDrawingState(snapshot: unknown): void
@@ -227,6 +239,13 @@ interface OpenPenApi {
   revertSettings(): Promise<void>
   getLocale(): Promise<string>
   onLocaleChange(cb: (locale: string) => void): () => void
+
+  // Hold-to-draw key
+  getHoldToDrawStatus(): Promise<HoldToDrawStatus>
+  setHoldToDrawKey(key: string | null): Promise<HoldToDrawStatus | null>
+  recordHoldToDrawKey(): Promise<string | null>
+  cancelHoldToDrawRecording(): void
+  onHoldToDrawStatusChanged(cb: (status: HoldToDrawStatus) => void): () => void
 
   // Shortcuts
   setShortcutsSuspended(suspended: boolean): void

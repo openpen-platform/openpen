@@ -3,6 +3,7 @@ import { ref, computed, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AppTooltip } from '@openpen/module-api/uikit'
 import { formatAccelerator as fmtAccel, type Platform } from '../../utils/format-accelerator'
+import { formatHoldKey } from '../../utils/format-hold-key'
 
 const props = defineProps<{
   modelValue: string
@@ -12,6 +13,12 @@ const props = defineProps<{
   conflictMessageKey?: string
   /** Accept a lone key with no modifier (drawing-scope shortcuts only). */
   allowBare?: boolean
+  /**
+   * Hold-to-draw row: records ONE modifier key held on its own (Fn included,
+   * which a web page never receives, so main reads the keys natively) and
+   * stores it through the hold-to-draw IPC. Values are key names or 'Off'.
+   */
+  holdKey?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -44,6 +51,10 @@ const KEY_MAP: Record<string, string> = {
 const MODIFIER_KEYS = new Set(['Control', 'Shift', 'Alt', 'Meta', 'Command', 'Super', 'Hyper', 'OS'])
 
 function formatAccelerator(accel: string): string {
+  if (props.holdKey) {
+    if (accel === 'Off') return t('holdKeyOff')
+    return formatHoldKey(accel, platform, { left: t('holdKeyLeft'), right: t('holdKeyRight') })
+  }
   return fmtAccel(accel, platform)
 }
 
@@ -73,6 +84,15 @@ function onDocKeyDown(e: KeyboardEvent) {
     return
   }
 
+  if (props.holdKey) {
+    // Main records the modifier itself; Delete / Backspace turns the key off.
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      stopCapture()
+      void applyAccelerator('Off')
+    }
+    return
+  }
+
   const accel = buildAccelerator(e)
   if (!accel) return
 
@@ -85,18 +105,33 @@ function startCapture() {
   emit('shortcutError', '')
   window.openPenApi?.setShortcutsSuspended(true)
   document.addEventListener('keydown', onDocKeyDown, true)
+  if (props.holdKey) {
+    void window.openPenApi?.recordHoldToDrawKey().then((key) => {
+      if (!key || !isCapturing.value) return
+      stopCapture()
+      void applyAccelerator(key)
+    })
+  }
 }
 
 function stopCapture() {
   if (!isCapturing.value) return
   isCapturing.value = false
   document.removeEventListener('keydown', onDocKeyDown, true)
+  if (props.holdKey) window.openPenApi?.cancelHoldToDrawRecording()
   window.openPenApi?.setShortcutsSuspended(false)
 }
 
 async function applyAccelerator(accel: string) {
   if (accel === props.defaultValue) {
     await resetToDefault()
+    return
+  }
+
+  if (props.holdKey) {
+    await window.openPenApi?.setHoldToDrawKey(accel)
+    emit('update:modelValue', accel)
+    emit('shortcutError', '')
     return
   }
 
@@ -113,6 +148,13 @@ async function applyAccelerator(accel: string) {
 }
 
 async function resetToDefault() {
+  if (props.holdKey) {
+    // null stores "platform default", so the default follows the platform.
+    await window.openPenApi?.setHoldToDrawKey(null)
+    emit('update:modelValue', props.defaultValue)
+    emit('shortcutError', '')
+    return
+  }
   const result = await window.openPenApi?.resetShortcut(props.shortcutId)
     ?? { ok: false, error: 'API unavailable' }
   if (result.ok) {
@@ -151,6 +193,9 @@ onUnmounted(() => {
           </svg>
           {{ formatAccelerator(modelValue) || '—' }}
         </button>
+      </AppTooltip>
+      <AppTooltip v-else-if="holdKey" :content="t('holdKeyOffHint')" side="top">
+        <span class="hki-listening">{{ t('holdKeyPress') }}</span>
       </AppTooltip>
       <span v-else class="hki-listening">{{ t('shortcutPressKeys') }}</span>
 

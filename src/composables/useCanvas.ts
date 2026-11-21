@@ -21,6 +21,7 @@ import { canUndo, canRedo, serializeState, hydrateState } from '../services/stro
 import type { StrokeStyle } from '../types/tool-types'
 import { emit as eventBusEmit, on as eventBusOn } from '../core/runtime/event-bus'
 import { getSlotEntries } from '../core/runtime/contribution-store'
+import { holdToDrawToolId } from '../../shared/hold-to-draw'
 
 const DEFAULT_STYLE: StrokeStyle = {
   color: '#818cf8',
@@ -36,8 +37,13 @@ export function useCanvas() {
   const canvasRef = ref<HTMLCanvasElement | null>(null)
   const activeToolId = ref<string | null>(null)
   const isDrawingMode = ref(false)
+  // True while the hold-to-draw key has the mouse (drawing mode itself is off).
+  let holdToDraw = false
   let engine: CanvasEngine | null = null
   let pointerDown = false
+  // Last pointer position of the stroke in flight, to commit it when the
+  // overlay loses the mouse before the pointer-up arrives.
+  let lastPoint: { x: number; y: number } | null = null
   // The tool last handed to the engine; null until the active tool's module
   // has registered it in `canvas.tools`.
   let engineTool: ToolContribution | null = null
@@ -98,7 +104,9 @@ export function useCanvas() {
   function syncActiveTool(): void {
     if (!engine) return
     if (!activeToolId.value) return
-    const tool = findToolById(activeToolId.value)
+    // Holding the key never types: a typing tool draws with the pen instead.
+    const toolId = holdToDraw ? holdToDrawToolId(activeToolId.value) : activeToolId.value
+    const tool = findToolById(toolId)
     // Setting a tool aborts the stroke in flight, so a re-sync caused by an
     // unrelated tool registering must not hand the same tool over again.
     if (!tool || tool === engineTool) return
@@ -216,6 +224,7 @@ export function useCanvas() {
     pointerDown = true
     rafPending = false
     pendingPointer = null
+    lastPoint = toPoint(e)
     if (e.currentTarget && 'setPointerCapture' in e.currentTarget) {
       try {
         ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
@@ -230,6 +239,7 @@ export function useCanvas() {
 
   function onPointerMove(e: PointerEvent): void {
     if (!engine || !pointerDown) return
+    lastPoint = toPoint(e)
     if (!engineTool) {
       bufferInput({ kind: 'move', point: toPoint(e), modifiers: { shiftKey: e.shiftKey } })
       return
@@ -305,10 +315,22 @@ export function useCanvas() {
       ipcUnsubs.push(onRedoIpc)
 
       const onDraw = window.openPenApi.onDrawingModeChanged((enabled) => {
+        // Releasing the hold-to-draw key mid-drag makes the overlay
+        // click-through, so the pointer-up never arrives: commit the stroke
+        // at its last point instead of leaving it in flight.
+        if (!enabled && pointerDown && lastPoint && engine) {
+          onPointerUp(new PointerEvent('pointerup', { clientX: lastPoint.x, clientY: lastPoint.y }))
+        }
         isDrawingMode.value = enabled
         applyCursor()
       })
       ipcUnsubs.push(onDraw)
+
+      const onHold = window.openPenApi.onHoldToDrawChanged?.((active) => {
+        holdToDraw = active
+        syncActiveTool()
+      })
+      if (onHold) ipcUnsubs.push(onHold)
 
       // Linux: replay the persisted drawing snapshot into this freshly-created
       // overlay so strokes from the previous session reappear.
