@@ -192,8 +192,9 @@ test('dragging right (ball near right edge) snaps to edge-right', async () => {
   // ~300ms total: 50ms drag-end delay + 250ms snap animation, plus slack.
   await win.waitForTimeout(400);
 
-  const cls = await win.getByTestId('floatball-btn').getAttribute('class');
-  expect(cls).toMatch(/edge-right/);
+  // The edge class lands after the drag-end round trip to main and, for a side
+  // snap, after the 300ms snap animation; wait for it instead of a fixed sleep.
+  await expect(win.getByTestId('floatball-btn')).toHaveClass(/edge-right/);
 });
 
 test('dragging left (ball near left edge) snaps to edge-left', async () => {
@@ -216,8 +217,9 @@ test('dragging left (ball near left edge) snaps to edge-left', async () => {
   await win.mouse.up();
   await win.waitForTimeout(400);
 
-  const cls = await win.getByTestId('floatball-btn').getAttribute('class');
-  expect(cls).toMatch(/edge-left/);
+  // The edge class lands after the drag-end round trip to main and, for a side
+  // snap, after the 300ms snap animation; wait for it instead of a fixed sleep.
+  await expect(win.getByTestId('floatball-btn')).toHaveClass(/edge-left/);
 });
 
 test('after snapping, clicking the ball still expands the bar', async () => {
@@ -274,8 +276,9 @@ test('edge half-circle temporarily reverts to full circle after 1px of motion (m
   await win.mouse.up();
   await win.waitForTimeout(450);
 
-  const snappedClass = await ball.getAttribute('class');
-  expect(snappedClass).toMatch(/edge-left/);
+  // The edge class lands after the drag-end round trip to main and, for a side
+  // snap, after the 300ms snap animation; wait for it instead of a fixed sleep.
+  await expect(ball).toHaveClass(/edge-left/);
 
   // Pressing the mouse down (without moving) should keep the edge-* class.
   const snappedBox = await ball.boundingBox();
@@ -331,9 +334,7 @@ test('during a side snap, the ball stays circular until the animation reaches th
   expect(animatingClass).not.toMatch(/edge-(left|right)/);
 
   // Once the animation settles at the edge, the half-circle edge-left is applied.
-  await win.waitForTimeout(260);
-  const settledClass = await ball.getAttribute('class');
-  expect(settledClass).toMatch(/edge-left/);
+  await expect(ball).toHaveClass(/edge-left/);
 });
 
 test('the control bar keeps its snap layout while dragging (no jump at drag start)', async () => {
@@ -358,8 +359,9 @@ test('the control bar keeps its snap layout while dragging (no jump at drag star
   await win.mouse.up();
   await win.waitForTimeout(450);
 
-  const cls = await ball.getAttribute('class');
-  expect(cls).toMatch(/edge-left/);
+  // The edge class lands after the drag-end round trip to main and, for a side
+  // snap, after the 300ms snap animation; wait for it instead of a fixed sleep.
+  await expect(ball).toHaveClass(/edge-left/);
 
   // Expand the bar and drag via the drag handle.
   await ball.click();

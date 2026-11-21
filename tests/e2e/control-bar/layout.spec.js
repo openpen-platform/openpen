@@ -133,14 +133,12 @@ test('snap to left -> control bar has vbar-left class (vertical layout)', async 
 
   await dragBall(win, -100);
 
-  const ballCls = await win.getByTestId('floatball-btn').getAttribute('class');
-  expect(ballCls).toMatch(/edge-left/);
+  // The edge class lands after the drag-end round trip to main and, for a side
+  // snap, after the 300ms snap animation; wait for it instead of a fixed sleep.
+  await expect(win.getByTestId('floatball-btn')).toHaveClass(/edge-left/);
 
   await win.getByTestId('floatball-btn').click();
-  await win.waitForTimeout(400);
-
-  const barCls = await win.getByTestId('control-bar').getAttribute('class');
-  expect(barCls).toMatch(/vbar-left/);
+  await expect(win.getByTestId('control-bar')).toHaveClass(/vbar-left/);
 });
 
 test('snap to right -> control bar has vbar-right class (vertical layout)', async () => {
@@ -153,14 +151,12 @@ test('snap to right -> control bar has vbar-right class (vertical layout)', asyn
 
   await dragBall(win, 100);
 
-  const ballCls = await win.getByTestId('floatball-btn').getAttribute('class');
-  expect(ballCls).toMatch(/edge-right/);
+  // The edge class lands after the drag-end round trip to main and, for a side
+  // snap, after the 300ms snap animation; wait for it instead of a fixed sleep.
+  await expect(win.getByTestId('floatball-btn')).toHaveClass(/edge-right/);
 
   await win.getByTestId('floatball-btn').click();
-  await win.waitForTimeout(400);
-
-  const barCls = await win.getByTestId('control-bar').getAttribute('class');
-  expect(barCls).toMatch(/vbar-right/);
+  await expect(win.getByTestId('control-bar')).toHaveClass(/vbar-right/);
 });
 
 test('snap to top -> horizontal layout (no vbar-left/vbar-right class)', async () => {
