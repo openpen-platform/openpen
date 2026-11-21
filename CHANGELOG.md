@@ -1,5 +1,52 @@
 # Changelog
 
+## [1.7.0](https://github.com/openpen-platform/openpen/compare/v1.6.0...v1.7.0) (2026-11-21)
+
+
+### Features
+
+* bundle the text and arrow plugins with the installer ([#152](https://github.com/openpen-platform/openpen/issues/152)) ([2ecb39e](https://github.com/openpen-platform/openpen/commit/2ecb39e01a1faa67505812ad7a1a4a5b92f4b80a))
+* **canvas:** render smooth, tapered and soft brush strokes and filled regions ([eb47eef](https://github.com/openpen-platform/openpen/commit/eb47eef1714c9efa92ef201316804ce37ce519a2))
+* **cli:** scaffold a demo MCP tool and check tools when packing ([c56349c](https://github.com/openpen-platform/openpen/commit/c56349c9f00bc89b34efb845e2797d4c7fe0d1ea))
+* **drawing:** keep strokes on screen after leaving drawing mode ([707c3f2](https://github.com/openpen-platform/openpen/commit/707c3f25a004ef7724a5e476f0bfe95a3e8f25a3))
+* install OpenPen into Claude Desktop from the MCP settings ([d5bf35f](https://github.com/openpen-platform/openpen/commit/d5bf35f6843c1b5e6cbba59be834f4f5a941497c))
+* list and run plugin MCP tools from the local endpoint ([c5806f2](https://github.com/openpen-platform/openpen/commit/c5806f273c3cb71a954b417826827ac9a601ba50))
+* **mcp:** add paint and fill tools, zoomed screenshots and a painting guide ([84661f1](https://github.com/openpen-platform/openpen/commit/84661f1375ec8c17e5e3deacb8384a8da32c1acd))
+* **module-api:** let plugin MCP tools convert screenshot points to canvas ([569a316](https://github.com/openpen-platform/openpen/commit/569a316f54e57d56028ae7b430cd9e45be08fb7b))
+* **module-api:** let plugins declare MCP tools ([b236a31](https://github.com/openpen-platform/openpen/commit/b236a31cadb102869a8763cef8b0453188b379f8))
+* **plugin:** show icons, screenshots and Chinese text in the marketplace ([b7d730b](https://github.com/openpen-platform/openpen/commit/b7d730b7eab696047fdf77c7646ce33d1f280390))
+* serve a local MCP endpoint so AI apps can draw on screen ([bc0ec4c](https://github.com/openpen-platform/openpen/commit/bc0ec4c95715ec27a6ba9145fb507f47278d3cfa))
+* **settings:** add an MCP tab ([9419feb](https://github.com/openpen-platform/openpen/commit/9419febb65b8609b1d21690523f98f995ca2c980))
+* **settings:** show why plugin tools are not exposed ([8dadab1](https://github.com/openpen-platform/openpen/commit/8dadab1a1b8adf155e65144bc7d8ebea14f7cf47))
+
+
+### Bug Fixes
+
+* accept the colour notations the MCP guide lists and document tool limits ([2289d6d](https://github.com/openpen-platform/openpen/commit/2289d6d7a1f3808e418029c8a93ef39bdfb8c75b))
+* **app:** exit on system quit requests instead of waiting on a dialog ([625346a](https://github.com/openpen-platform/openpen/commit/625346ab4647fc4e846c4fdeb799cdd4c53a722e))
+* **build:** make the pnpm install and build work ([8f64edb](https://github.com/openpen-platform/openpen/commit/8f64edb9bc8b8ba5da064562b6dd9afcb40aed48))
+* **canvas:** keep background layers intact under the brush eraser ([9fbe369](https://github.com/openpen-platform/openpen/commit/9fbe369701fa3c1bf118af0e85c882ce74913c21))
+* **cli:** align plugin publishing docs and scaffold with actual behavior ([3a8364e](https://github.com/openpen-platform/openpen/commit/3a8364e5925d21a04efa4821b072ae248f464f4f))
+* **cli:** derive starter button and tool ids from the plugin name ([eb2aebd](https://github.com/openpen-platform/openpen/commit/eb2aebd17d27ee1ca0d14b7f8d158750122951c3))
+* **cli:** scaffold ignores zips and guides a new project; catalog bot only comments ([9287fbb](https://github.com/openpen-platform/openpen/commit/9287fbbc4c4dbfd0d784764259adf3d61c1a2ded))
+* **cli:** stop publish crashing while reading the owner info ([9acf8f6](https://github.com/openpen-platform/openpen/commit/9acf8f6b53673824a00c848f0e9623551bd5ccea))
+* **drawing:** keep strokes drawn before the tools register ([c983bf4](https://github.com/openpen-platform/openpen/commit/c983bf492d767e57b3d2a7d2aeeda254df1fa7c9))
+* **drawing:** let a focused text editor receive single-key hotkeys ([#153](https://github.com/openpen-platform/openpen/issues/153)) ([6980a7d](https://github.com/openpen-platform/openpen/commit/6980a7dd57400942d239ee68878623093e8d032b))
+* **mcp:** do not wait for a repaint while the overlay is hidden ([389da20](https://github.com/openpen-platform/openpen/commit/389da20fc16b1843085d821130d3179d03bec049))
+* **mcp:** reply to draw and edit commands once the overlay has repainted ([8b7e29f](https://github.com/openpen-platform/openpen/commit/8b7e29f3618b8e301fdad4e3663ae36a36ed3b13))
+* **mcp:** show agent strokes added mid-stroke and cap ping at one wait ([e95f490](https://github.com/openpen-platform/openpen/commit/e95f49094e58e84122ab61e697c3e3eed8b22e16))
+* **plugin:** compare minAppVersion against the openpen version ([b230fd1](https://github.com/openpen-platform/openpen/commit/b230fd1485cbcc836f615766c0858bc71cb79dc5))
+* **plugin:** write plugin tool info logs to the OpenPen log ([c7dee80](https://github.com/openpen-platform/openpen/commit/c7dee8036d1f5421eed0f5be1eebf5342e3a0709))
+* point draw_rect docs to the fill tool for large areas ([e1ac34e](https://github.com/openpen-platform/openpen/commit/e1ac34ef77c5c08c66d0370d2a03245b3f6bf988))
+* show plugin tool drawings when drawing mode is off ([824dd29](https://github.com/openpen-platform/openpen/commit/824dd29e5524a70021abe134a6e8739ea23c7b7b))
+* **tests:** grade eval answers from a final answer line ([fbefbff](https://github.com/openpen-platform/openpen/commit/fbefbffcef92d9270ec683a4c3a17664f8e70cb2))
+* **tests:** stabilise settings cancel, HUD, watchdog and recovery specs ([6af4487](https://github.com/openpen-platform/openpen/commit/6af4487830bd2250f219498bf02bacc11a16980b))
+
+
+### Performance Improvements
+
+* **canvas:** draw only new strokes and repaint after GPU context restore ([2fc8e3b](https://github.com/openpen-platform/openpen/commit/2fc8e3b01c559c0c8668476f9a2a57cb8a3e92c0))
+
 ## [1.6.0](https://github.com/openpen-platform/openpen/compare/v1.5.0...v1.6.0) (2026-11-14)
 
 
